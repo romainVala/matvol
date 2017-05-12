@@ -1,0 +1,8 @@
+*~
+*.asv
+*.mat
+
+# OSX
+._*
+.DS_Store*
+
