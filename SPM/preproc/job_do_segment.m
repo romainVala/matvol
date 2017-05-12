@@ -30,7 +30,7 @@ par = complet_struct(par,defpar);
 if ~iscell(img)
     img = cellstr(img);
 end
-%img = unzip_volume(img); it makes the multi structure down ... arg
+img = unzip_volume(img); % it makes the multi structure down ... arg <============ need to solve this
 
 %check spm_version
 [v , r]=spm('Ver','spm');

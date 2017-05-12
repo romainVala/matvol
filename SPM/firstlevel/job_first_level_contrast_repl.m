@@ -1,4 +1,4 @@
-function jobs = job_first_level_estimate(fspm,contrast,par)
+function jobs = job_first_level_contrast_repl(fspm,contrast,par)
 
 
 if ~exist('par')
@@ -31,12 +31,12 @@ for nbs = 1:length(fspm)
             case 'T'
                 jobs{nbs}.spm.stats.con.consess{nbc}.tcon.name = contrast.names{nbc};
                 jobs{nbs}.spm.stats.con.consess{nbc}.tcon.weights = contrast.values{nbc};
-                jobs{nbs}.spm.stats.con.consess{nbc}.tcon.sessrep = 'none';
+                jobs{nbs}.spm.stats.con.consess{nbc}.tcon.sessrep = 'repl';
             case 'F'
                 
                 jobs{nbs}.spm.stats.con.consess{nbc}.fcon.name = contrast.names{nbc};
                 jobs{nbs}.spm.stats.con.consess{nbc}.fcon.weights = contrast.values{nbc};
-                jobs{nbs}.spm.stats.con.consess{nbc}.fcon.sessrep = 'none';
+                jobs{nbs}.spm.stats.con.consess{nbc}.fcon.sessrep = 'repl';
                 
         end
     end
