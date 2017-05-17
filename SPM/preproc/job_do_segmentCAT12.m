@@ -46,7 +46,7 @@ for nbsuj = 1:length(img)
     %skip if y_ exist
 %     of = addprefixtofilenames(img(nbsuj),'y_');
 %     if ~par.redo
-%         if exist(of{1}),                skip = [skip nbsuj];     fprintf('skiping suj %d becasue %s exist\n',nbsuj,of{1});       end
+%         if exist(of{1}),                skip = [skip nbsuj];     fprintf('skiping subj %d because %s exist\n',nbsuj,of{1});       end
 %     end
     
     

@@ -30,17 +30,17 @@ par = complet_struct(par,defpar);
 if ~iscell(img)
     img = cellstr(img);
 end
-%img = unzip_volume(img); it makes the multi structure down ... arg
+img = unzip_volume(img); % it makes the multi structure down ... arg <============ need to solve this
 
 %check spm_version
 [v , r]=spm('Ver','spm');
 skip=[];
 for nbsuj = 1:length(img)
-            
+
     %skip if y_ exist
     of = addprefixtofilenames(img(nbsuj),'y_');
     if ~par.redo
-        if exist(of{1}),                skip = [skip nbsuj];     fprintf('skiping suj %d becasue %s exist\n',nbsuj,of{1});       end
+        if exist(of{1}),                skip = [skip nbsuj];     fprintf('skiping subj %d because %s exist\n',nbsuj,of{1});       end
     end
 
     if strfind(r,'SPM8')
@@ -63,8 +63,8 @@ for nbsuj = 1:length(img)
         jobs{nbsuj}.spm.spatial.preproc.opts.biasfwhm = 60;
         jobs{nbsuj}.spm.spatial.preproc.opts.samp = 3;
         jobs{nbsuj}.spm.spatial.preproc.opts.msk = {''};
-        
-    elseif strfind(r,'SPM12')                
+
+    elseif strfind(r,'SPM12')
 
         spm_dir=spm('Dir'); %fileparts(which ('spm'));
         %-----------------------------------------------------------------------
@@ -117,7 +117,7 @@ if isempty(jobs), return;end
 
 if par.sge
     for k=1:length(jobs)
-        j=jobs(k);        
+        j=jobs(k);
         cmd = {'spm_jobman(''run'',j)'};
         varfile = do_cmd_matlab_sge(cmd,par);
         save(varfile{1},'j');
