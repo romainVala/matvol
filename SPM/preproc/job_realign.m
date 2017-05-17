@@ -50,7 +50,7 @@ for ns=1:nsuj
     %skip if mean exist
     of = addprefixtofilenames(ff(1),'mean');
     if ~par.redo
-        if exist(of{1}),                skip = [skip ns];     fprintf('skiping suj %d becasue %s exist',ns,of{1});       end
+        if exist(of{1}),                skip = [skip ns];     fprintf('skiping subj %d because %s exist\n',ns,of{1});       end
     end
     
     for n=1:length(ff)
@@ -81,7 +81,7 @@ for ns=1:nsuj
     %skip if last one exist
     of = addprefixtofilenames(ffsession(end),par.prefix);
     if ~par.redo
-        if exist(of{1}),                skip = [skip ns];     fprintf('skiping suj %d becasue %s exist',ns,of{1});       end
+        if exist(of{1}),                skip = [skip ns];     fprintf('skiping subj %d because %s exist\n',ns,of{1});       end
     end
     
     

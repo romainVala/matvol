@@ -1,10 +1,11 @@
-function jobs = job_first_level_estimate(fspm,contrast,par)
+function jobs = job_first_level_contrast(fspm,contrast,par)
 
 
 if ~exist('par')
     par='';
 end
 
+defpar.sessrep = 'none'; % 'none', 'repl' => replicate contrast over all sessions
 defpar.TR   = 0;
 defpar.file_reg = '^s.*nii';
 
@@ -19,8 +20,6 @@ defpar.delete_previous = 0;
 par.redo=0;
 par = complet_struct(par,defpar);
 
-TR = par.TR;
-
 
 for nbs = 1:length(fspm)
     
@@ -31,12 +30,12 @@ for nbs = 1:length(fspm)
             case 'T'
                 jobs{nbs}.spm.stats.con.consess{nbc}.tcon.name = contrast.names{nbc};
                 jobs{nbs}.spm.stats.con.consess{nbc}.tcon.weights = contrast.values{nbc};
-                jobs{nbs}.spm.stats.con.consess{nbc}.tcon.sessrep = 'none';
+                jobs{nbs}.spm.stats.con.consess{nbc}.tcon.sessrep = par.sessrep;
             case 'F'
                 
                 jobs{nbs}.spm.stats.con.consess{nbc}.fcon.name = contrast.names{nbc};
                 jobs{nbs}.spm.stats.con.consess{nbc}.fcon.weights = contrast.values{nbc};
-                jobs{nbs}.spm.stats.con.consess{nbc}.fcon.sessrep = 'none';
+                jobs{nbs}.spm.stats.con.consess{nbc}.fcon.sessrep = par.sessrep;
                 
         end
     end
