@@ -1,37 +1,58 @@
-function do_delete(f,ask)
+function do_delete(cell_to_delete,ask)
+% DO_DELETE deletes all files or dirs in the cell. ask=0/1 to ask for a
+% confirmation.
 
-if ~exist('ask')
- ask=1;
+
+%% Check input arguments
+
+if nargin < 2
+    ask = 1;
 end
-%do_delet(f)
-%f  a list of cell containing images to be deleted
 
-cf =  char(f);
-if isdir(deblank(cf(1,:)))
- ddir=1;
+if nargin < 1
+    error('Not enough inpur argument')
+end
+
+
+%% Main
+
+% isdir ?
+ctd = char(cell_to_delete);
+if isdir(deblank(ctd(1,:)))
+    ddir = 1;
 else
- ddir=0;
+    ddir = 0;
 end
 
+% ask confirmation ?
 if ask
-  fprintf('Are you sure you want to delete those %d files \n',size(cf,1))
-
-  R = input('yes or no\n','s');
+    fprintf('[%s]: Are you sure you want to delete those %d files/dirs \n',mfilename,size(ctd,1))
+    R = input(['[' mfilename ']: yes or no \n'],'s');
 else
-  R='yes';
+    R='yes';
 end
 
-if strcmp(R,'yes')
-  for k=1:size(cf,1)
-    if ddir
-      cmd = (['rm -rf ', deblank(cf(k,:))]);
-      unix(cmd);
-    else
-      delete(deblank(cf(k,:)));
+% do the delete ...
+if any(strcmpi(R,{'yes','y'}))
+    
+    for k=1:size(ctd,1)
+        
+        if ddir
+            cmd = (['rm -rf ', deblank(ctd(k,:))]);
+            unix(cmd);
+            
+        else
+            delete(deblank(ctd(k,:)));
+        end
+        
     end
-  end
-  fprintf(' done \n');
+    
+    fprintf('[%s]: done \n', mfilename);
+    
 else
-  fprintf('nothing done \n');
+    
+    fprintf('[%s]: nothing done \n', mfilename);
+    
 end
 
+end % function
