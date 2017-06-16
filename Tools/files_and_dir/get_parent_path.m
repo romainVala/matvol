@@ -1,5 +1,5 @@
 function [upper_dir_path, upper_dir_name, varargout] = get_parent_path(input_dir,level)
-% GET_PARENT_PATH Perferforms a job similir to fileparts, but can do
+% GET_PARENT_PATH Perferforms a job similar to fileparts, but can do
 % multiple levels
 %
 %   ***to be completed***
