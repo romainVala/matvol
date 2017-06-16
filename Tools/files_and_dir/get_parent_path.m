@@ -19,7 +19,9 @@ if nargin < 1
 end
 
 % Ensure the outputs are defined
-varargout{1} = {};
+upper_dir_path = {};
+upper_dir_name = {};
+varargout{1}   = {};
 
 
 %% Recursive part
