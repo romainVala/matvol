@@ -54,7 +54,7 @@ for i = 1:length(filelist)
     
     for line = 1:size(filelist{i},1)
         [pathstr,name,extension] = fileparts( deblank( filelist{i}(line,:) ) );
-        wfiles                   = [wfiles; fullfile(pathstr,[prefix{i} name extension ])]; %#ok<*AGROW>
+        wfiles = strvcat(wfiles, fullfile(pathstr,[prefix{i} name extension ]));
     end
     
     newlist{i} = wfiles;

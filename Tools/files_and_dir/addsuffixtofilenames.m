@@ -64,7 +64,7 @@ for i=1:length(filelist)
         end
         
         
-        wfiles  = [wfiles ; fullfile(pathstr,[name suffix{i} extension ])]; %#ok<AGROW>
+        wfiles  = strvcat(wfiles , fullfile(pathstr,[name suffix{i} extension ]));
         
     end
     
