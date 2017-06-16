@@ -1,18 +1,39 @@
-function [o no]=remove_regex(indir,reg_ex)
+function [accpeted, rejected] = remove_regex(inputlist, reg_ex)
+% REMOVE_REGEX removes elements from a list corresponding to the regular
+% exression.
+%
+% note : the 'inputlist' will remain a char or a cell, depending on its
+% nature.
+%
+
+%% Check input arguments
+
+if nargin ~= 2
+    error('inputlist & reg_ex must be defined')
+end
 
 
-if ~iscell(reg_ex), reg_ex={reg_ex};end
+%% Prepare inputs and outputs format
 
-o={};
-no={};
+reg_ex = cellstr(reg_ex); % avoid problems of class or dimensions
 
-ind_to_remove =[];
+% If the inputlist is char, we want the accpeted to also be char
+makeitchar = 0;
+if ischar(inputlist)
+    inputlist  = cellstr(inputlist);
+    makeitchar = 1;
+end
 
-for nb_dir=1:length(indir)
+
+%% Remove the elements corresponding do the regexp
+
+ind_to_remove = [];
+
+for line = 1:length(inputlist)
     
-    for nb_reg=1:length(reg_ex)
-        if  ~isempty(regexp(indir{nb_dir},reg_ex{nb_reg}))
-            ind_to_remove = [ind_to_remove nb_dir];
+    for nb_reg = 1:length(reg_ex)
+        if  ~isempty( regexp(inputlist{line}, reg_ex{nb_reg}, 'once') )
+            ind_to_remove = [ind_to_remove line]; %#ok<AGROW>
             break
         end
     end
@@ -20,7 +41,15 @@ for nb_dir=1:length(indir)
     
 end
 
-o = indir;
-no = indir(ind_to_remove);
+accpeted                = inputlist; % copy
+accpeted(ind_to_remove) = [];        % remove the rejected elements
 
-o(ind_to_remove)='';
+rejected                = inputlist(ind_to_remove);
+
+if makeitchar
+    accpeted = char(accpeted);
+    rejected = char(rejected);
+end
+
+
+end % function

@@ -9,6 +9,7 @@ function dir_out = r_mkdir(base_dir,new_dir)
 %         dir_out = r_mkdir( {'base_dir_1','base_dir_2'} ,  'new_dir'                )
 %         dir_out = r_mkdir( {'base_dir_1','base_dir_2'} , {'new_dir_1','new_dir_2'} )
 %
+%
 % See also r_movefile
 
 %% Check input arguments
