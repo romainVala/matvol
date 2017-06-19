@@ -29,43 +29,66 @@ if nargin<3
 end
 
 if do_print
-    fid = fopen(fullfile(outdir,'acqp.txt'),'w');
-    fid2 = fopen(fullfile(outdir,'fileacqp.txt'),'w');
+    [fid,msg] = fopen(fullfile(outdir,'acqp.txt'),'wt');
+    [fid2,msg2] = fopen(fullfile(outdir,'fileacqp.txt'),'wt');
 end
 
 totfile=1;
 for k = 1:length(finii)
     if line_for_each_volume
-        v1=nifti_spm_vol(finii{k}); 
+        v1=nifti_spm_vol(finii{k});
         nbline = length(v1);
     else
         nbline = size(finii{k},1); %put 1 line if 4D data
     end
     
-    j=loadjson(fdic{k});
+    new_method = 1;
+    
+    if ~new_method
+        j=loadjson(fdic{k});
+    else
+        field_to_get={
+            'SeriesNumber'
+            'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0\].dInPlaneRot'
+            'InPlanePhaseEncodingDirection'
+            'CsaImage.PhaseEncodingDirectionPositive'
+            'CsaImage.BandwidthPerPixelPhaseEncode'
+            };
+        field_type={
+            'double'
+            'double'
+            'char'
+            'double'
+            'double'
+            };
+        [ out ] = get_string_from_json( fdic{k} , field_to_get , field_type );
+    end
     
     for nbf=1:nbline
-        hsession(totfile) = j.global.const.SeriesNumber;
-        hseries(totfile) = k;
-        if isfield(j.global.const,'sSliceArray_asSlice_0__dInPlaneRot')
-            phase_angle =j.global.const.sSliceArray_asSlice_0__dInPlaneRot;
+        
+        if ~new_method
+            hsession(totfile) = j.global.const.SeriesNumber;
+            hseries(totfile) = k;
+            if isfield(j.global.const,'sSliceArray_asSlice_0__dInPlaneRot')
+                phase_angle =j.global.const.sSliceArray_asSlice_0__dInPlaneRot;
+            else
+                phase_angle = 0;
+            end
+            
+            phase_dir = j.global.const.InPlanePhaseEncodingDirection;
+            phase_sign = j.global.const.PhaseEncodingDirectionPositive;
+            hz =  j.global.const.BandwidthPerPixelPhaseEncode;
         else
-            phase_angle = 0;
+            
+            hsession(totfile) =  out{1};
+            hseries(totfile) = k;
+            phase_angle = out{2};
+            phase_dir = out{3};
+            phase_sign = out{4};
+            hz = out{5};
+            
         end
         
-        phase_dir = j.global.const.InPlanePhaseEncodingDirection;
-if isfield(j.global.const,'PhaseEncodingDirectionPositive')
-        phase_sign = j.global.const.PhaseEncodingDirectionPositive;
-elseif isfield(j.global.const,'CsaImage_0x2E_PhaseEncodingDirectionPositive')
-  phase_sign = j.global.const.CsaImage_0x2E_PhaseEncodingDirectionPositive;
-end
-
-if isfield(j.global.const,'BandwidthPerPixelPhaseEncode')
-        hz =  j.global.const.BandwidthPerPixelPhaseEncode;
-elseif isfield(j.global.const,'CsaImage_0x2E_PhaseEncodingDirectionPositive')
-hz =  j.global.const.CsaImage_0x2E_PhaseEncodingDirectionPositive
-end
-
         switch phase_dir
             case 'COL'
                 if phase_sign
@@ -80,7 +103,7 @@ end
                 else
                     acqpval = sprintf('1 0 0 %f',1/hz);
                 end
-                                
+                
             otherwise
                 error('what is this phase axe <%s>', phase_dir)
         end
@@ -146,5 +169,3 @@ if do_print
         warning('can not do topup : tere is a unique phase direction for all acquisitions!')
     end
 end
-
-
