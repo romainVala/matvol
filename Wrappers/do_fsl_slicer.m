@@ -28,7 +28,7 @@ diro =get_parent_path(f);
 [pp fo ]=get_parent_path(diro,-4);
 
 if ~isempty(par.suffix)
-    fo=addsufixtofilenames(fo,par.suffix);
+    fo=addsuffixtofilenames(fo,par.suffix);
 end
 if ~isempty(par.prefix)
     fo=addprefixtofilenames(fo,par.prefix);

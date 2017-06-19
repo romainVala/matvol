@@ -9,7 +9,7 @@ in = cellstr(char(in));
 for i=1:length(in)
     
     if strcmp(in{i}(end-1:end),'gz')
-        cmd = sprintf('gunzip -in %s',in{i});
+        cmd = sprintf('gunzip -f %s',in{i});
         out{i} = in{i}(1:end-3); %#ok<*AGROW>
         unix(cmd);
     else

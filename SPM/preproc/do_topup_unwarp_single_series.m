@@ -42,19 +42,19 @@ cwd=pwd;
 cd(topup_outdir{1})
 
 
-fout = addsufixtofilenames(topup_outdir,'/4D_orig_topup_movpar.txt');
+fout = addsuffixtofilenames(topup_outdir,'/4D_orig_topup_movpar.txt');
 
 if exist(fout{1})
     fprintf('skiping topup estimate because % exist',fout{1})
 else
     
-    fo = addsufixtofilenames(topup_outdir,'/4D_orig');
+    fo = addsuffixtofilenames(topup_outdir,'/4D_orig');
     do_fsl_merge(fme,fo{1},par);
     do_fsl_topup(fo,par);
     
 end
 
-fo = addsufixtofilenames(topup_outdir,'/4D_orig_topup');
+fo = addsuffixtofilenames(topup_outdir,'/4D_orig_topup');
 
 for k=1:length(curent_ff)
     par.index=k;

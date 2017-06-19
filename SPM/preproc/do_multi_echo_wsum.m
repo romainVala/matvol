@@ -27,7 +27,7 @@ for ns=1:nsuj
     curent_ff = get_subdir_regex_files(multi_dir{ns},par.file_reg);
     
     [suj sername] = get_parent_path(multi_dir{ns}(1))    ;
-    sername = addsufixtofilenames(sername,par.subdir);
+    sername = addsuffixtofilenames(sername,par.subdir);
     outdir = r_mkdir(suj,sername);
     
     for nbte = 1:length(curent_ff)
@@ -68,7 +68,7 @@ for ns=1:nsuj
     
     [niftidir ffname] = get_parent_path(ff);
             
-    fo = fullfile(outdir{1},addsufixtofilenames(ffname{1},'_echoWsum'));
+    fo = fullfile(outdir{1},addsuffixtofilenames(ffname{1},'_echoWsum'));
     cmdadd = sprintf('%s %s',cmdadd,fo);
     unix(cmdadd);
     clear cmdadd

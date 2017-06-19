@@ -11,7 +11,7 @@ f=cellstr(char(f));
 
 if ischar(name)
     [pp ff] = get_parent_path(f);
-    fo = addsufixtofilenames(pp,['/' name]);
+    fo = addsuffixtofilenames(pp,['/' name]);
 elseif iscell(name)
     fo = name;
 end

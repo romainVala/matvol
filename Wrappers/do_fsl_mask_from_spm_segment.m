@@ -15,7 +15,7 @@ par = complet_struct(par,defpar);
 anat=get_parent_path(fanat);
 
 ff=get_subdir_regex_files(anat,'^c[123]',3);
-fo=addsufixtofilenames(anat,'/mask_brain');
+fo=addsuffixtofilenames(anat,'/mask_brain');
 
 dosge=0;
 if par.sge, par.sge=-1;dosge=1;end

@@ -26,7 +26,7 @@ for kk=1:length(fin)
     
     if isempty(mf)
         dir=get_parent_path(fin(kk));
-        mf = addsufixtofilenames(dir,['/' par.mask]);
+        mf = addsuffixtofilenames(dir,['/' par.mask]);
         
         cmd = sprintf('fslmaths %s -mul 0 -add 1 %s',fin{kk},mf{1});
         unix(cmd)
@@ -69,7 +69,7 @@ for k=1:length(fin)
     end
         
     fo = addprefixtofilenames(fin(k),par.prefix);
-    fo = addsufixtofilenames(fo,suf);
+    fo = addsuffixtofilenames(fo,suf);
     
     if iscell(par.mask)
         maskf=par.mask{k};

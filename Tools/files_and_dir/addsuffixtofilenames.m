@@ -1,5 +1,5 @@
 function newlist = addsuffixtofilenames(filelist,suffix)
-% ADDSUFIXTOFILENAMES Adds suffixs to files name.
+% ADDSUFFIXTOFILENAMES Adds suffixs to files name.
 %
 % 1. filelist can be a cell-array where each element is a char-array
 % containing a list of file names.

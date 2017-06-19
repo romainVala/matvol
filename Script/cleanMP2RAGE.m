@@ -20,7 +20,7 @@ function  cleanMP2RAGE(magn1,phase1,magn2,phase2,uni,output,gamma)
 %   anats=get_subdir_regex_multi(suj,{'INV','UNI'}) 
 %   fanats=get_subdir_regex_files(anats,'img',1);
 %   aa=r_mkdir(suj,'anat')
-%   fo =addsufixtofilenames(aa,'/T1_bg_remove.nii')
+%   fo =addsuffixtofilenames(aa,'/T1_bg_remove.nii')
 %   cleanMP2RAGE(fanats,fo)
 
 

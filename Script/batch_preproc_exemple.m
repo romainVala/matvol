@@ -41,7 +41,7 @@ j=job_apply_normalize(fy,fanat,par)
 %anat brain extract
 
 ff=get_subdir_regex_files(anat,'^c[123]',3);
-fo=addsufixtofilenames(anat,'/mask_brain');
+fo=addsuffixtofilenames(anat,'/mask_brain');
 do_fsl_add(ff,fo)
 fm=get_subdir_regex_files(anat,'^mask_b',1); fanat=get_subdir_regex_files(anat,'^s.*nii',1);
 fo = addprefixtofilenames(fanat,'brain_');
