@@ -41,7 +41,7 @@ dir_out = {};
 
 % Ensure the inputs are cellstrings, to avoid dimensions problems
 source = cellstr(source);
-dest  = cellstr(dest);
+dest   = cellstr(dest);
 
 % Repeat source to match dest size
 if numel(source) == 1

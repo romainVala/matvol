@@ -1,17 +1,21 @@
-function fo = unzip_volume(f)
+function out = unzip_volume(in)
+% UNZIP_VOLUME uses gunzip (linux) to unzip volumes if needed.
+% If the target file is not zipped (do not have .gz extension), skip it.
 
-f = cellstr(char(f));
 
-for i=1:length(f)
+% Ensure the inputs are cellstrings, to avoid dimensions problems
+in = cellstr(char(in));
 
-  if strcmp(f{i}(end-1:end),'gz')
-    cmd = sprintf('gunzip -f %s',f{i});
-
-    fo{i} = f{i}(1:end-3);
-  
-    unix(cmd);
-  else
-    fo{i} = f{i};
-  end
-  
+for i=1:length(in)
+    
+    if strcmp(in{i}(end-1:end),'gz')
+        cmd = sprintf('gunzip -in %s',in{i});
+        out{i} = in{i}(1:end-3); %#ok<*AGROW>
+        unix(cmd);
+    else
+        out{i} = in{i};
+    end
+    
 end
+
+end % function
