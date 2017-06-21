@@ -25,7 +25,7 @@ for ns=1:nsuj
     curent_ff = get_subdir_regex_files(multi_dir{ns},par.file_reg);
     
     suj = get_parent_path(multi_dir{ns}(1));
-    fprintf('\n[%s]: curruntly working on %s \n', mfilename, suj{1})
+    fprintf('\n[%s]: currently working on %s \n', mfilename, suj{1})
     
     topup_outdir = r_mkdir(suj,par.subdir);
     
@@ -63,7 +63,7 @@ for ns=1:nsuj
     fout = addsuffixtofilenames(topup_outdir,'/4D_orig_topup_movpar.txt');
     
     if exist(fout{1},'file')
-        fprintf('skiping topup estimate because %s exist \n',fout{1})
+        fprintf('[%s]: skiping topup estimate because %s exist \n',mfilename,fout{1})
     else
         
         fprintf('load json % \n\n',fout{1})
