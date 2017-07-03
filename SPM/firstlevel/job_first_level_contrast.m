@@ -1,63 +1,68 @@
 function jobs = job_first_level_contrast(fspm,contrast,par)
+% JOB_FIRST_LEVEL_CONTRAST - SPM:Stats:contrast manager
+%
+% par.sessrep = 
+% 'none'   => do nothing fancy
+% 'repl'   => replicate contrast over all sessions
+% 'replsc' => replicate contrast over all sessions & scale (for comparaison with 2nd lvl analysis)
+% 'sess'   => create contrast per session
+% 'both'   => replicate & per session
+% 'bosthsc'=> replicate & per session & scale
 
 
-if ~exist('par')
-    par='';
+%% Check input arguments
+
+if ~exist('par','var')
+    par = ''; % for defpar
 end
 
-defpar.sessrep = 'none'; % 'none', 'repl' => replicate contrast over all sessions
-defpar.TR   = 0;
-defpar.file_reg = '^s.*nii';
 
-defpar.jobname='spm_glm';
-defpar.walltime = '04:00:00';
+%% defpar
 
-defpar.sge = 0;
-defpar.run = 0;
-defpar.display=0;
+defpar.sessrep         = 'none'; 
+defpar.file_reg        = '^s.*nii';
+
+defpar.jobname         ='spm_glm';
+defpar.walltime        = '04:00:00';
+
+defpar.sge             = 0;
+defpar.run             = 0;
+defpar.display         = 0;
 defpar.delete_previous = 0;
+par.redo               = 0;
 
-par.redo=0;
 par = complet_struct(par,defpar);
 
 
-for nbs = 1:length(fspm)
+%% SPM:Stats:contrast manager
+
+for idx = 1:length(fspm)
     
-    jobs{nbs}.spm.stats.con.spmmat(1) = fspm(nbs) ;
+    jobs{idx}.spm.stats.con.spmmat(1) = fspm(idx) ; %#ok<*AGROW>
     
     for nbc = 1:length(contrast.names)
         switch contrast.types{nbc}
             case 'T'
-                jobs{nbs}.spm.stats.con.consess{nbc}.tcon.name = contrast.names{nbc};
-                jobs{nbs}.spm.stats.con.consess{nbc}.tcon.weights = contrast.values{nbc};
-                jobs{nbs}.spm.stats.con.consess{nbc}.tcon.sessrep = par.sessrep;
-            case 'F'
+                jobs{idx}.spm.stats.con.consess{nbc}.tcon.name = contrast.names{nbc};
+                jobs{idx}.spm.stats.con.consess{nbc}.tcon.weights = contrast.values{nbc};
+                jobs{idx}.spm.stats.con.consess{nbc}.tcon.sessrep = par.sessrep;
                 
-                jobs{nbs}.spm.stats.con.consess{nbc}.fcon.name = contrast.names{nbc};
-                jobs{nbs}.spm.stats.con.consess{nbc}.fcon.weights = contrast.values{nbc};
-                jobs{nbs}.spm.stats.con.consess{nbc}.fcon.sessrep = par.sessrep;
+            case 'F'
+                jobs{idx}.spm.stats.con.consess{nbc}.fcon.name = contrast.names{nbc};
+                jobs{idx}.spm.stats.con.consess{nbc}.fcon.weights = contrast.values{nbc};
+                jobs{idx}.spm.stats.con.consess{nbc}.fcon.sessrep = par.sessrep;
                 
         end
     end
     
-    jobs{nbs}.spm.stats.con.delete = par.delete_previous;
+    jobs{idx}.spm.stats.con.delete = par.delete_previous;
     
 end
 
-if par.sge
-    for k=1:length(jobs)
-        j=jobs(k);
-        cmd = {'spm_jobman(''run'',j)'};
-        varfile = do_cmd_matlab_sge(cmd,par);
-        save(varfile{1},'j');
-    end
-end
 
-if par.display
-    spm_jobman('interactive',jobs);
-    spm('show');
-end
+%% Other routines
 
-if par.run
-    spm_jobman('run',jobs)
-end
+[ jobs ] = job_ending_rountines( jobs, [], par );
+
+
+end % function

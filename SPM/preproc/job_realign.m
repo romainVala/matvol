@@ -30,6 +30,11 @@ defpar.redo    = 0;
 
 par = complet_struct(par,defpar);
 
+
+
+%%  SPM:Spatial:Realign:Estimate & Reslice
+
+% estimate ? estimate_and_reslice ?
 switch par.type
     case 'estimate'
         par.which_write = [0 1];
@@ -38,9 +43,7 @@ switch par.type
         par.which_write = [2 1];
 end
 
-
-%%  SPM:Spatial:Realign:Estimate & Reslice
-
+% nrSubject ?
 if iscell(img{1})
     nrSubject = length(img);
 else
@@ -109,34 +112,7 @@ end
 
 %% Other routines
 
-% Skip the empty jobs
-jobs(skip) = [];
-
-if isempty(jobs)
-    return
-end
-
-
-if par.sge
-    for vol=1:length(jobs)
-        j       = jobs(vol); %#ok<NASGU>
-        cmd     = {'spm_jobman(''run'',j)'};
-        varfile = do_cmd_matlab_sge(cmd,par);
-        save(varfile{1},'j');
-    end
-end
-
-
-if par.display
-    spm_jobman('interactive',jobs);
-    spm('show');
-end
-
-
-% Run !
-if par.run
-    spm_jobman('run',jobs)
-end
+[ jobs ] = job_ending_rountines( jobs, skip, par );
 
 
 end % function

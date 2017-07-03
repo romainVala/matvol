@@ -11,7 +11,6 @@ end
 
 %% defpar
 
-
 defpar.file_reg = '^s.*nii';
 defpar.rp       = 0;
 
@@ -59,7 +58,7 @@ for subj = 1:nrSubject
     
     for run = 1:length(subjectRuns)
         currentRun = cellstr(subjectRuns{run}) ;
-        clear ffs
+        clear allVolumes
         
         if length(currentRun) == 1 %4D file
             nrVoumes = spm_vol(currentRun{1});
@@ -111,31 +110,7 @@ end
 
 %% Other routines
 
-if isempty(jobs)
-    return
-end
-
-
-if par.sge
-    for vol=1:length(jobs)
-        j       = jobs(vol); %#ok<NASGU>
-        cmd     = {'spm_jobman(''run'',j)'};
-        varfile = do_cmd_matlab_sge(cmd,par);
-        save(varfile{1},'j');
-    end
-end
-
-
-if par.display
-    spm_jobman('interactive',jobs);
-    spm('show');
-end
-
-
-% Run !
-if par.run
-    spm_jobman('run',jobs)
-end
+[ jobs ] = job_ending_rountines( jobs, [], par );
 
 
 end % function

@@ -1,44 +1,40 @@
 function jobs = job_first_level_estimate(fspm,par)
+% JOB_FIRST_LEVEL_ESTIMATE - SPM:Stats:model estimation
 
+%% Check input arguments
 
-if ~exist('par')
-    par='';
+if ~exist('par','var')
+    par = ''; % for defpar
 end
 
 
-defpar.jobname='spm_glm_est';
+%% defpar
+
+defpar.jobname  = 'spm_glm_est';
 defpar.walltime = '11:00:00';
 
-defpar.sge = 0;
-defpar.run = 0;
-defpar.display=0;
-par.redo=0;
+defpar.sge      = 0;
+defpar.run      = 0;
+defpar.display  = 0;
+defpar.redo     = 0;
+
 par = complet_struct(par,defpar);
 
 
-for nbs = 1:length(fspm)
+%% SPM:Stats:model estimation
 
-    jobs{nbs}.spm.stats.fmri_est.spmmat = fspm(nbs) ;
-    jobs{nbs}.spm.stats.fmri_est.write_residuals = 0;
-    jobs{nbs}.spm.stats.fmri_est.method.Classical = 1;
+for idx = 1:length(fspm)
+
+    jobs{idx}.spm.stats.fmri_est.spmmat = fspm(idx) ; %#ok<*AGROW>
+    jobs{idx}.spm.stats.fmri_est.write_residuals = 0;
+    jobs{idx}.spm.stats.fmri_est.method.Classical = 1;
 
 
 end
 
-if par.sge
-    for k=1:length(jobs)
-        j=jobs(k);
-        cmd = {'spm_jobman(''run'',j)'};
-        varfile = do_cmd_matlab_sge(cmd,par);
-        save(varfile{1},'j');
-    end
-end
+%% Other routines
 
-if par.display
-    spm_jobman('interactive',jobs);
-    spm('show');
-end
+[ jobs ] = job_ending_rountines( jobs, [], par );
 
-if par.run
-    spm_jobman('run',jobs)
-end
+
+end % function
