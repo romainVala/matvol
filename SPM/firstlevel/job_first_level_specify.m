@@ -90,7 +90,7 @@ for subj = 1:nrSubject
     
     jobs{subj}.spm.stats.fmri_spec.dir = dirStats(subj);
     jobs{subj}.spm.stats.fmri_spec.timing.units = 'secs';
-    jobs{subj}.spm.stats.fmri_spec.timing.RT = TR;
+    jobs{subj}.spm.stats.fmri_spec.timing.RT = par.TR;
     jobs{subj}.spm.stats.fmri_spec.timing.fmri_t = 16;
     jobs{subj}.spm.stats.fmri_spec.timing.fmri_t0 = 8;
     

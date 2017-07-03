@@ -8,8 +8,8 @@ function [ jobs ] = job_ending_rountines( jobs, skip, par )
 %% Check input arguments
 
 assert(nargin==3, 'All inputs are required : jobs, skip, par')
-assert(isstruct(jobs),'jobs must be struct')
-assert(isvector(skip)&&isnumeric(skip),'skip must be numeric vector')
+assert(iscell(jobs),'jobs must be cell')
+assert(isnumeric(skip),'skip must be numeric')
 assert(isstruct(par),'par must be struct')
 
 
