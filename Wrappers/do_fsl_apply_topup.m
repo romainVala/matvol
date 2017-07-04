@@ -24,8 +24,8 @@ if length(ftopup)==1
     ftopup = repmat(ftopup,size(fin));
 end
 
-if exist(fo{end}) && ~par.redo
-    fprintf('skiping topup write, because %s exist\n',fo{end});
+if exist(fo{end},'file') && ~par.redo
+    fprintf('[%s]: skiping topup write, because %s exist \n',mfilename,fo{end});
 else
     for k=1:length(fin)
         [dirtopup fff] = fileparts(ftopup{k});

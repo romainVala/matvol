@@ -84,8 +84,6 @@ for subj=1:nrSubject
         fprintf('[%s]: skiping topup estimate because %s exists \n',mfilename,fout{1})
     else
         
-        fprintf('load json %s \n',fout{1})
-        
         %ACQP=topup_param_from_nifti_cenir(runList,topup_outdir)
         try
             ACQP=topup_param_from_json_cenir(fmean,topup_outdir);
