@@ -1,4 +1,4 @@
-function do_topup_unwarp_4D(img,par)
+function do_topup_unwarp_4D(dirFonc,par)
 % DO_TOPUP_UNWARP_4D - FSL:topup - FSL:unwarp
 % img is multilevel directory (see get_subdir_regex).
 % The function will generate a mean for each runs (necessary to do topup on
@@ -27,8 +27,8 @@ par = complet_struct(par,defpar);
 
 %%  FSL:topup - FSL:unwarp
 
-if iscell(img{1})
-    nrSubject = length(img);
+if iscell(dirFonc{1})
+    nrSubject = length(dirFonc);
 else
     nrSubject = 1;
 end
@@ -36,10 +36,10 @@ end
 for subj=1:nrSubject
     
     % Fetch current subject images files
-    runList = get_subdir_regex_files(img{subj},par.file_reg);
+    runList = get_subdir_regex_files(dirFonc{subj},par.file_reg);
     
     % Extract subject name, and print it
-    subjectName = get_parent_path(img{subj}(1));
+    subjectName = get_parent_path(dirFonc{subj}(1));
     fprintf('\n[%s]: currently working on %s \n', mfilename, subjectName{1})
     
     % Create inside the subject dir runName "topup" dire, which will be our

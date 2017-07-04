@@ -1,4 +1,4 @@
-function jobs = job_realign(img,par)
+function jobs = job_realign(dirFonc,par)
 % JOB_REALIGN - SPM:Spatial:Realign:Estimate & Reslice
 %
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
@@ -44,8 +44,8 @@ switch par.type
 end
 
 % nrSubject ?
-if iscell(img{1})
-    nrSubject = length(img);
+if iscell(dirFonc{1})
+    nrSubject = length(dirFonc);
 else
     nrSubject = 1;
 end
@@ -54,13 +54,13 @@ skip = [];
 
 for subj = 1:nrSubject
     
-    if iscell(img{1}) %
-        subjectRuns = get_subdir_regex_files(img{subj},par.file_reg);
+    if iscell(dirFonc{1}) %
+        subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
         unzip_volume(subjectRuns);
-        subjectRuns = get_subdir_regex_files(img{subj},par.file_reg);
+        subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
         
     else
-        subjectRuns = img;
+        subjectRuns = dirFonc;
     end
     
     %skip if mean exist
@@ -77,13 +77,13 @@ for subj = 1:nrSubject
         if length(currentRun) == 1 % 4D file (*.nii)
             nrVolumes = spm_vol(currentRun{1});
             for vol = 1:length(nrVolumes)
-                allVolumes{vol} = sprintf('%s,%d',currentRun{1},vol);
+                allVolumes{vol,1} = sprintf('%s,%d',currentRun{1},vol);
             end
         else
             allVolumes = currentRun;
         end
         
-        jobs{subj}.spm.spatial.realign.estwrite.data{run} = allVolumes';
+        jobs{subj}.spm.spatial.realign.estwrite.data{run} = allVolumes;
         
     end
     
