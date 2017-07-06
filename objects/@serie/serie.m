@@ -1,25 +1,27 @@
 classdef serie < handle
-    %SERIE Summary of this class goes here
-    %   Detailed explanation goes here
     
     properties
         
         name % directory name
         path % path of dirname
+        
+        tag  % tag of the serie : anat, T1, run, run1, d60, RS, ...
+        
         exam % exam associatedthis serie
         
     end
     
     methods
         
-        function obj = serie(inputPath, examObj)
+        function obj = serie(inputPath, tag, examObj)
             if nargin > 0
                 
                 [pathstr,name, ~] = get_parent_path(inputPath);
                 obj.name = name;
-                obj.path = fullfile(pathstr,name);
+                obj.path = fullfile(pathstr,name,filesep);
+                obj.tag  = tag;
                 
-                if nargin > 1 
+                if exist('examObj','var')
                     obj.exam = examObj;
                 end
                 

@@ -1,11 +1,11 @@
 classdef exam < handle
-    %EXAM Summary of this class goes here
-    %   Detailed explanation goes here
     
     properties
+        
         name   % directory name
         path   % path of dirname
-        series % series associated with this exam (See @serie object)
+        
+        series = serie.empty % series associated with this exam (See @serie object)
         
     end
     
@@ -15,7 +15,7 @@ classdef exam < handle
             if nargin > 0
                 [pathstr,name, ~] = get_parent_path(inputPath);
                 obj.name = name;
-                obj.path = fullfile(pathstr,name);
+                obj.path = fullfile(pathstr,name,filesep);
             end
         end
         
