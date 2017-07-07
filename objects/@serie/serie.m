@@ -7,12 +7,13 @@ classdef serie < handle
         
         tag  % tag of the serie : anat, T1, run, run1, d60, RS, ...
         
-        exam % exam associatedthis serie
+        exam = exam.empty % exam associatedthis serie
         
     end
     
     methods
         
+        % --- Constructor -------------------------------------------------
         function obj = serie(inputPath, tag, examObj)
             if nargin > 0
                 
@@ -27,6 +28,7 @@ classdef serie < handle
                 
             end
         end
+        % -----------------------------------------------------------------
         
     end
     
