@@ -1,8 +1,12 @@
-function [ C ] = getSeries( examArray, tag )
+function [ cellOfChar ] = getSeries( examArray, regex )
+% Syntax  : fetch the series.tag corresponfing to the regex.
+% Example : run_dir  = examArray.getSeries('run');
+%           run1_dir = examArray.getSeries('run1');
+%           run2_dir = examArray.getSeries('run2');
 
 AssertIsExamArray(examArray);
 
-C = cell(size(examArray));
+cellOfChar = cell(size(examArray));
 
 for ex = 1 : numel(examArray)
     
@@ -12,10 +16,10 @@ for ex = 1 : numel(examArray)
     for ser = 1 : length(examArray(ex).series)
         
         if ...
-                ~isempty(examArray(ex).series(ser).tag) && ...
-                ~isempty(regexp(examArray(ex).series(ser).tag, tag, 'once'))
+                ~isempty(examArray(ex).series(ser).tag) && ...                 % tag is present in the @serie ?
+                ~isempty(regexp(examArray(ex).series(ser).tag, regex, 'once')) % found a corresponding serie.tag to the regex ?
             
-            found{ser} = examArray(ex).series(ser).path;
+            found{ser} = examArray(ex).series(ser).path; % Add path to the outpout
             
         else
             
@@ -26,7 +30,7 @@ for ex = 1 : numel(examArray)
     end % serie in exam
     
     found(find(to_remove)) = []; %#ok<FNDSB>
-    C{ex} = char(found);
+    cellOfChar{ex} = char(found);
     
 end % exam
 

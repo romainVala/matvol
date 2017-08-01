@@ -1,4 +1,8 @@
 classdef exam < handle
+    % EXAM object behave construction behave the same as get_subdir_regex
+    %
+    % Syntax  : examArray = exam(baseDirectory, reg_ex1, reg_ex2, reg_ex3, ...)
+    % Example : examArray = exam('/dir/to/subject/', 'SubjectNameREGEX')
     
     properties
         
@@ -13,15 +17,29 @@ classdef exam < handle
         
         % --- Constructor -------------------------------------------------
         function examArray = exam(indir, reg_ex, varargin)
+            %
+            
+            % Input args ?
             if nargin > 0
+                
+                % Fetch dir list recursibley with regex
                 dirList = get_subdir_regex(indir, reg_ex, varargin{:});
+                
+                % Create an array of @exam objects, corresponding to each
+                % dir in the list
                 for idx = 1 : length(dirList)
+                    
                     [pathstr,name, ~] = get_parent_path(dirList{idx});
                     examArray(idx).name = name; %#ok<*AGROW>
                     examArray(idx).path = fullfile(pathstr,name,filesep);
+                    
+                    % NB : series field remains empty at the creaion of the exam
+                    
                 end
+                
             end
-        end
+            
+        end % ctor
         % -----------------------------------------------------------------
         
     end

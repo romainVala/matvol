@@ -1,4 +1,5 @@
 function explore( obj )
+% EXPLORE method displays the content of the object
 
 for idx = 1 : numel(obj)
     fprintf(' -- name  = %s \n',obj(idx).name)

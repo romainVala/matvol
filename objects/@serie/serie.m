@@ -1,4 +1,5 @@
 classdef serie < handle
+    % SERIE object construction is encapsulated inside [ exam.addSeries ].
     
     properties
         
@@ -15,6 +16,9 @@ classdef serie < handle
         
         % --- Constructor -------------------------------------------------
         function obj = serie(inputPath, tag, examObj)
+            %
+            
+            % Input args ?
             if nargin > 0
                 
                 [pathstr,name, ~] = get_parent_path(inputPath);
@@ -22,12 +26,16 @@ classdef serie < handle
                 obj.path = fullfile(pathstr,name,filesep);
                 obj.tag  = tag;
                 
+                % If an @exam object is presented as input argument,
+                % incorporate it's pointer inside the created @serie
+                % object.
                 if exist('examObj','var')
                     obj.exam = examObj;
                 end
                 
             end
-        end
+            
+        end % ctor
         % -----------------------------------------------------------------
         
     end

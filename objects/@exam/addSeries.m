@@ -1,4 +1,6 @@
 function addSeries( examArray, varargin)
+% Syntax  : examArray.addSeries( 'regex_1', 'regex_2', ... , {'tag_1', 'tag_2', ...} );
+% Example : examArray.addSeries( 'PA$', {'run1', 'run2'} );
 
 AssertIsExamArray(examArray);
 
@@ -19,11 +21,12 @@ for ex = 1 : numel(examArray)
     
     if ~isempty(serieList)
         
+        % Check if N series are found for N tags.
         if length(serieList) ~= length(tags)
             error([
                 'Number of input tags differs from number of series found \n'...
-                'In : %s ' ...
-                ], examArray(ex).path)
+                '#%d : %s ' ...
+                ], ex, examArray(ex).path)
         end
         
         for ser = 1 : length(serieList)
@@ -33,10 +36,11 @@ for ex = 1 : numel(examArray)
         
     else
         
+        % When series are not found
         warning([
             'Could not find recursivly any dir corresponding to the regex [ %s] \n'...
-            'In : %s ' ...
-            ], sprintf('%s ',recursive_args{:}), examArray(ex).path ) %#ok<SPWRN>
+            '#%d : %s ' ...
+            ], sprintf('%s ',recursive_args{:}), ex, examArray(ex).path ) %#ok<SPWRN>
         
         % examArray(ex).series(end+1) = serie; % Still add an empty @serie
         
