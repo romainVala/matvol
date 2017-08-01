@@ -1,22 +1,23 @@
-classdef serie < handle
-    % SERIE object construction is encapsulated inside [ exam.addSeries ].
+classdef volume < handle
+    %VOLUME Summary of this class goes here
+    %   Detailed explanation goes here
     
     properties
         
-        name % directory name
-        path % path of dirname
+        name % name of the file
+        path % path of the file
         
-        tag  % tag of the serie : anat, T1, run, run1, d60, RS, ...
+        tag  % tag of the volume : s, wms, f, rf, swrf, ...
         
-        volumes = volume.empty % volumes associated with this serie
-        exam    = exam.empty   % exam    associated with this serie
+        exam   = exam.empty  % exam associatedthis serie
+        serie  = serie.empty % series associated with this exam (See @serie object)
         
     end
     
     methods
         
         % --- Constructor -------------------------------------------------
-        function obj = serie(inputPath, tag, examObj)
+        function obj = volume(inputPath, tag, examObj, serieObj)
             %
             
             % Input args ?
@@ -34,10 +35,18 @@ classdef serie < handle
                     obj.exam = examObj;
                 end
                 
+                % If an @serie object is presented as input argument,
+                % incorporate it's pointer inside the created @volume
+                % object.
+                if exist('serieObj','var')
+                    obj.serie = serieObj;
+                end
+                
             end
             
         end % ctor
         % -----------------------------------------------------------------
+        
         
     end
     

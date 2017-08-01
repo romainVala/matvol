@@ -15,7 +15,7 @@ for ex = 1 : numel(examArray)
     % Fetch the directories
     serieList  = get_subdir_regex( examArray(ex).path, recursive_args{:} );
     
-    % Be sure to add new series to the seriesArray
+    % Be sure to add new series to the serieArray
     nrSeries = length(examArray(ex).series);
     counter = 0;
     

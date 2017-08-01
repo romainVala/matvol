@@ -110,8 +110,10 @@ for nb_dir=1:length(indir)
     
     if isfield(p,'wanted_number_of_file')
         if size(to,1)~=p.wanted_number_of_file;
-            fprintf('BAD number of file found')
-            char(to)
+            if p.verbose
+                fprintf('BAD number of file found')
+                char(to)
+            end
             error('Change the regular expression : %s to get only %d files',char(reg_ex),p.wanted_number_of_file)
         end
         
