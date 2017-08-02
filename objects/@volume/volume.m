@@ -9,7 +9,7 @@ classdef volume < handle
         
         tag  = '' % tag of the volume : s, wms, f, rf, swrf, ...
         
-        exam   = exam.empty  % exam associatedthis serie
+        exam   = exam.empty  % exam   associated this serie
         serie  = serie.empty % series associated with this exam (See @serie object)
         
     end

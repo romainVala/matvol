@@ -8,11 +8,11 @@ pathArray = cell(size(volumeArray,1),1);
 
 for idx = 1:size(volumeArray,1)
     
-    pathArray{idx} = {volumeArray(idx,:).path};
+    pathArray{idx} = char(volumeArray(idx,:).path);
     
     % to simulate the output of get_subdir_regex_multi
     if isempty(char(volumeArray(idx,:).path))
-        pathArray{idx} = {};
+        pathArray{idx} = '';
     end
     
 end
