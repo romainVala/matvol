@@ -6,6 +6,14 @@ function [ volumeArray ] = getVolumes( examArray, serie_regex, volume_regex )
 
 AssertIsExamArray(examArray);
 
+if nargin < 2
+    serie_regex  = '.*';
+end
+
+if nargin < 3
+    volume_regex = '.*';
+end
+
 volumeArray = examArray.getSeries(serie_regex).getVolumes(volume_regex);
 
 end % function

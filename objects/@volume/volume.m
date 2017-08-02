@@ -1,6 +1,5 @@
 classdef volume < handle
-    %VOLUME Summary of this class goes here
-    %   Detailed explanation goes here
+    % VOLUME object construction is encapsulated inside [ exam.addVolumes ].
     
     properties
         

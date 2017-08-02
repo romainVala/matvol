@@ -10,6 +10,7 @@ if nargin < 2
     regex = '.*';
 end
 
+% Create 0x0 @serie object
 serieArray = serie.empty;
 
 for ex = 1 : numel(examArray)

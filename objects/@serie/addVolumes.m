@@ -19,7 +19,7 @@ for ser = 1 : numel(serieArray)
         
         try
             
-            volume_found = get_subdir_regex_files(serieArray(ser).path,file_regex{vol},struct('verbose',0,'wanted_number_of_file',1));
+            volume_found = get_subdir_regex_files(serieArray(ser).path,file_regex{vol},struct('verbose',0,'wanted_number_of_file',1)); % error from this function if not found
             counter = counter + 1;
             serieArray(ser).volumes(nrVolumes + counter) = volume(char(volume_found), tags{vol}, serieArray(ser).exam , serieArray(ser));
             

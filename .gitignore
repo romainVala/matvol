@@ -6,3 +6,5 @@
 ._*
 .DS_Store*
 
+# ignore specific files
+objects/show_prepend.txt
