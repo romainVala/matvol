@@ -29,9 +29,9 @@ for ex = 1 : numel(examArray)
                 ], ex, examArray(ex).path)
         end
         
-        for ser = 1 : length(serieList)
+        for ser = 1 : length(tags)
             counter = counter + 1;
-            examArray(ex).series(nrSeries + counter) = serie(serieList{ser}, tags{ser},examArray(ex) ); %#ok<*AGROW>
+            examArray(ex).series(nrSeries + counter) = serie(serieList{ser}, tags{ser}, examArray(ex) );
         end
         
     else
@@ -39,13 +39,20 @@ for ex = 1 : numel(examArray)
         % When series are not found
         warning([
             'Could not find recursivly any dir corresponding to the regex [ %s] \n'...
-            '#%d : %s ' ...
+            '#%d : %s' ...
             ], sprintf('%s ',recursive_args{:}), ex, examArray(ex).path ) %#ok<SPWRN>
         
-        % examArray(ex).series(end+1) = serie; % Still add an empty @serie
+        % Add empty series, but with pointer to the exam : for diagnostic
+        for ser = 1 : length(tags)
+            counter = counter + 1;
+            examArray(ex).series(nrSeries + counter)      = serie();
+            examArray(ex).series(nrSeries + counter).tag  = tags{ser};
+            examArray(ex).series(nrSeries + counter).exam = examArray(ex);
+        end
         
     end
     
 end % exam
+
 
 end % function

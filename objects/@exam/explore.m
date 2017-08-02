@@ -7,6 +7,7 @@ for idx = 1 : numel(obj)
     fprintf('    path   = %s \n',obj(idx).path)
     fprintf('    series: \n')
     obj(idx).series.explore;
+    fprintf('\n')
 end
 
 end % function

@@ -6,8 +6,8 @@ classdef exam < handle
     
     properties
         
-        name % directory name
-        path % path of dirname
+        name = '' % directory name
+        path = '' % path of dirname
         
         series = serie.empty % series associated with this exam (See @serie object)
         
@@ -30,8 +30,8 @@ classdef exam < handle
                 for idx = 1 : length(dirList)
                     
                     [pathstr,name, ~] = get_parent_path(dirList{idx});
-                    examArray(idx).name = name; %#ok<*AGROW>
-                    examArray(idx).path = fullfile(pathstr,name,filesep);
+                    examArray(idx,1).name = name; %#ok<*AGROW>
+                    examArray(idx,1).path = fullfile(pathstr,name,filesep);
                     
                     % NB : series field remains empty at the creaion of the exam
                     

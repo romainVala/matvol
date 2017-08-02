@@ -4,10 +4,10 @@ classdef volume < handle
     
     properties
         
-        name % name of the file
-        path % path of the file
+        name = '' % name of the file
+        path = '' % path of the file
         
-        tag  % tag of the volume : s, wms, f, rf, swrf, ...
+        tag  = '' % tag of the volume : s, wms, f, rf, swrf, ...
         
         exam   = exam.empty  % exam associatedthis serie
         serie  = serie.empty % series associated with this exam (See @serie object)
@@ -25,7 +25,7 @@ classdef volume < handle
                 
                 [pathstr,name, ~] = get_parent_path(inputPath);
                 obj.name = name;
-                obj.path = fullfile(pathstr,name,filesep);
+                obj.path = fullfile(pathstr,name);
                 obj.tag  = tag;
                 
                 % If an @exam object is presented as input argument,

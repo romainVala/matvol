@@ -3,10 +3,10 @@ classdef serie < handle
     
     properties
         
-        name % directory name
-        path % path of dirname
+        name = '' % directory name
+        path = '' % path of dirname
         
-        tag  % tag of the serie : anat, T1, run, run1, d60, RS, ...
+        tag  = '' % tag of the serie : anat, T1, run, run1, d60, RS, ...
         
         volumes = volume.empty % volumes associated with this serie
         exam    = exam.empty   % exam    associated with this serie
