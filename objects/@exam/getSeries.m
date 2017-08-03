@@ -4,11 +4,19 @@ function [ serieArray ] = getSeries( examArray, regex )
 %           run1_series = examArray.getSeries('run1');
 %           run2_series = examArray.getSeries('run2');
 
+
+%% Check inputs
+
 AssertIsExamArray(examArray);
 
 if nargin < 2
     regex = '.*';
 end
+
+AssertIsCharOrCellstr(regex)
+
+
+%% getSeries from @exam
 
 % Create 0x0 @serie object
 serieArray = serie.empty;

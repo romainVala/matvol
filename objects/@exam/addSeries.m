@@ -2,12 +2,19 @@ function addSeries( examArray, varargin)
 % Syntax  : examArray.addSeries( 'regex_1', 'regex_2', ... , {'tag_1', 'tag_2', ...} );
 % Example : examArray.addSeries( 'PA$', {'run1', 'run2'} );
 
+
+%% Check inputs
+
 AssertIsExamArray(examArray);
+
+
+%% addSeries to @exam
 
 for ex = 1 : numel(examArray)
     
     % Last argument is always the cell of tags
     tags = cellstr(varargin{end});
+    AssertIsCharOrCellstr(tags);
     
     % Other previous args are used to navigate/search for GET_SUBDIR_REGEX
     recursive_args = varargin(1:end-1);

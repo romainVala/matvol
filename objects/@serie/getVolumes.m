@@ -4,11 +4,16 @@ function [ volumeArray ] = getVolumes( serieArray, regex )
 %           run1_volumes = serieArray.getVolumes('run1');
 %           run2_volumes = serieArray.getVolumes('run2');
 
+%% Check inputs
+
 AssertIsSerieArray(serieArray);
 
 if nargin < 2
     regex = '.*';
 end
+
+
+%% getVolumes from @serie
 
 volumeArray = volume.empty;
 

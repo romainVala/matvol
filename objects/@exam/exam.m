@@ -1,8 +1,8 @@
 classdef exam < handle
-    % EXAM object behave construction behave the same as get_subdir_regex
+    % EXAM object behave construction behave the same as [ get_subdir_regex ]
     %
     % Syntax  : examArray = exam(baseDirectory, reg_ex1, reg_ex2, reg_ex3, ...)
-    % Example : examArray = exam('/dir/to/subject/', 'SubjectNameREGEX')
+    % Example : examArray = exam('/dir/to/subjects/', 'SubjectNameREGEX')
     
     properties
         

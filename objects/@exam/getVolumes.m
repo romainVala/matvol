@@ -4,6 +4,9 @@ function [ volumeArray ] = getVolumes( examArray, serie_regex, volume_regex )
 %           run1_vol = examArray.getVolumes('run1', '^rf$');
 %           run2_vol = examArray.getVolumes('run2', 'rf');
 
+
+%% Check inputs
+
 AssertIsExamArray(examArray);
 
 if nargin < 2
@@ -14,6 +17,10 @@ if nargin < 3
     volume_regex = '.*';
 end
 
+
+%% getVolumes from @exam
+
 volumeArray = examArray.getSeries(serie_regex).getVolumes(volume_regex);
+
 
 end % function

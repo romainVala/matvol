@@ -1,6 +1,5 @@
 function [ pathArray ] = getPath( volumeArray )
-% GETPATH fetches volumeArray.path, just as would do
-% [ get_subdir_regex_multi ]
+% GETPATH fetches volumeArray.path, just as would do [ get_subdir_regex_multi ]
 
 AssertIsVolumeArray(volumeArray)
 

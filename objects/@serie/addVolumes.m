@@ -3,11 +3,21 @@ function addVolumes( serieArray, file_regex, tags )
 % Example : serieArray.addVolumes( '^f.*nii'                            , 'f' );
 % Example : serieArray.addVolumes( {'^f.*nii', '^swrf.*nii'}            , {'f', 'swrf'} );
 
+
+%% Check inputs
+
 AssertIsSerieArray(serieArray);
+
+AssertIsCharOrCellstr(file_regex);
+AssertIsCharOrCellstr(tags );
 
 file_regex = cellstr(file_regex);
 tags       = cellstr(tags);
+
 assert( length(file_regex) == length(tags) , 'file_regex and tags must be the same size' )
+
+
+%% addVolumes to @serie
 
 for ser = 1 : numel(serieArray)
     
@@ -40,4 +50,4 @@ for ser = 1 : numel(serieArray)
 end % serie
 
 
-end
+end % function

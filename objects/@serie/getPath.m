@@ -1,6 +1,5 @@
 function [ pathArray ] = getPath( serieArray )
-% GETPATH fetches serieArray.path, just as would do
-% [ get_subdir_regex_multi ]
+% GETPATH fetches serieArray.path, just as would do [ get_subdir_regex_multi ]
 
 AssertIsSerieArray(serieArray)
 

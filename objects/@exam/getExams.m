@@ -5,11 +5,19 @@ function [ exams ] = getExams( examArray, regex )
 %           ex = examArray.getExams('Subject');
 %           ex = examArray.getExams('V2');
 
+
+%% Check inputs
+
 AssertIsExamArray(examArray);
 
 if nargin < 2
     regex = '.*';
 end
+
+AssertIsCharOrCellstr(regex)
+
+
+%% getExams from @exam
 
 % Create 0x0 @exam object
 exams = exam.empty;

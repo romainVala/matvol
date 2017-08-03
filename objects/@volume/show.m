@@ -39,8 +39,10 @@ if nargin < 2
     viewer = 'mrview';
 end
 
+AssertIsCharOrCellstr(viewer)
 
-%% object/show_prepend.txt exists ?
+
+%% objects/show_prepend.txt exists ?
 
 file_fullpath = [matvoldir 'objects' filesep 'show_prepend.txt'];
 
