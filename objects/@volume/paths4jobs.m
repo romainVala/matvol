@@ -1,4 +1,4 @@
-function [ pathArray ] = getPath( volumeArray )
+function [ pathArray ] = paths4jobs( volumeArray )
 % GETPATH fetches volumeArray.path, just as would do [ get_subdir_regex_multi ]
 
 AssertIsVolumeArray(volumeArray)
