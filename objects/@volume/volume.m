@@ -1,15 +1,10 @@
-classdef volume < handle
+classdef volume < mvObject
     % VOLUME object construction is encapsulated inside [ exam.addVolumes ].
     
     properties
         
-        name = '' % name of the file
-        path = '' % path of the file
-        
-        tag  = '' % tag of the volume : s, wms, f, rf, swrf, ...
-        
-        exam   = exam.empty  % exam   associated this serie
-        serie  = serie.empty % series associated with this exam (See @serie object)
+        exam   = exam.empty  % exam   associated with this serie (See @serie object)
+        serie  = serie.empty % series associated with this exam  (See @exam  object)
         
     end
     
@@ -23,9 +18,9 @@ classdef volume < handle
             if nargin > 0
                 
                 [pathstr,name, ~] = get_parent_path(inputPath);
-                obj.name = name;
-                obj.path = fullfile(pathstr,name);
-                obj.tag  = tag;
+                obj.name = name;                                           % name of the file
+                obj.path = fullfile(pathstr,name);                         % path of the file
+                obj.tag  = tag;                                            % tag of the volume : s, wms, f, rf, swrf, ...
                 
                 % If an @exam object is presented as input argument,
                 % incorporate it's pointer inside the created @serie
