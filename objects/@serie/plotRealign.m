@@ -46,6 +46,7 @@ for ex = 1 : size(serieArray,1)
         plot(rp(:,1:3))
         axis tight
         ylabel('translation in mm')
+        xlabel('image')
         legend('x','y','z','location','best')
         
         % rotation
@@ -53,6 +54,7 @@ for ex = 1 : size(serieArray,1)
         plot(rp(:,4:6)*180/pi)
         axis tight
         ylabel('rotation in °')
+        xlabel('image')
         legend('pitch','roll','yaw','location','best')
         
     end
