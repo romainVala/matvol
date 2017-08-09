@@ -1,8 +1,8 @@
-function checkreg( volumeArray, center, fov, res )
+function checkreg( volumeArray, center, fov, resolution )
 % CHECKREG uses spm_check_registration
-% center: X, Y & Z coordinates of centre voxel -> [0 0 0] is the center of the volume
-% fov   : width of field of view in mm         -> 0 o rInf in fullview, 20 means fov=20x20 mm²
-% res   : resolution in mm
+% center     : X, Y & Z coordinates of centre voxel -> [0 0 0] is the center of the volume
+% fov        : width of field of view in mm         -> 0 or Inf is fullview, 20 means fov = 20mm x 20mm
+% resolution : resolution in mm
 %
 % Exemple: examArray.getExams('Subject03').getSeries('anat').getVolumes('normalized').checkreg
 
@@ -13,16 +13,16 @@ AssertIsVolumeArray(volumeArray);
 
 spm_check_registration( volumeArray.paths )
 
-if exist('center','var')
+if exist('center','var')&& ~isempty(center)
     spm_orthviews('Reposition',center)
 end
 
-if exist('fov','var')
-    if exist('res','var')
-        spm_orthviews('Zoom',fov,res)
-    else
-        spm_orthviews('Zoom',fov)
-    end
+if exist('fov','var') && ~isempty(fov)
+    spm_orthviews('Zoom',fov)
+end
+
+if exist('resolution','var') && ~isempty(resolution)
+    spm_orthviews('Resolution',resolution)
 end
 
 end % function
