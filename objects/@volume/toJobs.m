@@ -1,5 +1,5 @@
-function [ pathArray ] = paths4jobs( volumeArray )
-% GETPATH fetches volumeArray.path, just as would do [ get_subdir_regex_multi ]
+function [ pathArray ] = toJobs( volumeArray )
+% TOJOBS fetches volumeArray.path, just as would do [ get_subdir_regex_multi ]
 
 AssertIsVolumeArray(volumeArray)
 

@@ -49,6 +49,8 @@ for ex = 1 : numel(examArray)
             '#%d : %s' ...
             ], sprintf('%s ',recursive_args{:}), ex, examArray(ex).path ) %#ok<SPWRN>
         
+        examArray(ex).is_incomplete = 1; % set incomplete flag
+        
         % Add empty series, but with pointer to the exam : for diagnostic
         for ser = 1 : length(tags)
             counter = counter + 1;

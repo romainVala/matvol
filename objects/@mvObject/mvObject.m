@@ -13,7 +13,7 @@ classdef mvObject < handle
     methods
         
         % --- Constructor -------------------------------------------------
-        % no constructor : this is an abstract object
+        % no constructor : this is a 'virtial' object
         % -----------------------------------------------------------------
         
     end

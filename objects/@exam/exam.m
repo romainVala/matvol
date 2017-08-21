@@ -8,6 +8,8 @@ classdef exam < mvObject
         
         series = serie.empty % series associated with this exam (See @serie object)
         
+        is_incomplete = [];  % this flag will be set to 1 if missing series/volumes 
+        
     end
     
     methods

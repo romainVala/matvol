@@ -1,5 +1,5 @@
-function [ pathArray ] = paths4jobs( serieArray )
-% GETPATH fetches serieArray.path, just as would do [ get_subdir_regex_multi ]
+function [ pathArray ] = toJobs( serieArray )
+% TOJOBS fetches serieArray.path, just as would do [ get_subdir_regex_multi ]
 
 AssertIsSerieArray(serieArray)
 

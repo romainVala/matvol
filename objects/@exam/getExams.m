@@ -27,8 +27,8 @@ counter = 0;
 for ex = 1 : numel(examArray)
     
     if ...
-            ~isempty(examArray(ex).name) && ...                 % name is present in the @exam ?
-            ~isempty(regexp(examArray(ex).name, regex, 'once')) % found a corresponding exma.name to the regex ?
+            ~isempty(examArray(ex).tag) && ...                 % name is present in the @exam ?
+            ~isempty(regexp(examArray(ex).tag, regex, 'once')) % found a corresponding exma.name to the regex ?
         
         counter = counter + 1;
         exams(counter,1) = examArray(ex);

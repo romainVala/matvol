@@ -43,6 +43,8 @@ for ser = 1 : numel(serieArray)
                 '#[%d %d] : %s ' ...
                 ], file_regex{vol}, exam_idx, serie_idx, serieArray(ser).exam.path )
             
+            serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
+            
         end
         
     end % volume
