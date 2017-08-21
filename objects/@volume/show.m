@@ -94,7 +94,9 @@ end
 cmd = [ prepend_content ' ' viewer ];
 
 for vol = 1 : numel(volumeArray)
-    cmd = [cmd ' ' volumeArray(vol).path]; %#ok<AGROW>
+    for p = 1 : size(volumeArray(vol).path,1)
+        cmd = [cmd ' ' volumeArray(vol).path(p,:)]; %#ok<AGROW>
+    end
 end
 cmd = [cmd ' &']; % the viewer do not pause matlab execution
 

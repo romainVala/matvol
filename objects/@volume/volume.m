@@ -1,5 +1,6 @@
 classdef volume < mvObject
     % VOLUME object construction is encapsulated inside [ exam.addVolumes ].
+    % VOLUME can have multiples elements in path, for multiple files
     
     properties
         
@@ -18,9 +19,9 @@ classdef volume < mvObject
             if nargin > 0
                 
                 [pathstr,name, ~] = get_parent_path(inputPath);
-                obj.name = name;                                           % name of the file
-                obj.path = fullfile(pathstr,name);                         % path of the file
-                obj.tag  = tag;                                            % tag of the volume : s, wms, f, rf, swrf, ...
+                obj.name = name;                                               % name of the file
+                obj.path = [pathstr repmat(filesep,[size(pathstr,1) 1]) name]; % path of the file
+                obj.tag  = tag;                                                % tag of the volume : s, wms, f, rf, swrf, ...
                 
                 % If an @exam object is presented as input argument,
                 % incorporate it's pointer inside the created @serie

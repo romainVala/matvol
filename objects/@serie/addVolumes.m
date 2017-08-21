@@ -1,53 +1,57 @@
-function addVolumes( serieArray, file_regex, tags )
-% Syntax  : serieArray.addVolumes( {'file_regex_1', 'file_regex_2', ...}, {'tag_1', 'tag_2', ...} );
-% Example : serieArray.addVolumes( '^f.*nii'                            , 'f' );
-% Example : serieArray.addVolumes( {'^f.*nii', '^swrf.*nii'}            , {'f', 'swrf'} );
+function addVolumes( serieArray, file_regex, tag, nrVolumes )
+% Find all volumes available, regardlesss of how many they are :
+% Syntax  : serieArray.addVolumes( 'file_regex', 'tag' );
+% Example : serieArray.addVolumes( '^f.*nii'   , 'f'   );
+% Find exactly nrVolumes, or return an error :
+% Syntax  : serieArray.addVolumes( 'file_regex'       , 'tag'        , nrVolumes );
+% Example : serieArray.addVolumes( '^c[123456].*nii'  , 'compartment', 6         );
 
 
 %% Check inputs
 
 AssertIsSerieArray(serieArray);
 
-AssertIsCharOrCellstr(file_regex);
-AssertIsCharOrCellstr(tags );
+assert( ischar(file_regex) && ~isempty(file_regex) , '%s must be a non-empty char', file_regex )
+assert( ischar(tag       ) && ~isempty(tag       ) , '%s must be a non-empty char', tag        )
 
-file_regex = cellstr(file_regex);
-tags       = cellstr(tags);
-
-assert( length(file_regex) == length(tags) , 'file_regex and tags must be the same size' )
+if nargin == 4 && ~isempty(nrVolumes)
+    assert( isnumeric(nrVolumes) && nrVolumes==round(nrVolumes) && nrVolumes>0, 'If defined, nrVolumes must be positive integer' )
+    par.wanted_number_of_file = nrVolumes;
+end
+par.verbose = 0;
 
 
 %% addVolumes to @serie
 
 for ser = 1 : numel(serieArray)
     
-    % Be sure to add new volumes to the volumeArray
-    nrVolumes = length(serieArray(ser).volumes);
-    counter = 0;
-    
-    for vol = 1 : length(file_regex)
+    try
         
-        try
-            
-            volume_found = get_subdir_regex_files(serieArray(ser).path,file_regex{vol},struct('verbose',0,'wanted_number_of_file',1)); % error from this function if not found
-            counter = counter + 1;
-            serieArray(ser).volumes(nrVolumes + counter) = volume(char(volume_found), tags{vol}, serieArray(ser).exam , serieArray(ser));
-            
-        catch
-            
-            [exam_idx,serie_idx] = ind2sub(size(serieArray),ser);
-            
-            % When volumes are not found
+        volume_found = get_subdir_regex_files(serieArray(ser).path,file_regex,par); % error from this function if not found
+        serieArray(ser).volumes(end + 1) = volume(char(volume_found), tag, serieArray(ser).exam , serieArray(ser));
+        
+    catch
+        
+        [exam_idx,serie_idx] = ind2sub(size(serieArray),ser);
+        
+        if nargin == 4 && ~isempty(nrVolumes)
+            % When volumes found are not exactly nrVolumes
             warning([
-                'Could not find recursivly any dir corresponding to the regex [ %s ] \n'...
+                'Could not find exactly %d volumes corresponding to the regex [ %s ] \n'...
                 '#[%d %d] : %s ' ...
-                ], file_regex{vol}, exam_idx, serie_idx, serieArray(ser).exam.path )
-            
-            serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
-            
+                ], nrVolumes, file_regex, exam_idx, serie_idx, serieArray(ser).path )
+        else
+            % When volumes are not found at all
+            warning([
+                'Could not find any volume corresponding to the regex [ %s ] \n'...
+                '#[%d %d] : %s ' ...
+                ], file_regex, exam_idx, serie_idx, serieArray(ser).path )
         end
         
-    end % volume
+        serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
+        
+    end
+    
     
 end % serie
 
