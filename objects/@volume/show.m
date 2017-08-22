@@ -23,32 +23,10 @@ function show( volumeArray, viewer )
 % OUR SOLUTION :
 % ============
 %
-% Write your prepend aruments inside the function 'volume_show_prepend' that can be reached by MATLAB paths (your userpath for instance):
-%
-%---BEGUINING--------------------------------------------------------------
-% function [ prepend ] = volume_show_prepend
-%
-% prepend = 'LD_LIBRARY_PATH='; % <--- write there your prepend arguments
-%
-% end
-%---ENDING-----------------------------------------------------------------
-%
+% Write your prepend aruments inside the matvol_config.m file that can be reached by MATLAB paths (your userpath for instance)
 % This file will be used by @volume/show method, to prepend to the command calling the viewer.
 %
-%
-%
-% OTHER TIP :
-% =========
-%
-% If you want to set a default viewer, you can use a similar method, by creating a function 'volume_show_viewer' :
-%
-%---BEGUINING--------------------------------------------------------------
-% function [ viewer ] = volume_show_viewer
-%
-% viewer = '/usr/bin/fslview'; % <--- write there your viewer name (mrview, fslview, fsleyes, ...)
-%
-% end
-%---ENDING-----------------------------------------------------------------
+% If you want to set a default viewer, you can use the same method
 %
 %
 %
@@ -62,33 +40,23 @@ function show( volumeArray, viewer )
 %% Check input arguments
 
 AssertIsVolumeArray(volumeArray);
+volumeArray = shiftdim(volumeArray,1); % need to shift dimensions to have the volumes displayed in meaningful order.
 
 if numel(volumeArray) == 0
     error('[@volume:show] no volume to show')
 end
 
+% Load user cfg
+p = matvol_config;
+prepend_content = p.volume_show_prepend;
+
 if nargin < 2
-    
-    if which('volume_show_viewer')
-        viewer = volume_show_viewer;
-    else
-        error('A viewer must be defined as input argument or by the user via the function volume_show_viewer. See the help for more info')
-    end
-    
+    viewer = p.volume_show_viewer;
 end
 
 assert(ischar(viewer),'viewer must be char')
 
-
-%% User defined finction volume_show_prepend exists ?
-
-if which('volume_show_prepend')
-    prepend_content = volume_show_prepend;
-else
-    prepend_content = '';
-end
-
-
+    
 %% Show with mrview, using the prefix (if they exist)
 
 cmd = [ prepend_content ' ' viewer ];
