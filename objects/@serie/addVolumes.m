@@ -11,8 +11,8 @@ function addVolumes( serieArray, file_regex, tag, nrVolumes )
 
 AssertIsSerieArray(serieArray);
 
-assert( ischar(file_regex) && ~isempty(file_regex) , '%s must be a non-empty char', file_regex )
-assert( ischar(tag       ) && ~isempty(tag       ) , '%s must be a non-empty char', tag        )
+assert( ischar(file_regex) && ~isempty(file_regex) , 'file_regex must be a non-empty char', file_regex )
+assert( ischar(tag       ) && ~isempty(tag       ) , 'tag must be a non-empty char'       , tag        )
 
 if nargin == 4 && ~isempty(nrVolumes)
     assert( isnumeric(nrVolumes) && nrVolumes==round(nrVolumes) && nrVolumes>0, 'If defined, nrVolumes must be positive integer' )
