@@ -11,7 +11,16 @@ function checkreg( volumeArray, center, fov, resolution )
 
 AssertIsVolumeArray(volumeArray);
 
-spm_check_registration( volumeArray.print )
+% Remove the empty volumes.path from volumeArray
+list = volumeArray.print;
+vol = {};
+for l = 1 : size(list,1)
+    if ~isempty(deblank(list(l,:)))
+        vol{end+1} = list(l,:); %#ok<AGROW>
+    end
+end
+
+spm_check_registration( char(vol) )
 
 if exist('center','var')&& ~isempty(center)
     spm_orthviews('Reposition',center)

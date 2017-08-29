@@ -1,5 +1,5 @@
-function addSeries( examArray, varargin)
-% General syntax : examArray.addSeries( 'dir_regex_1', 'dir_regex_2', ... , {'tag_1', 'tag_2', ...}, N );
+function varargout = addSeries( examArray, varargin)
+% General syntax : jobInput = examArray.addSeries( 'dir_regex_1', 'dir_regex_2', ... , {'tag_1', 'tag_2', ...}, N );
 %
 % Example :
 %
@@ -12,6 +12,9 @@ function addSeries( examArray, varargin)
 % it differes from :
 % examArray.addSeries( 'PA$', 'run', 2 );
 % will auto increment run_001, run_002, but error if nr_dir_found ~= 2
+%
+% jobInput is the output examArray.getSeries("all tags combined").toJobs
+%
 
 
 %% Check inputs
@@ -123,6 +126,25 @@ for ex = 1 : numel(examArray)
     end
     
 end % exam
+
+
+%% Output
+
+if nargout > 0
+    
+    % Combine tags
+    allTags = '^(';
+    for t = 1:length(tags)
+        allTags = [allTags tags{t}]; %#ok<*AGROW>
+        if t~=length(tags)
+            allTags = [allTags '|'];
+        end
+    end
+    allTags = [allTags ')$'];
+    
+    varargout{1} = examArray.getSeries(allTags).toJobs;
+    
+end
 
 
 end % function

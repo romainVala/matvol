@@ -1,6 +1,14 @@
-function addVolumes( examArray, series_tag_regex, file_regex, tag, nrVolumes)
-% Syntax  : examArray.addVolumes( 'series_tag_regex', 'file_regex','tag' );
-% Example : examArray.addVolumes( 'run1'            , '^f.*nii'   , 'f'    );
+function varargout = addVolumes( examArray, series_tag_regex, file_regex, tag, nrVolumes)
+% Syntax  : jobInput = examArray.addVolumes( 'series_tag_regex', 'file_regex', 'tag', nrVolumes );
+% Example : jobInput = examArray.addVolumes( 'run1'            , '^f.*nii'   , 'f'  , 1         );
+% Syntax  : jobInput = examArray.addVolumes( 'series_tag_regex', 'file_regex', 'tag' );
+% Example : jobInput = examArray.addVolumes( 'run1'            , '^f.*nii'   , 'f'   );
+%
+% jobInput is the output examArray.getVolumes(['^' tag '$']).toJobs
+% 
+% NOTES :
+% The syntax bellow is possible (chaining methods)
+% examArray.getSeries(series_tag_regex).addVolumes(file_regex, tags);
 
 
 %% Check inputs
@@ -16,6 +24,7 @@ if ~exist('nrVolumes','var')
     nrVolumes = [];
 end
 
+
 %% Select the series corresponding to series_tag_regex
 
 serieArray = examArray.getSeries(series_tag_regex);
@@ -27,12 +36,14 @@ end
 
 %% Add volumes to the series found
 
-serieArray.addVolumes(file_regex, tag, nrVolumes );
+jobInput = serieArray.addVolumes(file_regex, tag, nrVolumes );
 
 
-%% Notes:
-% The syntax bellow is possible (chaining methods) be I want more diagnostic. Se the error above.
-% examArray.getSeries(series_tag_regex).addVolumes(file_regex, tags);
+%% Output
+
+if nargout > 0
+    varargout{1} = jobInput;
+end
 
 
 end % function

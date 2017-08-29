@@ -1,10 +1,13 @@
-function addVolumes( serieArray, file_regex, tag, nrVolumes )
+function varargout = addVolumes( serieArray, file_regex, tag, nrVolumes )
 % Find all volumes available, regardlesss of how many they are :
-% Syntax  : serieArray.addVolumes( 'file_regex', 'tag' );
-% Example : serieArray.addVolumes( '^f.*nii'   , 'f'   );
+% Syntax  : jobInput = serieArray.addVolumes( 'file_regex', 'tag' );
+% Example : jobInput = serieArray.addVolumes( '^f.*nii'   , 'f'   );
 % Find exactly nrVolumes, or return an error :
-% Syntax  : serieArray.addVolumes( 'file_regex'       , 'tag'        , nrVolumes );
-% Example : serieArray.addVolumes( '^c[123456].*nii'  , 'compartment', 6         );
+% Syntax  : jobInput = serieArray.addVolumes( 'file_regex'       , 'tag'        , nrVolumes );
+% Example : jobInput = serieArray.addVolumes( '^c[123456].*nii'  , 'compartment', 6         );
+%
+% jobInput is the output serieArray.getVolumes(['^' tag '$']).toJobs
+% 
 
 
 %% Check inputs
@@ -54,6 +57,13 @@ for ser = 1 : numel(serieArray)
     
     
 end % serie
+
+
+%% Output
+
+if nargout > 0
+    varargout{1} = serieArray.getVolumes(['^' tag '$']).toJobs;
+end
 
 
 end % function
