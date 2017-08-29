@@ -40,4 +40,14 @@ for ex = 1 : numel(examArray)
     
 end % exam
 
+% I fill the empty series with some pointers and references, only useful for diagnostic and future warnings
+% I cannot do this filling during the previous loop, because at that point, we don't know the size (columns) of serieArray
+for ex_ = 1 : size(serieArray,1)
+    for ser_ = 1 : size(serieArray,2)
+        if isempty(serieArray(ex_,ser_).tag)
+            serieArray(ex_,ser_).exam = examArray(ex);
+        end
+    end
+end
+
 end % function

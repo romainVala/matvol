@@ -66,6 +66,11 @@ else
     end
 end
 
+if nrSeries == 1
+    autoIncrement = 0;
+end
+
+
 %% addSeries to @exam
 
 for ex = 1 : numel(examArray)
