@@ -12,6 +12,7 @@ defpar.interp = 'Linear'; % BSpline NearestNeighbor MultiLabel[<sigma=imageSpaci
 % BSpline[<order=3>] CosineWindowedSinc WelchWindowedSinc HammingWindowedSinc LanczosWindowedSinc
 defpar.inv = 0;
 defpar.folder = 'mov'; %same dir as the move file %'warp' same dir as the warp file
+defpar.nii4D=0
 
 par = complet_struct(par,defpar);
 
@@ -39,6 +40,10 @@ for k=1:length(fmov)
     
     %cmd = sprintf('cd %s',ppwarp{k});
     cmd = sprintf('antsApplyTransforms -i %s -r %s -o %s ',fmov{k},fref{k},fo);
+    
+    if par.nii4D
+        cmd=sprintf('%s -e 3 ',cmd)
+    end
     
     ffwarp = cellstr(fwarp{k});
     if length(par.inv) ~= length(ffwarp)
