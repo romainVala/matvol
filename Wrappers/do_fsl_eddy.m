@@ -31,16 +31,16 @@ par.bvals = get_subdir_regex_files(dtidir,par.bvals,1);
 
 if ischar(par.topup_dir) % then it is relative to DWI dir
    
-    par.topup_dir = addsufixtofilenames(dtidir,['/' par.topup_dir]);
+    par.topup_dir = addsuffixtofilenames(dtidir,['/' par.topup_dir]);
 end
 
 
-par.topup_acqp = addsufixtofilenames(par.topup_dir,['/' par.topup_acqp]);
+par.topup_acqp = addsuffixtofilenames(par.topup_dir,['/' par.topup_acqp]);
 if ~strcmp(par.topup(1),'/')
-    par.topup = addsufixtofilenames(par.topup_dir,['/' par.topup]);
+    par.topup = addsuffixtofilenames(par.topup_dir,['/' par.topup]);
 end
 
-outfile = addsufixtofilenames(f4D,par.outsuffix)
+outfile = addsuffixtofilenames(f4D,par.outsuffix)
 
 for k=1:length(f4D)
 

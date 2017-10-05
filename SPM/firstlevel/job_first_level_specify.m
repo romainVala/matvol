@@ -1,116 +1,116 @@
-function jobs = job_first_level_specify(dfonc,stat_dir,onset_mat,par)
+function jobs = job_first_level_specify(dirFonc,dirStats,onsets,par)
+% JOB_FIRST_LEVEL_SPECIFY - SPM:Stats:fMRI model specification
 
 
-if ~exist('par')
-    par='';
+%% Check input arguments
+
+if ~exist('par','var')
+    par = ''; % for defpar
 end
 
+
+%% defpar
 
 defpar.file_reg = '^s.*nii';
-defpar.rp = 0;
+defpar.rp       = 0;
 
-defpar.jobname='spm_glm';
+defpar.jobname  = 'spm_glm';
 defpar.walltime = '04:00:00';
 
-defpar.sge = 0;
-defpar.run = 0;
-defpar.display=0;
+defpar.sge      = 0;
+defpar.run      = 0;
+defpar.display  = 0;
 
-par.redo=0;
+par.redo        = 0;
+
 par = complet_struct(par,defpar);
 
-TR = par.TR;
+if ~isfield(par,'TR')
+    error('par structure must have non empty TR field.')
+end
 
-if iscell(dfonc{1}),    nsuj = length(dfonc); else,    nsuj=1; end
 
-for nbs = 1:nsuj
+%% SPM:Stats:fMRI model specification
+
+if iscell(dirFonc{1})
+    nrSubject = length(dirFonc);
+else
+    nrSubject=1;
+end
+
+for subj = 1:nrSubject
     
-    if iscell(dfonc{1}) %
-        ff = get_subdir_regex_files(dfonc{nbs},par.file_reg);
-        unzip_volume(ff);
-        ff = get_subdir_regex_files(dfonc{nbs},par.file_reg);
+    if iscell(dirFonc{1})
+        subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
+        unzip_volume(subjectRuns);
+        subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
         if par.rp
-            frp = get_subdir_regex_files(dfonc{nbs},'^rp.*txt');
+            fileRP = get_subdir_regex_files(dirFonc{subj},'^rp.*txt');
         end
     else
-        ff = dfonc;
-        
+        subjectRuns = dirFonc;
     end
     
-    if ~ isstruct(onset_mat{1})
-        fonset = cellstr(char(onset_mat(nbs)));
+    % When onsets are inside the .mat file
+    if ~ isstruct(onsets{1})
+        fonset = cellstr(char(onsets(subj)));
     end
     
-    for nsess=1:length(ff)
-        ffsession = cellstr(ff{nsess}) ;
-        clear ffs
+    for run = 1:length(subjectRuns)
+        currentRun = cellstr(subjectRuns{run}) ;
+        clear allVolumes
         
-        if length(ffsession) == 1 %4D file
-            V = spm_vol(ffsession{1});
-            for k=1:length(V)
-                ffs{k,1} = sprintf('%s,%d',ffsession{1},k);
+        if length(currentRun) == 1 %4D file
+            nrVoumes = spm_vol(currentRun{1});
+            for vol=1:length(nrVoumes)
+                allVolumes{vol,1} = sprintf('%s,%d',currentRun{1},vol);
             end
         else
-            ffs = ffsession;
+            allVolumes = currentRun;
         end
-        jobs{nbs}.spm.stats.fmri_spec.sess(nsess).scans = ffs;
-        jobs{nbs}.spm.stats.fmri_spec.sess(nsess).cond = struct('name', {}, 'onset', {}, 'duration', {}, 'tmod', {}, 'pmod', {}, 'orth', {});
-        jobs{nbs}.spm.stats.fmri_spec.sess(nsess).multi = {''};
-        if isstruct(onset_mat{1})
-            jobs{nbs}.spm.stats.fmri_spec.sess(nsess).cond = onset_mat{nsess};
+        jobs{subj}.spm.stats.fmri_spec.sess(run).scans = allVolumes; %#ok<*AGROW>
+        jobs{subj}.spm.stats.fmri_spec.sess(run).cond = struct('name', {}, 'onset', {}, 'duration', {}, 'tmod', {}, 'pmod', {}, 'orth', {});
+        jobs{subj}.spm.stats.fmri_spec.sess(run).multi = {''};
+        if isstruct(onsets{1})
+            jobs{subj}.spm.stats.fmri_spec.sess(run).cond = onsets{run};
         else
-            jobs{nbs}.spm.stats.fmri_spec.sess(nsess).multi = fonset(nsess);
+            jobs{subj}.spm.stats.fmri_spec.sess(run).multi = fonset(run);
         end
         
         if par.rp
-            jobs{nbs}.spm.stats.fmri_spec.sess(nsess).multi_reg = frp(nsess);
+            jobs{subj}.spm.stats.fmri_spec.sess(run).multi_reg = fileRP(run);
         else
-            jobs{nbs}.spm.stats.fmri_spec.sess(nsess).multi_reg = {''};
+            jobs{subj}.spm.stats.fmri_spec.sess(run).multi_reg = {''};
         end
-        %matlabbatch{1}.spm.stats.fmri_spec.sess(4).multi_reg = {'/servernas/home/home_ubu14/romain/pres_romain.txt'};
-
-        jobs{nbs}.spm.stats.fmri_spec.sess(nsess).regress = struct('name', {}, 'val', {});
-        jobs{nbs}.spm.stats.fmri_spec.sess(nsess).hpf = 128;
+        
+        jobs{subj}.spm.stats.fmri_spec.sess(run).regress = struct('name', {}, 'val', {});
+        jobs{subj}.spm.stats.fmri_spec.sess(run).hpf = 128;
         
     end
     
-    jobs{nbs}.spm.stats.fmri_spec.dir = stat_dir(nbs);
-    jobs{nbs}.spm.stats.fmri_spec.timing.units = 'secs';
-    jobs{nbs}.spm.stats.fmri_spec.timing.RT = TR;
-    jobs{nbs}.spm.stats.fmri_spec.timing.fmri_t = 16;
-    jobs{nbs}.spm.stats.fmri_spec.timing.fmri_t0 = 8;
-    
-
-    
-    jobs{nbs}.spm.stats.fmri_spec.fact = struct('name', {}, 'levels', {});
-    jobs{nbs}.spm.stats.fmri_spec.bases.hrf.derivs = [0 0];
-    jobs{nbs}.spm.stats.fmri_spec.volt = 1;
-    jobs{nbs}.spm.stats.fmri_spec.global = 'None';
-    jobs{nbs}.spm.stats.fmri_spec.mthresh = 0.8;
-    jobs{nbs}.spm.stats.fmri_spec.mask = {''};
-    jobs{nbs}.spm.stats.fmri_spec.cvi = 'AR(1)';
+    jobs{subj}.spm.stats.fmri_spec.dir = dirStats(subj);
+    jobs{subj}.spm.stats.fmri_spec.timing.units = 'secs';
+    jobs{subj}.spm.stats.fmri_spec.timing.RT = par.TR;
+    jobs{subj}.spm.stats.fmri_spec.timing.fmri_t = 16;
+    jobs{subj}.spm.stats.fmri_spec.timing.fmri_t0 = 8;
     
     
-    % jobs{2}.spm.stats.fmri_est.spmmat(1) = cfg_dep('fMRI model specification: SPM.mat File', substruct('.','val', '{}',{1}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','spmmat'));
-    % jobs{2}.spm.stats.fmri_est.write_residuals = 0;
-    % jobs{2}.spm.stats.fmri_est.method.Classical = 1;
+    
+    jobs{subj}.spm.stats.fmri_spec.fact = struct('name', {}, 'levels', {});
+    jobs{subj}.spm.stats.fmri_spec.bases.hrf.derivs = [0 0];
+    jobs{subj}.spm.stats.fmri_spec.volt = 1;
+    jobs{subj}.spm.stats.fmri_spec.global = 'None';
+    jobs{subj}.spm.stats.fmri_spec.mthresh = 0.8;
+    jobs{subj}.spm.stats.fmri_spec.mask = {''};
+    jobs{subj}.spm.stats.fmri_spec.cvi = 'AR(1)';
+    
     
 end
 
-if par.sge
-    for k=1:length(jobs)
-        j=jobs(k);
-        cmd = {'spm_jobman(''run'',j)'};
-        varfile = do_cmd_matlab_sge(cmd,par);
-        save(varfile{1},'j');
-    end
-end
 
-if par.display
-    spm_jobman('interactive',jobs);
-    spm('show');
-end
+%% Other routines
 
-if par.run
-    spm_jobman('run',jobs)
-end
+[ jobs ] = job_ending_rountines( jobs, [], par );
+
+
+end % function

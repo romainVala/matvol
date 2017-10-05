@@ -1,14 +1,17 @@
 function init_path_matvol
 
-%make it short : include all subdir
-
-dir_prog = [ fileparts(mfilename('fullpath')) filesep];
-
-paths_to_add = regexp(genpath(dir_prog),':','split');
+if isunix
+    splitter = ':';
+elseif ispc
+    splitter = ';';
+else
+    error('all architectures are not codded yet...')
+end
+paths_to_add = regexp(genpath(matvoldir),splitter,'split');
 paths_to_add(end) = []; % the last one is always an empty split
 
 regexp_to_take_out = {
-    '\.' % like the ".git/"
+    '\.git' % like the ".git/"
     };
 
 for l =  1:length(regexp_to_take_out)

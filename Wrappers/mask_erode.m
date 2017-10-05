@@ -15,7 +15,7 @@ defpar.numpass  = 1;
 
 par = complet_struct(par,defpar);
 
-fo = addsufixtofilenames(fin,par.suffix);
+fo = addsuffixtofilenames(fin,par.suffix);
 
 for nbf=1:length(fin)
     

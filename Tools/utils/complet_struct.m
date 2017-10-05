@@ -1,13 +1,16 @@
-function so = complet_struct(s,sd)
+function newStruct = complet_struct(inputStruct,baseStruct)
+% COMPLET_STRUCT will complete the inputStruct with fields from baseStruct
+% if they are missing
 
-fi=fieldnames(sd);
+fields = fieldnames(baseStruct);
 
-so=s;
+newStruct = inputStruct;
 
-for k=1:length(fi)
-  if ~isfield(s,fi{k})
-    cc=getfield(sd,fi{k});
-    so = setfield(so,fi{k},cc);
+for f = 1 : length(fields)
+  if ~isfield(inputStruct,fields{f})
+    newStruct.(fields{f}) = baseStruct.(fields{f});
   end
   
 end
+
+end % function

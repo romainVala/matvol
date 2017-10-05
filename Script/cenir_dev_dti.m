@@ -60,8 +60,8 @@ spm_jobman('interactive',j);
 p1=get_subdir_regex_files(anat,'^p.*nii',3)
 for k=1:length(p1)
     fp1 = p1{k}(1,:);    fp2 = p1{k}(2,:);    fp3 = p1{k}(3,:);
-    fo = addsufixtofilenames(anat,'/bm_mask.nii');
-    fo2 = addsufixtofilenames(anat,'/white_mask.nii');
+    fo = addsuffixtofilenames(anat,'/bm_mask.nii');
+    fo2 = addsuffixtofilenames(anat,'/white_mask.nii');
     cmd = sprintf('c3d %s %s %s -add -add -binarize %s -threshold 0.000001 inf -1 0 -add -clip 0 1 -o %s',fp1,fp2,fp3,fp3,fo{k});
     cmd = sprintf('%s\n c3d %s -threshold 1 1 1 0 -o %s\n',cmd,fp2,fo2{k})
     job{k} = cmd;

@@ -69,8 +69,8 @@ for nbsuj = 1:length(spm_suj_dir)
                     [pp fn] = get_parent_path(ff);
                     fn = change_file_extension(fn,'');
                     
-                    fo = addsufixtofilenames(So,'/');
-                    fo = addsufixtofilenames(fo,fn{1});
+                    fo = addsuffixtofilenames(So,'/');
+                    fo = addsuffixtofilenames(fo,fn{1});
                     
                     do_fsl_chfiletype(ff,'NIFTI',fo);
                 end

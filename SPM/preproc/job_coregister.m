@@ -1,41 +1,51 @@
 function jobs = job_coregister(src,ref,other,par)
+% JOB_COREGISTER - SPM:Spatial:Coregister
+%
+% To build the image list easily, use get_subdir_regex & get_subdir_regex_files
+%
+% See also get_subdir_regex get_subdir_regex_files
 
-if ~exist('other'), other={};end
 
-if ~iscell(src),  src = cellstr(src);end
-if ~iscell(ref),  ref = cellstr(ref)';end
-if isempty(other)
-    other={};
+%% Check input arguments
+
+if ~exist('other','var'), other = {}             ; end
+if isempty(other)       , other = {}             ; end
+if ~iscell(other)       , other = cellstr(other)'; end
+if ~iscell(src)         , src   = cellstr(src)   ; end
+if ~iscell(ref)         , ref   = cellstr(ref)'  ; end
+
+if ~exist('par','var')
+    par = ''; % for defpar
 end
 
-if ~iscell(other)
-    other = cellstr(other)';
-end
 
-if ~exist('par'),  par='';end
+%% defpar
 
-defpar.type = 'estimate';
+defpar.type   = 'estimate';
 defpar.interp = 1;
 defpar.prefix = 'r';
-defpar.sge = 0;
-defpar.redo=0;
-defpar.run = 0;
-defpar.display=0;
+defpar.sge    = 0;
+defpar.redo   = 0;
+defpar.run    = 0;
+defpar.display= 0;
 
-defpar.jobname='spm_coreg';
+defpar.jobname  = 'spm_coreg';
 defpar.walltime = '00:30:00';
 
 par = complet_struct(par,defpar);
 
+
+%% SPM:Spatial:Coregister
+
 skip=[];
 for nbsuj = 1:length(ref)
-%     if ~par.redo
-%         if is_hdr_realign(src(nbsuj)),  skip = [skip nbsuj];     fprintf('skiping suj %d becasue %s is realigned',nbsuj,src{nbsuj});       end
-%     end
+    %     if ~par.redo
+    %         if is_hdr_realign(src(nbsuj)),  skip = [skip nbsuj];     fprintf('skiping suj %d becasue %s is realigned',nbsuj,src{nbsuj});       end
+    %     end
     
     switch par.type
         case 'estimate'
-            jobs{nbsuj}.spm.spatial.coreg.estimate.ref = ref(nbsuj);
+            jobs{nbsuj}.spm.spatial.coreg.estimate.ref = ref(nbsuj); %#ok<*AGROW>
             jobs{nbsuj}.spm.spatial.coreg.estimate.source = src(nbsuj);
             if ~isempty(other)
                 jobs{nbsuj}.spm.spatial.coreg.estimate.other = cellstr(other{nbsuj});
@@ -78,23 +88,10 @@ for nbsuj = 1:length(ref)
     
 end
 
-jobs(skip)=[];
-if isempty(jobs), return;end
 
-if par.display
-    spm_jobman('interactive',jobs);
-    spm('show');
-end
+%% Other routines
 
-if par.run
-    spm_jobman('run',jobs)
-end
+[ jobs ] = job_ending_rountines( jobs, skip, par );
 
-if par.sge
-    for k=1:length(jobs)
-        j=jobs(k);
-        cmd = {'spm_jobman(''run'',j)'};
-        varfile = do_cmd_matlab_sge(cmd,par);
-        save(varfile{1},'j');
-    end
-end
+
+end % function

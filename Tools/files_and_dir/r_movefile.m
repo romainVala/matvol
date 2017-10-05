@@ -1,80 +1,111 @@
-function dir_out = r_movefile(d,new_dir,type)
-%dir_out = r_moverfile(d,new_dir,type)
-%will move or copy or link files d in new_dir
-%type can be  'copy' 'link' 'move'
+function dir_out = r_movefile(source,dest,type)
+% R_MOVEFILE moves, copies, or links files/dirs
+%
+% *************************************************************************
+%
+% WARNING : if you need to create directories, prepare them with r_mkdir to
+% avoid conflicts !
+%
+% This function DOES NOT make verifications to check if the destination
+% dirs exists !
+%
+% *************************************************************************
+%
+%   type =
+%       'move'  movefile
+%       'copyn' copy without overwrite
+%       'copy'  copy with    overwrite
+%       'linkn' symbolic link without overwrite
+%       'link'  symbolic link with    overwrite
+%
+%   example : syntax for 'source' and 'dest' is similar to r_mkdir
+%
+%
+% See also r_mkdir
 
+%% Check input arguments
 
-if ~exist('type')
-    type = 'copy';
+if nargin < 3
+    error('type is required explicitly : ''move'', ''copyn'', ''copy'', ''linkn'', ''link''')
 end
 
-if isstr(d)
-    d = repmat({d},size(new_dir));
+if nargin < 2
+    error('source & dest must be defined')
 end
 
-if isstr(new_dir)
-    new_dir = repmat({new_dir},size(d));
+% Ensure the outputs are defined
+dir_out = {};
+
+
+%% Prepare inputs
+
+% Ensure the inputs are cellstrings, to avoid dimensions problems
+source = cellstr(source);
+dest   = cellstr(dest);
+
+% Repeat source to match dest size
+if numel(source) == 1
+    source = repmat(source,size(dest));
+end
+
+% Repeat dest to match source size
+if numel(dest) == 1
+    dest = repmat(dest,size(source));
+end
+
+% Assert the dimensions match
+if any(size(source)-size(dest))
+    error('[%s]: the 2 cell input must have the same size',mfilename)
 end
 
 
-if any(size(d)-size(new_dir))
-    error('rrr \n the 2 cell input must have the same size\n')
-end
+%% movefile
 
+[~, source_dir_name] = get_parent_path(source);
 
-[pp ff ] = get_parent_path(d);
-
-for k=1:length(d)
+for idx = 1:length(source)
     
-    %  if ~exist(new_dir{k})
-    %    mkdir(new_dir{k})
-    %  end
-    for kf=1:size(d{k},1)
+    for line = 1:size(source{idx},1) % in case of multilevel elements such as source={char(5,30);char(4,32);...}
         
-        if exist(new_dir{k},'dir')
-            dir_out{k}(kf,:) = fullfile(new_dir{k},ff{k}(kf,:));
-        else %(exist(new_dir{k},'file'))
-           % if size(new_dir{k},1)>1
-           %     dir_out{k}(kf,:) = new_dir{k}(kf,:);
-           % else
-                dir_out{k}(kf,:) = new_dir{k};
-           % end
-            
+        % In case the destination dir does not exists
+        if exist(dest{idx},'dir')
+            dir_out{idx}(line,:) = fullfile(dest{idx},source_dir_name{idx}(line,:)); %#ok<*AGROW>
+        else
+            dir_out{idx}(line,:) = dest{idx};
         end
-        
         
         switch type
             case 'copyn'
-                if ~exist(dir_out{k}(kf,:),'file')
-                    %copyfile(d{k}(kf,:),new_dir{k});
-                    cmd = sprintf('cp -fpr %s %s',d{k}(kf,:),new_dir{k});
+                if ~exist(dir_out{idx}(line,:),'file')
+                    cmd = sprintf('cp -fpr %s %s',source{idx}(line,:),dest{idx});
                     unix(cmd);
                 end
-            case 'copy'
                 
-                %copyfile(d{k}(kf,:),new_dir{k});
-                cmd = sprintf('cp -fpr %s %s',d{k}(kf,:),new_dir{k});
+            case 'copy'
+                cmd = sprintf('cp -fpr %s %s',source{idx}(line,:),dest{idx});
                 unix(cmd);
                 
             case 'linkn'
-                
-                if ~exist(dir_out{k}(kf,:),'file')
-                    
-                    %copyfile(d{k}(kf,:),new_dir{k});
-                    cmd = sprintf('ln -s %s %s',d{k}(kf,:),new_dir{k});
+                if ~exist(dir_out{idx}(line,:),'file')
+                    cmd = sprintf('ln -s %s %s',source{idx}(line,:),dest{idx});
                     unix(cmd);
                 end
+                
             case 'link'
-                %copyfile(d{k}(kf,:),new_dir{k});
-                cmd = sprintf('ln -s %s %s',d{k}(kf,:),new_dir{k});
+                cmd = sprintf('ln -s %s %s',source{idx}(line,:),dest{idx});
                 unix(cmd);
+                
             case 'move'
-                movefile(deblank(d{k}(kf,:)),new_dir{k});
+                movefile(deblank(source{idx}(line,:)),dest{idx});
+                
             otherwise
-                error('rrr type %s unknown \n',type)
+                error('[%s]: type %s unknown',mfilename,type)
                 
         end
         
     end
     
 end
+
+
+end % function

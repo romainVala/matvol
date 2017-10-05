@@ -59,8 +59,8 @@ end
 
 % %redoo
 %  sujdir_freesurfer={}; sid = {};
-% sslong= addsufixtofilenames(ss,'.*long');
-% ssfirst=addsufixtofilenames(ss,'..*');
+% sslong= addsuffixtofilenames(ss,'.*long');
+% ssfirst=addsuffixtofilenames(ss,'..*');
 % for nbs=1:length(ss)
 %     done{nbs}  =  get_subdir_regex(rd,sslong(nbs),'mri');
 %     if isempty(done)
