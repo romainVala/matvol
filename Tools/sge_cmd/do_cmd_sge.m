@@ -190,7 +190,7 @@ else
     fprintf(fqsubar,' %s ',par.sbatch_args);
     
     if ~isempty(qsubappend)
-        fprintf(fqsubar,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,k+kinit,f_do_array);
+        fprintf(fqsubar,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,k+kinit,f_do_array);
     else
         fprintf(fqsubar,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,k+kinit,f_do_array);
     end
