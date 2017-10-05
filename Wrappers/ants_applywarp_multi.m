@@ -30,14 +30,17 @@ for k=1:length(fmov)
     fsermov = cellstr(fmov{k});
     for nbfmov = 1:length(fsermov)
         
-        [ppwarp fname_warp ] = get_parent_path(fwarp(k)); fname_warp = change_file_extension(fname_warp,'');
-        [ppmov fname_mov ] = get_parent_path(fsermov(nbfmov)); fname_mov = change_file_extension(fname_mov,'');
+        [ppwarp, ~] = get_parent_path(fwarp(k)); 
+        [ppmov , fname_mov ] = get_parent_path(fsermov(nbfmov)); fname_mov = change_file_extension(fname_mov,'');
+        [ppref , ~] = get_parent_path(fref(k)); 
 
         switch par.folder
             case 'mov'
                 path_warp = ppmov{1}(1,:);
             case 'warp'
                 path_warp = ppwarp{1}(1,:);
+            case 'ref'
+                path_warp = ppref{1}(1,:);
         end
         
         fo = fullfile(path_warp,[par.prefix fname_mov{1} '.nii.gz']);
