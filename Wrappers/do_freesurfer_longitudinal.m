@@ -37,6 +37,8 @@ for nbsuj=1:length(sujid)
     for nbt=1:length(sujdirs{nbsuj})
         cmd1 = sprintf('%s -tp %s',cmd1,sujdirs{nbsuj}{nbt});
         cmd2 = sprintf('%s\n recon-all -long %s %s -all -sd %s\n',cmd,sujdirs{nbsuj}{nbt},sujid{nbsuj},params.free_sujdir);
+        % with extra arg todo
+	%cmd2 = sprintf('%s\n recon-all -long %s %s -all -sd %s -brainstem-structures \n',cmd,sujdirs{nbsuj}{nbt},sujid{nbsuj},params.free_sujdir);
         jobs2{end+1} = cmd2; 
     end
         
