@@ -15,8 +15,9 @@ end
 defpar.GM   = [0 1 1 1]; % Unmodulated / modulated / native_space / dartel import  
 %first one not possible, but keep for compatibility with spm12 job_segment
 defpar.WM   = [0 1 1 1];
-defpar.CSF  = [0 1 1 1]; %not use
-defpar.bias = [0 1]; % bias field / bias corrected image
+defpar.CSF  = [0 1 1 1]; 
+defpar.bias = [1 1 0] ; % native normalize dartel     [0 1]; % bias field / bias corrected image
+defpar.def_field = [1 0]; % deformation field to write [y iy]
 defpar.run = 0;
 defpar.display=0;
 defpar.redo=0;
@@ -26,7 +27,7 @@ defpar.doSurface =1;
 
 defpar.jobname='spm_segmentCAT';
 defpar.walltime = '02:00:00';
-
+defpar.cmd_prepend = 'global cat; cat_defaults; cat.extopts.subfolders=0; cat.extopts.expertgui=1;';
 
 par = complet_struct(par,defpar);
 
@@ -46,7 +47,7 @@ for nbsuj = 1:length(img)
     %skip if y_ exist
 %     of = addprefixtofilenames(img(nbsuj),'y_');
 %     if ~par.redo
-%         if exist(of{1}),                skip = [skip nbsuj];     fprintf('skiping subj %d because %s exist\n',nbsuj,of{1});       end
+%         if exist(of{1}),                skip = [skip nbsuj];     fprintf('skiping suj %d becasue %s exist\n',nbsuj,of{1});       end
 %     end
     
     
@@ -78,9 +79,20 @@ for nbsuj = 1:length(img)
     if par.WM(4)
         jobs{nbsuj}.spm.tools.cat.estwrite.output.WM.dartel = 2;
     end
-    jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.warped = 1;
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.CSF.native = par.CSF(3);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.CSF.mod = par.CSF(2);
+    if par.CSF(4)
+        jobs{nbsuj}.spm.tools.cat.estwrite.output.CSF.dartel = 2;
+    end
+
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.native = par.bias(1);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.warped = par.bias(2);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.dartel = par.bias(3)*2;
+
     jobs{nbsuj}.spm.tools.cat.estwrite.output.jacobian.warped = 1;
-    jobs{nbsuj}.spm.tools.cat.estwrite.output.warps = [1 1];
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.warps = par.def_field;
+
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.las.dartel = 1;
 
 end
 
@@ -89,11 +101,16 @@ if isempty(jobs), return;end
 
 
 if par.sge
+    cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
+    cmd = repmat(cmd,size(jobs));
+    
+    varfile = do_cmd_matlab_sge(cmd,par)
+    
     for k=1:length(jobs)
         j=jobs(k);
-        cmd = {'spm_jobman(''run'',j)'};
-        varfile = do_cmd_matlab_sge(cmd,par);
-        save(varfile{1},'j');
+        %cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
+        %varfile = do_cmd_matlab_sge(cmd,par);
+        save(varfile{k},'j');
     end
 end
 
