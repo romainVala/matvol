@@ -32,7 +32,7 @@ fo = cellstr(char(fo));
 
 [pp ffo]=get_parent_path(fo);
  
-cmd = sprintf('export FSLOUTPUTTYPE=%s;cd %s;fslmaths %s -nan -thr 0',par.fsl_output_format,pp{1},fo{1});
+cmd = sprintf('cur_dir=pwd;\nexport FSLOUTPUTTYPE=%s;\ncd %s;\nfslmaths %s -nan -thr 0;\n cd $cur_dir',par.fsl_output_format,pp{1},fo{1});
 if length(fo)==1 %this is a 4D volume
     cmd = sprintf('%s -Tmean %s\n',cmd,outname);
 else
