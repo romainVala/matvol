@@ -1,7 +1,7 @@
 function [jobs do]= do_freesurfer(anat,params)
 
-def_par.walltime = '40:00:00';
-def_par.sge_queu = 'long';
+def_par.walltime = '23:00:00';
+def_par.sge_queu = 'short';
 def_par.skip = 1;
 def_par.version = 5;
 def_par.version_path='';
@@ -9,6 +9,7 @@ def_par.free_cmd='freesurferall';
 def_par.free_sujdir='';
 def_par.add_sername_to_sujname=0;
 def_par.jobname = 'freesurfer_reconall';
+def_par.cmd_append='';
 
 params = complet_struct(params,def_par);
 
@@ -38,12 +39,12 @@ for nbsuj=1:length(anat)
         if params.add_sername_to_sujname
             sujname = [sujname '_' sername];
         end
-        
+        %remove space
+        sujname = nettoie_dir(sujname);
+
     end
     
         
-    %remove space
-    sujname = nettoie_dir(sujname);
     
     if iscell(params.free_sujdir)
         freesujdir = params.free_sujdir{nbsuj};
@@ -82,29 +83,36 @@ for nbsuj=1:length(anat)
         
     else
         cmd = sprintf('recon-all ');
-        
-        for nbf=1:length(filename)
-            cmd = sprintf('%s -i %s',cmd,filename{nbf});            
-        end    
-                
-        switch params.free_cmd
-            case 'freesurferall'
-                cmd = sprintf('%s -s %s -sd %s -all -qcache ',cmd,sujname,freesujdir);
-                
-            case 'freesurfer'
-                cmd = sprintf('%s -s %s -sd %s -all ',cmd,sujname ,freesujdir);
-                
-            case 'freesurferhippo'
-                cmd = sprintf('%s -s %s -sd %s -all -hippo-subfields',cmd,sujname ,freesujdir);
-                
-            case 'freesurfercrop'
-                cmd = sprintf('%s -s %s -cw256 -sd %s -all ',cmd,sujname ,freesujdir);
-                
-                
-            case 'freesurfer_qcache'
-                cmd = sprintf('recon-all  -s %s -sd %s -qcache ',sujname ,freesujdir);
-                
+
+        if strfind(params.free_cmd,'again')
+            cmd = sprintf('%s -s %s -sd %s  ',cmd,sujname,freesujdir);
+        else
+            
+            for nbf=1:length(filename)
+                cmd = sprintf('%s -i %s',cmd,filename{nbf});
+            end
+            
+            switch params.free_cmd
+                case 'freesurferall'
+                    cmd = sprintf('%s -s %s -sd %s -all -qcache ',cmd,sujname,freesujdir);
+                    
+                case 'freesurfer'
+                    cmd = sprintf('%s -s %s -sd %s -all ',cmd,sujname ,freesujdir);
+                    
+                case 'freesurferhippo'
+                    cmd = sprintf('%s -s %s -sd %s -all -hippo-subfields',cmd,sujname ,freesujdir);
+                    
+                case 'freesurfercrop'
+                    cmd = sprintf('%s -s %s -cw256 -sd %s -all ',cmd,sujname ,freesujdir);
+                    
+                    
+                case 'freesurfer_qcache'
+                    cmd = sprintf('recon-all  -s %s -sd %s -qcache ',sujname ,freesujdir);
+                    
+            end
         end
+        
+        cmd = sprintf('%s %s ',cmd,params.cmd_append);
         
         %cmd = sprintf('cd %s\n%s',psuj,cmd);
         
