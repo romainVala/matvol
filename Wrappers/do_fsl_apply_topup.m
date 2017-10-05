@@ -27,11 +27,19 @@ end
 if exist(fo{end}) && ~par.redo
     fprintf('skiping topup write, because %s exist\n',fo{end});
 else
+    
     for k=1:length(fin)
+    
+        if length(par.index)>1
+            ii = par.index(k);
+        else
+            ii= par.index;
+        end
+        
         [dirtopup fff] = fileparts(ftopup{k});
         
         cmd = sprintf('cd %s;export FSLOUTPUTTYPE=%s; applytopup --imain=%s --datain=%s --method=jac --inindex=%d  --topup=%s --out=%s;\n',...
-            dirtopup,par.fsl_output_format,fin{k},par.acqpfile,par.index,fff,fo{k});
+            dirtopup,par.fsl_output_format,fin{k},par.acqpfile,ii,fff,fo{k});
         job{k} = cmd;
     end
     
