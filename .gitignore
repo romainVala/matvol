@@ -1,5 +1,8 @@
+# Matlab autosave files
 *~
 *.asv
+
+# Matlab save files
 *.mat
 
 # OSX
@@ -7,4 +10,4 @@
 .DS_Store*
 
 # ignore specific files
-objects/show_prepend.txt
+
