@@ -67,7 +67,7 @@ for subj = 1:nrSubject
     mean_filenames_cellstr = addprefixtofilenames(subjectRuns(1),'mean');
     if ~par.redo   &&   exist(mean_filenames_cellstr{1},'file')
         skip = [skip subj];
-        fprintf('[%s]: skiping subj %d because %s exist\run',mfilename,subj,mean_filenames_cellstr{1});
+        fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,subj,mean_filenames_cellstr{1});
     end
     
     for run = 1:length(subjectRuns)
@@ -91,7 +91,7 @@ for subj = 1:nrSubject
     lastrun_filenames_cellstr = addprefixtofilenames(currentRun(end),par.prefix);
     if ~par.redo   &&   exist(lastrun_filenames_cellstr{1},'file')
         skip = [skip subj];
-        fprintf('[%s]: skiping subj %d because %s exist\run',mfilename,subj,lastrun_filenames_cellstr{1});
+        fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,subj,lastrun_filenames_cellstr{1});
     end
     
     jobs{subj}.spm.spatial.realign.estwrite.eoptions.quality = 1; %#ok<*AGROW>
