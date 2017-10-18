@@ -24,6 +24,7 @@ def_par.job_pack = 1;
 def_par.sbatch_args = '--export=NONE -m block:block ';
 def_par.jobappend = '';
 def_par.parallel=0;
+def_par.parallel_pack=1;
 
 par = complet_struct(par,def_par);
 
@@ -153,12 +154,13 @@ else
         fpnlog = sprintf('%s.log',fpn);        fpnlogerror = sprintf('%s.err',fpn);
         
         if par.parallel>0
-            nbpara = ceil((length(job)+kinit)/par.parallel);
-            k_para =ceil((k+kinit)/par.parallel);            
+            pack_para = par.parallel * par.parallel_pack;
+            nbpara = ceil((length(job)+kinit)/pack_para);
+            k_para =ceil((k+kinit)/pack_para);            
             para_jname = sprintf('p%.2d_%s',k_para,par.jobname);
             fpara = fullfile(job_dir,para_jname);            
             ffpara = fopen(fpara,'a+');
-            fprintf(ffpara,'bash %s > lopara_%s 2> erpara_%s \n',fpn,jname,jname);
+            fprintf(ffpara,'bash %s > log_%s 2> err_%s \n',fpn,jname,jname);
             fclose(ffpara);
         end
         
@@ -169,7 +171,16 @@ else
             otherwise
                 fprintf(ff,'#!/bin/bash\n');
         end
-        fprintf(ff,cmdd);
+        if par.parallel
+            
+            fprintf(ff,'\n\necho started on $HOSTNAME \n date\n\n');
+            fprintf(ff,'tic="$(date +%%s)"\n\n');
+            fprintf(ff,cmdd);
+            fprintf(ff,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
+        else
+            fprintf(ff,cmdd);
+        end
+        
         fclose(ff);
         
         switch par.sge_queu
@@ -178,8 +189,6 @@ else
                 cmd{k} = sprintf('qsub -V -q %s %s -o %s -e %s %s',par.sge_queu,par.qsubappend,fpnlog,fpnlogerror,fpn);
                 fprintf(fqsub,'%s\n sleep %d \n',cmd{k},par.submit_sleep);
         end
-        
-        
         fprintf(floc,'bash %s > log_%s 2> err_%s \n',fpn,jname,jname);
         
     end
@@ -187,7 +196,7 @@ else
     fclose(fqsub);fclose(floc);
     
     
-    fprintf(fqsubar,'export jobid=`sbatch -p %s --qos=%s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
+    fprintf(fqsubar,'export jobid=`sbatch -p %s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
     if ~isempty(par.walltime)
         fprintf(fqsubar,' -t %s',par.walltime);
     end
