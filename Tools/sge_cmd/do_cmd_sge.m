@@ -178,7 +178,7 @@ else
             fprintf(ff,cmdd);
             fprintf(ff,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
 %        else
-            fprintf(ff,cmdd);
+%            fprintf(ff,cmdd);
 %        end
         
         fclose(ff);
