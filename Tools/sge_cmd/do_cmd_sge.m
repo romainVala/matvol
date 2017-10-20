@@ -171,15 +171,15 @@ else
             otherwise
                 fprintf(ff,'#!/bin/bash\n');
         end
-        if par.parallel
+%        if par.parallel
             
             fprintf(ff,'\n\necho started on $HOSTNAME \n date\n\n');
             fprintf(ff,'tic="$(date +%%s)"\n\n');
             fprintf(ff,cmdd);
             fprintf(ff,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
-        else
+%        else
             fprintf(ff,cmdd);
-        end
+%        end
         
         fclose(ff);
         
@@ -219,8 +219,8 @@ else
     
     fffa = fopen(f_do_array,'w');
     fprintf(fffa,'#!/bin/bash\n');
-	fprintf(fffa,'\n\necho started on $HOSTNAME \n date\n\n');
-    fprintf(fffa,'tic="$(date +%%s)"\n\n');
+%	fprintf(fffa,'\n\necho started on $HOSTNAME \n date\n\n');
+%    fprintf(fffa,'tic="$(date +%%s)"\n\n');
     
     if par.parallel 
         fprintf(fffa,' cmd=$( printf "p%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n parallel -j %d < %s/$cmd\n\n',par.jobname,par.parallel,job_dir);
@@ -228,7 +228,7 @@ else
         fprintf(fffa,' cmd=$( printf "j%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n bash %s/$cmd\n\n',par.jobname,job_dir);
     end
     
-    fprintf(fffa,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
+%    fprintf(fffa,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
     
     % seff does not work because the job is still runing
     %fprintf(fffa,'\n seff -d ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}\n');
