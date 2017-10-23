@@ -65,7 +65,8 @@ else
         checkNr  = 1;
         nrSeries = length(tags);
     else
-        checkNr = 0;
+        checkNr  = 0;
+        nrSeries = [];
     end
 end
 
@@ -77,6 +78,15 @@ end
 %% addSeries to @exam
 
 for ex = 1 : numel(examArray)
+    
+    % Allow duplicate ?
+    if examArray(ex).cfg.allow_duplicate % yes
+        % pass
+    else% no
+        if examArray(ex).series.checkTag(tags)
+            continue
+        end
+    end
     
     % Fetch the directories
     serieList  = get_subdir_regex( examArray(ex).path, recursive_args{:} );
@@ -90,9 +100,9 @@ for ex = 1 : numel(examArray)
         % Check if N series are found for N tags.
         if checkNr && ( length(serieList) ~= nrSeries )
             error([
-                'Number of input tag/nrSeries differs from number of series found \n'...
+                'Number of input (%d) tag/nrSeries differs from number of series found \n'...
                 '#%d : %s ' ...
-                ], ex, examArray(ex).path)
+                ], nrSeries, ex, examArray(ex).path)
         end
         
         for ser = 1 : length(serieList)
