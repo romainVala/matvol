@@ -7,7 +7,7 @@ function varargout = addVolumes( serieArray, file_regex, tag, nrVolumes )
 % Example : jobInput = serieArray.addVolumes( '^c[123456].*nii'  , 'compartment', 6         );
 %
 % jobInput is the output serieArray.getVolumes(['^' tag '$']).toJobs
-% 
+%
 
 
 %% Check inputs
@@ -27,6 +27,15 @@ par.verbose = 0;
 %% addVolumes to @serie
 
 for ser = 1 : numel(serieArray)
+    
+    % Allow duplicate ?
+    if serieArray(ser).cfg.allow_duplicate % yes
+        % pass
+    else% no
+        if serieArray(ser).volumes.checkTag(tag)
+            continue
+        end
+    end
     
     try
         

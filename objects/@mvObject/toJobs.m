@@ -1,6 +1,7 @@
 function [ pathArray ] = toJobs( mvArray, flag )
 % TOJOBS fetches serieArray.path, just as would do [ get_subdir_regex_multi ]
-% flag means ativate multilevel or not
+% flag means activate multilevel or not
+
 
 %% Check input arguments
 
