@@ -57,7 +57,7 @@ for subj=1:nrSubject
         
         % Generate if needed, a mean image for all runs (necessary for topup)
         mean_files_cellstr = addprefixtofilenames({runName},'mean');
-        if ~exist(mean_files_cellstr{1},'var')
+        if ~exist(mean_files_cellstr{1},'file')
             sgeset  = par.sge;
             par.sge = 0;
             mean_files_cellstr{1} = do_fsl_mean(runList(run),mean_files_cellstr{1},par);
