@@ -1,5 +1,5 @@
 function [ serieArray ] = getSeries( examArray, regex, type )
-% Syntax  : fetch the series corresponfing to the regex or the another property.
+% Syntax  : fetch the series corresponfing to the regex, scanning the defined property.
 % Example : run_series  = examArray.getSeries('run');
 %           run1_series = examArray.getSeries('run1');
 %           run2_series = examArray.getSeries('run2');
@@ -18,14 +18,14 @@ if nargin < 3
     type = 'tag';
 end
 
-AssertIsCharOrCellstr(regex)
-assert(ischar(type),'type must be a char')
+assert(ischar(regex),'regex must be a char')
+assert(ischar(type) , 'type must be a char')
 
 
 %% Type managment
 
 obj = serie; % create empty object, to make some tests
-assert( isprop(obj,type) && ischar(obj.(type)), 'type must refer to a char property of the the @serie object' )
+assert( isprop(obj,type) && ischar(obj.(type) ), 'type must refer to a char property of the the @serie object' )
 
 
 %% getSeries from @exam
@@ -40,7 +40,7 @@ for ex = 1 : numel(examArray)
     for ser = 1 : numel(examArray(ex).series)
         
         if ...
-                ~isempty(examArray(ex).series(ser).(type)) && ...                 % type is present in the @serie ?
+                ~isempty(examArray(ex).series(ser).(type)) && ...                 % (type) is present in the @serie ?
                 ~isempty(regexp(examArray(ex).series(ser).(type), regex, 'once')) % found a corresponding serie.(type) to the regex ?
             
             counter = counter + 1;
