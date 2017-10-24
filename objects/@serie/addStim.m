@@ -62,7 +62,7 @@ for ser = 1 : numel(serieArray)
         
     catch
         
-        if nargin == 4 && ~isempty(nrStim)
+        if nargin == 5 && ~isempty(nrStim)
             % When stim found are not exactly nrStim
             warning([
                 'Could not find exactly %d stim corresponding to the regex [ %s ] \n'...

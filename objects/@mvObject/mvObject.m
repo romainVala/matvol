@@ -15,7 +15,7 @@ classdef mvObject < handle
     methods
         
         % --- Constructor -------------------------------------------------
-        % no 'real' constructor : this is a 'virtial' object
+        % no 'real' constructor : this is a 'virtual' object
         % -----------------------------------------------------------------
         function obj =  mvObject
             
