@@ -1,8 +1,9 @@
-function [ serieArray ] = getSeries( examArray, regex )
-% Syntax  : fetch the series corresponfing to the regex.
+function [ serieArray ] = getSeries( examArray, regex, type )
+% Syntax  : fetch the series corresponfing to the regex or the another property.
 % Example : run_series  = examArray.getSeries('run');
 %           run1_series = examArray.getSeries('run1');
 %           run2_series = examArray.getSeries('run2');
+%           anat_serie  = examArray.getSeries('S03_t1_mpr','name');
 
 
 %% Check inputs
@@ -13,7 +14,18 @@ if nargin < 2
     regex = '.*';
 end
 
+if nargin < 3
+    type = 'tag';
+end
+
 AssertIsCharOrCellstr(regex)
+assert(ischar(type),'type must be a char')
+
+
+%% Type managment
+
+obj = serie; % create empty object, to make some tests
+assert( isprop(obj,type) && ischar(obj.(type)), 'type must refer to a char property of the the @serie object' )
 
 
 %% getSeries from @exam
@@ -28,8 +40,8 @@ for ex = 1 : numel(examArray)
     for ser = 1 : numel(examArray(ex).series)
         
         if ...
-                ~isempty(examArray(ex).series(ser).tag) && ...                 % tag is present in the @serie ?
-                ~isempty(regexp(examArray(ex).series(ser).tag, regex, 'once')) % found a corresponding serie.tag to the regex ?
+                ~isempty(examArray(ex).series(ser).(type)) && ...                 % type is present in the @serie ?
+                ~isempty(regexp(examArray(ex).series(ser).(type), regex, 'once')) % found a corresponding serie.(type) to the regex ?
             
             counter = counter + 1;
             serieArray(ex,counter) = examArray(ex).series(ser);
@@ -44,7 +56,7 @@ end % exam
 % I cannot do this filling during the previous loop, because at that point, we don't know the size (columns) of serieArray
 for ex_ = 1 : size(serieArray,1)
     for ser_ = 1 : size(serieArray,2)
-        if isempty(serieArray(ex_,ser_).tag)
+        if isempty(serieArray(ex_,ser_).(type))
             serieArray(ex_,ser_).exam = examArray(ex);
         end
     end
