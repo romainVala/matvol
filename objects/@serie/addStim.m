@@ -36,7 +36,7 @@ for ser = 1 : numel(serieArray)
     if serieArray(ser).cfg.allow_duplicate % yes
         % pass
     else% no
-        if isfield(serieArray(ser),'stim') && serieArray(ser).stim.checkTag(tag)
+        if serieArray(ser).stim.checkTag(tag)
             continue
         end
     end
