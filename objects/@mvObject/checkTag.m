@@ -4,14 +4,8 @@ function [ flag ] = checkTag( mvArray, tag )
 % Fetch all tags into a signle cellstr
 allTags = cellstr(char(mvArray.tag));
 
-% Contenate if multiple tags
-if iscellstr(tag) && numel(tag)>1
-    rep  = repmat('%s|',[1 length(tag)]);
-    rep  = rep(1:end-1);
-    tags = sprintf(['(' rep ')'],tag{:});
-else
-    tags = tag;
-end
+% Concatenate if tag is a cellstr
+tags = cellstr2regex(tag);
 
 % Input tag exists in all tags of the array ?
 allFlags = cell2mat(regexp(allTags,tags,'once'));
