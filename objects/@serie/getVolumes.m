@@ -1,10 +1,9 @@
 function [ volumeArray ] = getVolumes( serieArray, regex, type )
 % Syntax  : fetch the volume corresponfing to the regex, scanning the defined property.
-% Example : run_volumes  = serieArray.getVolumes('run'              );
-%           run1_volumes = serieArray.getVolumes('run1'             );
-%           run2_volumes = serieArray.getVolumes('run2'             );
-%           anat_volume  = serieArray.getVolumes('S03_t1_mpr','name');
-
+% Example : run_volumes     = serieArray.getVolumes('f'                );
+%           run1_rf_volumes = serieArray.getVolumes('^rf'              );
+%           anat_volume     = serieArray.getVolumes('S03_t1_mpr','name');
+%           anat_volume     = serieArray.getVolumes({'^s','^brain'}    ); <== works with cellstr
 
 %% Check inputs
 
@@ -18,8 +17,12 @@ if nargin < 3
     type = 'tag';
 end
 
-assert(ischar(regex),'regex must be a char')
+AssertIsCharOrCellstr(regex)
 assert(ischar(type ), 'type must be a char')
+
+% Concatenate if regex is a cellstr
+regex = cellstr2regex(regex);
+
 
 %% Type managment
 

@@ -1,10 +1,10 @@
 function [ serieArray ] = getSeries( examArray, regex, type )
 % Syntax  : fetch the series corresponfing to the regex, scanning the defined property.
-% Example : run_series  = examArray.getSeries('run');
-%           run1_series = examArray.getSeries('run1');
-%           run2_series = examArray.getSeries('run2');
+% Example : run_series  = examArray.getSeries('run'              );
+%           run1_series = examArray.getSeries('run1'             );
+%           run2_series = examArray.getSeries('run2'             );
 %           anat_serie  = examArray.getSeries('S03_t1_mpr','name');
-
+%           anat_serie  = examArray.getSeries({'run1','run2'}    ); <== works with cellstr
 
 %% Check inputs
 
@@ -18,8 +18,11 @@ if nargin < 3
     type = 'tag';
 end
 
-assert(ischar(regex),'regex must be a char')
+AssertIsCharOrCellstr(regex)
 assert(ischar(type) , 'type must be a char')
+
+% Concatenate if regex is a cellstr
+regex = cellstr2regex(regex);
 
 
 %% Type managment

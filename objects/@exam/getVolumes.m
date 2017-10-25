@@ -10,7 +10,7 @@ function [ volumeArray ] = getVolumes( examArray, serie_regex, volume_regex, vol
 AssertIsExamArray(examArray);
 
 if nargin < 2
-    serie_regex  = '.*';
+    serie_regex = '.*';
 end
 
 if nargin < 3
