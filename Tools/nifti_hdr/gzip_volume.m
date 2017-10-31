@@ -21,8 +21,7 @@ for i=1:length(f)
     cmd{i} = sprintf('gzip -f %s',f{i});
 
     fo{i} = [f{i} '.gz'];
-  
-    unix(cmd);
+    
   else
     fo{i} = f{i};
     ind_to_remove(end+1)=i;
