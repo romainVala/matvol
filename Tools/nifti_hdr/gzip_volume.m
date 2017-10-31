@@ -2,7 +2,7 @@ function fo = gzip_volume(f,par)
 
 if ~exist('par','var'),par ='';end
 defpar.sge=0;
-defpar.jobname='zip'
+defpar.jobname='zip';
 
 par = complet_struct(par,defpar);
 
