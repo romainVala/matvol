@@ -77,7 +77,7 @@ if par.job_pack>1;
         end
         aa = job{nn};
         for kkk=nn+1:kkkend
-            aa = sprintf('%s\n%s\n',aa, job{kkk}];
+            aa = sprintf('%s\n%s\n',aa, job{kkk});
         end
         jnew(end+1)={aa};
     end
