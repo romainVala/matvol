@@ -1,4 +1,4 @@
-function fo = gzip_volume(f)
+function fo = gzip_volume(f,par)
 
 if ~exist('par','var'),par ='';end
 defpar.sge=0;
