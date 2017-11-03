@@ -9,7 +9,7 @@ function varargout = addStim( serieArray, stimPath, regex, tag, nrStim )
 % WARNING : there directory to look for the file will be [stimPath '/' exam.name]
 % It means stimPath must have subdir corresponding to the exam.name
 %
-% jobInput is the output serieArray.getStim(['^' tag '$']).toJobs
+% jobInput is the output serieArray.getStim(['^' tag '$']).toJob
 %
 
 
@@ -87,7 +87,7 @@ end % serie
 %% Output
 
 if nargout > 0
-    varargout{1} = serieArray.getStim(['^' tag '$']).toJobs;
+    varargout{1} = serieArray.getStim(['^' tag '$']).toJob;
 end
 
 

@@ -1,5 +1,5 @@
 classdef volume < mvObject
-    % VOLUME object construction is encapsulated inside [ exam.addVolumes ].
+    % VOLUME object construction is encapsulated inside [ exam.addVolume ].
     % VOLUME can have multiples elements in path, for multiple files
     
     properties

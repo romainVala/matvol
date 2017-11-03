@@ -1,5 +1,5 @@
 classdef stim < mvObject
-    % STIM object construction is encapsulated inside [ exam.addVolumes ].
+    % STIM object construction is encapsulated inside [ exam.addVolume ].
     
     properties
         

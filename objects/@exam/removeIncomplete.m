@@ -1,7 +1,7 @@
 function [ completeExams, incompleteExams ] = removeIncomplete( examArray )
 % REMOVEINCOMPLETE method removes incomplet @exams accoding to their flag .is_complete
 % IMPORTANT : This method requires an output argument, and will not affect the input
-% (due to MATLAB object behaviour). 
+% (due to MATLAB object behaviour).
 % Also, you can keep the incomplete exams (second output).
 
 AssertIsExamArray(examArray);

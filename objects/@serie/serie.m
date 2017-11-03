@@ -1,5 +1,5 @@
 classdef serie < mvObject
-    % SERIE object construction is encapsulated inside [ exam.addSeries ].
+    % SERIE object construction is encapsulated inside [ exam.addSerie ].
     
     properties
         

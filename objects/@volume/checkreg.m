@@ -4,7 +4,7 @@ function checkreg( volumeArray, center, fov, resolution )
 % fov        : width of field of view in mm         -> 0 or Inf is fullview, 20 means fov = 20mm x 20mm
 % resolution : resolution in mm
 %
-% Exemple: examArray.getExams('Subject03').getSeries('anat').getVolumes('normalized').checkreg
+% Exemple: examArray.getExam('Subject03').getSerie('anat').getVolume('normalized').checkreg
 
 % For the moment, there is no easy method to overide the maxium image displayed.
 % This limit value (24 in my case) is hard coded in spm_orthviews -> max_img

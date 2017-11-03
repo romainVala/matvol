@@ -7,10 +7,10 @@ function [ p ] = matvol_config
 % see 'help volume.show' for more info
 
 % Prepend arguments to the terminal line sent via matlab
-p.volume_show_prepend = 'LD_LIBRARY_PATH='; 
+p.volume_show_prepend = 'LD_LIBRARY_PATH=';
 
 % Your viewer name (mrview, fslview, fsleyes, ...)
-p.volume_show_viewer  = 'mrview'; 
+p.volume_show_viewer  = 'mrview';
 
 
 end % function

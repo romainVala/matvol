@@ -1,10 +1,10 @@
-function [ serieArray ] = getSeries( examArray, regex, type )
+function [ serieArray ] = getSerie( examArray, regex, type )
 % Syntax  : fetch the series corresponfing to the regex, scanning the defined property.
-% Example : run_series  = examArray.getSeries('run'              );
-%           run1_series = examArray.getSeries('run1'             );
-%           run2_series = examArray.getSeries('run2'             );
-%           anat_serie  = examArray.getSeries('S03_t1_mpr','name');
-%           anat_serie  = examArray.getSeries({'run1','run2'}    ); <== works with cellstr
+% Example : run_series  = examArray.getSerie('run'              );
+%           run1_series = examArray.getSerie('run1'             );
+%           run2_series = examArray.getSerie('run2'             );
+%           anat_serie  = examArray.getSerie('S03_t1_mpr','name');
+%           anat_serie  = examArray.getSerie({'run1','run2'}    ); <== works with cellstr
 
 %% Check inputs
 
@@ -31,7 +31,7 @@ obj = serie; % create empty object, to make some tests
 assert( isprop(obj,type) && ischar(obj.(type) ), 'type must refer to a char property of the the @serie object' )
 
 
-%% getSeries from @exam
+%% getSerie from @exam
 
 % Create 0x0 @serie object
 serieArray = serie.empty;

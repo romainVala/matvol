@@ -24,7 +24,7 @@ end
 
 %% getStim from @exam
 
-volumeArray = examArray.getSeries(serie_regex).getStim(stim_regex,stim_type);
+volumeArray = examArray.getSerie(serie_regex).getStim(stim_regex,stim_type);
 
 
 end % function

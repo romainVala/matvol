@@ -1,19 +1,19 @@
-function varargout = addSeries( examArray, varargin)
-% General syntax : jobInput = examArray.addSeries( 'dir_regex_1', 'dir_regex_2', ... , {'tag_1', 'tag_2', ...}, N );
+function varargout = addSerie( examArray, varargin)
+% General syntax : jobInput = examArray.addSerie( 'dir_regex_1', 'dir_regex_2', ... , {'tag_1', 'tag_2', ...}, N );
 %
 % Example :
 %
-% examArray.addSeries( 'PA$', {'run1', 'run2'} );
+% examArray.addSerie( 'PA$', {'run1', 'run2'} );
 % is equivalent to
-% examArray.addSeries( 'PA$', {'run1', 'run2'}, 2 );
+% examArray.addSerie( 'PA$', {'run1', 'run2'}, 2 );
 %
-% examArray.addSeries( 'PA$', 'run' );
+% examArray.addSerie( 'PA$', 'run' );
 % will auto increment run_001, run_002, ... for all dir_found
 % it differes from :
-% examArray.addSeries( 'PA$', 'run', 2 );
+% examArray.addSerie( 'PA$', 'run', 2 );
 % will auto increment run_001, run_002, but error if nr_dir_found ~= 2
 %
-% jobInput is the output examArray.getSeries("all tags combined").toJobs
+% jobInput is the output examArray.getSerie("all tags combined").toJob
 %
 
 
@@ -75,7 +75,7 @@ if nrSeries == 1
 end
 
 
-%% addSeries to @exam
+%% addSerie to @exam
 
 for ex = 1 : numel(examArray)
     
@@ -152,7 +152,7 @@ if nargout > 0
     end
     allTags = [allTags ')$'];
     
-    varargout{1} = examArray.getSeries(allTags).toJobs;
+    varargout{1} = examArray.getSerie(allTags).toJob;
     
 end
 

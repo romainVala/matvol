@@ -1,9 +1,9 @@
-function [ volumeArray ] = getVolumes( serieArray, regex, type )
+function [ volumeArray ] = getVolume( serieArray, regex, type )
 % Syntax  : fetch the volume corresponfing to the regex, scanning the defined property.
-% Example : run_volumes     = serieArray.getVolumes('f'                );
-%           run1_rf_volumes = serieArray.getVolumes('^rf'              );
-%           anat_volume     = serieArray.getVolumes('S03_t1_mpr','name');
-%           anat_volume     = serieArray.getVolumes({'^s','^brain'}    ); <== works with cellstr
+% Example : run_volumes     = serieArray.getVolume('f'                );
+%           run1_rf_volumes = serieArray.getVolume('^rf'              );
+%           anat_volume     = serieArray.getVolume('S03_t1_mpr','name');
+%           anat_volume     = serieArray.getVolume({'^s','^brain'}    ); <== works with cellstr
 
 %% Check inputs
 
@@ -30,7 +30,7 @@ obj = volume; % create empty object, to make some tests
 assert( isprop(obj,type) && ischar(obj.(type) ), 'type must refer to a char property of the the @volume object' )
 
 
-%% getVolumes from @serie
+%% getVolume from @serie
 
 volumeArray = volume.empty;
 
