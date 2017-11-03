@@ -18,9 +18,16 @@ classdef mvObject < handle
         % no 'real' constructor : this is a 'virtual' object
         % -----------------------------------------------------------------
         function obj =  mvObject
+            global mvObject_cfg
             
-            % cfg
-            obj.cfg.allow_duplicate = 0; % Do not allow adding dupplicate items
+            % --- cfg ---
+            
+            if isempty(mvObject_cfg)
+                p = matvol_config; % Load config
+                mvObject_cfg = p.mvObject_cfg; % Save config in global workspace
+            end
+            
+            obj.cfg.allow_duplicate = mvObject_cfg.allow_duplicate;
             
         end % ctor
         
