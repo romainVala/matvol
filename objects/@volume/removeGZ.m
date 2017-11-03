@@ -1,5 +1,5 @@
 function removeGZ( volumeArray )
-% REMOVEGZ removes .gz from each file name inside the volumeArray
+% REMOVEGZ removes .gz from each file name inside the volumeArray, if needed.
 
 AssertIsVolumeArray(volumeArray)
 
@@ -15,4 +15,4 @@ for vol = 1 : numel(volumeArray)
     
 end % volume
 
-end % end
+end % function
