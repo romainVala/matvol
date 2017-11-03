@@ -83,7 +83,7 @@ for k=1:length(fmov)
         %cmd = sprintf('cd %s',ores{k});
         cmd = sprintf('%s reg_resample -flo %s -ref %s -res %s ',cmd,ffmov{nb_mov},fref{k},fo);
         
-        cmd = sprintf('%s ',cmd);        
+        %cmd = sprintf('%s ',cmd);        
         cmd = sprintf('%s -trans %s',cmd,the_fwarp);        
         cmd = sprintf('%s -inter %d \n\n',cmd,par.interp);
         
@@ -92,7 +92,7 @@ for k=1:length(fmov)
         if isempty(par.inv_temp_dir)
             cmd = sprintf('%s rm -f %s %s \n\n',cmd,fo_def{k},foinv{k})
         else
-            cmd = sprintf('%s rm -f %s',cmd,tmpdir);
+            cmd = sprintf('%s rm -f %s \n\n',cmd,tmpdir);
         end
     end
     job{k} = cmd;
