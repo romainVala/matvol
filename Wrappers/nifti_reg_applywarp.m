@@ -62,19 +62,20 @@ for k=1:length(fmov)
         path_warp=repmat(path_warp,size(ffmov)); %one warp several move
     end
     
+    if isempty(par.inv_temp_dir)
+        cmd = sprintf('cd %s\n',dirw{k});
+    else
+        cmd = sprintf('cd %s\n',par.temp_dir);
+    end
+    
+    the_fwarp = fwarp{k};
+    if par.inv
+        cmd = sprintf('%s reg_transform -def %s %s -ref %s \n',cmd,the_fwarp,fo_def{k},fref{k});
+        cmd = sprintf('%s reg_transform -invNrr %s %s %s \n',cmd,fo_def{k},frefiw{k},foinv{k});
+        the_fwarp = foinv{k};
+    end
+
     for nb_mov = 1:length(ffname_mov)
-        if isempty(par.inv_temp_dir)
-            cmd = sprintf('cd %s\n',dirw{k});
-        else
-            cmd = sprintf('cd %s\n',par.temp_dir);
-        end
-        
-        the_fwarp = fwarp{k};
-        if par.inv
-            cmd = sprintf('%s reg_transform -def %s %s -ref %s \n',cmd,the_fwarp,fo_def{k},fref{k});
-            cmd = sprintf('%s reg_transform -invNrr %s %s %s \n',cmd,fo_def{k},frefiw{k},foinv{k});  
-            the_fwarp = foinv{k};
-        end
         
         fo = fullfile(path_warp{nb_mov},[par.prefix ffname_mov{nb_mov} '.nii.gz']);
         
@@ -83,14 +84,13 @@ for k=1:length(fmov)
         
         cmd = sprintf('%s ',cmd);        
         cmd = sprintf('%s -trans %s',cmd,the_fwarp);        
-        cmd = sprintf('%s -inter %d \n',cmd,par.interp);
+        cmd = sprintf('%s -inter %d \n\n',cmd,par.interp);
         
-        if par.inv_delete
-            cmd = sprintf('%s rm -f %s %s \n',cmd,fo_def{k},foinv{k})
-        end
-        
-        job{end+1} = cmd;
+    end        
+    if par.inv_delete
+        cmd = sprintf('%s rm -f %s %s \n\n',cmd,fo_def{k},foinv{k})
     end
+    job{end+1} = cmd;
 end
 
 do_cmd_sge(job,par)
