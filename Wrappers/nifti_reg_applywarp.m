@@ -92,10 +92,10 @@ for k=1:length(fmov)
         if isempty(par.inv_temp_dir)
             cmd = sprintf('%s rm -f %s %s \n\n',cmd,fo_def{k},foinv{k})
         else
-            cmd = sprintf('%s rm -f %s \n\n',cmd,tmpdir);
+            cmd = sprintf('%s rm -rf %s \n\n',cmd,tmpdir);
         end
     end
     job{k} = cmd;
 end
 
-do_cmd_sge(job,par)
+do_cmd_sge(job,par);
