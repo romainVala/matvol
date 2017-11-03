@@ -39,7 +39,10 @@ for ser = 1 : numel(serieArray)
     
     try
         
+        % Try to fetch volume
         volume_found = get_subdir_regex_files(serieArray(ser).path,file_regex,par); % error from this function if not found
+        
+        % Volume found, so add it
         serieArray(ser).volumes(end + 1) = volume(char(volume_found), tag, serieArray(ser).exam , serieArray(ser));
         
     catch

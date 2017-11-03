@@ -95,6 +95,7 @@ for ex = 1 : numel(examArray)
     lengthSeries = length(examArray(ex).series);
     counter = 0;
     
+    % Non-empy list ?
     if ~isempty(serieList)
         
         % Check if N series are found for N tags.
@@ -105,6 +106,7 @@ for ex = 1 : numel(examArray)
                 ], nrSeries, ex, examArray(ex).path)
         end
         
+        % Add the series
         for ser = 1 : length(serieList)
             counter = counter + 1;
             if autoIncrement

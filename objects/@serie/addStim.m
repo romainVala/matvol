@@ -43,6 +43,8 @@ for ser = 1 : numel(serieArray)
     
     [exam_idx,serie_idx] = ind2sub(size(serieArray),ser);
     
+    % Path to stim dirs = [stimPath serieArray(ser).exam.name]
+    % Fetch this dirs
     where = get_subdir_regex(stimPath,serieArray(ser).exam.name);
     if isempty(where)
         % Invalid path
@@ -57,7 +59,10 @@ for ser = 1 : numel(serieArray)
     
     try
         
+        % Try to fetch stim file
         stim_found = get_subdir_regex_files(where,regex,par); % error from this function if not found
+        
+        % File found
         serieArray(ser).stim(end + 1) = stim(char(stim_found), tag, serieArray(ser).exam , serieArray(ser));
         
     catch
