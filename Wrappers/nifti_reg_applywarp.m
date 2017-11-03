@@ -62,10 +62,11 @@ for k=1:length(fmov)
         path_warp=repmat(path_warp,size(ffmov)); %one warp several move
     end
     
-    if isempty(par.inv_temp_dir)
+    if isempty(par.inv_temp_dir)        
         cmd = sprintf('cd %s\n',dirw{k});
     else
-        cmd = sprintf('cd %s\n',par.temp_dir);
+        tmpdir = tempname(par.inv_temp_dir);
+        cmd = sprintf('mkdir -p %s\ncd %s\n',tmpdir,tmpdir);
     end
     
     the_fwarp = fwarp{k};
@@ -88,7 +89,11 @@ for k=1:length(fmov)
         
     end        
     if par.inv_delete
-        cmd = sprintf('%s rm -f %s %s \n\n',cmd,fo_def{k},foinv{k})
+        if isempty(par.inv_temp_dir)
+            cmd = sprintf('%s rm -f %s %s \n\n',cmd,fo_def{k},foinv{k})
+        else
+            cmd = sprintf('%s rm -f %s',tmpdir);
+        end
     end
     job{end+1} = cmd;
 end
