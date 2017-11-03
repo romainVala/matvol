@@ -21,7 +21,7 @@ end
 
 [dirw fwarp] = get_parent_path(fwarp);
 
-fo = addprefixtofilenames(fwarp,par.prefix)
+fo = addprefixtofilenames(fwarp,par.prefix);
 fo_def = addprefixtofilenames(fwarp,'defo_');
 
 job={};
