@@ -52,7 +52,7 @@ if par.inv
     if length(frefiw)==1,    frefiw = repmat(frefiw,size(fwarp)); end
 end
 
-job={};
+job=cell(fmov);
 for k=1:length(fmov)
     path_warp = cellstr(deblank(ores{k}));
     
@@ -95,7 +95,7 @@ for k=1:length(fmov)
             cmd = sprintf('%s rm -f %s',tmpdir);
         end
     end
-    job{end+1} = cmd;
+    job{k} = cmd;
 end
 
 do_cmd_sge(job,par)
