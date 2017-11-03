@@ -47,7 +47,7 @@ end
         
 if par.inv
     fo_def = addprefixtofilenames(fwarp_file,'defo_');
-    foinv = addprefixtofilenames(fwarp,'i');
+    foinv = addprefixtofilenames(fwarp_file,'i');
     frefiw = par.inv_ref;
     if length(frefiw)==1,    frefiw = repmat(frefiw,size(fwarp)); end
 end
