@@ -3,7 +3,11 @@ function unzip( volumeArray )
 
 AssertIsVolumeArray(volumeArray)
 
-unzip_volume(volumeArray.toJob);
+if ~isempty(volumeArray)
+    unzip_volume(volumeArray.toJob);
+else
+    warning('volumeArray is empty, cannot unzip volumes')
+end
 
 volumeArray.removeGZ;
 
