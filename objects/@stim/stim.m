@@ -1,6 +1,5 @@
-classdef volume < mvObject
-    % VOLUME object construction is encapsulated inside [ exam.addVolume ].
-    % VOLUME can have multiples elements in path, for multiple files
+classdef stim < mvObject
+    % STIM object construction is encapsulated inside [ exam.addVolume ].
     
     properties
         
@@ -12,7 +11,7 @@ classdef volume < mvObject
     methods
         
         % --- Constructor -------------------------------------------------
-        function obj = volume(inputPath, tag, examObj, serieObj)
+        function obj = stim(inputPath, tag, examObj, serieObj)
             %
             
             % Input args ?
@@ -21,17 +20,17 @@ classdef volume < mvObject
                 [pathstr,name, ~] = get_parent_path(inputPath);
                 obj.name = name;                                               % name of the file
                 obj.path = [pathstr repmat(filesep,[size(pathstr,1) 1]) name]; % path of the file
-                obj.tag  = tag;                                                % tag of the volume : s, wms, f, rf, swrf, ...
+                obj.tag  = tag;                                                % tag of the stim : s, wms, f, rf, swrf, ...
                 
                 % If an @exam object is presented as input argument,
-                % incorporate it's pointer inside the created @volume
+                % incorporate it's pointer inside the created @stim
                 % object.
                 if exist('examObj','var')
                     obj.exam = examObj;
                 end
                 
                 % If an @serie object is presented as input argument,
-                % incorporate it's pointer inside the created @volume
+                % incorporate it's pointer inside the created @stim
                 % object.
                 if exist('serieObj','var')
                     obj.serie = serieObj;

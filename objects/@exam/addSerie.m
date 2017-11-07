@@ -1,19 +1,19 @@
-function varargout = addSeries( examArray, varargin)
-% General syntax : jobInput = examArray.addSeries( 'dir_regex_1', 'dir_regex_2', ... , {'tag_1', 'tag_2', ...}, N );
+function varargout = addSerie( examArray, varargin)
+% General syntax : jobInput = examArray.addSerie( 'dir_regex_1', 'dir_regex_2', ... , {'tag_1', 'tag_2', ...}, N );
 %
 % Example :
 %
-% examArray.addSeries( 'PA$', {'run1', 'run2'} );
+% examArray.addSerie( 'PA$', {'run1', 'run2'} );
 % is equivalent to
-% examArray.addSeries( 'PA$', {'run1', 'run2'}, 2 );
+% examArray.addSerie( 'PA$', {'run1', 'run2'}, 2 );
 %
-% examArray.addSeries( 'PA$', 'run' );
+% examArray.addSerie( 'PA$', 'run' );
 % will auto increment run_001, run_002, ... for all dir_found
 % it differes from :
-% examArray.addSeries( 'PA$', 'run', 2 );
+% examArray.addSerie( 'PA$', 'run', 2 );
 % will auto increment run_001, run_002, but error if nr_dir_found ~= 2
 %
-% jobInput is the output examArray.getSeries("all tags combined").toJobs
+% jobInput is the output examArray.getSerie("all tags combined").toJob
 %
 
 
@@ -65,7 +65,8 @@ else
         checkNr  = 1;
         nrSeries = length(tags);
     else
-        checkNr = 0;
+        checkNr  = 0;
+        nrSeries = [];
     end
 end
 
@@ -74,9 +75,18 @@ if nrSeries == 1
 end
 
 
-%% addSeries to @exam
+%% addSerie to @exam
 
 for ex = 1 : numel(examArray)
+    
+    % Allow duplicate ?
+    if examArray(ex).cfg.allow_duplicate % yes
+        % pass
+    else% no
+        if examArray(ex).series.checkTag(tags)
+            continue
+        end
+    end
     
     % Fetch the directories
     serieList  = get_subdir_regex( examArray(ex).path, recursive_args{:} );
@@ -85,16 +95,18 @@ for ex = 1 : numel(examArray)
     lengthSeries = length(examArray(ex).series);
     counter = 0;
     
+    % Non-empy list ?
     if ~isempty(serieList)
         
         % Check if N series are found for N tags.
         if checkNr && ( length(serieList) ~= nrSeries )
             error([
-                'Number of input tag/nrSeries differs from number of series found \n'...
+                'Number of input (%d) tag/nrSeries differs from number of series found \n'...
                 '#%d : %s ' ...
-                ], ex, examArray(ex).path)
+                ], nrSeries, ex, examArray(ex).path)
         end
         
+        % Add the series
         for ser = 1 : length(serieList)
             counter = counter + 1;
             if autoIncrement
@@ -142,7 +154,7 @@ if nargout > 0
     end
     allTags = [allTags ')$'];
     
-    varargout{1} = examArray.getSeries(allTags).toJobs;
+    varargout{1} = examArray.getSerie(allTags).toJob;
     
 end
 

@@ -3,18 +3,33 @@ classdef mvObject < handle
     
     properties
         
-        name = '' % name of the directory/file
-        path = '' % path of the directory/file
+        name = ''     % name of the directory/file
+        path = ''     % path of the directory/file
         
-        tag  = '' % tag of the subclass object (exam/serie/volume)
+        tag  = ''     % tag of the subclass object (exam/serie/volume)
+        
+        cfg  = struct % configuration parameters
         
     end
     
     methods
         
         % --- Constructor -------------------------------------------------
-        % no constructor : this is a 'virtial' object
+        % no 'real' constructor : this is a 'virtual' object
         % -----------------------------------------------------------------
+        function obj =  mvObject
+            global mvObject_cfg
+            
+            % --- cfg ---
+            
+            if isempty(mvObject_cfg)
+                p = matvol_config; % Load config
+                mvObject_cfg = p.mvObject_cfg; % Save config in global workspace
+            end
+            
+            obj.cfg.allow_duplicate = mvObject_cfg.allow_duplicate;
+            
+        end % ctor
         
     end
     

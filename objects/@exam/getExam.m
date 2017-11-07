@@ -1,9 +1,9 @@
-function [ exams ] = getExams( examArray, regex )
+function [ exams ] = getExam( examArray, regex )
 % Syntax  : fetch the exams corresponfing to the regex.
-% Example : ex = examArray.getExams('2017');
-%           ex = examArray.getExams('Subject02');
-%           ex = examArray.getExams('Subject');
-%           ex = examArray.getExams('V2');
+% Example : ex = examArray.getExam('2017');
+%           ex = examArray.getExam('Subject02');
+%           ex = examArray.getExam('Subject');
+%           ex = examArray.getExam('V2');
 
 
 %% Check inputs
@@ -17,7 +17,7 @@ end
 AssertIsCharOrCellstr(regex)
 
 
-%% getExams from @exam
+%% getExam from @exam
 
 % Create 0x0 @exam object
 exams = exam.empty;

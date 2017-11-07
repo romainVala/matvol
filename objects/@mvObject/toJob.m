@@ -1,10 +1,11 @@
-function [ pathArray ] = toJobs( mvArray, flag )
-% TOJOBS fetches serieArray.path, just as would do [ get_subdir_regex_multi ]
-% flag means ativate multilevel or not
+function [ pathArray ] = toJob( mvArray, flag )
+% TOJOB fetches serieArray.path, just as would do [ get_subdir_regex_multi ]
+% flag means activate multilevel or not
+
 
 %% Check input arguments
 
-assert( isa(mvArray,'exam') || isa(mvArray,'serie') || isa(mvArray,'volume'), '0' )
+assert( isa(mvArray,'exam') || isa(mvArray,'serie') || isa(mvArray,'volume') || isa(mvArray,'stim') )
 
 if nargin < 2
     switch class(mvArray)
@@ -13,6 +14,8 @@ if nargin < 2
         case 'serie'
             flag = 1;
         case 'volume'
+            flag = 0;
+        case 'stim'
             flag = 0;
     end
 end

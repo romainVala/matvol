@@ -1,10 +1,11 @@
 classdef serie < mvObject
-    % SERIE object construction is encapsulated inside [ exam.addSeries ].
+    % SERIE object construction is encapsulated inside [ exam.addSerie ].
     
     properties
         
         volumes = volume.empty % volumes associated with this serie
         exam    = exam.empty   % exam    associated with this serie
+        stim    = stim.empty   % stim    associated with this serie
         
     end
     
