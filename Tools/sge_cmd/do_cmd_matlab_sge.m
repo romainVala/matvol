@@ -14,7 +14,7 @@ def_par.matlab_opt = '-singleCompThread -nodesktop -nojvm -nosoftwareopengl';
 
 def_par.jobdir=pwd; 
 %def_par.sge_queu = 'matlab_nodes';
-def_par.sge_queu = 'short';
+def_par.sge_queu = 'express';
 def_par.sge_nb_coeur=1;
 def_par.submit_sleep = 1;  %add a sleep of 1 second between each qsub
 def_par.fake = 0;

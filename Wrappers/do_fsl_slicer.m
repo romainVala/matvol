@@ -15,7 +15,7 @@ defpar.prefix='';
 defpar.sge=0;
 defpar.jobname = 'fslslicer';
 defpar.walltime = '00:10:00';
-defpar.sge_queu='short';
+defpar.sge_queu='express';
 defpar.type = '3x3'; % '3x5' '3x3'  '3x4 overlay' 3x1 montage256
 par = complet_struct(par,defpar);
 

@@ -1,7 +1,7 @@
 function [jobs do]= do_freesurfer(anat,params)
 
 def_par.walltime = '23:00:00';
-def_par.sge_queu = 'short';
+def_par.sge_queu = 'normal';
 def_par.skip = 1;
 def_par.version = 5;
 def_par.version_path='';
