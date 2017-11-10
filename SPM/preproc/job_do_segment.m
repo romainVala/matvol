@@ -35,6 +35,7 @@ defpar.GM   = [0 0 1 0]; % Unmodulated / modulated / native_space / dartel impor
 defpar.WM   = [0 0 1 0];
 defpar.CSF  = [0 0 1 0];
 defpar.bias = [0 1]; % bias field / bias corrected image
+defpar.warp = [1 1];
 
 defpar.run     = 0;
 defpar.display = 0;
@@ -132,7 +133,7 @@ for subj = 1:length(img)
         jobs{subj}.spm.spatial.preproc.warp.affreg = 'mni';
         jobs{subj}.spm.spatial.preproc.warp.fwhm = 0;
         jobs{subj}.spm.spatial.preproc.warp.samp = 3;
-        jobs{subj}.spm.spatial.preproc.warp.write = [1 1];
+        jobs{subj}.spm.spatial.preproc.warp.write = par.warp;
     end
 end
 
