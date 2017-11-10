@@ -25,12 +25,18 @@ end
 
 % SGE
 if par.sge
-    for vol=1:length(jobs)
-        j       = jobs(vol); %#ok<NASGU>
-        cmd     = {'spm_jobman(''run'',j)'};
-        varfile = do_cmd_matlab_sge(cmd,par);
-        save(varfile{1},'j');
+    cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
+    cmd = repmat(cmd,size(jobs));
+    
+    varfile = do_cmd_matlab_sge(cmd,par)
+    
+    for k=1:length(jobs)
+        j=jobs(k);
+        %cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
+        %varfile = do_cmd_matlab_sge(cmd,par);
+        save(varfile{k},'j');
     end
+
 end
 
 % Display
