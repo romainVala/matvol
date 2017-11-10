@@ -271,11 +271,11 @@ else
         
         par.topup_dir = topup;
         [pp fB0name] = get_parent_path(foeddycor);
-        par.topup = addsufixtofilenames(fB0name{1},'_topup');
+        par.topup = addsuffixtofilenames(fB0name{1},'_topup');
                         
         par.fsl_output_format = 'NIFTI_GZ';
         par.sge=1;        par.walltime='12:00:00';
-        do_fsl_apply_topup(foDTIeddycor,addsufixtofilenames(topup,['/' par.topup]),par,job)
+        do_fsl_apply_topup(foDTIeddycor,addsuffixtofilenames(topup,['/' par.topup]),par,job)
     end
     
 end
