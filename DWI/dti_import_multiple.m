@@ -14,7 +14,7 @@ defpar.swap=''; %for swap dim for sag par.swap='-y z -x' for coro par.swap='x z 
 defpar.skip_if_exist = 1;
 defpar.make_even_number_of_slice=1;
 defpar.include_all = 0;
-defpar.force_eddy=0;
+defpar.force_eddy=1;
 
 par = complet_struct(par,defpar);
 
