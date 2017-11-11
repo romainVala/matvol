@@ -25,6 +25,9 @@ end
 
 % SGE
 if par.sge
+    defpar.cmd_prepend = '';
+    par = complet_struct(par,defpar);
+
     cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
     cmd = repmat(cmd,size(jobs));
     
