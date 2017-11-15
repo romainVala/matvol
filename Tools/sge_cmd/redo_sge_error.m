@@ -60,7 +60,13 @@ for k=1:length(erf)
                 cmd = sprintf('%s%s\n',cmd,tline);
             end
             fclose(fid);
-            
+            %replace % string by %%
+            ii=findstr(cmd,'%');
+            for k=1:length(ii)
+                cc=[cmd(1:ii(k)) '%' cmd(ii(k)+1:end)];
+                cmd=cc;
+            end
+                
             jobagain{end+1} = cmd;
 
         else
