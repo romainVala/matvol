@@ -1,4 +1,4 @@
-function out = unzip_volume(in)
+function out = unzip_volume(in,par)
 % UNZIP_VOLUME uses gunzip (linux) to unzip volumes if needed.
 % If the target file is not zipped (do not have .gz extension), skip it.
 
