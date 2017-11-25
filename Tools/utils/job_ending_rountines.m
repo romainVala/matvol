@@ -35,7 +35,7 @@ if par.sge
     for k=1:length(jobs)
         j=jobs{k};
          jstr = gencode(j);
-         jstr{end+1} = 'spm_jobman(''run'',j);\nclear j;\n';
+         jstr{end+1} = sprintf('spm_jobman(''run'',j);\nclear j;\n');
          cmd{k}=jstr;
     end
     toc
