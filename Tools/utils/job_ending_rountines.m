@@ -31,12 +31,14 @@ if par.sge
     %     cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
     %     cmd = repmat(cmd,size(jobs));
     cmd=cell(size(jobs));
+    tic
     for k=1:length(jobs)
         j=jobs{k};
          jstr = gencode(j);
-         jstr{end+1} = 'spm_jobman(''run'',j)';
+         jstr{end+1} = 'spm_jobman(''run'',j);\nclear j;\n';
          cmd{k}=jstr;
     end
+    toc
     %    varfile = do_cmd_matlab_sge(cmd,par)
     do_cmd_matlab_sge(cmd,par)
     
