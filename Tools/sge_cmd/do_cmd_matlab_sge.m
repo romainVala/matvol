@@ -82,7 +82,16 @@ for k=1:length(job)
         fprintf(fpnfonc,' path(''%s'');',llp);
     end
 %    fprintf(fpnfonc,'\n %s \n quit force \n',llp,job{k});
-    fprintf(fpnfonc,'\n\ntry\n\n %s \n\n catch err\n display(err.message);\n disp(getReport(err,''extended''));\n\n end\n quit force \n ',job{k});
+    jjj=job{k};
+    
+fprintf(fpnfonc,'\n\ntry\n\n ');
+if iscell(jjj)
+fprintf(fpnfonc,'%s \n',jjj{:});
+else
+fprintf(fpnfonc,'%s ',jjj);
+end
+
+fprintf(fpnfonc,'\n\n catch err\n display(err.message);\n disp(getReport(err,''extended''));\n\n end\n quit force \n ');
     
     fclose(fpnfonc);
     

@@ -27,18 +27,25 @@ end
 if par.sge
     defpar.cmd_prepend = '';
     par = complet_struct(par,defpar);
-
-    cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
-    cmd = repmat(cmd,size(jobs));
     
-    varfile = do_cmd_matlab_sge(cmd,par)
-    
+    %     cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
+    %     cmd = repmat(cmd,size(jobs));
+    cmd=cell(size(jobs));
     for k=1:length(jobs)
-        j=jobs(k);
-        %cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
-        %varfile = do_cmd_matlab_sge(cmd,par);
-        save(varfile{k},'j');
+        j=jobs{k};
+         jstr = gencode(j);
+         jstr{end+1} = 'spm_jobman(''run'',j)';
+         cmd{k}=jstr;
     end
+    %    varfile = do_cmd_matlab_sge(cmd,par)
+    do_cmd_matlab_sge(cmd,par)
+    
+%     for k=1:length(jobs)
+%         j=jobs(k);
+%         %cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
+%         %varfile = do_cmd_matlab_sge(cmd,par);
+%         save(varfile{k},'j');
+%     end
 
 end
 
