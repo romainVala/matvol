@@ -18,8 +18,8 @@ end
 
 
 ind_to_remove=[];
-cmd = cell(size(f));
-for i=1:length(f)
+cmd = cell(size(in));
+for i=1:length(in)
     
     if ~isempty(in{i}) && strcmp(in{i}(end-1:end),'gz')
         cmd{i} = sprintf('gunzip -f %s',in{i});
