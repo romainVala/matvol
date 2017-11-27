@@ -98,7 +98,7 @@ for idx = 1:length(source)
             case 'movel'
                 movefile(deblank(source{idx}(line,:)),dest{idx});
             case 'move_unix'
-                cmd = sprintf('mv  %s %s',source{idx}(line,:),dest{idx})
+                cmd = sprintf('mv  %s %s',source{idx}(line,:),dest{idx});
                 unix(cmd);
                 
             otherwise
