@@ -95,8 +95,11 @@ for idx = 1:length(source)
                 cmd = sprintf('ln -s %s %s',source{idx}(line,:),dest{idx});
                 unix(cmd);
                 
-            case 'move'
+            case 'movel'
                 movefile(deblank(source{idx}(line,:)),dest{idx});
+            case 'move_unix'
+                cmd = sprintf('mv  %s %s',source{idx}(line,:),dest{idx})
+                unix(cmd);
                 
             otherwise
                 error('[%s]: type %s unknown',mfilename,type)
