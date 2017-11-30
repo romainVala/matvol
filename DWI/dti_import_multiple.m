@@ -51,6 +51,10 @@ for k=1:length(dti_spm_dir)
     catch
         fprintf('WARNING no bvals bvecs found in %s\n',dti_spm_dir{k})
         fprintf('supposing B0 acquisition\n')
+        %check if dti file start with s which mean only one volume
+        fftest = get_subdir_regex_files(dti_spm_dir{k},'^s.*nii')
+        if isempty(fftest), error(sprintf('missing bval or bvec and no s file \n so check %s', dti_spm_dir{k})); end
+        
         dd=get_parent_path(which('dti_import_multiple.m'));
         bval_f(k) = get_subdir_regex_files(dd,'bvals_b0',1);
         bvec_f(k) = get_subdir_regex_files(dd,'bvecs_b0',1);
