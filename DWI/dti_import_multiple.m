@@ -15,6 +15,7 @@ defpar.skip_if_exist = 1;
 defpar.make_even_number_of_slice=1;
 defpar.include_all = 0;
 defpar.force_eddy=1;
+defpar.eddy_add_cmd=' --data_is_shelled';
 
 par = complet_struct(par,defpar);
 
@@ -94,7 +95,7 @@ dicjson = r_movefile(dicjson,outdir,'copy');
 [acqp,session]=topup_param_from_json_cenir(dti_files,'',dicjson,1);
 [B bi bj ]=unique(acqp,'rows');
 
-do_eddy=0;
+if par.force_eddy, do_eddy=1; else do_eddy=0; end
 
 if length(bi)==2
     if length(find(bj==1)) == length(find(bj==2)) %this mean there is the same number of AP PA acquisition so do eddy
@@ -190,9 +191,19 @@ if par.make_even_number_of_slice
 end
 
 if size(B,1) == 1
-    fprintf('Sorry but there is a unique phase direction for all acquisitions, I can not do topup\n');
-    topup_param_from_json_cenir(fb0,{outdir},dicjson,1); %just to write acqp.txt 
-    [job foDTIeddycor] = do_fsl_dtieddycor({fodti})   
+    if  par.force_eddy
+        %let's try eddy without topup
+        fid = fopen(fullfile(outdir,'index.txt'),'w');
+        fid2 = fopen(fullfile(outdir,'session.txt'),'w');
+        keyboard
+        
+        fclose(fid);    fclose(fid2);
+
+    else        
+        fprintf('Sorry but there is a unique phase direction for all acquisitions, I can not do topup\n');
+        topup_param_from_json_cenir(fb0,{outdir},dicjson,1); %just to write acqp.txt
+        [job foDTIeddycor] = do_fsl_dtieddycor({fodti})
+    end
 else
     
     topup=r_mkdir({outdir},'topup');
@@ -236,7 +247,7 @@ else
             fprintf(fid2,'%d ',ll(aa(end)));
             if any(acqp(k,:)-acqp(ind(aa(end)),:))
                 fprintf('ERROR bad index topup to eddy association');
-                keyboard
+                %keyboard
             end
         end
         fclose(fid);    fclose(fid2);
