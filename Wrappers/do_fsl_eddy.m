@@ -20,8 +20,8 @@ defpar.walltime='12:00:00';
 
 par = complet_struct(par,defpar);
 
- dtidir = get_parent_path(f4D);
- 
+dtidir = get_parent_path(f4D);
+
 par.index  = get_subdir_regex_files(dtidir,par.index,1);
 if ~iscell(par.mask)
     par.mask  = get_subdir_regex_files(dtidir,par.mask,1);
@@ -30,7 +30,7 @@ par.bvecs = get_subdir_regex_files(dtidir,par.bvecs,1);
 par.bvals = get_subdir_regex_files(dtidir,par.bvals,1);
 
 if ischar(par.topup_dir) % then it is relative to DWI dir
-   
+    
     par.topup_dir = addsuffixtofilenames(dtidir,['/' par.topup_dir]);
 end
 
@@ -43,7 +43,7 @@ end
 outfile = addsuffixtofilenames(f4D,par.outsuffix)
 
 for k=1:length(f4D)
-
+    
     cmd = sprintf('eddy %s --imain=%s  --mask=%s  --index=%s  --bvecs=%s  --bvals=%s  --acqp=%s  --topup=%s  --out=%s --resamp=%s\n',...
         par.eddy_add_cmd,f4D{k},par.mask{k},par.index{k},par.bvecs{k},par.bvals{k},par.topup_acqp{k},par.topup{k},outfile{k},par.resamp)
     
