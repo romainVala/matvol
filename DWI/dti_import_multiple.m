@@ -194,11 +194,17 @@ if size(B,1) == 1
     if  par.force_eddy
         %let's try eddy without topup
         fid = fopen(fullfile(outdir,'index.txt'),'w');
-        fid2 = fopen(fullfile(outdir,'session.txt'),'w');
-        keyboard
-        
-        fclose(fid);    fclose(fid2);
+        fid3 = fopen(fullfile(outdir,'acqp.txt'),'w');
+        fprintf(fid3,'0 1 0 0.05');
+        ssess = ones(1,length(bval)); fprintf(fid,'%d ',ssess);
+        fclose(fid);    fclose(fid3);
 
+        par.sge=-1;
+        [job par.mask] = do_fsl_bet({fodti},par);
+        par.sge=1; par.topup='';
+        do_fsl_eddy({fodti},par,job)
+
+        
     else        
         fprintf('Sorry but there is a unique phase direction for all acquisitions, I can not do topup\n');
         topup_param_from_json_cenir(fb0,{outdir},dicjson,1); %just to write acqp.txt
