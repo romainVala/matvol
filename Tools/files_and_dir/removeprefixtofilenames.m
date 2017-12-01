@@ -35,13 +35,13 @@ if ischar(filelist)
 end
 
 % Repeat prefix to match filelist size if needed
-if numel(prefix) == 1
-    prefix = repmat(prefix,size(filelist));
-end
-
-if numel(filelist) > numel(prefix)
-    error('Dimensions mismatch : if there is N elements in filelist, there must be N prefix, OR juste 1 prefix')
-end
+% if numel(prefix) == 1
+%     prefix = repmat(prefix,size(filelist));
+% end
+% 
+% if numel(filelist) > numel(prefix)
+%     error('Dimensions mismatch : if there is N elements in filelist, there must be N prefix, OR juste 1 prefix')
+% end
 
 
 %% Add the prefixes
@@ -54,9 +54,14 @@ for i = 1:length(filelist)
     
     for line = 1:size(filelist{i},1)
         [pathstr,name,extension] = fileparts( deblank( filelist{i}(line,:) ) );
-        if strcmp(name(1:length(prefix{i})),prefix{i})
-            name(1:length(prefix{i}))=[];
+%         if strcmp(name(1:length(prefix{i})),prefix{i})
+%             name(1:length(prefix{i}))=[];
+%         end
+        aa=regexp(name,prefix,'match');
+        if ~isempty(aa{1})
+         name(1:length(aa{1}{1}))=[];   
         end
+        
         wfiles = strvcat(wfiles, fullfile(pathstr,[ name extension ])); %#ok<*AGROW>
     end
     
