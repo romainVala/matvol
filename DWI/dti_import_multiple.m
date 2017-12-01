@@ -152,7 +152,7 @@ bvec(:,opo_ind)=[];  bval(:,opo_ind)=[];
 
 %DO MERGE
 fodti=fullfile(outdir,par.data4D);
-do_fsl_merge(dti_files,fodti);
+do_fsl_merge(dti_files,fodti,struct('checkorient',1));
 
 if ~isempty(par.swap)
     fff = get_subdir_regex_files(outdir,'.*gz$');
@@ -228,12 +228,11 @@ else
             fme(nbb) = bb;
         end
     end
-    do_fsl_merge(fme,fo);
+    do_fsl_merge(fme,fo,struct('checkorient',1));
     
     ffname = fullfile(topup{1},'remove_one_slice');
     if exist(ffname,'file') %then remove the last slice
-        fprintf('WARNING you need to change the number of slice should not happend !!! romain !!!\n')
-        keyboard
+        error('WARNING you need to change the number of slice should not happend !!! romain !!!\n')        
     end
     
     if do_eddy
@@ -256,8 +255,7 @@ else
             fprintf(fid,'%d ',aa(end));
             fprintf(fid2,'%d ',ll(aa(end)));
             if any(acqp(k,:)-acqp(ind(aa(end)),:))
-                fprintf('ERROR bad index topup to eddy association');
-                %keyboard
+                eror('ERROR bad index topup to eddy association');
             end
         end
         fclose(fid);    fclose(fid2);
