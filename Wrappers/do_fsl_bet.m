@@ -23,7 +23,7 @@ for k=1:length(f)
     
     [pp ff ] = fileparts(f{k});
     
-    cmd = sprintf('cd %s; bet2 %s %s -m -f %f',pp,ff,par.output_name,par.frac);
+    cmd = sprintf('cd %s;\n bet2 %s %s -m -f %f',pp,ff,par.output_name,par.frac);
 	
     if par.anat_brain==0
 	cmd = sprintf('%s -n ',cmd);
