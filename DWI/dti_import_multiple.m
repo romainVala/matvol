@@ -255,7 +255,7 @@ else
             fprintf(fid,'%d ',aa(end));
             fprintf(fid2,'%d ',ll(aa(end)));
             if any(acqp(k,:)-acqp(ind(aa(end)),:))
-                eror('ERROR bad index topup to eddy association');
+                error('ERROR bad index topup to eddy association');
             end
         end
         fclose(fid);    fclose(fid2);
