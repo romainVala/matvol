@@ -95,7 +95,7 @@ for idx = 1:length(source)
                 cmd = sprintf('ln -s %s %s',source{idx}(line,:),dest{idx});
                 unix(cmd);
                 
-            case 'movel'
+            case 'move'
                 movefile(deblank(source{idx}(line,:)),dest{idx});
             case 'move_unix'
                 cmd = sprintf('mv  %s %s',source{idx}(line,:),dest{idx});
