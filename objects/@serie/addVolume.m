@@ -28,13 +28,24 @@ par.verbose = 0;
 
 for ser = 1 : numel(serieArray)
     
-    % Allow duplicate ?
-    if serieArray(ser).cfg.allow_duplicate % yes
-        % pass
-    else% no
+    % Remove duplicates
+    if serieArray(ser).cfg.remove_duplicates
+        
         if serieArray(ser).volumes.checkTag(tag)
-            continue
+            serieArray(ser).volumes = serieArray(ser).volumes.removeTag(tag);
         end
+        
+    else
+        
+        % Allow duplicate ?
+        if serieArray(ser).cfg.allow_duplicate % yes
+            % pass
+        else% no
+            if serieArray(ser).volumes.checkTag(tag)
+                continue
+            end
+        end
+        
     end
     
     try
