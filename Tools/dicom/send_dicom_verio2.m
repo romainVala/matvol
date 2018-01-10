@@ -1,5 +1,5 @@
 
-P = spm_select([1 Inf],'dir','Select directories of dicom files','','/nasDicom/dicom_raw'); 
+P = spm_select([1 Inf],'dir','Select directories of dicom files','','/export/dataCENIR/dicom/dicom_raw/'); 
 
 spm_defaults;
 
