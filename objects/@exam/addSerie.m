@@ -79,13 +79,24 @@ end
 
 for ex = 1 : numel(examArray)
     
-    % Allow duplicate ?
-    if examArray(ex).cfg.allow_duplicate % yes
-        % pass
-    else% no
+    % Remove duplicates
+    if examArray(ex).cfg.remove_duplicates
+        
         if examArray(ex).series.checkTag(tags)
-            continue
+            examArray(ex).series = examArray(ex).series.removeTag(tags);
         end
+        
+    else
+        
+        % Allow duplicate ?
+        if examArray(ex).cfg.allow_duplicate % yes
+            % pass
+        else% no
+            if examArray(ex).series.checkTag(tags)
+                continue
+            end
+        end
+        
     end
     
     % Fetch the directories
@@ -144,17 +155,7 @@ end % exam
 
 if nargout > 0
     
-    % Combine tags
-    allTags = '^(';
-    for t = 1:length(tags)
-        allTags = [allTags tags{t}]; %#ok<*AGROW>
-        if t~=length(tags)
-            allTags = [allTags '|'];
-        end
-    end
-    allTags = [allTags ')$'];
-    
-    varargout{1} = examArray.getSerie(allTags).toJob;
+    varargout{1} = examArray.getSerie( cellstr2regex(tags) ).toJob;
     
 end
 

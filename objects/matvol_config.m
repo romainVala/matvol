@@ -16,7 +16,7 @@ p.volume_show_viewer  = 'mrview';
 
 % --- @mvObject/mvObject (constructor) --------------------------------------------------------
 p.mvObject_cfg = struct;
-p.mvObject_cfg.allow_duplicate = 0;
-
+p.mvObject_cfg.allow_duplicate   = 0;
+p.mvObject_cfg.remove_duplicates = 1;
 
 end % function
