@@ -38,10 +38,22 @@ par = complet_struct(par,defpar);
 %% SPM:Spatial:Coregister
 
 skip=[];
+
 for nbsuj = 1:length(ref)
+    
     %     if ~par.redo
     %         if is_hdr_realign(src(nbsuj)),  skip = [skip nbsuj];     fprintf('skiping suj %d becasue %s is realigned',nbsuj,src{nbsuj});       end
     %     end
+    
+    % skip if .coregistered file exists
+    if ~par.redo
+        upper_dir_path_source = get_parent_path(char(src));
+        coreg_file_source = fullfile(upper_dir_path_source,'matvol_coregistration_info.txt');
+        if exist(coreg_file_source,'file')
+            skip = [skip nbsuj];
+            fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,nbsuj,coreg_file_source);
+        end
+    end
     
     switch par.type
         case 'estimate'
@@ -93,5 +105,45 @@ end
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
 
+
+%% Special routine for coregistration with matvol
+% Write a matvol_coregistration_info.txt file to remember it has been done, and allow sckipping the next tine
+
+for j = 1:length(jobs)
+    
+    % Content of the file
+    str = gencode(jobs{j}); % generate matlabbatch code
+    
+    % Source : Where to write the file ?
+    upper_dir_path_source = get_parent_path(char(jobs{j}.spm.spatial.coreg.estimate.source));
+    coreg_file_source     = fullfile(upper_dir_path_source,'matvol_coregistration_info.txt');
+    write_in_text_file(coreg_file_source, str)
+    
+    % Other : Where to write the file ?
+    if isfield(jobs{j}.spm.spatial.coreg.estimate,'other')
+        for o = 1:length(jobs{j}.spm.spatial.coreg.estimate.other)
+            upper_dir_path_other = get_parent_path(char(jobs{j}.spm.spatial.coreg.estimate.other{o}));
+            coreg_file_other     = fullfile(upper_dir_path_other,'matvol_coregistration_info.txt');
+            write_in_text_file(coreg_file_other, str)
+        end
+    end
+    
+end
+
+
+end % function
+
+function write_in_text_file(filename, content)
+
+assert(iscellstr(content) && isvector(content))
+
+fileID = fopen( filename , 'w' , 'n' , 'UTF-8' );
+if fileID < 0
+    warning('[%s]: Could not open %s', mfilename, filename)
+end
+
+fprintf(fileID,'%s\n',content{:});
+
+fclose(fileID);
 
 end % function
