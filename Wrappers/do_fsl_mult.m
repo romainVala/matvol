@@ -1,18 +1,14 @@
-function [out job] = do_fsl_mult(fos,outname,par)
+function [out, job] = do_fsl_mult(fos,outname,par)
 %function out = do_fsl_mult(fo,outname)
 %fo is either a cell or a matrix of char
 %outname is the name of the fo volumes sum
 %
 
-if ~exist('par'),par ='';end
+%% Check input arguments
 
-defpar.fsl_output_format = 'NIFTI';
-defpar.sge=0;
-defpar.jobname='fsl_mult';
-
-
-par = complet_struct(par,defpar);
-
+if ~exist('par','var')
+    par = ''; % for defpar
+end
 
 if iscell(outname)
     if length(fos)~=length(outname)
@@ -23,7 +19,27 @@ else
     outname = {outname};
 end
 
+
+%% defpar
+
+defpar.fsl_output_format = 'NIFTI';
+defpar.sge               = 0;
+defpar.jobname           = 'fsl_mult';
+defpar.redo              = 0;
+
+par = complet_struct(par,defpar);
+
+
+%% Prepare Prepare command using fslmaths
+
+skip = [];
+
 for ns=1:length(outname)
+    
+    if ~par.redo   &&   exist(outname{ns},'file')
+        skip = [skip ns]; %#ok<AGROW>
+        fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,ns,outname{ns});
+    end
     
     fo = cellstr(char(fos(ns)));
     
@@ -35,12 +51,18 @@ for ns=1:length(outname)
     
     cmd = sprintf('%s %s \n',cmd,outname{ns});
     
-%    fprintf('writing %s \n',outname)
+    %    fprintf('writing %s \n',outname)
     
-    out{ns} = [outname{ns} '.nii.gz'];
+    out{ns} = [outname{ns} '.nii.gz']; %#ok<AGROW>
     
-    job(ns) = {cmd};
- 
+    job(ns) = {cmd}; %#ok<AGROW>
+    
 end
 
+% Skip the empty jobs
+job(skip) = [];
+
 job = do_cmd_sge(job,par);
+
+
+end % function
