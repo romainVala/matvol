@@ -47,7 +47,7 @@ for nbsuj = 1:length(ref)
     
     % skip if .coregistered file exists
     if ~par.redo
-        upper_dir_path_source = get_parent_path(char(src));
+        upper_dir_path_source = get_parent_path(char(src(nbsuj)));
         coreg_file_source = fullfile(upper_dir_path_source,'matvol_coregistration_info.txt');
         if exist(coreg_file_source,'file')
             skip = [skip nbsuj];
