@@ -36,11 +36,19 @@ par = complet_struct(par,defpar);
 
 skip = [];
 
+FSLOUTPUTTYPE = getenv('FSLOUTPUTTYPE');
+switch FSLOUTPUTTYPE
+    case 'NIFTI'
+        ext = '.nii';
+    case 'NIFTI_GZ'
+        ext = '.nii.gz';
+end
+
 for ns=1:length(outnames)
     
     fo = cellstr(char(fos(ns)));
     outname = outnames{ns};
-    out{ns} = [outname '.nii.gz']; %#ok<AGROW>
+    out{ns} = [outname ext]; %#ok<AGROW>
     
     % Skip outname already exists
     if ~par.redo   &&   exist(out{ns},'file')
