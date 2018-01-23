@@ -17,7 +17,7 @@ classdef mvObject < handle
         % --- Constructor -------------------------------------------------
         % no 'real' constructor : this is a 'virtual' object
         % -----------------------------------------------------------------
-        function obj =  mvObject
+        function self =  mvObject
             global mvObject_cfg
             
             % --- cfg ---
@@ -27,8 +27,8 @@ classdef mvObject < handle
                 mvObject_cfg = p.mvObject_cfg; % Save config in global workspace
             end
             
-            obj.cfg.allow_duplicate   = mvObject_cfg.allow_duplicate;
-            obj.cfg.remove_duplicates = mvObject_cfg.remove_duplicates;
+            self.cfg.allow_duplicate   = mvObject_cfg.allow_duplicate;
+            self.cfg.remove_duplicates = mvObject_cfg.remove_duplicates;
             
         end % ctor
         
