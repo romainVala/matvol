@@ -1,6 +1,6 @@
 function unix( mvArray, cmd )
 %L Main routine for all unix commands, such as ls, ll, pwd, applied on the self.path
-% Syntax : l('ls')   l('ll')   l('ltr')
+% Syntax : unix('ls')   unix('ll')   unix('chmod')   ...
 
 for idx = 1 : numel(mvArray)
     
