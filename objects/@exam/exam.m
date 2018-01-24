@@ -7,6 +7,7 @@ classdef exam < mvObject
     properties
         
         series = serie.empty % series associated with this exam (See @serie object)
+        models = model.empty % models associated with this exam (See @model object)
         
         is_incomplete = [];  % this flag will be set to 1 if missing series/volumes
         

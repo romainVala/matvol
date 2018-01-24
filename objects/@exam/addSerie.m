@@ -104,7 +104,7 @@ for ex = 1 : numel(examArray)
     
     % Be sure to add new series to the serieArray
     lengthSeries = length(examArray(ex).series);
-    counter = 0;
+    counter      = 0;
     
     % Non-empy list ?
     if ~isempty(serieList)
