@@ -17,9 +17,9 @@ classdef model < mvObject
             if nargin > 0
                 
                 [pathstr,name, ~] = get_parent_path(inputPath);
-                self.name = name;                                           % directory name
-                self.path = fullfile(pathstr,name,filesep);                 % path of dirname
-                self.tag  = tag;                                            % tag of the serie : anat, T1, run, run1, d60, RS, ...
+                self.name = name;                   % directory name
+                self.path = fullfile(pathstr,name); % path of dirname
+                self.tag  = tag;                    % tag of the serie : anat, T1, run, run1, d60, RS, ...
                 
                 % If an @exam object is presented as input argument,
                 % incorporate it's pointer inside the created @serie
