@@ -16,11 +16,12 @@ end
 
 %% defpar
 
-defpar.todo  = 0;
-defpar.subdir = 'topup';
-defpar.file_reg = '^f.*nii';
-defpar.fsl_output_format='NIFTI';
-defpar.do_apply = [];
+defpar.todo              = 0;
+defpar.subdir            = 'topup';
+defpar.file_reg          = '^f.*nii';
+defpar.fsl_output_format = 'NIFTI';
+defpar.do_apply          = [];
+defpar.redo              = 0;
 
 par = complet_struct(par,defpar);
 
@@ -80,7 +81,7 @@ for subj=1:nrSubject
     
     fout = addsuffixtofilenames(topup_outdir,'/4D_orig_topup_movpar.txt');
     
-    if exist(fout{1},'file')
+    if exist(fout{1},'file') && ~par.redo
         fprintf('[%s]: skiping topup estimate because %s exists \n',mfilename,fout{1})
     else
         

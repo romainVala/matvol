@@ -150,17 +150,24 @@ if do_print
     end
     
     if mod(dim(3),2)==0 %even number of slice
-        fprintf('even number of slice keeping --subsamp=2,2,2,2,2,1,1,1,1\n');
-    elseif mod(dim(3),3)==0
-        fprintf('number of slice /3 so changing --subsamp=2,2,2,2,2,1,1,1,1  to --subsamp=3,3,3,3,3,1,1,1,1 \n');
-        cmd = sprintf('sed -i -e ''4s/.*/--subsamp=3,3,3,3,3,1,1,1,1/'' %s',fcnf{1});
-        unix(cmd);
+        %         fprintf('even number of slice keeping --subsamp=2,2,2,2,2,1,1,1,1\n');
+        %     elseif mod(dim(3),3)==0
+        %         fprintf('number of slice /3 so changing --subsamp=2,2,2,2,2,1,1,1,1  to --subsamp=3,3,3,3,3,1,1,1,1 \n');
+        %         cmd = sprintf('sed -i -e ''4s/.*/--subsamp=3,3,3,3,3,1,1,1,1/'' %s',fcnf{1});
+        %         unix(cmd);
         
     else
-        fprintf('Please remove one slice to get an even number of slices\n\n')
-        ffname = fullfile(outdir,'remove_one_slice');
-        fid=fopen(ffname,'w');
-        fprintf(fid,'%d %d %d',dim(1),dim(2),dim(3)-1); fclose(fid);
+        %         fprintf('Please remove one slice to get an even number of slices\n\n')
+        %         ffname = fullfile(outdir,'remove_one_slice');
+        %         fid=fopen(ffname,'w');
+        %         fprintf(fid,'%d %d %d',dim(1),dim(2),dim(3)-1); fclose(fid);
+        
+        warning('To remove one slice : do_fsl_remove_one_slice')
+        warning('To add    one slice : do_fsl_add_one_slice   ')
+        warning('You should add/remove onse slice on the RAW data')
+        
+        error(['There is an odd number of slices and TOPUP cannot deal with it. Please remove/add one slice to the volume : \n'...
+            '%s\n'],finii{1})
         
     end
     
@@ -168,4 +175,7 @@ if do_print
     if size(B,1) == 1
         warning('can not do topup : tere is a unique phase direction for all acquisitions!')
     end
+    
 end
+
+end % function
