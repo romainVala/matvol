@@ -29,7 +29,6 @@ defpar.sge             = 0;
 defpar.run             = 0;
 defpar.display         = 0;
 defpar.delete_previous = 0;
-par.redo               = 0;
 
 par = complet_struct(par,defpar);
 

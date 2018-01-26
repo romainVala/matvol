@@ -1,5 +1,5 @@
-function addModel( examArray, varargin)
-% General syntax : examArray.addModel('dir_regex_1', 'dir_regex_2', ... , 'tag' )
+function varargout = addModel( examArray, varargin)
+% General syntax : jobInput = examArray.addModel('dir_regex_1', 'dir_regex_2', ... , 'tag' )
 %
 % Example :
 %
@@ -8,6 +8,8 @@ function addModel( examArray, varargin)
 % examArray.addModel('models', 'retinotpy', 'rotatingWedge', 'model_rotatingWedge') <= Model 1
 % examArray.addModel('models', 'retinotpy', 'eccentricity ', 'model_eccentricity' ) <= Model 2
 % examArray.addModel('models', 'motor'                     , 'model_motor'        ) <= Model 3
+%
+% jobInput is the output examArray.getModel("all tags combined").toJob
 %
 
 %% Check inputs
@@ -79,5 +81,14 @@ for ex = 1 : numel(examArray)
     
     
 end % exam
+
+
+%% Output
+
+if nargout > 0
+    
+    varargout{1} = examArray.getModel( tag ).toJob;
+    
+end
 
 end % function
