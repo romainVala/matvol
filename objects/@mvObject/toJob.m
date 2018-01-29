@@ -5,7 +5,7 @@ function [ pathArray ] = toJob( mvArray, flag )
 
 %% Check input arguments
 
-assert( isa(mvArray,'exam') || isa(mvArray,'serie') || isa(mvArray,'volume') || isa(mvArray,'stim') )
+assert( isa(mvArray,'exam') || isa(mvArray,'serie') || isa(mvArray,'volume') || isa(mvArray,'stim') || isa(mvArray,'model') )
 
 if nargin < 2
     switch class(mvArray)
@@ -16,6 +16,8 @@ if nargin < 2
         case 'volume'
             flag = 0;
         case 'stim'
+            flag = 0;
+        case 'model'
             flag = 0;
     end
 end
