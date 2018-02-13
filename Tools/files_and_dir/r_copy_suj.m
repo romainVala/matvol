@@ -1,4 +1,4 @@
-function suj = r_copy_suj(suj,outputdir,par)
+function sujout = r_copy_suj(suj,outputdir,par)
 %suj = r_moverfile(suj,outputdir,par)
 %for a list of subject in d copy in outputdir
 %
