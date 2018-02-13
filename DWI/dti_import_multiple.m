@@ -7,7 +7,7 @@ if ~exist('par')
 end
 
 defpar.skip_vol='';
-defpar.sge=0;
+defpar.sge=1;
 defpar.data4D= '4D_dwi';
 defpar.imgregex = '^[fs]';
 defpar.swap=''; %for swap dim for sag par.swap='-y z -x' for coro par.swap='x z -y '
@@ -18,6 +18,7 @@ defpar.force_eddy=1;
 defpar.eddy_add_cmd=' --data_is_shelled';
 
 par = complet_struct(par,defpar);
+choose_sge=par.sge;
 
 %multiple dti subdir to import
 if iscell(dti_spm_dir{1})
@@ -205,7 +206,7 @@ if size(B,1) == 1
 
         par.sge=-1;
         [job par.mask] = do_fsl_bet({fodti},par);
-        par.sge=1; par.topup='';
+        par.sge=choose_sge; par.topup='';
         do_fsl_eddy({fodti},par,job)
 
         
@@ -260,7 +261,7 @@ else
         end
         fclose(fid);    fclose(fid2);
         [job par.mask] = do_fsl_bet({fodti},par,job);
-        par.sge=1;
+        par.sge=choose_sge;
         do_fsl_eddy({fodti},par,job)
         
     else %only topup so
@@ -293,7 +294,7 @@ else
         par.topup = addsuffixtofilenames(fB0name{1},'_topup');
                         
         par.fsl_output_format = 'NIFTI_GZ';
-        par.sge=1;        par.walltime='12:00:00';
+        par.sge=choose_sge;        par.walltime='12:00:00';
         do_fsl_apply_topup(foDTIeddycor,addsuffixtofilenames(topup,['/' par.topup]),par,job)
     end
     
