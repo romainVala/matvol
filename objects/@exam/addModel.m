@@ -30,8 +30,8 @@ for ex = 1 : numel(examArray)
     % Remove duplicates
     if examArray(ex).cfg.remove_duplicates
         
-        if examArray(ex).models.checkTag(tag)
-            examArray(ex).models = examArray(ex).models.removeTag(tag);
+        if examArray(ex).model.checkTag(tag)
+            examArray(ex).model = examArray(ex).model.removeTag(tag);
         end
         
     else
@@ -40,7 +40,7 @@ for ex = 1 : numel(examArray)
         if examArray(ex).cfg.allow_duplicate % yes
             % pass
         else% no
-            if examArray(ex).models.checkTag(tags)
+            if examArray(ex).model.checkTag(tags)
                 continue
             end
         end
@@ -51,7 +51,7 @@ for ex = 1 : numel(examArray)
     modelDir  = get_subdir_regex( examArray(ex).path, recursive_args{:} );
     
     % Be sure to add new model to the modelArray
-    lengthModel = length(examArray(ex).models);
+    lengthModel = length(examArray(ex).model);
     counter     = 0;
     
     % Non-empy Dir ?
@@ -66,7 +66,7 @@ for ex = 1 : numel(examArray)
         try
             SPMfile = get_subdir_regex_files(modelDir,'^SPM.mat$',1);
             counter = counter + 1;
-            examArray(ex).models(lengthModel + counter) = model(char(SPMfile), tag, examArray(ex));
+            examArray(ex).model(lengthModel + counter) = model(char(SPMfile), tag, examArray(ex));
         catch
             warning(['Could not find SPM.mat file in the dir : \n' ...
                 '%s'], char(modelDir))

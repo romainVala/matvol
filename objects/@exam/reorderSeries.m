@@ -15,7 +15,7 @@ end
 %% Do the reorder over all exams
 
 for ex = 1 : numel(examArray)
-    examArray(ex).series = examArray(ex).series.reorder(kind);
+    examArray(ex).serie = examArray(ex).serie.reorder(kind);
 end
 
 

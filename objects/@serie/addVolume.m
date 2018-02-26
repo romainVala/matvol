@@ -31,8 +31,8 @@ for ser = 1 : numel(serieArray)
     % Remove duplicates
     if serieArray(ser).cfg.remove_duplicates
         
-        if serieArray(ser).volumes.checkTag(tag)
-            serieArray(ser).volumes = serieArray(ser).volumes.removeTag(tag);
+        if serieArray(ser).volume.checkTag(tag)
+            serieArray(ser).volume = serieArray(ser).volume.removeTag(tag);
         end
         
     else
@@ -41,7 +41,7 @@ for ser = 1 : numel(serieArray)
         if serieArray(ser).cfg.allow_duplicate % yes
             % pass
         else% no
-            if serieArray(ser).volumes.checkTag(tag)
+            if serieArray(ser).volume.checkTag(tag)
                 continue
             end
         end
@@ -54,7 +54,7 @@ for ser = 1 : numel(serieArray)
         volume_found = get_subdir_regex_files(serieArray(ser).path,file_regex,par); % error from this function if not found
         
         % Volume found, so add it
-        serieArray(ser).volumes(end + 1) = volume(char(volume_found), tag, serieArray(ser).exam , serieArray(ser));
+        serieArray(ser).volume(end + 1) = volume(char(volume_found), tag, serieArray(ser).exam , serieArray(ser));
         
     catch
         

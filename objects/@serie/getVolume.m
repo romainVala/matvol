@@ -40,17 +40,17 @@ for ex = 1 : size(serieArray,1)
         
         counter = 0;
         
-        for vol = 1 : numel(serieArray(ex,ser).volumes)
+        for vol = 1 : numel(serieArray(ex,ser).volume)
             
             if ...
-                    ~isempty(serieArray(ex,ser).volumes(vol).(type)) && ...                      % (type) is present in the @volume ?
-                    ~isempty(regexp(serieArray(ex,ser).volumes(vol).(type)(1,:), regex, 'once')) % found a corresponding volume.(type) to the regex ?
+                    ~isempty(serieArray(ex,ser).volume(vol).(type)) && ...                      % (type) is present in the @volume ?
+                    ~isempty(regexp(serieArray(ex,ser).volume(vol).(type)(1,:), regex, 'once')) % found a corresponding volume.(type) to the regex ?
                 
                 % Above is a problem : I only scan the first line of char array : regexp doesnt work on char array, only char vector
                 % It could also work if we scan over a cellstr, but the management would bring other problems : which line to take into account ?
                 
                 counter = counter + 1;
-                volumeArray(ex,ser,counter) = serieArray(ex,ser).volumes(vol);
+                volumeArray(ex,ser,counter) = serieArray(ex,ser).volume(vol);
                 
             end
             

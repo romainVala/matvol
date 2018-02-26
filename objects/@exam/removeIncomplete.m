@@ -10,7 +10,7 @@ if nargout < 1
     error('[%s]: At least one output argument is required', mfilename)
 end
 
-completeExams   = examArray;  % deep copy of the array
+completeExams   = examArray;  % NOT a deep copy of the array, just pointer copy
 incompleteExams = exam.empty; % empty array
 
 for ex = length(examArray) : -1 : 1

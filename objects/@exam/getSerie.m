@@ -40,14 +40,14 @@ for ex = 1 : numel(examArray)
     
     counter = 0;
     
-    for ser = 1 : numel(examArray(ex).series)
+    for ser = 1 : numel(examArray(ex).serie)
         
         if ...
-                ~isempty(examArray(ex).series(ser).(type)) && ...                 % (type) is present in the @serie ?
-                ~isempty(regexp(examArray(ex).series(ser).(type), regex, 'once')) % found a corresponding serie.(type) to the regex ?
+                ~isempty(examArray(ex).serie(ser).(type)) && ...                 % (type) is present in the @serie ?
+                ~isempty(regexp(examArray(ex).serie(ser).(type), regex, 'once')) % found a corresponding serie.(type) to the regex ?
             
             counter = counter + 1;
-            serieArray(ex,counter) = examArray(ex).series(ser);
+            serieArray(ex,counter) = examArray(ex).serie(ser);
             
         end
         

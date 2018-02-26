@@ -38,14 +38,14 @@ for ex = 1 : numel(examArray)
     
     counter = 0;
     
-    for ser = 1 : numel(examArray(ex).models)
+    for ser = 1 : numel(examArray(ex).model)
         
         if ...
-                ~isempty(examArray(ex).models(ser).(type)) && ...                 % (type) is present in the @model ?
-                ~isempty(regexp(examArray(ex).models(ser).(type), regex, 'once')) % found a corresponding model.(type) to the regex ?
+                ~isempty(examArray(ex).model(ser).(type)) && ...                 % (type) is present in the @model ?
+                ~isempty(regexp(examArray(ex).model(ser).(type), regex, 'once')) % found a corresponding model.(type) to the regex ?
             
             counter = counter + 1;
-            modelArray(ex,counter) = examArray(ex).models(ser);
+            modelArray(ex,counter) = examArray(ex).model(ser);
             
         end
         

@@ -3,9 +3,9 @@ classdef serie < mvObject
     
     properties
         
-        volumes = volume.empty % volumes associated with this serie
-        exam    = exam.empty   % exam    associated with this serie
-        stim    = stim.empty   % stim    associated with this serie
+        volume = volume.empty % volumes associated with this serie
+        exam   = exam.empty   % exam    associated with this serie
+        stim   = stim.empty   % stim    associated with this serie
         
     end
     
