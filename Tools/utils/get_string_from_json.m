@@ -12,24 +12,32 @@ function [ out ] = get_string_from_json( filename , field_to_get , field_type )
 % Made to replace loadjson form jsonlab
 
 %% Check inpur parameters
-if iscell(filename)
-    for kk=1:length(filename)
-        out(kk) = get_string_from_json( filename{kk} , field_to_get , field_type );
-    end
-    return    
-end
 
 assert(nargin==3,'Wrong number of input arguments : 3 required')
 
-assert(ischar(filename),'filename must be a char')
+assert(ischar(filename) || iscellstr(filename),'filename must be a char or cellstr')
 
-assert(iscell(field_to_get)&&isvector(field_to_get),'field_to_get cellvector')
-assert(iscell(field_type)&&isvector(field_type),'field_type cellvector')
+assert((iscellstr(field_to_get)||ischar(field_to_get))&&isvector(field_to_get),'field_to_get cellstr')
+assert((iscellstr(field_type  )||ischar(field_type  ))&&isvector(field_type  ),'field_type cellstr')
+
+field_to_get = cellstr(field_to_get);
+field_type   = cellstr(field_type);
 
 assert(numel(field_to_get)==numel(field_type),'field_to_get field_type must have the same dimension')
 
 assert(all(cellfun(@ischar,field_to_get)),'all elements in field_to_get must be char')
 assert(all(cellfun(@ischar,field_type)),'all elements in field_type must be char')
+
+
+%% Loop over all files
+
+if iscellstr(filename)
+    out = cell(length(filename),1);
+    for kk=1:length(filename)
+        out{kk} = get_string_from_json( filename{kk} , field_to_get , field_type );
+    end
+    return
+end
 
 
 %% Read the file
