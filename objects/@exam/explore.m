@@ -9,6 +9,7 @@ for idx = 1 : numel(obj)
     fprintf('    name = %s \n',obj(idx).name)
     fprintf('    path = %s \n',obj(idx).path)
     obj(idx).serie.explore;
+    obj(idx).model.explore;
     fprintf('\n')
 end
 
