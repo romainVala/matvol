@@ -5,7 +5,9 @@ stimstruct = cell(numel(stimArray),1);
 
 for idx = 1 : numel(stimArray)
     
-    stimstruct{idx} = load(stimArray(idx).path);
+    if ~isempty(stimArray(idx).path)
+        stimstruct{idx} = load(stimArray(idx).path);
+    end
     
 end % for all objects in stimArray
 
