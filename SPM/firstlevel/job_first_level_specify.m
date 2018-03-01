@@ -62,9 +62,9 @@ for subj = 1:nrSubject
     end
     
     %     if iscell(dirFonc{1})
-    subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg,struct('verbose',0));
-    unzip_volume(subjectRuns);
     subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
+    unzip_volume(subjectRuns);
+    subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg,struct('verbose',0));
     if par.rp
         fileRP = get_subdir_regex_files(dirFonc{subj},'^rp.*txt');
     end
