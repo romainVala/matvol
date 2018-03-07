@@ -8,20 +8,33 @@ function [ jobs ] = job_ending_rountines( jobs, skip, par )
 %% Check input arguments
 
 assert(nargin==3, 'All inputs are required : jobs, skip, par')
-assert(iscell(jobs),'jobs must be cell')
-assert(isnumeric(skip),'skip must be numeric')
-assert(isstruct(par),'par must be struct')
+assert(iscell(jobs), 'jobs must be cell')
+assert(isnumeric(skip), 'skip must be numeric')
+assert(isstruct(par), 'par must be struct')
+
+
+%% defpar
+
+defpar.sge      = 0;
+defpar.run      = 0;
+defpar.display  = 0;
+defpar.pct      = 0; % Parallel Computing Toolbox
+
+par = complet_struct(par,defpar);
 
 
 %% Routines
 
+
 % Skip the empty jobs
 jobs(skip) = [];
+
 
 % Jobs are remaining ?
 if isempty(jobs)
     return
 end
+
 
 % SGE
 if par.sge
@@ -34,22 +47,23 @@ if par.sge
     tic
     for k=1:length(jobs)
         j=jobs{k};
-         jstr = gencode(j);
-         jstr{end+1} = sprintf('spm_jobman(''run'',{j});\nclear j;\n');
-         cmd{k}=jstr;
+        jstr = gencode(j);
+        jstr{end+1} = sprintf('spm_jobman(''run'',{j});\nclear j;\n');
+        cmd{k}=jstr;
     end
     toc
     %    varfile = do_cmd_matlab_sge(cmd,par)
     do_cmd_matlab_sge(cmd,par)
     
-%     for k=1:length(jobs)
-%         j=jobs(k);
-%         %cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
-%         %varfile = do_cmd_matlab_sge(cmd,par);
-%         save(varfile{k},'j');
-%     end
-
+    %     for k=1:length(jobs)
+    %         j=jobs(k);
+    %         %cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
+    %         %varfile = do_cmd_matlab_sge(cmd,par);
+    %         save(varfile{k},'j');
+    %     end
+    
 end
+
 
 % Display
 if par.display
@@ -57,9 +71,17 @@ if par.display
     spm('show');
 end
 
+
 % Run !
 if par.run
-    spm_jobman('run',jobs)
+    if par.pct % Parallel Computing Toolbox
+        parfor j = 1 : numel(jobs)
+            spm_jobman('run',jobs(j))
+        end % parfor
+    else
+        spm_jobman('run',jobs)
+    end
 end
+
 
 end % function
