@@ -111,6 +111,7 @@ for ex = 1 : numel(examArray)
         
         % Check if N series are found for N tags.
         if checkNr && ( length(serieList) ~= nrSeries )
+            examArray(ex).is_incomplete = 1; % set incomplete flag
             error([
                 'Number of input (%d) tag/nrSeries differs from number of series found \n'...
                 '#%d : %s ' ...

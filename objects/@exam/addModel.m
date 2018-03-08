@@ -61,6 +61,7 @@ for ex = 1 : numel(examArray)
                 'Could not find only 1 dir corresponding to the recursive_regex_path : \n'...
                 '%s %s'],...
                 examArray(ex).path, sprintf('%s ', recursive_args{:}))
+            examArray(ex).is_incomplete = 1; % set incomplete flag
         end
         
         try
@@ -70,6 +71,7 @@ for ex = 1 : numel(examArray)
         catch
             warning(['Could not find SPM.mat file in the dir : \n' ...
                 '%s'], char(modelDir))
+            examArray(ex).is_incomplete = 1; % set incomplete flag
         end
         
     else
@@ -77,6 +79,7 @@ for ex = 1 : numel(examArray)
             'Could not find any dir corresponding to the recursive_regex_path : \n'...
             '%s %s'],...
             examArray(ex).path, sprintf('%s ', recursive_args{:}))
+        examArray(ex).is_incomplete = 1; % set incomplete flag
     end
     
     
