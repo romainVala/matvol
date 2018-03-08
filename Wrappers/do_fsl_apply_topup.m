@@ -5,7 +5,7 @@ if ~exist('jobappend','var'), jobappend ='';end
 
 
 defpar.outprefix = 'ut';
-defpar.sge=1;
+defpar.sge=0;
 defpar.index=0;
 defpar.acqpfile = 'acqp.txt';
 defpar.fsl_output_format = 'NIFTI';

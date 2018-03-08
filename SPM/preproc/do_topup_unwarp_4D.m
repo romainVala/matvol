@@ -22,6 +22,7 @@ defpar.file_reg          = '^f.*nii';
 defpar.fsl_output_format = 'NIFTI';
 defpar.do_apply          = [];
 defpar.redo              = 0;
+defpar.pct               = 0;
 
 par = complet_struct(par,defpar);
 
@@ -34,7 +35,19 @@ else
     nrSubject = 1;
 end
 
-for subj=1:nrSubject
+if par.pct % Parallel Computing Toolbox
+    nrUsableWorkers = Inf; 
+else
+    nrUsableWorkers = 0;
+end
+
+% just to solve a parfor problem : need to pre-allocate some internal variables
+fmean = cell(nrSubject,1);
+par_topup = cell(nrSubject,1);
+ACQP = cell(nrSubject,1);
+
+parfor(subj = 1 : nrSubject, nrUsableWorkers)
+% for subj = 1 : nrSubject % use this line (classic for loop) to debug, and comment the previous line (parfor loop)
     
     % Fetch current subject images files
     runList = get_subdir_regex_files(dirFonc{subj},par.file_reg);
@@ -59,25 +72,24 @@ for subj=1:nrSubject
         % Generate if needed, a mean image for all runs (necessary for topup)
         mean_files_cellstr = addprefixtofilenames({runName},'mean');
         if ~exist(mean_files_cellstr{1},'file')
-            sgeset  = par.sge;
-            par.sge = 0;
-            mean_files_cellstr{1} = do_fsl_mean(runList(run),mean_files_cellstr{1},par);
-            par.sge = sgeset;
+            par_save = par;
+            par_save.sge = 0;
+            mean_files_cellstr{1} = do_fsl_mean(runList(run),mean_files_cellstr{1},par_save);
         end
         
         % Is the orientation of all runs coherent ?
         if run>1
-            if compare_orientation(fmean(1),mean_files_cellstr(1)) == 0
+            if compare_orientation(fmean{subj}(1),mean_files_cellstr(1)) == 0
                 fprintf('[%s]: WARNING reslicing mean image %s \n', mfilename, mean_files_cellstr{1});
-                resliced_mean= do_fsl_reslice( mean_files_cellstr(1),fmean(1));
+                resliced_mean= do_fsl_reslice( mean_files_cellstr(1),fmean{subj}(1));
                 mean_files_cellstr(1) = resliced_mean;
             end
         end
         
         runList{run}=char([cellstr(char(runList(run)));mean_files_cellstr]);
-        fmean(run) = mean_files_cellstr(1); %#ok<AGROW>
+        fmean{subj}(run) = mean_files_cellstr(1);
         
-    end
+    end % runList
     
     fout = addsuffixtofilenames(topup_outdir,'/4D_orig_topup_movpar.txt');
     
@@ -87,40 +99,41 @@ for subj=1:nrSubject
         
         %ACQP=topup_param_from_nifti_cenir(runList,topup_outdir)
         try
-            ACQP=topup_param_from_json_cenir(fmean,topup_outdir);
+            ACQP{subj}=topup_param_from_json_cenir(fmean{subj},topup_outdir);
         catch err
             warning(err.message)
-            ACQP=topup_param_from_nifti_cenir(fmean,topup_outdir);
+            ACQP{subj}=topup_param_from_nifti_cenir(fmean{subj},topup_outdir);
         end
-        if size(unique(ACQP),1)<2
+        if size(unique(ACQP{subj}),1)<2
             error('all the serie have the same phase direction can not do topup')
         end
         
         fprintf('topup estimate %s \n',fout{1})
         
         fo = addsuffixtofilenames(topup_outdir,'/4D_orig');
-        par.checkorient=1; %give error if not same orient
-        do_fsl_merge(fmean,fo{1},par);
-        do_fsl_topup(fo,par);
+        par_topup{subj} = par;
+        par_topup{subj}.checkorient=1; %give error if not same orient
+        do_fsl_merge(fmean{subj},fo{1},par_topup{subj});
+        do_fsl_topup(fo,par_topup{subj});
         
     end
     
     fo = addsuffixtofilenames(topup_outdir,'/4D_orig_topup');
     
     if isempty(par.do_apply)
-        par.do_apply = ones(size(runList));
+        par_topup{subj}.do_apply = ones(size(runList));
     end
     
     for run=1:length(runList)
         %no because length is the same  realind = ceil(run/2); % because runList ad the mean
         %par.index=realind;
         
-        par.index=run;
-        if par.do_apply(run)
-            do_fsl_apply_topup(runList(run),fo,par)
+        par_topup{subj}.index=run;
+        if par_topup{subj}.do_apply(run)
+            do_fsl_apply_topup(runList(run),fo,par_topup{subj})
         end
         
-    end
+    end % runList
     
 end % for - subject
 
