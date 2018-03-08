@@ -1,4 +1,4 @@
-function mkdir( mvArray , varargin )
+function out = mkdir( mvArray , varargin )
 %MKDIR creates dir contained in varargin, starting for the current self.path
 % If the self.path is a dir , a subdir will be created.
 % If the self.path is a file, a subdir will be created next to it.
@@ -28,6 +28,7 @@ else
     lastDir        = fullfile(varargin{end});
 end
 
+out = cell(numel(mvArray),1);
 
 for idx = 1 : numel(mvArray)
     
@@ -42,7 +43,7 @@ for idx = 1 : numel(mvArray)
             error('Nature not defined for %s', mvArray(idx).path)
     end
     
-    r_mkdir(baseDir,fullfile(intermediatDir,lastDir));
+    out{idx} = char(r_mkdir(baseDir,fullfile(intermediatDir,lastDir)));
     
 end
 
