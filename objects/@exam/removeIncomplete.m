@@ -19,7 +19,7 @@ for ex = length(examArray) : -1 : 1
         fprintf('[%s]: The exam #%d will be removed : \n', mfilename, ex)
         examArray(ex).explore
         completeExams(ex) = [];
-        incompleteExams(end+1) = examArray(ex); %#ok<AGROW>
+        incompleteExams(end+1,1) = examArray(ex); %#ok<AGROW>
     end
 end
 
