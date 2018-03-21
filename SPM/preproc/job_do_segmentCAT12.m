@@ -32,6 +32,7 @@ defpar.walltime = '02:00:00';
 par = complet_struct(par,defpar);
 defpar.cmd_prepend = sprintf('global cat; cat_defaults; cat.extopts.subfolders=%d; cat.extopts.expertgui=1;clear defaults; spm_jobman(''initcfg'');',...
     par.subfolder);
+defpar.matlab_opt = ' -nodesktop '
 
 par = complet_struct(par,defpar);
 
