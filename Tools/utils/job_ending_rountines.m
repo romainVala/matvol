@@ -28,15 +28,17 @@ if par.sge
     defpar.cmd_prepend = '';
     par = complet_struct(par,defpar);
     
-    %     cmd{1} = sprintf('%s \n spm_jobman(''run'',j)',par.cmd_prepend);
-    %     cmd = repmat(cmd,size(jobs));
     cmd=cell(size(jobs));
     tic
     for k=1:length(jobs)
         j=jobs{k};
-         jstr = gencode(j);
-         jstr{end+1} = sprintf('spm_jobman(''run'',{j});\nclear j;\n');
-         cmd{k}=jstr;
+        jstr = gencode(j);
+        if isfield(par,'cmd_prepend')
+            jstr{end+1} = sprintf('%s\n spm_jobman(''run'',{j});\nclear j;\n',par.cmd_prepend);
+        else
+            jstr{end+1} = sprintf('spm_jobman(''run'',{j});\nclear j;\n');
+        end
+        cmd{k}=jstr;
     end
     toc
     %    varfile = do_cmd_matlab_sge(cmd,par)
