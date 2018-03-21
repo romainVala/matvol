@@ -93,12 +93,10 @@ end
 
 fprintf(fpnfonc,'\n\n catch err\n display(err.message);\n disp(getReport(err,''extended''));\n\n end\n quit force \n ');
     
-    fclose(fpnfonc);
+    fclose(fpnfonc);        
     
-    %cmdd{k} = sprintf('\nexport LANG=fr_FR.UTF-8\n\n matlab  -nodesktop -nojvm -nodisplay  -r "run(''%s'')"\n',job_fonc{k});
-    
-    
-    cmdd{k} = sprintf('\nexport LANG=fr_FR.UTF-8\n\n %s %s -r "run(''%s'')"\n',matdir,par.matlab_opt,job_fonc{k});
+%    cmdd{k} = sprintf('\nexport LANG=fr_FR.UTF-8\n\n %s %s -r "run(''%s'')"\n',matdir,par.matlab_opt,job_fonc{k});
+     cmdd{k} = sprintf('\n %s %s -r "run(''%s'')"\n',matdir,par.matlab_opt,job_fonc{k});
     
     
 end
