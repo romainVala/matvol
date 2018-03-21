@@ -61,7 +61,7 @@ for nbsuj = 1:length(img)
     
     spm_dir=spm('Dir'); %fileparts(which ('spm'));
     jobs{nbsuj}.spm.tools.cat.estwrite.data = cellstr(img{nbsuj});
-    %     jobs{nbsuj}.spm.tools.cat.estwrite.nproc = 0;
+    jobs{nbsuj}.spm.tools.cat.estwrite.nproc = 0;
     %     jobs{nbsuj}.spm.tools.cat.estwrite.opts.tpm = {fullfile(spm_dir,'tpm','TPM.nii,1')};
     %     jobs{nbsuj}.spm.tools.cat.estwrite.opts.affreg = 'mni';
     %     jobs{nbsuj}.spm.tools.cat.estwrite.opts.biasstr = 0.5;
