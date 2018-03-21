@@ -12,6 +12,12 @@ function [ out ] = get_string_from_json( filename , field_to_get , field_type )
 % Made to replace loadjson form jsonlab
 
 %% Check inpur parameters
+if iscell(filename)
+    for kk=1:length(filename)
+        out(kk) = get_string_from_json( filename{kk} , field_to_get , field_type );
+    end
+    return    
+end
 
 assert(nargin==3,'Wrong number of input arguments : 3 required')
 
@@ -51,7 +57,7 @@ for o = 1 : length(field_to_get)
                 out{o} = [];
             end
         case { 'char' , 'string' , 'str' }
-            token = regexp(content, [ '"' field_to_get{o} '": "(\w+)",' ],'tokens');
+            token = regexp(content, [ '"' field_to_get{o} '": "([A-Za-z0-9-_,;]+)",' ],'tokens');
             if ~isempty(token)
                 out{o} = token{:}{:};
             else
