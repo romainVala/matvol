@@ -14,7 +14,7 @@ def_par.matlab_opt = '-singleCompThread -nodesktop -nojvm -nosoftwareopengl';
 
 def_par.jobdir=pwd; 
 %def_par.sge_queu = 'matlab_nodes';
-def_par.sge_queu = 'express';
+def_par.sge_queu = 'normal';
 def_par.sge_nb_coeur=1;
 def_par.submit_sleep = 1;  %add a sleep of 1 second between each qsub
 def_par.fake = 0;
@@ -93,12 +93,10 @@ end
 
 fprintf(fpnfonc,'\n\n catch err\n display(err.message);\n disp(getReport(err,''extended''));\n\n end\n quit force \n ');
     
-    fclose(fpnfonc);
+    fclose(fpnfonc);        
     
-    %cmdd{k} = sprintf('\nexport LANG=fr_FR.UTF-8\n\n matlab  -nodesktop -nojvm -nodisplay  -r "run(''%s'')"\n',job_fonc{k});
-    
-    
-    cmdd{k} = sprintf('\nexport LANG=fr_FR.UTF-8\n\n %s %s -r "run(''%s'')"\n',matdir,par.matlab_opt,job_fonc{k});
+%    cmdd{k} = sprintf('\nexport LANG=fr_FR.UTF-8\n\n %s %s -r "run(''%s'')"\n',matdir,par.matlab_opt,job_fonc{k});
+     cmdd{k} = sprintf('\n %s %s -r "run(''%s'')"\n',matdir,par.matlab_opt,job_fonc{k});
     
     
 end

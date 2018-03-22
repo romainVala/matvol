@@ -15,5 +15,5 @@ pc = fullfile(p,'send_dicom_prisma.sh');
 
 for k=1:length(Dirnames)
   fprintf('sending files for %s\n',Dirnames{k})
-  unix( [pc ' ' deblank(Dirnames{k}) '*.dic'] );
+  unix( ['LD_LIBRARY_PATH= ' pc ' ' deblank(Dirnames{k}) '*.dic'] );
 end  
