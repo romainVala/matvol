@@ -3,7 +3,7 @@ function [ out ] = minus( mvArray_1, mvArray_2 )
 %
 % Syntax : newArray = mvArray_1 - mvArray_2
 %
-% This operatior will remove the objects in mvArray_1 corresponding to the any tag of mvArray_2
+% This operatior will remove the objects in mvArray_1 corresponding to any tag of mvArray_2
 %
 
 assert( isa(mvArray_2,'mvObject') , 'can only use @mvObject for this operation')
