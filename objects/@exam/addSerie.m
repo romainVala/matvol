@@ -19,8 +19,6 @@ function varargout = addSerie( examArray, varargin)
 
 %% Check inputs
 
-AssertIsExamArray(examArray);
-
 % Need at least dir_regex + tag
 assert( length(varargin)>=2 , '[%s]: requires at least 2 input arguments dir_regex + tag')
 

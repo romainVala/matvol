@@ -21,8 +21,6 @@ function varargout = addStim( serieArray, stimPath, regex, tag, nrStim )
 
 %% Check inputs
 
-AssertIsSerieArray(serieArray);
-
 assert( ischar(stimPath) && ~isempty(stimPath) , 'stimPath must be a non-empty char' )
 assert( ischar(regex    ) && ~isempty(regex  ) , 'regex must be a non-empty char'    )
 assert( ischar(tag      ) && ~isempty(tag    ) , 'tag must be a non-empty char'      )

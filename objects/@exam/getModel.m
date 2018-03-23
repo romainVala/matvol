@@ -6,8 +6,6 @@ function [ modelArray ] = getModel( examArray, regex, type )
 
 %% Check inputs
 
-AssertIsExamArray(examArray);
-
 if nargin < 2
     regex = '.*';
 end

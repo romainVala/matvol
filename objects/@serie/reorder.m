@@ -4,7 +4,6 @@ function serieArray = reorder( serieArray, kind )
 
 %% Check input arguments
 
-AssertIsSerieArray(serieArray)
 assert( nargin>1 && ( ischar(kind) ) && ~isempty(kind) , 'kind must be defined and a non-empty char ')
 
 

@@ -5,8 +5,6 @@ function reorderSeries( examArray, kind )
 
 %% Check input arguments
 
-AssertIsExamArray(examArray)
-
 if nargin < 2
     kind = 'name';
 end

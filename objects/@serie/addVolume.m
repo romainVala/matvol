@@ -12,8 +12,6 @@ function varargout = addVolume( serieArray, file_regex, tag, nrVolumes )
 
 %% Check inputs
 
-AssertIsSerieArray(serieArray);
-
 assert( ischar(file_regex) && ~isempty(file_regex) , 'file_regex must be a non-empty char', file_regex )
 assert( ischar(tag       ) && ~isempty(tag       ) , 'tag must be a non-empty char'       , tag        )
 

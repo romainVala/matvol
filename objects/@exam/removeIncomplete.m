@@ -7,8 +7,6 @@ function [ completeExams, incompleteExams ] = removeIncomplete( examArray, do_de
 % Note : This method requires an output argument.
 %
 
-AssertIsExamArray(examArray);
-
 if nargout < 1
     error('[%s]: At least one output argument is required', mfilename)
 end

@@ -13,8 +13,6 @@ function varargout = addVolume( examArray, series_tag_regex, file_regex, tag, nr
 
 %% Check inputs
 
-AssertIsExamArray(examArray);
-
 AssertIsCharOrCellstr(series_tag_regex);
 
 AssertIsCharOrCellstr(file_regex);

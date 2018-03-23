@@ -8,8 +8,6 @@ function [ serieArray ] = getSerie( examArray, regex, type )
 
 %% Check inputs
 
-AssertIsExamArray(examArray);
-
 if nargin < 2
     regex = '.*';
 end

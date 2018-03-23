@@ -2,9 +2,6 @@ function plotRealign( serieArray )
 % PLOTREALIGN plots the realignment paramters for EPI sequences
 % Plots all series for each exam
 
-%% Check inputs
-AssertIsSerieArray(serieArray)
-
 
 %% plotRealign
 
