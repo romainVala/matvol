@@ -1,6 +1,8 @@
-function out = do_fsl_mean(fo,outname,par)
+function [ out, job ]= do_fsl_mean(fo,outname,par,jobappend)
 
 if ~exist('par'),par ='';end
+if ~exist('jobappend','var'), jobappend ='';end
+
 
 defpar.sge=0;
 defpar.fsl_output_format = 'NIFTI_GZ'; %ANALYZE, NIFTI, NIFTI_PAIR, NIFTI_GZ
@@ -31,11 +33,11 @@ outname = change_file_extension(outname,'');
 fo = cellstr(char(fo));
 
 [pp ffo]=get_parent_path(fo);
- 
-cmd = sprintf('export FSLOUTPUTTYPE=%s;cd %s;fslmaths %s -nan -thr 0',par.fsl_output_format,pp{1},fo{1});
+
+cmd = sprintf('export FSLOUTPUTTYPE=%s;\ncd %s;\nfslmaths %s -nan -thr 0',par.fsl_output_format,pp{1},fo{1});
 % cmd = sprintf('cur_dir=pwd;\nexport FSLOUTPUTTYPE=%s;\ncd %s;\nfslmaths %s -nan -thr 0;\n cd $cur_dir',par.fsl_output_format,pp{1},fo{1});
 if length(fo)==1 %this is a 4D volume
-    cmd = sprintf('%s -Tmean %s\n',cmd,outname);
+    cmd = sprintf('%s -Tmean %s;\n',cmd,outname);
 else
     
     for k=2:length(fo)
@@ -46,6 +48,7 @@ else
     
     cmd = sprintf('%s\nfslmaths %s -div  %d %s -odt float',cmd,outname,length(fo),outname);
 end
+
 
 job{1}=cmd;
 
@@ -60,4 +63,7 @@ switch par.fsl_output_format
 end
 out = [outname ext];
 
-do_cmd_sge(job,par);
+job = do_cmd_sge(job,par,jobappend);
+
+end % function
+

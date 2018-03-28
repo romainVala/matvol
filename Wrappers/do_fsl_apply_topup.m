@@ -1,8 +1,7 @@
-function do_fsl_apply_topup(fin,ftopup,par,jobappend)
+function [ job ] = do_fsl_apply_topup(fin,ftopup,par,jobappend)
 
 if ~exist('par'),par ='';end
 if ~exist('jobappend','var'), jobappend ='';end
-
 
 defpar.outprefix = 'ut';
 defpar.sge=0;
@@ -28,8 +27,10 @@ if exist(fo{end},'file') && ~par.redo
     fprintf('[%s]: skiping topup write, because %s exist \n',mfilename,fo{end});
 else
     
-    for k=1:length(fin)
+    job = '';
     
+    for k=1:length(fin)
+        
         if length(par.index)>1
             ii = par.index(k);
         else
@@ -38,10 +39,15 @@ else
         
         [dirtopup fff] = fileparts(ftopup{k});
         
-        cmd = sprintf('cd %s;export FSLOUTPUTTYPE=%s; applytopup --imain=%s --datain=%s --method=jac --inindex=%d  --topup=%s --out=%s;\n',...
+        cmd = sprintf('cd %s;\nexport FSLOUTPUTTYPE=%s;\napplytopup --imain=%s --datain=%s --method=jac --inindex=%d  --topup=%s --out=%s;\n',...
             dirtopup,par.fsl_output_format,fin{k},par.acqpfile,ii,fff,fo{k});
-        job{k} = cmd;
+        job = [job cmd];
     end
     
+    job = {job};
+    
     job = do_cmd_sge(job,par,jobappend);
+    
 end
+
+end % function

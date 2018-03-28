@@ -1,5 +1,8 @@
 function [job f_do_qsubar] = do_cmd_sge(job,par,jobappend,qsubappend)
+% DO_CMD_SGE
 
+
+%% Check inputs
 
 if ~exist('par'),  par=''; end
 if ~exist('jobappend','var'), jobappend ='';end
@@ -25,8 +28,12 @@ def_par.sbatch_args = '--export=NONE -m block:block ';
 def_par.jobappend = '';
 def_par.parallel=0;
 def_par.parallel_pack=1;
+def_par.pct = 0;
 
 par = complet_struct(par,def_par);
+
+
+%% Go
 
 if par.parallel>0
     par.sge_nb_coeur=par.parallel;
@@ -87,16 +94,39 @@ end
 %make jobdir in a subdir with jobname
 par.jobdir = fullfile(par.jobdir,par.jobname);
 
-if par.sge==0
-    for nn=1:length(job)
-        cmd = job{nn};
-        if nn<3 || nn>(length(job)-3)
-            fprintf('runing %s \n\n',cmd);
+if par.sge==0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    if par.pct
+        
+        parfor nn=1:length(job)
+            cmd = job{nn};
+            cmd = strsplit(cmd, sprintf('\n\n'))';
+            for c = 1 : length(cmd)
+                fprintf('[%s] : %s\n\n', mfilename, cmd{c});
+                if par.fake
+                else
+                    unix( cmd{c} );
+                end
+            end
         end
-        if par.fake,    else    unix(cmd);        end
+        
+    else
+        
+        for nn=1:length(job)
+            cmd = job{nn};
+            cmd = strsplit(cmd, sprintf('\n\n'))';
+            for c = 1 : length(cmd)
+                fprintf('[%s] : %s\n\n', mfilename, cmd{c});
+                if par.fake
+                else
+                    unix( cmd{c} );
+                end
+            end
+        end
     end
     
-else
+    
+else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     job_dir = par.jobdir;
     
@@ -114,7 +144,7 @@ else
         f_do_qsubar=qsubappend;
         fqsubar=fopen(f_do_qsubar,'a');
         fprintf(fqsubar,'\n');
-
+        
     else
         f_do_qsubar=fullfile(job_dir,'do_qsub.sh');
         fqsubar=fopen(f_do_qsubar,'w');
@@ -125,10 +155,10 @@ else
     f_do_loc=fullfile(job_dir,'do_all_local.sh');
     
     if par.job_append
-        fqsub=fopen(f_do_qsub,'a');        
+        fqsub=fopen(f_do_qsub,'a');
         floc=fopen(f_do_loc,'a');
     else
-        fqsub=fopen(f_do_qsub,'w');        
+        fqsub=fopen(f_do_qsub,'w');
         floc=fopen(f_do_loc,'w');
     end
     
@@ -149,16 +179,16 @@ else
             cmdd = sprintf('%s\n%s',par.software_path,cmdd);
         end
         
-        jname = sprintf('j%.2d_%s',k+kinit,par.jobname);        
+        jname = sprintf('j%.2d_%s',k+kinit,par.jobname);
         fpn = fullfile(job_dir,jname);
         fpnlog = sprintf('%s.log',fpn);        fpnlogerror = sprintf('%s.err',fpn);
         
         if par.parallel>0
             pack_para = par.parallel * par.parallel_pack;
             nbpara = ceil((length(job)+kinit)/pack_para);
-            k_para =ceil((k+kinit)/pack_para);            
+            k_para =ceil((k+kinit)/pack_para);
             para_jname = sprintf('p%.2d_%s',k_para,par.jobname);
-            fpara = fullfile(job_dir,para_jname);            
+            fpara = fullfile(job_dir,para_jname);
             ffpara = fopen(fpara,'a+');
             fprintf(ffpara,'bash %s > log_%s 2> err_%s \n',fpn,jname,jname);
             fclose(ffpara);
@@ -171,15 +201,15 @@ else
             otherwise
                 fprintf(ff,'#!/bin/bash\n');
         end
-%        if par.parallel
-            
-            fprintf(ff,'\n\necho started on $HOSTNAME \n date\n\n');
-            fprintf(ff,'tic="$(date +%%s)"\n\n');
-            fprintf(ff,cmdd);
-            fprintf(ff,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
-%        else
-%            fprintf(ff,cmdd);
-%        end
+        %        if par.parallel
+        
+        fprintf(ff,'\n\necho started on $HOSTNAME \n date\n\n');
+        fprintf(ff,'tic="$(date +%%s)"\n\n');
+        fprintf(ff,cmdd);
+        fprintf(ff,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
+        %        else
+        %            fprintf(ff,cmdd);
+        %        end
         
         fclose(ff);
         
@@ -209,7 +239,7 @@ else
     else
         nb_job=k+kinit;
     end
-
+    
     if ~isempty(qsubappend)
         fprintf(fqsubar,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,f_do_array);
     else
@@ -219,16 +249,16 @@ else
     
     fffa = fopen(f_do_array,'w');
     fprintf(fffa,'#!/bin/bash\n');
-%	fprintf(fffa,'\n\necho started on $HOSTNAME \n date\n\n');
-%    fprintf(fffa,'tic="$(date +%%s)"\n\n');
+    %	fprintf(fffa,'\n\necho started on $HOSTNAME \n date\n\n');
+    %    fprintf(fffa,'tic="$(date +%%s)"\n\n');
     
-    if par.parallel 
+    if par.parallel
         fprintf(fffa,' cmd=$( printf "p%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n parallel -j %d < %s/$cmd\n\n',par.jobname,par.parallel,job_dir);
     else
         fprintf(fffa,' cmd=$( printf "j%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n bash %s/$cmd\n\n',par.jobname,job_dir);
     end
     
-%    fprintf(fffa,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
+    %    fprintf(fffa,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
     
     % seff does not work because the job is still runing
     %fprintf(fffa,'\n seff -d ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}\n');
@@ -242,6 +272,9 @@ else
         cmdout=sprintf('bash %s',f_do_loc);
         delete(f_do_qsub)
     end
-end
+end % if par.sge
 
-%--depend=afterok:343599 
+%--depend=afterok:343599
+
+end % function
+
