@@ -21,7 +21,7 @@ def_par.walltime = ''; % string hours
 def_par.qsubappend = '';
 def_par.mem = 4000;  %give a number in Mega --mem=[mem][M|G|T] OR --mem-per-cpu=[mem][M|G|T]
 def_par.job_pack = 1;
-def_par.sbatch_args = '--export=NONE -m block:block ';
+def_par.sbatch_args = '-m block:block ';
 def_par.jobappend = '';
 def_par.parallel=0;
 def_par.parallel_pack=1;
