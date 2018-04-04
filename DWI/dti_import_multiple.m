@@ -153,7 +153,22 @@ bvec(:,opo_ind)=[];  bval(:,opo_ind)=[];
 
 %DO MERGE
 fodti=fullfile(outdir,par.data4D);
+aa=1;
+for kk=2:length(dti_files) 
+    aa=compare_orientation(dti_files(1),dti_files(kk));
+    if aa==0, break ;end
+end
+if aa==0
+    fprintf('WARNING reslicing diffusion images image because DIFFERENT ORIENTATION \n');
+    for kk=2:length(dti_files)
+        parr.outfilename={tempname};
+        bb=do_fsl_reslice(dti_files(kk),dti_files(1),parr);
+        dti_files(kk)=bb;
+    end
+end
+
 do_fsl_merge(dti_files,fodti,struct('checkorient',1));
+
 
 if ~isempty(par.swap)
     fff = get_subdir_regex_files(outdir,'.*gz$');
