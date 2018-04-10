@@ -26,8 +26,10 @@ defpar.pct                = 0;
 
 par = complet_struct(par,defpar);
 
-parsge = par.sge;
-par.sge = -1; % only prepare commands
+if par.pct
+    parsge = par.sge;
+    par.sge = -1; % only prepare commands
+end
 
 
 %%  FSL:topup - FSL:unwarp
@@ -42,7 +44,7 @@ job = cell(0);
 
 for subj=1:nrSubject
     
-    job_subj = '';
+    job_subj = ''; % initialize
     
     % Extract subject name, and print it
     subjectName = get_parent_path(dirFonc{subj}(1));
@@ -54,8 +56,6 @@ for subj=1:nrSubject
     % Create inside the subject dir runName "topup" dire, which will be our
     % working directory
     topup_outdir = r_mkdir(subjectName,par.subdir);
-    
-    clear job_do_fsl_mean
     
     for run = 1:length(runList)
         
@@ -135,8 +135,9 @@ for subj=1:nrSubject
     
 end % for - subject
 
-
-par.sge = parsge;
+if par.pct
+    par.sge = parsge;
+end
 
 job = do_cmd_sge(job,par);
 

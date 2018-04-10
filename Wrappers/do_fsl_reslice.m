@@ -13,7 +13,6 @@ defpar.sge = 0;
 defpar.jobname='fsl_reslice';
 defpar.fsl_output_format = 'NIFTI_GZ';
 defpar.outfilename='' ;
-defpar.do_topup_unwarp_4D = 0;
 
 par = complet_struct(par,defpar);
 

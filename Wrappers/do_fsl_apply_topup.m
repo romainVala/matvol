@@ -13,6 +13,8 @@ defpar.submit_sleep =0;
 defpar.sge_queu = 'long';
 defpar.jobname = 'fsl_apply_topup';
 
+job = '';
+
 par = complet_struct(par,defpar);
 
 fin = cellstr(char(fin));
@@ -26,8 +28,6 @@ end
 if exist(fo{end},'file') && ~par.redo
     fprintf('[%s]: skiping topup write, because %s exist \n',mfilename,fo{end});
 else
-    
-    job = '';
     
     for k=1:length(fin)
         

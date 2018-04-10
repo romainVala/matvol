@@ -71,7 +71,7 @@ if ~isempty(jobappend)
     end
 end
 
-if par.sge == -1
+if par.sge == -1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     return
 end
 
