@@ -1,7 +1,7 @@
 function [ job ] = do_fsl_apply_topup(fin,ftopup,par,jobappend)
 
-if ~exist('par'),par ='';end
-if ~exist('jobappend','var'), jobappend ='';end
+if ~exist('par'      ,'var'), par ='';       end
+if ~exist('jobappend','var'), jobappend =''; end
 
 defpar.outprefix = 'ut';
 defpar.sge=0;
@@ -12,8 +12,6 @@ defpar.redo=0;
 defpar.submit_sleep =0;
 defpar.sge_queu = 'long';
 defpar.jobname = 'fsl_apply_topup';
-
-job = '';
 
 par = complet_struct(par,defpar);
 
@@ -41,10 +39,10 @@ else
         
         cmd = sprintf('cd %s;\nexport FSLOUTPUTTYPE=%s;\napplytopup --imain=%s --datain=%s --method=jac --inindex=%d  --topup=%s --out=%s;\n',...
             dirtopup,par.fsl_output_format,fin{k},par.acqpfile,ii,fff,fo{k});
-        job = [job cmd];
+        
+        job{k} = cmd;
+        
     end
-    
-    job = {job};
     
     job = do_cmd_sge(job,par,jobappend);
     

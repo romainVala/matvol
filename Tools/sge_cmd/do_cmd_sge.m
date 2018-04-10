@@ -75,7 +75,7 @@ if par.sge == -1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     return
 end
 
-if par.job_pack>1;
+if par.job_pack>1
     jnew={};
     for nn=1:par.job_pack:length(job)
         kkkend = nn+par.job_pack-1;
@@ -130,7 +130,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     job_dir = par.jobdir;
     
-    if ~exist(job_dir)
+    if ~exist(job_dir,'dir')
         mkdir(job_dir);
     end
     

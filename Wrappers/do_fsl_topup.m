@@ -16,8 +16,7 @@ for k=1:length(f4D)
     
     cmd = sprintf('cd %s;\ntopup --imain=%s --datain=%s --config=%s --out=%s --fout=field_%s --iout=unwarp_%s;\n',...
         outdir,fin,'acqp.txt','b02b0.cnf',fo,fo,fo);
-    cmd = sprintf('cd %s;\ntopup --imain=%s --datain=%s --config=%s --out=%s --fout=field_%s --iout=unwarp_%s;\n',...
-        outdir,fin,'acqp.txt','b02b0.cnf',fo,fo,fo);
+    
     job{k} = cmd;
 end
 
