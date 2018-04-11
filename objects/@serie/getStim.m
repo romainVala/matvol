@@ -8,8 +8,6 @@ function [ stimArray ] = getStim( serieArray, regex, type )
 
 %% Check inputs
 
-AssertIsSerieArray(serieArray);
-
 if nargin < 2
     regex = '.*';
 end

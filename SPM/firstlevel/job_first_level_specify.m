@@ -25,10 +25,6 @@ par.redo        = 0;
 
 par = complet_struct(par,defpar);
 
-if ~isfield(par,'TR')
-    error('par structure must have non empty TR field.')
-end
-
 
 %% SPM:Stats:fMRI model specification
 
@@ -40,16 +36,41 @@ end
 
 for subj = 1:nrSubject
     
-    if iscell(dirFonc{1})
-        subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
-        unzip_volume(subjectRuns);
-        subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
-        if par.rp
-            fileRP = get_subdir_regex_files(dirFonc{subj},'^rp.*txt');
+    % Check of all TR are the same for each run
+    if ~isfield(par,'TR')
+        
+        jsons = get_subdir_regex_files( dirFonc{subj} , '^dic.*json$' );
+        if iscell(dirFonc{1})
+            assert( length(dirFonc{subj}) == length(jsons) , 'dic.*json were no found in all volumes' )
+        else
+            assert( length(dirFonc) == length(jsons) , 'dic.*json were no found in all volumes' )
         end
-    else
-        subjectRuns = dirFonc;
+        [ TRs ] = get_string_from_json( jsons , 'RepetitionTime' , 'numeric' );
+        allTR = nan(size(TRs));
+        for idx = 1 : length(allTR)
+            allTR(idx) = TRs{idx}{1};
+        end
+        if iscell(dirFonc{1})
+            assert( all( allTR(1)==allTR ) , 'TR is not the same for each run : %s' , dirFonc{subj}{:} )
+        else
+            assert( all( allTR(1)==allTR ) , 'TR is not the same for each run : %s' , dirFonc{:} )
+        end
+        
+        % Define TR
+        par.TR = allTR(1)/1000; % convert milliseconds into seconds
+        
     end
+    
+    %     if iscell(dirFonc{1})
+    subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
+    unzip_volume(subjectRuns);
+    subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg,struct('verbose',0));
+    if par.rp
+        fileRP = get_subdir_regex_files(dirFonc{subj},'^rp.*txt');
+    end
+    %     else
+    %         subjectRuns = dirFonc;
+    %     end
     
     % When onsets are inside the .mat file
     if ~ isstruct(onsets{1})

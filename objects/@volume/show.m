@@ -39,7 +39,6 @@ function show( volumeArray, viewer )
 
 %% Check input arguments
 
-AssertIsVolumeArray(volumeArray);
 volumeArray = shiftdim(volumeArray,1); % need to shift dimensions to have the volumes displayed in meaningful order.
 
 if numel(volumeArray) == 0

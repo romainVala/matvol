@@ -8,8 +8,6 @@ function [ exams ] = getExam( examArray, regex )
 
 %% Check inputs
 
-AssertIsExamArray(examArray);
-
 if nargin < 2
     regex = '.*';
 end

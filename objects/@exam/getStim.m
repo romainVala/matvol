@@ -7,8 +7,6 @@ function [ volumeArray ] = getStim( examArray, serie_regex, stim_regex, stim_typ
 
 %% Check inputs
 
-AssertIsExamArray(examArray);
-
 if nargin < 2
     serie_regex = '.*';
 end

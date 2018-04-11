@@ -5,8 +5,6 @@ function [ pathArray ] = toJob( mvArray, flag )
 
 %% Check input arguments
 
-assert( isa(mvArray,'exam') || isa(mvArray,'serie') || isa(mvArray,'volume') || isa(mvArray,'stim') || isa(mvArray,'model') )
-
 if nargin < 2
     switch class(mvArray)
         case 'exam'
@@ -19,6 +17,8 @@ if nargin < 2
             flag = 0;
         case 'model'
             flag = 0;
+        otherwise
+            error('Unknown object class. Is it really an mvObject ?')
     end
 end
 

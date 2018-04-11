@@ -7,8 +7,6 @@ function [ volumeArray ] = getVolume( examArray, serie_regex, volume_regex, volu
 
 %% Check inputs
 
-AssertIsExamArray(examArray);
-
 if nargin < 2
     serie_regex = '.*';
 end

@@ -9,7 +9,6 @@ function checkreg( volumeArray, center, fov, resolution )
 % For the moment, there is no easy method to overide the maxium image displayed.
 % This limit value (24 in my case) is hard coded in spm_orthviews -> max_img
 
-AssertIsVolumeArray(volumeArray);
 
 % Remove the empty volumes.path from volumeArray
 list = volumeArray.print;

@@ -1,4 +1,4 @@
-function do_topup_unwarp_4D(dirFonc,par)
+function job = do_topup_unwarp_4D(dirFonc,par)
 % DO_TOPUP_UNWARP_4D - FSL:topup - FSL:unwarp
 % img is multilevel directory (see get_subdir_regex).
 % The function will generate a mean for each runs (necessary to do topup on
@@ -16,14 +16,20 @@ end
 
 %% defpar
 
-defpar.todo              = 0;
-defpar.subdir            = 'topup';
-defpar.file_reg          = '^f.*nii';
-defpar.fsl_output_format = 'NIFTI';
-defpar.do_apply          = [];
-defpar.redo              = 0;
+defpar.todo               = 0;
+defpar.subdir             = 'topup';
+defpar.file_reg           = '^f.*nii';
+defpar.fsl_output_format  = 'NIFTI';
+defpar.do_apply           = [];
+defpar.redo               = 0;
+defpar.pct                = 0;
 
 par = complet_struct(par,defpar);
+
+if par.pct
+    parsge = par.sge;
+    par.sge = -1; % only prepare commands
+end
 
 
 %%  FSL:topup - FSL:unwarp
@@ -34,14 +40,18 @@ else
     nrSubject = 1;
 end
 
+job = cell(0);
+
 for subj=1:nrSubject
     
-    % Fetch current subject images files
-    runList = get_subdir_regex_files(dirFonc{subj},par.file_reg);
+    job_subj = ''; % initialize
     
     % Extract subject name, and print it
     subjectName = get_parent_path(dirFonc{subj}(1));
-    fprintf('\n[%s]: currently working on %s \n', mfilename, subjectName{1})
+    fprintf('[%s]: Preparing %s \n\n', mfilename, subjectName{1});
+    
+    % Fetch current subject images files
+    runList = get_subdir_regex_files(dirFonc{subj},par.file_reg);
     
     % Create inside the subject dir runName "topup" dire, which will be our
     % working directory
@@ -59,17 +69,14 @@ for subj=1:nrSubject
         % Generate if needed, a mean image for all runs (necessary for topup)
         mean_files_cellstr = addprefixtofilenames({runName},'mean');
         if ~exist(mean_files_cellstr{1},'file')
-            sgeset  = par.sge;
-            par.sge = 0;
-            mean_files_cellstr{1} = do_fsl_mean(runList(run),mean_files_cellstr{1},par);
-            par.sge = sgeset;
+            [ mean_files_cellstr{1}, job_subj ] = do_fsl_mean(runList(run),mean_files_cellstr{1},par, job_subj);
         end
         
         % Is the orientation of all runs coherent ?
         if run>1
-            if compare_orientation(fmean(1),mean_files_cellstr(1)) == 0
-                fprintf('[%s]: WARNING reslicing mean image %s \n', mfilename, mean_files_cellstr{1});
-                resliced_mean= do_fsl_reslice( mean_files_cellstr(1),fmean(1));
+            if compare_orientation(fmean(1),runList(run)) == 0
+                warning('[%s]: WARNING reslicing mean image %s \n', mfilename, mean_files_cellstr{1});
+                [ resliced_mean, job_subj ]= do_fsl_reslice( mean_files_cellstr(1),fmean(1), job_subj);
                 mean_files_cellstr(1) = resliced_mean;
             end
         end
@@ -96,12 +103,12 @@ for subj=1:nrSubject
             error('all the serie have the same phase direction can not do topup')
         end
         
-        fprintf('topup estimate %s \n',fout{1})
-        
         fo = addsuffixtofilenames(topup_outdir,'/4D_orig');
-        par.checkorient=1; %give error if not same orient
-        do_fsl_merge(fmean,fo{1},par);
-        do_fsl_topup(fo,par);
+        
+        par.checkorient=0; %give error if not same orient : don't want to check
+        
+        job_subj = do_fsl_merge(fmean,fo{1},par, job_subj);
+        job_subj = do_fsl_topup(fo,par, job_subj);
         
     end
     
@@ -117,12 +124,24 @@ for subj=1:nrSubject
         
         par.index=run;
         if par.do_apply(run)
-            do_fsl_apply_topup(runList(run),fo,par)
+            for volume_idx = 1:size(runList(run))
+                job_subj = do_fsl_apply_topup(runList{run}(volume_idx,:),fo,par, job_subj);
+            end
         end
         
     end
     
+    job(end+1,1) = {char(job_subj)};
+    
+    disp(job{end})
+    
 end % for - subject
+
+if par.pct
+    par.sge = parsge;
+end
+
+job = do_cmd_sge(job,par);
 
 
 end % function

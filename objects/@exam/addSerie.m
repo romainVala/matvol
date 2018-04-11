@@ -19,8 +19,6 @@ function varargout = addSerie( examArray, varargin)
 
 %% Check inputs
 
-AssertIsExamArray(examArray);
-
 % Need at least dir_regex + tag
 assert( length(varargin)>=2 , '[%s]: requires at least 2 input arguments dir_regex + tag')
 
@@ -82,8 +80,8 @@ for ex = 1 : numel(examArray)
     % Remove duplicates
     if examArray(ex).cfg.remove_duplicates
         
-        if examArray(ex).series.checkTag(tags)
-            examArray(ex).series = examArray(ex).series.removeTag(tags);
+        if examArray(ex).serie.checkTag(tags)
+            examArray(ex).serie = examArray(ex).serie.removeTag(tags);
         end
         
     else
@@ -92,7 +90,7 @@ for ex = 1 : numel(examArray)
         if examArray(ex).cfg.allow_duplicate % yes
             % pass
         else% no
-            if examArray(ex).series.checkTag(tags)
+            if examArray(ex).serie.checkTag(tags)
                 continue
             end
         end
@@ -103,7 +101,7 @@ for ex = 1 : numel(examArray)
     serieList  = get_subdir_regex( examArray(ex).path, recursive_args{:} );
     
     % Be sure to add new series to the serieArray
-    lengthSeries = length(examArray(ex).series);
+    lengthSeries = length(examArray(ex).serie);
     counter      = 0;
     
     % Non-empy list ?
@@ -111,6 +109,7 @@ for ex = 1 : numel(examArray)
         
         % Check if N series are found for N tags.
         if checkNr && ( length(serieList) ~= nrSeries )
+            examArray(ex).is_incomplete = 1; % set incomplete flag
             error([
                 'Number of input (%d) tag/nrSeries differs from number of series found \n'...
                 '#%d : %s ' ...
@@ -125,7 +124,7 @@ for ex = 1 : numel(examArray)
             else
                 tag = tags{ser};
             end
-            examArray(ex).series(lengthSeries + counter) = serie(serieList{ser}, tag, examArray(ex) );
+            examArray(ex).serie(lengthSeries + counter) = serie(serieList{ser}, tag, examArray(ex) );
         end % found dir (== series)
         
     else
@@ -141,9 +140,9 @@ for ex = 1 : numel(examArray)
         % Add empty series, but with pointer to the exam : for diagnostic
         for ser = 1 : length(tags)
             counter = counter + 1;
-            examArray(ex).series(lengthSeries + counter)      = serie();
-            examArray(ex).series(lengthSeries + counter).tag  = tags{ser};
-            examArray(ex).series(lengthSeries + counter).exam = examArray(ex);
+            examArray(ex).serie(lengthSeries + counter)      = serie();
+            examArray(ex).serie(lengthSeries + counter).tag  = tags{ser};
+            examArray(ex).serie(lengthSeries + counter).exam = examArray(ex);
         end
         
     end

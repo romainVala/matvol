@@ -1,13 +1,6 @@
 function init_path_matvol
 
-if isunix
-    splitter = ':';
-elseif ispc
-    splitter = ';';
-else
-    error('all architectures are not codded yet...')
-end
-paths_to_add = regexp(genpath(matvoldir),splitter,'split');
+paths_to_add = regexp(genpath(matvoldir),pathsep,'split');
 paths_to_add(end) = []; % the last one is always an empty split
 
 regexp_to_take_out = {

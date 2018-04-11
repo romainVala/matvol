@@ -8,7 +8,8 @@ for idx = 1 : numel(obj)
     fprintf('|---idx  = %d \n',idx)
     fprintf('    name = %s \n',obj(idx).name)
     fprintf('    path = %s \n',obj(idx).path)
-    obj(idx).series.explore;
+    obj(idx).serie.explore;
+    obj(idx).model.explore;
     fprintf('\n')
 end
 

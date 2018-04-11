@@ -1,7 +1,6 @@
 function unzip( volumeArray )
 % UNZIP unzip volumes, if needed.
 
-AssertIsVolumeArray(volumeArray)
 
 if ~isempty(volumeArray)
     unzip_volume(volumeArray.toJob);

@@ -1,8 +1,10 @@
-function fo = do_fsl_reslice(src,ref,par) % prefix,interp_fsl)
+function [ fo, job ] = do_fsl_reslice(src,ref,par,jobappend) % prefix,interp_fsl)
 %function fo = do_fsl_reslice(src,ref,prefix)
 %if iscell(prefix) prefix is then the matrix output
 
 if ~exist('par'),par ='';end
+if ~exist('jobappend','var'), jobappend ='';end
+
 
 defpar.prefix = 'rfsl_';
 defpar.interp_fsl = 'trilinear'; % trilinear nearestneighbour sinc spline
@@ -57,5 +59,6 @@ else
     
 end
 
-do_cmd_sge(job,par);
+job = do_cmd_sge(job,par,jobappend);
 
+end % function
