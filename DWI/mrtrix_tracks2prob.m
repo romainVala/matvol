@@ -40,7 +40,7 @@ for k=1:length(intrk)
     %Automaticaly find the weigh names and check if exist
     if isnumeric(par.tck_weights) && par.tck_weights
         fweight = change_file_extension(alltrk,'.txt');
-        fweight = addsufixtofilenames(fweight,'_weights');
+        fweight = addsuffixtofilenames(fweight,'_weights');
         tckweights = fweight;
         fweight_exist=1;
         for rrk=1:length(fweight)

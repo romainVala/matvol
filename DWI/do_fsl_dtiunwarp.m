@@ -62,7 +62,7 @@ for nbs = 1:length(f4D)
             nmag = [nmag '_brain'];
             
             phase =  get_subdir_regex_images(fmdir{nbs}{2},par.phase_file_regex,1);
-            nphase = addsufixtofilenames(fmdir{nbs}{1},'/phase_rad');
+            nphase = addsuffixtofilenames(fmdir{nbs}{1},'/phase_rad');
 
             if exist([nphase,'.nii.gz'])
                 fprintf('skinping intial phase preparation ,already done\n');
@@ -84,7 +84,7 @@ for nbs = 1:length(f4D)
                 mag = {phase};
             end
             
-            nphase = addsufixtofilenames(fmdir{nbs},'/phase_rad');
+            nphase = addsuffixtofilenames(fmdir{nbs},'/phase_rad');
             cmd = sprintf('fslmaths %s -mul %f %s;\n',phase,2*pi,nphase);
     end
     
@@ -95,7 +95,7 @@ for nbs = 1:length(f4D)
     fout{nbs} = unwarp_outvol;
     
     %cmd = sprintf('/usr/cenir/bincenir/epidewarp.rrr.fsl --mag %s --dph %s --epi %s.nii.gz --tediff %f --esp %f --unwarpdir %s --vsm voxel_shift_map --epidw %s \n',mag,phase,outvolname,par.tediff,par.esp,par.unwarpdir,par.unwarp_outvol);
-    p  = addsufixtofilenames(get_parent_path(f4D(nbs)),'/unwarp');
+    p  = addsuffixtofilenames(get_parent_path(f4D(nbs)),'/unwarp');
     
     if exist(char(p))
         rmdir(char(p),'s');
