@@ -13,6 +13,7 @@ defpar.method = 's'; %   r: rigid        a: rigid + affine        s: rigid + aff
                      %    b: rigid + affine + deformable b-spline syn
 defpar.histo = 0;
 defpar.nb_thread = 1;
+defpar.write_norm = 1;
 
 par = complet_struct(par,defpar);
 
@@ -32,6 +33,15 @@ for k=1:length(fmov)
         
     cmd = sprintf('ANTS 3 -m CC[%s,%s,1,5] -t SyN[0.25] -r Gauss[3,0] -o %s -i 30x90x20 --use-Histogram-Matching --number-of-affine-iterations 10000x10000x10000x10000x10000 --MI-option 32x16000',...
         fref{k},fmov{k},transform);
+    
+    if par.write_norm
+        
+        fo = addprefixtofilenames(fmov(k),'aw_');
+        cmd = sprintf('%s\n WarpImageMultiTransform 3 %s %s -R %s %sWarp.nii.gz %sAffine.txt ',...
+            cmd,fmov{k},fo{1},fref{k},transform,transform);
+        
+    end
+    
     %cmd = sprintf('%s -n %d',cmd,par.nb_thread);
 %     if par.histo
 %         cmd = sprintf('%s -j 1',cmd);

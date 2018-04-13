@@ -21,9 +21,9 @@ defpar.sge=0;
 
 par = complet_struct(par,defpar);
 
-par.bvec = get_file_from_same_dir(f4D_to_fit,par.bvec);
-par.bval = get_file_from_same_dir(f4D_to_fit,par.bval);
-par.mask  = get_file_from_same_dir(f4D_to_fit,par.mask);
+par.bvec = get_file_from_same_dir(f4D_to_fit,par.bvec,1);
+par.bval = get_file_from_same_dir(f4D_to_fit,par.bval,1);
+par.mask  = get_file_from_same_dir(f4D_to_fit,par.mask,1);
 
 if isempty(par.sujname)
     [p sujname] = get_parent_path(f4D_to_fit);

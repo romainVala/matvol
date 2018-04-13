@@ -15,7 +15,7 @@ par=complet_struct(par,defpar);
 
 %cout = count_mrtrix_track(f_trk,cout);
 
-f_prob = addsufixtofilenames(f_trk,'_prob');
+f_prob = addsuffixtofilenames(f_trk,'_prob');
 f_prob = change_file_extension(f_prob,'.nii');
 
 

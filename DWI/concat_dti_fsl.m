@@ -19,7 +19,7 @@ for nbs = 1:length(outdirs)
     bvec_f = get_subdir_regex_files(dir4D,par.bvecs);
     bval_f = get_subdir_regex_files(dir4D,par.bvals);
     
-    fo=addsufixtofilenames(outdir,'/4D_dti');
+    fo=addsuffixtofilenames(outdir,'/4D_dti');
     
     do_fsl_merge(f4D,fo{1},par);    
     
