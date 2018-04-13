@@ -22,8 +22,19 @@ classdef exam < mvObject
             % Input args ?
             if nargin > 0
                 
+                AssertIsCharOrCellstr(indir )
+                AssertIsCharOrCellstr(reg_ex)
+                
+                indir  = char(indir);
+                reg_ex = char(reg_ex);
+                
                 % Fetch dir list recursibley with regex
                 dirList = get_subdir_regex(indir, reg_ex, varargin{:});
+                
+                if numel(dirList) == 0
+                    error('Could not find recursivly any dir corresponding to the regex [ %s ]\n in : %s', ...
+                        reg_ex, indir )
+                end
                 
                 % Create an array of @exam objects, corresponding to each dir in the list
                 for idx = 1 : length(dirList)
