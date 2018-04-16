@@ -265,7 +265,15 @@ end % function : do_cmd_sge
 
 function unix_no_sge(job, nn, par)
 
-fprintf('[%s] : JOB %d/%d \n', mfilename, nn, length(job));
+switch par.verbose
+    case 1
+        fprintf('[%s] : JOB %d/%d \n', mfilename, nn, length(job));
+    case 2
+        fprintf('[%s] : JOB %d/%d \n', mfilename, nn, length(job));
+    case 0
+        % pass
+end
+
 
 cmd = job{nn};
 cmd = strsplit(cmd, sprintf('\n\n'))';

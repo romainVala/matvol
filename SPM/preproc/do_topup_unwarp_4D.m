@@ -53,8 +53,7 @@ for subj=1:nrSubject
     subjectName = get_parent_path(dirFonc{subj}(1));
     
     % Echo in terminal & initialize job_subj
-    msg = sprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, subj, nrSubject, subjectName{1});
-    fprintf(msg);
+    fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, subj, nrSubject, subjectName{1});
     job_subj = {sprintf('#################### JOB %d/%d for %s #################### \n', subj, nrSubject, subjectName{1})}; % initialize
     
     % Fetch current subject images files
