@@ -25,6 +25,7 @@ end
 
 if exist(fo{end},'file') && ~par.redo
     fprintf('[%s]: skiping topup write, because %s exist \n',mfilename,fo{end});
+    job = jobappend;
 else
     
     for k=1:length(fin)
