@@ -1,4 +1,4 @@
-function [o nofiledir yesfiledir] = get_subdir_regex_files(indir,reg_ex,p)
+function [output, nofiledir, yesfiledir] = get_subdir_regex_files(indir,reg_ex,p)
 %cell vector of in directories
 %reg_ex regular expression to select files
 %p parameter, if  p.preproc_subdir is defined it will lock in this subdir
@@ -13,7 +13,7 @@ if ~isempty(indir)
         if iscell(indir{1})
             for nbsuj=1:length(indir)
                 [ooo nonono]  = get_subdir_regex_files(indir{nbsuj},reg_ex,p);
-                o{nbsuj} = char(ooo);
+                output{nbsuj,1} = char(ooo);
                 nofiledir{nbsuj} = (nonono);
                 if ~isempty(ooo)
                     [pp ff]=get_parent_path(ooo);
@@ -30,12 +30,12 @@ if ~iscell(indir), indir={indir};end
 nofiledir={};
 if ischar(reg_ex)
     if strcmp(reg_ex,'graphically')
-        o={};
+        output={};
         for nb_dir=1:length(indir)
             dir_sel = spm_select(inf,'any','select files','',indir{nb_dir});
             dir_sel = cellstr(dir_sel);
             for kk=1:length(dir_sel)
-                o{end+1} = dir_sel{kk};
+                output{end+1,1} = dir_sel{kk};
             end
         end
         return
@@ -54,7 +54,7 @@ if ~isfield(p,'verbose'), p.verbose=1;end
 if ~iscell(reg_ex), reg_ex={reg_ex};end
 if ~iscell(indir), indir={indir};end
 
-o={};
+output={};
 
 for nb_dir=1:length(indir)
     
@@ -102,7 +102,7 @@ for nb_dir=1:length(indir)
             
         end
         
-        o{end+1} = to;
+        output{end+1,1} = to;
         
     else
         nofiledir{end+1} = cur_dir;

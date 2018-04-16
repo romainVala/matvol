@@ -1,9 +1,9 @@
-function o=get_subdir_regex_one(indir,reg_ex,varargin)
+function output = get_subdir_regex_one(indir,reg_ex,varargin)
 
 if length(varargin)>0
-    o = get_subdir_regex_one(indir,reg_ex);
+    output = get_subdir_regex_one(indir,reg_ex);
     for ka=1:length(varargin)
-        o = get_subdir_regex_one(o,varargin{ka});
+        output = get_subdir_regex_one(output,varargin{ka});
     end
     return
 end
@@ -12,7 +12,7 @@ end
 if ~iscell(reg_ex), reg_ex={reg_ex};end
 if ~iscell(indir), indir={indir};end
 
-o={};
+output={};
 
 if length(indir)==1
     indir = repmat(indir,size(reg_ex));
@@ -32,14 +32,14 @@ for nb_dir=1:length(indir)
     od = od(3:end);
     
     found=0;
-    o{nb_dir} = {};
+    output{nb_dir,1} = {};
 
     for k=1:length(od)
         %    for nb_reg=1:length(reg_ex)
                 
         if od(k).isdir & ~isempty(regexp(od(k).name,reg_ex{nb_dir}))
             if ~found
-                o{nb_dir} = fullfile(indir{nb_dir},od(k).name,filesep);
+                output{nb_dir,1} = fullfile(indir{nb_dir},od(k).name,filesep);
                 found=1;
             else
                 found = found+1;
@@ -53,7 +53,7 @@ for nb_dir=1:length(indir)
         fprintf('warning suj %s has %d  subdir for %s \n',indir{nb_dir},found,reg_ex{nb_dir})
     end
     
-    if isempty(o{nb_dir})
+    if isempty(output{nb_dir})
         fprintf('warning suj %d %s has no %s subdir\n',nb_dir,indir{nb_dir},reg_ex{nb_dir})
     end
     

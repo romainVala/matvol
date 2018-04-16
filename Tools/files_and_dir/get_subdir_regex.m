@@ -64,7 +64,7 @@ if ischar(reg_ex) && strcmp(reg_ex,'graphically')
         
         % Add the graphically selected dirs into the output
         for d = 1:length(dir_sel)
-            output{end+1} = dir_sel{d}; %#ok<AGROW>
+            output{end+1,1} = dir_sel{d}; %#ok<AGROW>
         end
         
     end
@@ -97,7 +97,7 @@ for nb_dir = 1:length(indir)
             end
             
             if dir_content(d).isdir && ~isempty(regexp(dir_content(d).name,reg_ex{nb_reg}, 'once'))
-                output{end+1} = fullfile(indir{nb_dir},dir_content(d).name,filesep); %#ok<AGROW>
+                output{end+1,1} = fullfile(indir{nb_dir},dir_content(d).name,filesep); %#ok<AGROW>
                 found_subdir = 1;
                 break % to avoid that 2 reg_ex adds the same dir
             end

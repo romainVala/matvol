@@ -1,15 +1,15 @@
-function [o nofiledir yesfiledir]  = get_subdir_regex_files4D(indir,reg_ex,p)
+function [output, nofiledir, yesfiledir]  = get_subdir_regex_files4D(indir,reg_ex,p)
 
 
 if ~exist('p'), p=struct;end
 if ~exist('indir'), indir={pwd};end
 if ~exist('reg_ex'), reg_ex=('graphically');end
 
-[o nofiledir yesfiledir]  = get_subdir_regex_files(indir,reg_ex,p);
+[output, nofiledir, yesfiledir]  = get_subdir_regex_files(indir,reg_ex,p);
 
 
-for nbf = 1:length(o)
-    ff = cellstr(o{nbf});
+for nbf = 1:length(output)
+    ff = cellstr(output{nbf});
     
     ntot = 1;            
     for nn = 1:length(ff)
@@ -25,11 +25,11 @@ for nbf = 1:length(o)
         oo(p.skip_vol)='';
     end
         
-    OUT{nbf} = char(oo);
+    OUT{nbf,1} = char(oo);
     
 end
 
-o=OUT;
+output=OUT;
 
 end
 
