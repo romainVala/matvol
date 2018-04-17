@@ -30,7 +30,7 @@ not_found={};
 %% Do the get_subdir_regex over all the 'indir'
 
 for d = 1:length(indir)
-    [output{d}, not_found{d}] = get_subdir_regex(indir(d),reg_ex); %#ok<AGROW>
+    [output{d,1}, not_found{d,1}] = get_subdir_regex(indir(d),reg_ex); %#ok<AGROW>
 end
 
 

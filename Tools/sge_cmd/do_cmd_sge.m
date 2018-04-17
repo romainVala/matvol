@@ -4,31 +4,35 @@ function [job f_do_qsubar] = do_cmd_sge(job,par,jobappend,qsubappend)
 
 %% Check inputs
 
-if ~exist('par'),  par=''; end
-if ~exist('jobappend','var'), jobappend ='';end
-if ~exist('qsubappend','var'), qsubappend ='';end
+if ~exist('par'       ,'var'), par        =''; end
+if ~exist('jobappend' ,'var'), jobappend  =''; end
+if ~exist('qsubappend','var'), qsubappend =''; end
 
-def_par.jobname='jobname';
-def_par.software = '';%fsl freesurfer
+def_par.jobname          = 'jobname';
+def_par.software         = '';%fsl freesurfer
 def_par.software_version = '';
-def_par.software_path = '';
+def_par.software_path    = '';
 
-def_par.jobdir=pwd;
-def_par.sge=1;
-def_par.sge_queu = 'normal';
-def_par.job_append = 1;
-def_par.sge_nb_coeur=1;
-def_par.submit_sleep = 1;  %add a sleep of 1 second between each qsub
-def_par.fake = 0;
-def_par.walltime = ''; % string hours
-def_par.qsubappend = '';
-def_par.mem = 4000;  %give a number in Mega --mem=[mem][M|G|T] OR --mem-per-cpu=[mem][M|G|T]
-def_par.job_pack = 1;
-def_par.sbatch_args = '-m block:block ';
-def_par.jobappend = '';
-def_par.parallel=0;
-def_par.parallel_pack=1;
-def_par.pct = 0;
+def_par.jobdir        = pwd;
+def_par.sge           = 1;
+def_par.sge_queu      = 'normal';
+def_par.job_append    = 1;
+def_par.sge_nb_coeur  = 1;
+def_par.submit_sleep  = 1;  %add a sleep of 1 second between each qsub
+def_par.walltime      = ''; % string hours
+def_par.qsubappend    = '';
+def_par.mem           = 4000;  %give a number in Mega --mem=[mem][M|G|T] OR --mem-per-cpu=[mem][M|G|T]
+def_par.job_pack      = 1;
+def_par.sbatch_args   = '--export=NONE -m block:block ';
+def_par.jobappend     = '';
+def_par.parallel      = 0;
+def_par.parallel_pack = 1;
+
+def_par.verbose       = 1;
+def_par.fake          = 0;
+
+def_par.pct           = 0;
+
 
 par = complet_struct(par,def_par);
 
@@ -97,33 +101,14 @@ par.jobdir = fullfile(par.jobdir,par.jobname);
 if par.sge==0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if par.pct
-        
         parfor nn=1:length(job)
-            cmd = job{nn};
-            cmd = strsplit(cmd, sprintf('\n\n'))';
-            for c = 1 : length(cmd)
-                fprintf('[%s] : %s\n\n', mfilename, cmd{c});
-                if par.fake
-                else
-                    unix( cmd{c} );
-                end
-            end
-        end
-        
+            unix_no_sge(job, nn, par) % function is in this file, below
+        end % parfor
     else
-        
         for nn=1:length(job)
-            cmd = job{nn};
-            cmd = strsplit(cmd, sprintf('\n\n'))';
-            for c = 1 : length(cmd)
-                fprintf('[%s] : %s\n\n', mfilename, cmd{c});
-                if par.fake
-                else
-                    unix( cmd{c} );
-                end
-            end
-        end
-    end
+            unix_no_sge(job, nn, par) % function is in this file, below
+        end % for
+    end % pct
     
     
 else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -276,5 +261,42 @@ end % if par.sge
 
 %--depend=afterok:343599
 
-end % function
+end % function : do_cmd_sge
 
+function unix_no_sge(job, nn, par)
+
+switch par.verbose
+    case 1
+        fprintf('[%s] : JOB %d/%d \n', mfilename, nn, length(job));
+    case 2
+        fprintf('[%s] : JOB %d/%d \n', mfilename, nn, length(job));
+    case 0
+        % pass
+end
+
+
+cmd = job{nn};
+cmd = strsplit(cmd, sprintf('\n\n'))';
+
+for c = 1 : length(cmd)
+    
+    switch par.verbose
+        case 1
+            if nn < 3 || nn > (length(job)-2) % print first 2 and last 2 jobs
+                fprintf('%s\n\n', cmd{c});
+            end
+        case 2
+            fprintf('%s\n\n', cmd{c});
+        case 0
+            % pass, print nothing
+    end % switch
+    
+    if par.fake
+        % pass, do not execute
+    else
+        unix( cmd{c} );
+    end % if
+    
+end % for each sub-command
+
+end % function

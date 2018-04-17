@@ -1,12 +1,12 @@
-function [o no]=get_subdir_regex(indir,reg_ex,varargin)
+function [output, not_found]=get_subdir_regex(indir,reg_ex,varargin)
 
 if ~exist('indir'), indir=pwd;end
 if ~exist('reg_ex'), reg_ex=('graphically');end
 
 if length(varargin)>0
-  o = get_subdir_regex(indir,reg_ex);
+  output = get_subdir_regex(indir,reg_ex);
   for ka=1:length(varargin)
-    o = get_subdir_regex(o,varargin{ka});
+    output = get_subdir_regex(output,varargin{ka});
   end
   return
 end
@@ -16,8 +16,8 @@ if ~iscell(indir), indir={indir};end
 
 if ~iscell(reg_ex), reg_ex={reg_ex};end
 
-o={};
-no={};
+output={};
+not_found={};
 
 for nb_dir=1:length(indir)
   od = dir(indir{nb_dir});
@@ -44,7 +44,7 @@ for nb_dir=1:length(indir)
       end
       
       if od(k).isdir & ~isempty(regexp(od(k).name,reg_ex{nb_reg}))
-	o{end+1} = fullfile(indir{nb_dir},od(k).name,filesep);
+	output{end+1,1} = fullfile(indir{nb_dir},od(k).name,filesep);
 	found_sub=1;
 	break% (to avoid that 2 reg_ex adds the same dir
       end
@@ -54,6 +54,6 @@ for nb_dir=1:length(indir)
   end
   
   if ~found_sub
-    no{end+1} = indir{nb_dir};
+    not_found{end+1} = indir{nb_dir};
   end
 end

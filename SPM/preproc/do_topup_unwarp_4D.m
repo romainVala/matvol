@@ -23,13 +23,16 @@ defpar.fsl_output_format  = 'NIFTI';
 defpar.do_apply           = [];
 defpar.redo               = 0;
 defpar.pct                = 0;
+defpar.verbose            = 1;
 
 par = complet_struct(par,defpar);
 
-if par.pct
-    parsge = par.sge;
-    par.sge = -1; % only prepare commands
-end
+
+parsge  = par.sge;
+par.sge = -1; % only prepare commands
+
+parverbose  = par.verbose;
+par.verbose = 0; % don't print anything yet
 
 
 %%  FSL:topup - FSL:unwarp
@@ -40,18 +43,21 @@ else
     nrSubject = 1;
 end
 
-job = cell(0);
+job = cell(nrSubject,1);
+
+fprintf('\n')
 
 for subj=1:nrSubject
     
-    job_subj = ''; % initialize
-    
     % Extract subject name, and print it
     subjectName = get_parent_path(dirFonc{subj}(1));
-    fprintf('[%s]: Preparing %s \n\n', mfilename, subjectName{1});
+    
+    % Echo in terminal & initialize job_subj
+    fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, subj, nrSubject, subjectName{1});
+    job_subj = {sprintf('#################### JOB %d/%d for %s #################### \n', subj, nrSubject, subjectName{1})}; % initialize
     
     % Fetch current subject images files
-    runList = get_subdir_regex_files(dirFonc{subj},par.file_reg);
+    runList = get_subdir_regex_files(dirFonc{subj},par.file_reg,1);
     
     % Create inside the subject dir runName "topup" dire, which will be our
     % working directory
@@ -131,15 +137,12 @@ for subj=1:nrSubject
         
     end
     
-    job(end+1,1) = {char(job_subj)};
-    
-    disp(job{end})
+    job{subj} = char(job_subj);
     
 end % for - subject
 
-if par.pct
-    par.sge = parsge;
-end
+par.sge     = parsge;
+par.verbose = parverbose;
 
 job = do_cmd_sge(job,par);
 

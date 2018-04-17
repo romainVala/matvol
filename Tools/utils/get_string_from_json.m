@@ -4,7 +4,7 @@ function [ out ] = get_string_from_json( filename , field_to_get , field_type )
 %   SYNTHAX :
 %   [ out ] = get_string_from_json( filename , field_to_get , field_type )
 %
-%   INPUT : 
+%   INPUT :
 %   filename     : char
 %   field_to_get : cell of strings
 %   field_type   : cell of strings
@@ -57,20 +57,40 @@ out = cell(length(field_to_get),1);
 for o = 1 : length(field_to_get)
     
     switch field_type{o}
+        
         case { 'double' , 'num' , 'numeric' }
+            
             token = regexp(content, [ '"' field_to_get{o} '": (([-e.]|\d)+),' ],'tokens');
             if ~isempty(token)
                 out{o} = str2double( token{:} );
             else
                 out{o} = [];
             end
+            
         case { 'char' , 'string' , 'str' }
+            
             token = regexp(content, [ '"' field_to_get{o} '": "([A-Za-z0-9-_,;]+)",' ],'tokens');
             if ~isempty(token)
                 out{o} = token{:}{:};
             else
                 out{o} = [];
             end
+            
+        case {'vect'}
+            
+            start = regexp(content, [ '"' field_to_get{o} '": [' ]);
+            stop = regexp(content(start:end),']','once');
+            
+            VECT_str = content(start:start+stop);
+            
+            VECT_cell_raw = strsplit(VECT_str,'\n')';
+            VECT_cell = VECT_cell_raw(3:end-1);
+            VECT_cell_nocoma = strrep(VECT_cell,',','');
+            VECT_cell_nocoma_nowhitespace = strrep(VECT_cell_nocoma,' ','');
+            VECT_char = char(VECT_cell_nocoma_nowhitespace);
+            
+            out{o} = str2num(VECT_char); %#ok<ST2NM> % str2double does not work
+            
         otherwise
             error('unrecognized type : %s',field_type{o})
     end
