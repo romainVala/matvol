@@ -63,9 +63,11 @@ cout = struct;
 
 
 for kfa=1:length(faregex)
-    ffa = get_subdir_regex_files(fadir,['^' faregex{kfa}],1);
+    %ffa = get_subdir_regex_files(fadir,['^' faregex{kfa}],1); %to do only if automaticaly define
+    ffa = get_subdir_regex_files(fadir,[ faregex{kfa}],1);
     for kfp=1:length(roiregex)
-        ffroi = get_subdir_regex_files(roidir,['^' roiregex{kfp} '$'],1);
+        %ffroi = get_subdir_regex_files(roidir,['^' roiregex{kfp} '$'],1); %to do only if automaticaly define
+        ffroi = get_subdir_regex_files(roidir,[ roiregex{kfp} ],1);
         [y ystd] = get_wheited_mean(ffa,ffroi,par);
         %marche pas sur l'oblique ??? cr = do_roistat(fprob,ffa,sujn);        y = cr.Mean_1;
         vol = do_fsl_getvol(ffroi)
