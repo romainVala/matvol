@@ -92,22 +92,22 @@ for idx = 1:length(source)
         switch type
             case 'copyn'
                 if ~exist(dir_out{idx}(line,:),'file')
-                    cmd = sprintf('cp -fpr %s %s',source{idx}(line,:),dest{idx});
+                    cmd = sprintf('cp -fpr %s %s \n',source{idx}(line,:),dest{idx});
                 end
                 
             case 'copy'
-                cmd = sprintf('cp -fpr %s %s',source{idx}(line,:),dest{idx});
+                cmd = sprintf('cp -fpr %s %s \n',source{idx}(line,:),dest{idx});
                 
             case 'linkn'
                 if ~exist(dir_out{idx}(line,:),'file')
-                    cmd = sprintf('ln -s %s %s',source{idx}(line,:),dest{idx});
+                    cmd = sprintf('ln -s %s %s \n',source{idx}(line,:),dest{idx});
                 end
                 
             case 'link'
-                cmd = sprintf('ln -s %s %s',source{idx}(line,:),dest{idx});
+                cmd = sprintf('ln -s %s %s \n',source{idx}(line,:),dest{idx});
                 
             case { 'move', 'move_unix' }
-                cmd = sprintf('mv  %s %s',source{idx}(line,:),dest{idx});
+                cmd = sprintf('mv  %s %s \n',source{idx}(line,:),dest{idx});
                 %                 movefile(deblank(source{idx}(line,:)),dest{idx});
                 %             case 'move_unix'
                 %                 cmd = sprintf('mv  %s %s',source{idx}(line,:),dest{idx});

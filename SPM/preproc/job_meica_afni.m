@@ -56,7 +56,7 @@ for subj = 1 : nrSubject
     
     % Echo in terminal & initialize job_subj
     fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, subj, nrSubject, subjectName{1});
-    job_subj = {sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, subj, nrSubject, dir_func{subj}{1})}; % initialize
+    job_subj = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, subj, nrSubject, dir_func{subj}{1}); % initialize
     
     nrRun = length(dir_func{subj});
     
@@ -71,19 +71,21 @@ for subj = 1 : nrSubject
     A_src = char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, 1 ));
     assert( exist(A_src,'file')==2 , 'file does not exist : %s', A_src )
     
+    job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ];
+    
     % File extension ?
     if strcmp(A_src(end-6:end),'.nii.gz')
-        ext = '.nii.gz';
+        ext_anat = '.nii.gz';
     elseif strcmp(A_src(end-3:end),'.nii')
-        ext = '.nii';
+        ext_anat = '.nii';
     else
         error('WTF ? supported files are .nii and .nii.gz')
     end
-    anat_filename = sprintf('anat%s',ext);
+    anat_filename = sprintf('anat%s',ext_anat);
     
     A_dst = fullfile(working_dir,anat_filename);
-    r_movefile(A_src, A_dst, 'linkn');
-
+    [ ~ , job_tmp ] = r_movefile(A_src, A_dst, 'linkn', par);
+    job_subj = [job_subj char(job_tmp) sprintf('\n')];
     
     %-All echos
     %======================================================================
@@ -94,6 +96,8 @@ for subj = 1 : nrSubject
         run_path = dir_func{subj}{run};
         assert( exist(run_path,'dir')==7 , 'not a dir : %s', run_path )
         fprintf('In run dir %s ', run_path);
+        
+        job_subj = [job_subj sprintf('### Run %d/%d @ %s \n', run, nrRun, dir_func{subj}{run}) ];
         
         % Fetch json dics
         jsons = get_subdir_regex_files(run_path,'^dic.*json',struct('verbose',0));
@@ -129,19 +133,18 @@ for subj = 1 : nrSubject
             
             % File extension ?
             if strcmp(E_src{echo}(end-6:end),'.nii.gz')
-                ext = '.nii.gz';
+                ext_echo = '.nii.gz';
             elseif strcmp(E_src{echo}(end-3:end),'.nii')
-                ext = '.nii';
+                ext_echo = '.nii';
             else
                 error('WTF ? supported files are .nii and .nii.gz')
             end
             
-            filename = sprintf('run%.3d_e%.3d%s',run,echo,ext);
+            filename = sprintf('run%.3d_e%.3d%s',run,echo,ext_echo);
             
             E_dst{echo} = fullfile(working_dir,filename);
-            if ~exist(E_dst{echo},'file')
-                r_movefile(E_src{echo}, E_dst{echo}, 'link');
-            end
+            [ ~ , job_tmp ] = r_movefile(E_src{echo}, E_dst{echo}, 'linkn', par);
+            job_subj = [job_subj char(job_tmp)];
             
             E_dst{echo} = filename;
             
@@ -159,28 +162,74 @@ for subj = 1 : nrSubject
         echo_sprintf(end) = [];
         echo_arg = sprintf(echo_sprintf,sortedTE);
         
-        cmd = sprintf('cd %s;\n meica.py -d %s -e %s -a %s --MNI --prefix %s --script_only \n\n',...
-            working_dir, data_arg, echo_arg, anat_filename , sprintf('run%.3d',run) );
+        prefix = sprintf('run%.3d',run);
         
-%         unix(cmd)
+        cmd = sprintf('cd %s;\n meica.py -d %s -e %s -a %s --MNI --prefix %s --cpus %d \n',...
+            working_dir, data_arg, echo_arg, anat_filename , prefix, par.nrCPU );
+        
+        job_subj = [job_subj cmd];
+        
         
         %-Move meica-processed volumes in run dirs, using symbolic links
         %==================================================================
         
+        list_volume_base = {
+            'medn'
+            'mefc'
+            'mefl'
+            'tsoc'
+            };
+        
+        list_volume_src = addprefixtofilenames(list_volume_base, prefix);
+        list_volume_src = addsuffixtofilenames(list_volume_src,ext_echo);
+        list_volume_src{end+1} = sprintf('%s_%s',prefix,'ctab.txt'); % coregistration paramters ?
+        list_volume_src{end+1} = sprintf('meica.%s_e1',prefix);
+        list_volume_src = addprefixtofilenames(list_volume_src,working_dir);
+        list_volume_src{end} = fullfile( list_volume_src{end} , 'motion.1D' );
+        
+        list_volume_dst = addprefixtofilenames(list_volume_base,prefix);
+        list_volume_dst = addsuffixtofilenames(list_volume_dst,ext_echo);
+        list_volume_dst{end+1} = sprintf('%s_%s',prefix,'ctab.txt'); % coregistration paramters ?
+        list_volume_dst{end+1} = sprintf('rp_%s.txt',prefix);
+        list_volume_dst = addprefixtofilenames(list_volume_dst,dir_func{subj}{run});
         
         
+        [ ~ , job_tmp ] = r_movefile(list_volume_src, list_volume_dst, 'linkn', par);
+        job_subj = [job_subj [job_tmp{:}] sprintf('\n')];
         
     end % run
     
     %-Move meica-processed anat in anat dir, using symbolic links
     %==================================================================
     
-%     A__src = get_subdir_regex_files(working_dir,'anat_');
+    job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ];
     
+    list_anat_base = {
+        'anat_do'
+        'anat_ns_at' % MNI space
+        'anat_ns'
+        'anat_u'
+        };
     
-job(subj) = job_subj;
-
+    list_anat_src = addsuffixtofilenames(list_anat_base,ext_anat);
+    list_anat_src{end+1} = 'anat_ns2at.aff12.1D'; % coregistration paramters ?
+    list_anat_src = addprefixtofilenames(list_anat_src,working_dir);
+    
+    list_anat_dst = addsuffixtofilenames(list_anat_base,ext_anat);
+    list_anat_dst{end+1} = 'anat_ns2at.aff12.1D'; % coregistration paramters ?
+    list_anat_dst = addprefixtofilenames(list_anat_dst,dir_anat{subj});
+    
+    [ ~ , job_tmp ] = r_movefile(list_anat_src, list_anat_dst, 'linkn', par);
+    job_subj = [job_subj [job_tmp{:}]];
+    
+    % Save job_subj
+    job{subj} = job_subj;
+    
 end % subj
 
+par.sge     = parsge;
+par.verbose = parverbose;
+
+job = do_cmd_sge(job, par);
 
 end % function
