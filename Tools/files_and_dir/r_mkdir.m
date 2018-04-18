@@ -48,7 +48,7 @@ end
 
 for k=1:length(base_dir)
     
-    dir_out{k} = [fullfile(base_dir{k},new_dir{k}) filesep]; %#ok<AGROW>
+    dir_out{k,1} = [fullfile(base_dir{k},new_dir{k}) filesep]; %#ok<AGROW>
     
     if ~exist(dir_out{k},'dir')
         mkdir(dir_out{k});
