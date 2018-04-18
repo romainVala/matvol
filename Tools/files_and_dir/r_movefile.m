@@ -1,4 +1,4 @@
-function dir_out = r_movefile(source,dest,type)
+function [ dir_out , job ]= r_movefile(source, dest, type, par)
 % R_MOVEFILE moves, copies, or links files/dirs
 %
 % *************************************************************************
@@ -13,10 +13,10 @@ function dir_out = r_movefile(source,dest,type)
 %
 %   type =
 %       'move'  movefile
-%       'copyn' copy without overwrite
-%       'copy'  copy with    overwrite
-%       'linkn' symbolic link without overwrite
-%       'link'  symbolic link with    overwrite
+%       'copyn' check if exists + copy
+%       'copy'                    copy
+%       'linkn' check if exists + symbolic link
+%       'link'                    symbolic link
 %
 %   example : syntax for 'source' and 'dest' is similar to r_mkdir
 %
@@ -35,6 +35,19 @@ end
 
 % Ensure the outputs are defined
 dir_out = {};
+
+if ~exist('par','var')
+    par = ''; % for defpar
+end
+
+
+%% defpar
+
+defpar.sge     = 0;
+defpar.pct     = 0;
+defpar.verbose = 0;
+
+par = complet_struct(par,defpar);
 
 
 %% Prepare inputs
@@ -63,6 +76,8 @@ end
 
 [~, source_dir_name] = get_parent_path(source);
 
+job = {};
+
 for idx = 1:length(source)
     
     for line = 1:size(source{idx},1) % in case of multilevel elements such as source={char(5,30);char(4,32);...}
@@ -78,37 +93,37 @@ for idx = 1:length(source)
             case 'copyn'
                 if ~exist(dir_out{idx}(line,:),'file')
                     cmd = sprintf('cp -fpr %s %s',source{idx}(line,:),dest{idx});
-                    unix(cmd);
                 end
                 
             case 'copy'
                 cmd = sprintf('cp -fpr %s %s',source{idx}(line,:),dest{idx});
-                unix(cmd);
                 
             case 'linkn'
                 if ~exist(dir_out{idx}(line,:),'file')
                     cmd = sprintf('ln -s %s %s',source{idx}(line,:),dest{idx});
-                    unix(cmd);
                 end
                 
             case 'link'
                 cmd = sprintf('ln -s %s %s',source{idx}(line,:),dest{idx});
-                unix(cmd);
                 
-            case 'move'
-                movefile(deblank(source{idx}(line,:)),dest{idx});
-            case 'move_unix'
+            case { 'move', 'move_unix' }
                 cmd = sprintf('mv  %s %s',source{idx}(line,:),dest{idx});
-                unix(cmd);
+                %                 movefile(deblank(source{idx}(line,:)),dest{idx});
+                %             case 'move_unix'
+                %                 cmd = sprintf('mv  %s %s',source{idx}(line,:),dest{idx});
+                %                 unix(cmd);
                 
             otherwise
                 error('[%s]: type %s unknown',mfilename,type)
                 
-        end
+        end % switch
         
-    end
+        job{end+1,1} = cmd;
+        
+    end % for each line of source
     
-end
+end % for each source
 
+job = do_cmd_sge(job,par);
 
 end % function

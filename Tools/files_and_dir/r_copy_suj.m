@@ -13,13 +13,13 @@ par = complet_struct(par,defpar);
 for nbs=1:length(suj)
     
     ser = get_subdir_regex(suj(nbs),par.serreg);
-    files = get_subdir_regex_files(ser,par.filereg);
+    files = get_subdir_regex_files(ser,par.filereg,struct('verbose',0));
     
     [p sujname ] = get_parent_path(suj(nbs));
     [p sername] = get_parent_path(ser);
     
     sujout(nbs) = r_mkdir(outputdir,sujname);
-    serout = r_mkdir(sujout{nbs} ,sername)
+    serout = r_mkdir(sujout{nbs} ,sername);
     
     r_movefile(files,serout,'link');
     
