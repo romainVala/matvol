@@ -96,8 +96,8 @@ for lvl=1:length(input_dir)
         
     end
     
-    upper_dir_path{lvl} = char(dirpath);
-    upper_dir_name{lvl} = char(dirname);
+    upper_dir_path{lvl,1} = char(dirpath);
+    upper_dir_name{lvl,1} = char(dirname);
     
     dirpath = {}; %#ok<*AGROW>
     dirname = {};
