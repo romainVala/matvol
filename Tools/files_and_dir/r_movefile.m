@@ -93,6 +93,8 @@ for idx = 1:length(source)
             case 'copyn'
                 if ~exist(dir_out{idx}(line,:),'file')
                     cmd = sprintf('cp -fpr %s %s \n',source{idx}(line,:),dest{idx});
+                else
+                    cmd = '';
                 end
                 
             case 'copy'
@@ -101,6 +103,8 @@ for idx = 1:length(source)
             case 'linkn'
                 if ~exist(dir_out{idx}(line,:),'file')
                     cmd = sprintf('ln -s %s %s \n',source{idx}(line,:),dest{idx});
+                else
+                    cmd = '';
                 end
                 
             case 'link'

@@ -174,16 +174,16 @@ for subj = 1 : nrSubject
         %==================================================================
         
         list_volume_base = {
-            'medn'
-            'mefc'
-            'mefl'
-            'tsoc'
+            '_medn'
+            '_mefc'
+            '_mefl'
+            '_tsoc'
             };
         
         list_volume_src = addprefixtofilenames(list_volume_base, prefix);
         list_volume_src = addsuffixtofilenames(list_volume_src,ext_echo);
         list_volume_src{end+1} = sprintf('%s_%s',prefix,'ctab.txt'); % coregistration paramters ?
-        list_volume_src{end+1} = sprintf('meica.%s_e1',prefix);
+        list_volume_src{end+1} = sprintf('meica.%s_e001',prefix);
         list_volume_src = addprefixtofilenames(list_volume_src,working_dir);
         list_volume_src{end} = fullfile( list_volume_src{end} , 'motion.1D' );
         
