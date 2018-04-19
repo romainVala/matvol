@@ -46,7 +46,7 @@ end
 
 %% Add the prefixes
 
-newlist = cell(1,length(filelist));
+newlist = cell(length(filelist),1);
 
 for i = 1:length(filelist)
     
