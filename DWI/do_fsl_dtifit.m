@@ -17,6 +17,7 @@ defpar.software = 'fsl'; %to set the path
 defpar.software_version = 5; % 4 or 5 : fsl version
 defpar.jobname = 'dti_fit';
 defpar.sge=0;
+defpar.walltime      = '00:20';
 %see also default params from do_cmd_sge
 
 par = complet_struct(par,defpar);
