@@ -1,9 +1,11 @@
-function [isalign delta delta_legend] = is_hdr_realign(v)
+function [isalign, delta, fd, delta_legend ] = is_hdr_realign(v)
 %function [isalign delta delta_legend] = hdr_restore_original_orientation(v)
 
 if ~iscell(v)
     v={v};
 end
+
+v=cellstr(char(v));
 
 for k=1:length(v)
     h=spm_vol(v{k});
@@ -18,6 +20,10 @@ for k=1:length(v)
     A=spm_imatrix(h.private.mat0);
     
     delta(k,:) = B-A;
+    
+    drot = delta(k,4:6)*50 ;%% adjust rotation parameters to express them as a displacement for a typical distance from the center of 50 mm
+    fd(k) = sum(abs(drot) + abs(delta(k,1:3)));
+    
 end
 
 delta_legend = {
@@ -37,8 +43,8 @@ delta_legend = {
 
 delta_legend=char(delta_legend);
 
-delta;
-suj_max_mvt=max(abs(delta));
+%delta;
+%suj_max_mvt=max(abs(delta));
 
 % for k=1:6
 %     is(k) = find(abs(delta(:,k))==suj_max_mvt(k));
