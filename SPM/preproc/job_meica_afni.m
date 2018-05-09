@@ -11,13 +11,14 @@ end
 
 %% defpar
 
-% defpar.file_reg      = '^f.*nii';
 defpar.anat_file_reg = '^s.*nii';
 defpar.subdir        = 'meica';
 
 defpar.nrCPU         = 2;
 defpar.pct           = 0;
 defpar.sge           = 0;
+defpar.slice_timing  = 1; % can be (1) (recommended, will fetch automaticaly the pattern in the dic_.*json), (0) or a (char) such as 'alt+z', check 3dTshift -help
+defpar.MNI           = 1; % normalization
 
 defpar.redo          = 0;
 defpar.fake          = 0;
@@ -35,7 +36,7 @@ parverbose  = par.verbose;
 par.verbose = 0; % don't print anything yet
 
 
-%% Fetch data
+%% Main
 
 assert( length(dir_func) == length(dir_anat), 'dir_func & dir_anat must be the same length' )
 
@@ -71,7 +72,7 @@ for subj = 1 : nrSubject
     A_src = char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, 1 ));
     assert( exist(A_src,'file')==2 , 'file does not exist : %s', A_src )
     
-    job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ];
+    job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ]; %#ok<*AGROW>
     
     % File extension ?
     if strcmp(A_src(end-6:end),'.nii.gz')
@@ -150,6 +151,36 @@ for subj = 1 : nrSubject
             
         end % echo
         
+        %-Prepare slice timing info
+        %==================================================================
+        
+        if isnumeric(par.slice_timing) && par.slice_timing == 1
+            
+            % Read the slice timings directly in the dic_.*json
+            [ out ] = get_string_from_json( deblank(jsons{1}(1,:)) , 'CsaImage.MosaicRefAcqTimes' , 'vect' );
+            
+            % Right field found ?
+            assert( ~isempty(out{1}), 'Did not detect the right field ''CsaImage.MosaicRefAcqTimes'' in the file %s', deblank(jsons{1}(1,:)) )
+            
+            % Destination file :
+            tpattern = fullfile(working_dir,'sliceorder.txt');
+            fileID = fopen( tpattern , 'w' , 'n' , 'UTF-8' );
+            if fileID < 0
+                warning('[%s]: Could not open %s', mfilename, filename)
+            end
+            fprintf(fileID, '%f\n', out{1}/1000 );
+            fclose(fileID);
+            tpattern = ['@' tpattern]; % 3dTshift syntax to use a file is 3dTshift -tpattern @filename
+            
+        elseif ischar(par.slice_timing)
+            
+            tpattern = par.slice_timing;
+            
+        end
+        
+        % Fetch TR
+        res = get_string_from_json( deblank(jsons{1}(1,:)) ,'RepetitionTime','numeric');
+        TR = res{1}/1000;
         
         %-Prepare command : meica.py
         %==================================================================
@@ -164,10 +195,25 @@ for subj = 1 : nrSubject
         
         prefix = sprintf('run%.3d',run);
         
-        cmd = sprintf('cd %s;\n meica.py -d %s -e %s -a %s --MNI --prefix %s --cpus %d \n',...
-            working_dir, data_arg, echo_arg, anat_filename , prefix, par.nrCPU );
+        % Main command
+        cmd = sprintf('cd %s;\n meica.py -d %s -e %s -a %s --prefix %s --cpus %d --TR=%g --daw=5',... % kdaw = 5 makes ICA converge mucgh easier : https://bitbucket.org/prantikk/me-ica/issues/28/meice-ocnvergence-issue-mdpnodeexception
+            working_dir, data_arg, echo_arg, anat_filename , prefix, par.nrCPU, TR );
         
-        job_subj = [job_subj cmd];
+        % Options :
+        
+        if par.MNI
+            cmd = sprintf('%s --MNI', cmd);
+        end
+        
+        if ( isnumeric(par.slice_timing) && par.slice_timing == 1 ) || ischar(par.slice_timing)
+            cmd = sprintf('%s --tpattern %s', cmd, tpattern);
+        end
+        
+        cmd = sprintf('%s \n',cmd);
+        
+        if ~( exist(fullfile(working_dir,[prefix '_medn' ext_echo]),'file') == 2 ) || par.redo
+            job_subj = [job_subj cmd];
+        end
         
         
         %-Move meica-processed volumes in run dirs, using symbolic links
