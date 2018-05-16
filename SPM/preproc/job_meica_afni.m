@@ -69,8 +69,8 @@ for subj = 1 : nrSubject
     %======================================================================
     
     % Make symbolic link of tha anat in the working directory
-    A_src = char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, 1 ));
-    assert( exist(A_src,'file')==2 , 'file does not exist : %s', A_src )
+    assert( exist(dir_anat{subj},'dir')==7 , 'not a dir : %s', dir_anat{subj} )
+    A_src = char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, 1));
     
     job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ]; %#ok<*AGROW>
     
