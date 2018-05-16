@@ -97,6 +97,7 @@ for subj = 1 : nrSubject
         run_path = dir_func{subj}{run};
         assert( exist(run_path,'dir')==7 , 'not a dir : %s', run_path )
         fprintf('In run dir %s ', run_path);
+        [~, serie_name] = get_parent_path(run_path);
         
         job_subj = [job_subj sprintf('### Run %d/%d @ %s \n', run, nrRun, dir_func{subj}{run}) ];
         
@@ -118,9 +119,9 @@ for subj = 1 : nrSubject
         allEchos = cell(length(order),1);
         for echo = 1 : length(order)
             if order(echo) == 1
-                allEchos(echo) = get_subdir_regex_files(run_path,         '^f.*B\d.nii'                   , 1);
+                allEchos(echo) = get_subdir_regex_files(run_path, ['^f\d+_' serie_name '.nii'], 1);
             else
-                allEchos(echo) = get_subdir_regex_files(run_path, sprintf('^f.*B\\d_V%.3d.nii',order(echo)), 1);
+                allEchos(echo) = get_subdir_regex_files(run_path, ['^f\d+_' serie_name '_' sprintf('V%.3d',order(echo)) '.nii'], 1);
             end
         end % echo
         fprintf(['sorted as : ' repmat('%g ',[1,length(sortedTE)]) 'ms \n'], sortedTE)
