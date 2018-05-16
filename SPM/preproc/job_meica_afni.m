@@ -14,7 +14,8 @@ end
 defpar.anat_file_reg = '^s.*nii';
 defpar.subdir        = 'meica';
 
-defpar.nrCPU         = 2;
+defpar.cmd_arg       = '';
+defpar.nrCPU         = 0; % 0 means OpenMP will use all available CPU
 defpar.pct           = 0;
 defpar.sge           = 0;
 defpar.slice_timing  = 1; % can be (1) (recommended, will fetch automaticaly the pattern in the dic_.*json), (0) or a (char) such as 'alt+z', check 3dTshift -help
@@ -202,20 +203,26 @@ for subj = 1 : nrSubject
         
         % Options :
         
+        % MNI warp
         if par.MNI
             cmd = sprintf('%s --MNI', cmd);
         end
         
+        % SliceTiming Correction
         if ( isnumeric(par.slice_timing) && par.slice_timing == 1 ) || ischar(par.slice_timing)
             cmd = sprintf('%s --tpattern %s', cmd, tpattern);
         end
         
-        cmd = sprintf('%s \n',cmd);
+        % Other args ?
+        if ~isempty(par.cmd_arg)
+            cmd = sprintf('%s %s', cmd, par.cmd_arg);
+        end
         
+        % Finish preparing meica job
+        cmd = sprintf('%s \n',cmd);
         if ~( exist(fullfile(working_dir,[prefix '_medn' ext_echo]),'file') == 2 ) || par.redo
             job_subj = [job_subj cmd];
         end
-        
         
         %-Move meica-processed volumes in run dirs, using symbolic links
         %==================================================================
