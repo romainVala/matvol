@@ -37,6 +37,27 @@ parverbose  = par.verbose;
 par.verbose = 0; % don't print anything yet
 
 
+%% Check dir_func architecture
+% Transform dir_func into a multi-level cell
+% Transform dir_anat into a cellstr (because only 1 anat per subj)
+
+if ischar(dir_func)
+    dir_func = cellstr(dir_func);
+end
+
+if ischar(dir_anat)
+    dir_anat = cellstr(dir_anat);
+end
+
+if ischar(dir_func{1})
+    if size(dir_func{1},1)>1
+        dir_func = {cellstr(dir_func{1})};
+    else
+        dir_func = {dir_func};
+    end
+end
+
+
 %% Main
 
 assert( length(dir_func) == length(dir_anat), 'dir_func & dir_anat must be the same length' )
