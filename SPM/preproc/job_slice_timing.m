@@ -16,7 +16,7 @@ defpar.jobname='spm_sliceTime';
 defpar.walltime = '04:00:00';
 defpar.run = 0;
 defpar.display=0;
-par.redo=0;
+defpar.redo=0;
 par = complet_struct(par,defpar);
 
 TR = par.TR;
