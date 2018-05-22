@@ -11,13 +11,15 @@ end
 
 %% defpar
 
-% defpar.file_reg      = '^f.*nii';
 defpar.anat_file_reg = '^s.*nii';
 defpar.subdir        = 'meica';
 
-defpar.nrCPU         = 2;
+defpar.cmd_arg       = '';
+defpar.nrCPU         = 0; % 0 means OpenMP will use all available CPU
 defpar.pct           = 0;
 defpar.sge           = 0;
+defpar.slice_timing  = 1; % can be (1) (recommended, will fetch automaticaly the pattern in the dic_.*json), (0) or a (char) such as 'alt+z', check 3dTshift -help
+defpar.MNI           = 1; % normalization
 
 defpar.redo          = 0;
 defpar.fake          = 0;
@@ -35,7 +37,28 @@ parverbose  = par.verbose;
 par.verbose = 0; % don't print anything yet
 
 
-%% Fetch data
+%% Check dir_func architecture
+% Transform dir_func into a multi-level cell
+% Transform dir_anat into a cellstr (because only 1 anat per subj)
+
+if ischar(dir_func)
+    dir_func = cellstr(dir_func);
+end
+
+if ischar(dir_anat)
+    dir_anat = cellstr(dir_anat);
+end
+
+if ischar(dir_func{1})
+    if size(dir_func{1},1)>1
+        dir_func = {cellstr(dir_func{1})};
+    else
+        dir_func = {dir_func};
+    end
+end
+
+
+%% Main
 
 assert( length(dir_func) == length(dir_anat), 'dir_func & dir_anat must be the same length' )
 
@@ -68,10 +91,10 @@ for subj = 1 : nrSubject
     %======================================================================
     
     % Make symbolic link of tha anat in the working directory
-    A_src = char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, 1 ));
-    assert( exist(A_src,'file')==2 , 'file does not exist : %s', A_src )
+    assert( exist(dir_anat{subj},'dir')==7 , 'not a dir : %s', dir_anat{subj} )
+    A_src = char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, 1));
     
-    job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ];
+    job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ]; %#ok<*AGROW>
     
     % File extension ?
     if strcmp(A_src(end-6:end),'.nii.gz')
@@ -96,6 +119,7 @@ for subj = 1 : nrSubject
         run_path = dir_func{subj}{run};
         assert( exist(run_path,'dir')==7 , 'not a dir : %s', run_path )
         fprintf('In run dir %s ', run_path);
+        [~, serie_name] = get_parent_path(run_path);
         
         job_subj = [job_subj sprintf('### Run %d/%d @ %s \n', run, nrRun, dir_func{subj}{run}) ];
         
@@ -117,9 +141,9 @@ for subj = 1 : nrSubject
         allEchos = cell(length(order),1);
         for echo = 1 : length(order)
             if order(echo) == 1
-                allEchos(echo) = get_subdir_regex_files(run_path,         '^f.*B\d.nii'                   , 1);
+                allEchos(echo) = get_subdir_regex_files(run_path, ['^f\d+_' serie_name '.nii'], 1);
             else
-                allEchos(echo) = get_subdir_regex_files(run_path, sprintf('^f.*B\\d_V%.3d.nii',order(echo)), 1);
+                allEchos(echo) = get_subdir_regex_files(run_path, ['^f\d+_' serie_name '_' sprintf('V%.3d',order(echo)) '.nii'], 1);
             end
         end % echo
         fprintf(['sorted as : ' repmat('%g ',[1,length(sortedTE)]) 'ms \n'], sortedTE)
@@ -150,6 +174,36 @@ for subj = 1 : nrSubject
             
         end % echo
         
+        %-Prepare slice timing info
+        %==================================================================
+        
+        if isnumeric(par.slice_timing) && par.slice_timing == 1
+            
+            % Read the slice timings directly in the dic_.*json
+            [ out ] = get_string_from_json( deblank(jsons{1}(1,:)) , 'CsaImage.MosaicRefAcqTimes' , 'vect' );
+            
+            % Right field found ?
+            assert( ~isempty(out{1}), 'Did not detect the right field ''CsaImage.MosaicRefAcqTimes'' in the file %s', deblank(jsons{1}(1,:)) )
+            
+            % Destination file :
+            tpattern = fullfile(working_dir,'sliceorder.txt');
+            fileID = fopen( tpattern , 'w' , 'n' , 'UTF-8' );
+            if fileID < 0
+                warning('[%s]: Could not open %s', mfilename, filename)
+            end
+            fprintf(fileID, '%f\n', out{1}/1000 );
+            fclose(fileID);
+            tpattern = ['@' tpattern]; % 3dTshift syntax to use a file is 3dTshift -tpattern @filename
+            
+        elseif ischar(par.slice_timing)
+            
+            tpattern = par.slice_timing;
+            
+        end
+        
+        % Fetch TR
+        res = get_string_from_json( deblank(jsons{1}(1,:)) ,'RepetitionTime','numeric');
+        TR = res{1}/1000;
         
         %-Prepare command : meica.py
         %==================================================================
@@ -164,11 +218,32 @@ for subj = 1 : nrSubject
         
         prefix = sprintf('run%.3d',run);
         
-        cmd = sprintf('cd %s;\n meica.py -d %s -e %s -a %s --MNI --prefix %s --cpus %d \n',...
-            working_dir, data_arg, echo_arg, anat_filename , prefix, par.nrCPU );
+        % Main command
+        cmd = sprintf('cd %s;\n meica.py -d %s -e %s -a %s --prefix %s --cpus %d --TR=%g --daw=5',... % kdaw = 5 makes ICA converge mucgh easier : https://bitbucket.org/prantikk/me-ica/issues/28/meice-ocnvergence-issue-mdpnodeexception
+            working_dir, data_arg, echo_arg, anat_filename , prefix, par.nrCPU, TR );
         
-        job_subj = [job_subj cmd];
+        % Options :
         
+        % MNI warp
+        if par.MNI
+            cmd = sprintf('%s --MNI', cmd);
+        end
+        
+        % SliceTiming Correction
+        if ( isnumeric(par.slice_timing) && par.slice_timing == 1 ) || ischar(par.slice_timing)
+            cmd = sprintf('%s --tpattern %s', cmd, tpattern);
+        end
+        
+        % Other args ?
+        if ~isempty(par.cmd_arg)
+            cmd = sprintf('%s %s', cmd, par.cmd_arg);
+        end
+        
+        % Finish preparing meica job
+        cmd = sprintf('%s \n',cmd);
+        if ~( exist(fullfile(working_dir,[prefix '_medn' ext_echo]),'file') == 2 ) || par.redo
+            job_subj = [job_subj cmd];
+        end
         
         %-Move meica-processed volumes in run dirs, using symbolic links
         %==================================================================
