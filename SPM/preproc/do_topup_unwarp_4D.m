@@ -130,7 +130,7 @@ for subj=1:nrSubject
         
         par.index=run;
         if par.do_apply(run)
-            for volume_idx = 1:size(runList(run))
+            for volume_idx = 1:size(runList{run},1)
                 job_subj = do_fsl_apply_topup(runList{run}(volume_idx,:),fo,par, job_subj);
             end
         end
