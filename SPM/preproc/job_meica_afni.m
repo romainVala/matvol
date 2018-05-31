@@ -12,22 +12,30 @@ end
 
 %% defpar
 
-% meica.py arguments
-defpar.cmd_arg       = ''; % allows you to use all addition arguments not scripted in this job_meica_afni.m file
-defpar.nrCPU         = 0; % 0 means OpenMP will use all available CPU
-defpar.slice_timing  = 1; % can be (1) (recommended, will fetch automaticaly the pattern in the dic_.*json), (0) or a (char) such as 'alt+z', check 3dTshift -help
-defpar.MNI           = 1; % normalization
+% meica.py arguments : image processing
+defpar.slice_timing  = 1;  % can be (1) (recommended, will fetch automaticaly the pattern in the dic_.*json), (0) or a (char) such as 'alt+z', check 3dTshift -help
+defpar.MNI           = 1;  % Warp to MNI space using high-resolution template
+defpar.qwarp         = 1;  % Nonlinear anatomical normalization to MNI (or --space template) using 3dQWarp, after affine
+defpar.no_skullstrip = 0;  % Anatomical is already intensity-normalized and skull-stripped
+defpar.no_despike    = 0;  % Do not de-spike functional data. Default is to de-spike, recommended.
+defpar.smooth        = ''; % Data FWHM smoothing (3dBlurInMask). Default off. ex: par.smooth='3mm'
 
+% meica.py arguments : script options
+defpar.script_only   = 0;  % Generate script only, then exit
+defpar.pp_only       = 0;  % Preprocess only, then exit. It means no echo optimized comination, no ICA, just AFNI preprocessing
+defpar.keep_int      = 1;  % Keep preprocessing intermediates.
+defpar.OVERWRITE     = 0;  % If subjdir/meica/meica.xyz directory exists, overwrite.
+defpar.nrCPU         = 0;  % 0 means OpenMP will use all available CPU
+defpar.cmd_arg       = ''; % Allows you to use all addition arguments not scripted in this job_meica_afni.m file
 
+% matvol classic options
 defpar.anat_file_reg = '^s.*nii'; % regex to fetch anat volume
-defpar.subdir        = 'meica'; % name of the working dir
+defpar.subdir        = 'meica';   % name of the working dir
 defpar.pct           = 0; % Parallel Computing Toolbox, will execute in parallel all the subjects 
 defpar.sge           = 0; % for ICM cluster, run the jobs in paralle
 defpar.redo          = 0; % overwrite previous files
 defpar.fake          = 0; % do everything exept running
-
 defpar.verbose       = 1; % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
-
 
 par = complet_struct(par,defpar);
 
@@ -220,20 +228,25 @@ for subj = 1 : nrSubject
         prefix = sprintf('run%.3d',run);
         
         % Main command
-        cmd = sprintf('cd %s;\n meica.py -d %s -e %s -a %s --prefix %s --cpus %d --TR=%g --daw=5',... % kdaw = 5 makes ICA converge mucgh easier : https://bitbucket.org/prantikk/me-ica/issues/28/meice-ocnvergence-issue-mdpnodeexception
+        cmd = sprintf('cd %s;\n meica.py -d %s -e %s -a %s --prefix %s --cpus %d --TR=%g --daw=5',... % kdaw = 5 makes ICA converge much easier : https://bitbucket.org/prantikk/me-ica/issues/28/meice-ocnvergence-issue-mdpnodeexception
             working_dir, data_arg, echo_arg, anat_filename , prefix, par.nrCPU, TR );
         
         % Options :
-        
-        % MNI warp
-        if par.MNI
-            cmd = sprintf('%s --MNI', cmd);
-        end
         
         % SliceTiming Correction
         if ( isnumeric(par.slice_timing) && par.slice_timing == 1 ) || ischar(par.slice_timing)
             cmd = sprintf('%s --tpattern %s', cmd, tpattern);
         end
+        
+        if par.MNI,           cmd = sprintf('%s --MNI'          , cmd); end
+        if par.qwarp,         cmd = sprintf('%s --qwarp'        , cmd); end
+        if par.no_skullstrip, cmd = sprintf('%s --no_skullstrip', cmd); end
+        if par.no_despike,    cmd = sprintf('%s --no_despike'   , cmd); end
+        if par.smooth,        cmd = sprintf('%s --smooth %s'    , cmd, par.smooth); end
+        if par.script_only,   cmd = sprintf('%s --script_only'  , cmd); end
+        if par.pp_only,       cmd = sprintf('%s --pp_only'      , cmd); end
+        if par.keep_int,      cmd = sprintf('%s --keep_int'     , cmd); end
+        if par.OVERWRITE,     cmd = sprintf('%s --OVERWRITE'    , cmd); end
         
         % Other args ?
         if ~isempty(par.cmd_arg)
