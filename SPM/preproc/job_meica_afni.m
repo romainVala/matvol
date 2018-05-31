@@ -1,5 +1,6 @@
 function [ job ] = job_meica_afni( dir_func, dir_anat, par )
 %JOB_MEICA_AFNI
+% This scipt is well discribeded with the comments, just read it
 
 
 %% Check input arguments
@@ -11,24 +12,27 @@ end
 
 %% defpar
 
-defpar.anat_file_reg = '^s.*nii';
-defpar.subdir        = 'meica';
-
-defpar.cmd_arg       = '';
+% meica.py arguments
+defpar.cmd_arg       = ''; % allows you to use all addition arguments not scripted in this job_meica_afni.m file
 defpar.nrCPU         = 0; % 0 means OpenMP will use all available CPU
-defpar.pct           = 0;
-defpar.sge           = 0;
 defpar.slice_timing  = 1; % can be (1) (recommended, will fetch automaticaly the pattern in the dic_.*json), (0) or a (char) such as 'alt+z', check 3dTshift -help
 defpar.MNI           = 1; % normalization
 
-defpar.redo          = 0;
-defpar.fake          = 0;
 
-defpar.verbose       = 1;
+defpar.anat_file_reg = '^s.*nii'; % regex to fetch anat volume
+defpar.subdir        = 'meica'; % name of the working dir
+defpar.pct           = 0; % Parallel Computing Toolbox, will execute in parallel all the subjects 
+defpar.sge           = 0; % for ICM cluster, run the jobs in paralle
+defpar.redo          = 0; % overwrite previous files
+defpar.fake          = 0; % do everything exept running
+
+defpar.verbose       = 1; % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
 
 
 par = complet_struct(par,defpar);
 
+
+%% Setup that allows this scipt to prepare the commands only, no execution
 
 parsge  = par.sge;
 par.sge = -1; % only prepare commands
@@ -62,13 +66,9 @@ end
 
 assert( length(dir_func) == length(dir_anat), 'dir_func & dir_anat must be the same length' )
 
-if iscell(dir_func{1})
-    nrSubject = length(dir_func);
-else
-    nrSubject = 1;
-end
+nrSubject = length(dir_func);
 
-job = cell(nrSubject,1);
+job = cell(nrSubject,1); % pre-allocation, this is the job containter
 
 fprintf('\n')
 
@@ -85,6 +85,7 @@ for subj = 1 : nrSubject
     
     nrEchoAllRuns = zeros(nrRun,1);
     
+    % Create the working dir
     working_dir = char(r_mkdir(subjectName,par.subdir));
     
     %-Anat
@@ -210,11 +211,11 @@ for subj = 1 : nrSubject
         
         data_sprintf = repmat('%s,',[1 length(E_dst)]);
         data_sprintf(end) = [];
-        data_arg = sprintf(data_sprintf,E_dst{:});
+        data_arg = sprintf(data_sprintf,E_dst{:}); % looks like : "path/to/echo1, path/to/echo2, path/to/echo3"
         
         echo_sprintf = repmat('%g,',[1 length(sortedTE)]);
         echo_sprintf(end) = [];
-        echo_arg = sprintf(echo_sprintf,sortedTE);
+        echo_arg = sprintf(echo_sprintf,sortedTE); % looks like : "TE1, TE2, TE3"
         
         prefix = sprintf('run%.3d',run);
         
@@ -255,19 +256,18 @@ for subj = 1 : nrSubject
             '_tsoc'
             };
         
-        list_volume_src = addprefixtofilenames(list_volume_base, prefix);
-        list_volume_src = addsuffixtofilenames(list_volume_src,ext_echo);
-        list_volume_src{end+1} = sprintf('%s_%s',prefix,'ctab.txt'); % coregistration paramters ?
-        list_volume_src{end+1} = sprintf('meica.%s_e001',prefix);
+        list_volume_src = addprefixtofilenames(list_volume_base, prefix);      % add prefix
+        list_volume_src = addsuffixtofilenames(list_volume_src,ext_echo);      % add file extension
+        list_volume_src{end+1} = sprintf('%s_%s',prefix,'ctab.txt');           % coregistration paramters ?
+        list_volume_src{end+1} = sprintf('meica.%s_e001',prefix);              % for motion paramters path (1/2)
         list_volume_src = addprefixtofilenames(list_volume_src,working_dir);
-        list_volume_src{end} = fullfile( list_volume_src{end} , 'motion.1D' );
+        list_volume_src{end} = fullfile( list_volume_src{end} , 'motion.1D' ); % for motion paramters path (2/2)
         
-        list_volume_dst = addprefixtofilenames(list_volume_base,prefix);
-        list_volume_dst = addsuffixtofilenames(list_volume_dst,ext_echo);
-        list_volume_dst{end+1} = sprintf('%s_%s',prefix,'ctab.txt'); % coregistration paramters ?
-        list_volume_dst{end+1} = sprintf('rp_%s.txt',prefix);
-        list_volume_dst = addprefixtofilenames(list_volume_dst,dir_func{subj}{run});
-        
+        list_volume_dst = addprefixtofilenames(list_volume_base,prefix);       % add prefix
+        list_volume_dst = addsuffixtofilenames(list_volume_dst,ext_echo);      % add file extension
+        list_volume_dst{end+1} = sprintf('%s_%s',prefix,'ctab.txt');           % coregistration paramters ?
+        list_volume_dst{end+1} = sprintf('rp_%s.txt',prefix);                  % motion paramters
+        list_volume_dst = addprefixtofilenames(list_volume_dst,dir_func{subj}{run}); % path of the serie dir
         
         [ ~ , job_tmp ] = r_movefile(list_volume_src, list_volume_dst, 'linkn', par);
         job_subj = [job_subj [job_tmp{:}] sprintf('\n')];
@@ -302,9 +302,17 @@ for subj = 1 : nrSubject
     
 end % subj
 
+% No the jobs are prepared
+
+
+%% Run the jobs
+
+% Fetch origial parameters, because all jobs are prepared
 par.sge     = parsge;
 par.verbose = parverbose;
 
+% Run CPU, run !
 job = do_cmd_sge(job, par);
+
 
 end % function
