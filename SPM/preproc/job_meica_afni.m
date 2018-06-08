@@ -15,7 +15,7 @@ end
 % meica.py arguments : image processing
 defpar.slice_timing  = 1;  % can be (1) (recommended, will fetch automaticaly the pattern in the dic_.*json), (0) or a (char) such as 'alt+z', check 3dTshift -help
 defpar.MNI           = 1;  % Warp to MNI space using high-resolution template
-defpar.qwarp         = 1;  % Nonlinear anatomical normalization to MNI (or --space template) using 3dQWarp, after affine
+defpar.qwarp         = 0;  % Nonlinear anatomical normalization to MNI (or --space template) using 3dQWarp, after affine
 defpar.no_skullstrip = 0;  % Anatomical is already intensity-normalized and skull-stripped
 defpar.no_despike    = 0;  % Do not de-spike functional data. Default is to de-spike, recommended.
 defpar.smooth        = ''; % Data FWHM smoothing (3dBlurInMask). Default off. ex: par.smooth='3mm'
