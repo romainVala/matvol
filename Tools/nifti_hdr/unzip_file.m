@@ -9,6 +9,7 @@ in = cellstr(char(in));
 if ~exist('par','var'),par ='';end
 defpar.sge=0;
 defpar.jobname='zip';
+defpar.cmd = 'unzip -o';
 
 par = complet_struct(par,defpar);
 
@@ -23,7 +24,7 @@ for i=1:length(in)
     
     if ~isempty(in{i}) && ( strcmp(in{i}(end-1:end),'gz') ||  strcmp(in{i}(end-2:end),'zip'))
         [pp na ex] = fileparts(in{i})
-        cmd{i} = sprintf('cd %s ; unzip -o  %s',pp,in{i});
+        cmd{i} = sprintf('cd %s ; %s  %s',pp,par.cmd,in{i});
         out{i} = in{i}(1:end-3); %#ok<*AGROW>
         
     else
