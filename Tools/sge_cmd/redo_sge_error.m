@@ -7,6 +7,7 @@ defpar.msg='illed';
 defpar.jobname='redoo';
 defpar.logdir = 'bad_log';
 defpar.sge=1;
+defpar.python_job=0;
 
 par = complet_struct(par,defpar);
 
@@ -51,7 +52,11 @@ for k=1:length(erf)
             r_movefile(erf(k),redodir{1},'move');
             r_movefile(logf(k),redodir{1},'move');
             
-            jobfile = sprintf('j%.2d_%s',numjob,jobname);
+            if par.python_job
+                jobfile = sprintf('j%d.bash',numjob);
+            else
+                jobfile = sprintf('j%.2d_%s',numjob,jobname);
+            end
             fid = fopen(jobfile);
             l = fgetl(fid);cmd=''; %skip first line #bash
             while 1
