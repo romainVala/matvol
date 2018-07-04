@@ -13,6 +13,7 @@ end
 
 defpar.file_reg = '^s.*nii';
 defpar.rp       = 0;
+defpar.rp_regex = '^rp.*txt';
 
 defpar.jobname  = 'spm_glm';
 defpar.walltime = '04:00:00';
@@ -65,7 +66,7 @@ for subj = 1:nrSubject
     unzip_volume(subjectRuns);
     subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg,struct('verbose',0));
     if par.rp
-        fileRP = get_subdir_regex_files(dirFonc{subj},'^rp.*txt');
+        fileRP = get_subdir_regex_files(dirFonc{subj},par.rp_regex);
     end
     %     else
     %         subjectRuns = dirFonc;
