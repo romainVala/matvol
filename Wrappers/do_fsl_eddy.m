@@ -32,7 +32,7 @@ outfile = addsuffixtofilenames(f4D,par.outsuffix)
 
 if isempty(par.topup)
     for k=1:length(f4D)
-        acqp = get_subdir_regex_files(dtidir,'acqp',1);
+        acqp = get_subdir_regex_files(dtidir(k),'acqp',1);
         
         cmd = sprintf('eddy %s --imain=%s  --mask=%s  --index=%s  --bvecs=%s  --bvals=%s  --acqp=%s   --out=%s --resamp=%s\n',...
             par.eddy_add_cmd,f4D{k},par.mask{k},par.index{k},par.bvecs{k},par.bvals{k},acqp{1},outfile{k},par.resamp)
