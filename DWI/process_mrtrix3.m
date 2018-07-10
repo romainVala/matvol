@@ -7,8 +7,8 @@ if ~exist('par')
 end
 if ~exist('jobappend','var'), jobappend =''; end
 
-defpar.bvecs = 'bvecs';
-defpar.bvals = 'bvals';
+defpar.bvec = 'bvec';
+defpar.bval = 'bval';
 defpar.fsl_mask = '';  %if define, copy it to mrtrix subdir
 defpar.sf_mask = '';
 defpar.mask='mask_mrtrix.nii.gz';
@@ -61,8 +61,8 @@ for nbsuj = 1:length(V4D)
         if ~skip_import
             
             % Convert the gradient file in mrtrix format
-            bvecsf = get_file_from_same_dir(V4D(nbsuj),par.bvecs);
-            bvalsf = get_file_from_same_dir(V4D(nbsuj),par.bvals);
+            bvecsf = get_file_from_same_dir(V4D(nbsuj),par.bvec);
+            bvalsf = get_file_from_same_dir(V4D(nbsuj),par.bval);
             
             % Copy the 4D file in new mrtrix dir (dti_dir)
             
