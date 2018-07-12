@@ -34,9 +34,9 @@ for nbs=1:length(fi)
     phase_sign = j.global.const.PhaseEncodingDirectionPositive;
     switch phase_dir
         case 'COL'
-            phase_dir = 'y'
+            phase_dir = 'y';
         case 'ROW'
-            phase_dir = 'x'
+            phase_dir = 'x';
     end
     if phase_sign
         phase_dir = [phase_dir '-'];
