@@ -102,13 +102,13 @@ for idx = 1:length(source)
                 
             case 'linkn'
                 if ~exist(dir_out{idx}(line,:),'file')
-                    cmd = sprintf('ln -s %s %s \n',source{idx}(line,:),dest{idx});
+                    cmd = sprintf('ln -sf %s %s \n',source{idx}(line,:),dest{idx});
                 else
                     cmd = '';
                 end
                 
             case 'link'
-                cmd = sprintf('ln -s %s %s \n',source{idx}(line,:),dest{idx});
+                cmd = sprintf('ln -sf %s %s \n',source{idx}(line,:),dest{idx});
                 
             case { 'move', 'move_unix' }
                 cmd = sprintf('mv  %s %s \n',source{idx}(line,:),dest{idx});
