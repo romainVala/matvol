@@ -14,16 +14,16 @@ end
 
 % meica.py arguments : image processing
 defpar.slice_timing  = 1;  % can be (1) (recommended, will fetch automaticaly the pattern in the dic_.*json), (0) or a (char) such as 'alt+z', check 3dTshift -help
-defpar.MNI           = 1;  % Warp to MNI space using high-resolution template
+defpar.MNI           = 0;  % Warp to MNI space using high-resolution template
 defpar.qwarp         = 0;  % Nonlinear anatomical normalization to MNI (or --space template) using 3dQWarp, after affine
-defpar.no_skullstrip = 0;  % Anatomical is already intensity-normalized and skull-stripped
+defpar.no_skullstrip = 0;  % WARNING : Anatomical is already intensity-normalized and skull-stripped
 defpar.no_despike    = 0;  % Do not de-spike functional data. Default is to de-spike, recommended.
 defpar.smooth        = ''; % Data FWHM smoothing (3dBlurInMask). Default off. ex: par.smooth='3mm'
 
 % meica.py arguments : script options
 defpar.script_only   = 0;  % Generate script only, then exit
 defpar.pp_only       = 0;  % Preprocess only, then exit. It means no echo optimized comination, no ICA, just AFNI preprocessing
-defpar.keep_int      = 1;  % Keep preprocessing intermediates.
+defpar.keep_int      = 0;  % Keep preprocessing intermediates.
 defpar.OVERWRITE     = 0;  % If subjdir/meica/meica.xyz directory exists, overwrite.
 defpar.nrCPU         = 0;  % 0 means OpenMP will use all available CPU
 defpar.cmd_arg       = ''; % Allows you to use all addition arguments not scripted in this job_meica_afni.m file
@@ -35,7 +35,7 @@ defpar.pct           = 0; % Parallel Computing Toolbox, will execute in parallel
 defpar.sge           = 0; % for ICM cluster, run the jobs in paralle
 defpar.redo          = 0; % overwrite previous files
 defpar.fake          = 0; % do everything exept running
-defpar.verbose       = 1; % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
+defpar.verbose       = 2; % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
 
 par = complet_struct(par,defpar);
 
@@ -119,6 +119,8 @@ for subj = 1 : nrSubject
     [ ~ , job_tmp ] = r_movefile(A_src, A_dst, 'linkn', par);
     job_subj = [job_subj char(job_tmp) sprintf('\n')];
     
+    ext_anat = '.nii.gz'; % force this : AFNI only generates this .nii.gz volumes
+    
     %-All echos
     %======================================================================
     
@@ -181,6 +183,8 @@ for subj = 1 : nrSubject
             
             E_dst{echo} = filename;
             
+            ext_echo = '.nii.gz'; % force this : AFNI only generates this .nii.gz volumes
+            
         end % echo
         
         %-Prepare slice timing info
@@ -189,7 +193,7 @@ for subj = 1 : nrSubject
         if isnumeric(par.slice_timing) && par.slice_timing == 1
             
             % Read the slice timings directly in the dic_.*json
-            [ out ] = get_string_from_json( deblank(jsons{1}(1,:)) , 'CsaImage.MosaicRefAcqTimes' , 'vect' );
+            [ out ] = get_string_from_json( deblank(jsons{1}(1,:)) , 'CsaImage.MosaicRefAcqTimes' , 'vect' ); % in milliseconds
             
             % Right field found ?
             assert( ~isempty(out{1}), 'Did not detect the right field ''CsaImage.MosaicRefAcqTimes'' in the file %s', deblank(jsons{1}(1,:)) )
@@ -200,7 +204,7 @@ for subj = 1 : nrSubject
             if fileID < 0
                 warning('[%s]: Could not open %s', mfilename, filename)
             end
-            fprintf(fileID, '%f\n', out{1}/1000 );
+            fprintf(fileID, '%f\n', out{1}/1000 ); % in seconds
             fclose(fileID);
             tpattern = ['@' tpattern]; % 3dTshift syntax to use a file is 3dTshift -tpattern @filename
             
@@ -211,8 +215,8 @@ for subj = 1 : nrSubject
         end
         
         % Fetch TR
-        res = get_string_from_json( deblank(jsons{1}(1,:)) ,'RepetitionTime','numeric');
-        TR = res{1}/1000;
+        res = get_string_from_json( deblank(jsons{1}(1,:)) ,'RepetitionTime','numeric'); % in milliseconds
+        TR = res{1}/1000; % in seconds
         
         %-Prepare command : meica.py
         %==================================================================
@@ -293,18 +297,19 @@ for subj = 1 : nrSubject
     job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ];
     
     list_anat_base = {
-        'anat_do'
-        'anat_ns_at' % MNI space
-        'anat_ns'
-        'anat_u'
+        'anat_do' % deoblique
+        'anat_u'  % unifize
+        'anat_ns' % skullstrip
         };
     
+    if par.MNI, list_anat_base = [ list_anat_base ; 'anat_ns_at' ]; end
+    
     list_anat_src = addsuffixtofilenames(list_anat_base,ext_anat);
-    list_anat_src{end+1} = 'anat_ns2at.aff12.1D'; % coregistration paramters ?
+    if par.MNI, list_anat_src{end+1} = 'anat_ns2at.aff12.1D';  end % coregistration paramters ?
     list_anat_src = addprefixtofilenames(list_anat_src,working_dir);
     
     list_anat_dst = addsuffixtofilenames(list_anat_base,ext_anat);
-    list_anat_dst{end+1} = 'anat_ns2at.aff12.1D'; % coregistration paramters ?
+    if par.MNI, list_anat_dst{end+1} = 'anat_ns2at.aff12.1D';   end % coregistration paramters ?
     list_anat_dst = addprefixtofilenames(list_anat_dst,dir_anat{subj});
     
     [ ~ , job_tmp ] = r_movefile(list_anat_src, list_anat_dst, 'linkn', par);
