@@ -58,4 +58,12 @@ for ex = 1 : size(serieArray,1)
     
 end % exam
 
+
+%% Error if nothing found
+
+if isempty(volumeArray)
+    warning('No @volume.%s found for regex [ %s ]', type, regex )
+end
+
+
 end % function

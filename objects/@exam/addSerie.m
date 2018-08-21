@@ -20,7 +20,7 @@ function varargout = addSerie( examArray, varargin)
 %% Check inputs
 
 % Need at least dir_regex + tag
-assert( length(varargin)>=2 , '[%s]: requires at least 2 input arguments dir_regex + tag')
+assert( length(varargin)>=2 , '[%s]: requires at least 2 input arguments dir_regex + tag', mfilename)
 
 % nrSeries defined ?
 if isnumeric( varargin{end} )
@@ -110,10 +110,11 @@ for ex = 1 : numel(examArray)
         % Check if N series are found for N tags.
         if checkNr && ( length(serieList) ~= nrSeries )
             examArray(ex).is_incomplete = 1; % set incomplete flag
-            error([
-                'Number of input (%d) tag/nrSeries differs from number of series found \n'...
+            warning([
+                'Found %d/%d series with recursive_regex_path [ %s] \n'...
                 '#%d : %s ' ...
-                ], nrSeries, ex, examArray(ex).path)
+                ], length(serieList), nrSeries, sprintf('%s ', recursive_args{:}), ...
+                ex, examArray(ex).path)
         end
         
         % Add the series
@@ -131,9 +132,10 @@ for ex = 1 : numel(examArray)
         
         % When dirs are not found
         warning([
-            'Could not find recursivly any dir corresponding to the regex [ %s] \n'...
+            'Dir not found for recursive_regex_path [ %s] \n'...
             '#%d : %s' ...
-            ], sprintf('%s ',recursive_args{:}), ex, examArray(ex).path ) %#ok<SPWRN>
+            ], sprintf('%s ',recursive_args{:}), ...
+            ex, examArray(ex).path ) %#ok<SPWRN>
         
         examArray(ex).is_incomplete = 1; % set incomplete flag
         

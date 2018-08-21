@@ -63,4 +63,12 @@ for ex_ = 1 : size(serieArray,1)
     end
 end
 
+
+%% Error if nothing found
+
+if isempty(serieArray)
+    warning('No @serie.%s found for regex [ %s ]', type, regex )
+end
+
+
 end % function

@@ -61,4 +61,12 @@ for ex_ = 1 : size(modelArray,1)
     end
 end
 
+
+%% Error if nothing found
+
+if isempty(modelArray)
+    warning('No @model.%s found for regex [ %s ]', type, regex )
+end
+
+
 end % function

@@ -15,7 +15,7 @@ function varargout = addModel( examArray, varargin)
 %% Check inputs
 
 % Need at least dir_regex + tag
-assert( length(varargin)>=2 , '[%s]: requires at least 2 input arguments dir_regex + tag')
+assert( length(varargin)>=2 , '[%s]: requires at least 2 input arguments dir_regex + tag', mfilename)
 
 recursive_args = varargin(1:end-1); AssertIsCharOrCellstr(recursive_args)
 tag            = varargin{end    }; AssertIsCharOrCellstr(tag           )
@@ -55,29 +55,37 @@ for ex = 1 : numel(examArray)
     % Non-empy Dir ?
     if ~isempty(modelDir)
         if length(modelDir) > 1
+            
             warning([
-                'Could not find only 1 dir corresponding to the recursive_regex_path : \n'...
+                'Found %d/1 dir corresponding to the recursive_regex_path : \n'...
                 '%s %s'],...
-                examArray(ex).path, sprintf('%s ', recursive_args{:}))
+                length(modelDir), examArray(ex).path, sprintf('%s ', recursive_args{:}))
+            
             examArray(ex).is_incomplete = 1; % set incomplete flag
-        end
-        
-        try
-            SPMfile = get_subdir_regex_files(modelDir,'^SPM.mat$',1);
-            counter = counter + 1;
-            examArray(ex).model(lengthModel + counter) = model(char(SPMfile), tag, examArray(ex));
-        catch
-            warning(['Could not find SPM.mat file in the dir : \n' ...
-                '%s'], char(modelDir))
-            examArray(ex).is_incomplete = 1; % set incomplete flag
+            
+        else
+            
+            try
+                SPMfile = get_subdir_regex_files(modelDir,'^SPM.mat$',1);
+                counter = counter + 1;
+                examArray(ex).model(lengthModel + counter) = model(char(SPMfile), tag, examArray(ex));
+            catch
+                warning(['SPM.mat file not found in the dir : \n' ...
+                    '%s'], char(modelDir))
+                examArray(ex).is_incomplete = 1; % set incomplete flag
+            end
+            
         end
         
     else
+        
         warning([
-            'Could not find any dir corresponding to the recursive_regex_path : \n'...
+            'Dir not found corresponding to the recursive_regex_path : \n'...
             '%s %s'],...
             examArray(ex).path, sprintf('%s ', recursive_args{:}))
+        
         examArray(ex).is_incomplete = 1; % set incomplete flag
+        
     end
     
     

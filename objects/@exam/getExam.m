@@ -35,4 +35,12 @@ for ex = 1 : numel(examArray)
     
 end % exam
 
+
+%% Error if nothing found
+
+if isempty(exams)
+    warning('No @exam found for regex [ %s ]', regex )
+end
+
+
 end % function
