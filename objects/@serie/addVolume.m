@@ -17,8 +17,10 @@ assert( ischar(tag       ) && ~isempty(tag       ) , 'tag must be a non-empty ch
 
 if nargin == 4 && ~isempty(nrVolumes)
     assert( isnumeric(nrVolumes) && nrVolumes==round(nrVolumes) && nrVolumes>0, 'If defined, nrVolumes must be positive integer' )
-    par.wanted_number_of_file = nrVolumes;
+else
+    nrVolumes = [];
 end
+
 par.verbose = 0;
 
 
@@ -46,36 +48,52 @@ for ser = 1 : numel(serieArray)
         
     end
     
-    try
+    [exam_idx,serie_idx] = ind2sub(size(serieArray),ser);
+    
+    % Fetch files
+    volume_found = char(get_subdir_regex_files( serieArray(ser).path, file_regex, par ));
+    
+    if ~isempty(volume_found) % file found
         
-        % Try to fetch volume
-        volume_found = get_subdir_regex_files(serieArray(ser).path,file_regex,par); % error from this function if not found
-        
-        % Volume found, so add it
-        serieArray(ser).volume(end + 1) = volume(char(volume_found), tag, serieArray(ser).exam , serieArray(ser));
-        
-    catch
-        
-        [exam_idx,serie_idx] = ind2sub(size(serieArray),ser);
-        
-        if nargin == 4 && ~isempty(nrVolumes)
-            % When volumes found are not exactly nrVolumes
-            warning([
-                'Could not find exactly %d volumes corresponding to the regex [ %s ] \n'...
-                '#[%d %d] : %s ' ...
-                ], nrVolumes, file_regex, exam_idx, serie_idx, serieArray(ser).path )
-        else
-            % When volumes are not found at all
-            warning([
-                'Could not find any volume corresponding to the regex [ %s ] \n'...
-                '#[%d %d] : %s ' ...
-                ], file_regex, exam_idx, serie_idx, serieArray(ser).path )
+        % need a specific number of volumes ?
+        if ~isempty(nrVolumes) % yes, so check it
+            
+            if size(volume_found,1) == nrVolumes
+                
+                % Volume found, so add it
+                serieArray(ser).volume(end + 1) = volume(volume_found, tag, serieArray(ser).exam , serieArray(ser));
+                
+            else
+                
+                % When volumes found are not exactly nrVolumes
+                warning([
+                    'Found %d/%d volumes with the regex [ %s ] \n'...
+                    '#[%d %d] : %s ' ...
+                    ], size(volume_found,1), nrVolumes, file_regex, ...
+                    exam_idx, serie_idx, serieArray(ser).path )
+                
+                serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
+                
+            end
+            
+        else % no, so the number of files foud does not matter
+            
+            % Volume found, so add it
+            serieArray(ser).volume(end + 1) = volume(volume_found, tag, serieArray(ser).exam , serieArray(ser));
+            
         end
+        
+    else % no file found
+        
+        % When volumes are not found at all
+        warning([
+            'Found 0 files with regex [ %s ] \n'...
+            '#[%d %d] : %s ' ...
+            ], file_regex, exam_idx, serie_idx, serieArray(ser).path )
         
         serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
         
     end
-    
     
 end % serie
 
