@@ -28,6 +28,9 @@ classdef exam < mvObject
                 indir  = char(indir);
                 reg_ex = char(reg_ex);
                 
+                % Is indir a real dir ?
+                assert( exist(indir,'dir')==7, 'Dir does not exist : %s', indir )
+                
                 % Fetch dir list recursibley with regex
                 dirList = get_subdir_regex(indir, reg_ex, varargin{:});
                 
