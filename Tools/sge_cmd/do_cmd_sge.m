@@ -19,7 +19,7 @@ def_par.sge_queu      = 'normal';
 def_par.job_append    = 1;
 def_par.sge_nb_coeur  = 1;
 def_par.submit_sleep  = 1;  %add a sleep of 1 second between each qsub
-def_par.walltime      = ''; % string hours
+def_par.walltime      = '02'; % string hours
 def_par.qsubappend    = '';
 def_par.mem           = 4000;  %give a number in Mega --mem=[mem][M|G|T] OR --mem-per-cpu=[mem][M|G|T]
 def_par.job_pack      = 1;
