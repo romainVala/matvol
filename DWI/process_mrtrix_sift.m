@@ -8,6 +8,7 @@ end
 defpar.nthreads = 1;
 defpar.sge = 1;
 defpar.jobname = 'mrtrix_sift';
+defpar.nthreads = 1;
 
 par = complet_struct(par,defpar);
 
@@ -25,7 +26,7 @@ for nbsuj = 1:length(trackin)
     cmd = sprintf('cd %s\n tcksift2 ',dir_mrtrix);
     
     if par.nthreads>1
-        cmd = sprintf('%s\n -nthreads %d',cmd,par.nthreads);
+        cmd = sprintf('%s -nthreads %d',cmd,par.nthreads);
     end
     
     cmd = sprintf('%s %s%s %s %s_weights.txt \n',cmd,track_name,ex,sdata{nbsuj},track_name);
