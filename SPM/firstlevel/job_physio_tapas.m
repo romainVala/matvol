@@ -19,7 +19,7 @@ defpar.logfiles_align_scan = 'last';         % 'last' / 'first'
 
 defpar.file_reg = '^f.*nii'; % to fetch volume info (nrVolumes, nrSlices, TR, ...)
 
-defpar.slice_to_realign = 'middle'; % 'first' / 'middle' / 'last'
+defpar.slice_to_realign = 'middle'; % 'first' / 'middle' / 'last' / sliceNumber (integer)
 % Slice to which regressors are temporally aligned. Typically the slice where your most important activation is expected.
 
 % Physio regressors types
@@ -32,7 +32,7 @@ defpar.rp_regex = '^rp.*txt';
 defpar.rp_order = 24; % can be 6, 12, 24
 % 6 = just add rp, 12 = also adds first order derivatives, 24 = also adds first + second order derivatives
 defpar.rp_outlier_translation_mm = Inf; % Threshold, above which a stick regressor is created for corresponding volume of exceeding shift
-defpar.outlier_rotation_deg      = Inf; % Threshold, above which a stick regressor is created for corresponding volume of exceeding rotational movement
+defpar.rp_outlier_rotation_deg   = Inf; % Threshold, above which a stick regressor is created for corresponding volume of exceeding rotational movement
 
 par.other_regressor_regex = '';
 
@@ -173,7 +173,7 @@ for subj = 1:nrSubject
             jobs{j}.spm.tools.physio.model.movement.yes.file_realignment_parameters = rp;
             jobs{j}.spm.tools.physio.model.movement.yes.order = par.rp_order;
             jobs{j}.spm.tools.physio.model.movement.yes.outlier_translation_mm = par.rp_outlier_translation_mm;
-            jobs{j}.spm.tools.physio.model.movement.yes.outlier_rotation_deg   = par.outlier_rotation_deg;
+            jobs{j}.spm.tools.physio.model.movement.yes.outlier_rotation_deg   = par.rp_outlier_rotation_deg;
         end
         
         % Other regressors ------------------------------------------------
