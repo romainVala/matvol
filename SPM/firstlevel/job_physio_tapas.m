@@ -1,4 +1,4 @@
-function [ jobs ]= job_physio_tapas( dirFunc, dirPhysio, par)
+function [ jobs ]= job_physio_tapas( dirFunc, dirPhysio, dirNoiseROI, par)
 % JOB_PHYSIO_TAPAS - SPM:tools:physio
 % Use 2-level cell (get_subdir_regex_multi) syntax for dirFunc & dirPhysio
 
@@ -27,6 +27,15 @@ defpar.RETROICOR = 1;
 defpar.RVT       = 1;
 defpar.HRV       = 1;
 
+% Noise ROI regressors
+defpar.noiseROI = 1;
+defpar.noiseROI_files_regex  = '^w.*nii';     % usually use normalied files, NOT the smoothed data
+defpar.noiseROI_mask_regex   = '^wc[23].*nii'; % 2 = WM, 3 = CSF
+defpar.noiseROI_thresholds   = 0.99;          % keep voxels with tissu probabilty >= 99%
+defpar.noiseROI_n_voxel_crop = 2;             % crop n voxels in each direction, to avoid partial volume
+defpar.noiseROI_n_components = 12;            % keep n PCA componenets
+
+% Movement regressors
 defpar.rp       = 1;
 defpar.rp_regex = '^rp.*txt';
 defpar.rp_order = 24; % can be 6, 12, 24
@@ -107,13 +116,18 @@ for subj = 1:nrSubject
         
         % Volume info -----------------------------------------------------
         
+        % from header extracted by SPM
         volumes = get_subdir_regex_files( dirFunc{subj}(run) , par.file_reg , p ); % Can be more than 1 volume in case of multi-echo.
         volume  = volumes{1};                                                      % Only use the first volume. In case of ME, all volumes have the same 4D-matrix.
-        V       = spm_vol(char(volume));                                           % Read volume header
+        V       = spm_vol_nifti(char(volume));                                     % Read volume header
+        nrVolumes = V.private.dat.dim(4);
+        nrSlices  = V.private.dat.dim(3);
         
-        nrVolumes = length(V);
-        nrSlices  = V(1).dim(3);
-        TR        = V(1).private.timing.tspace;
+        % from JSON extracted by matvol functions
+        json = get_subdir_regex_files( dirFunc{subj}(run) , 'json$' , p );
+        json = char(json{1});
+        res  = get_string_from_json(json, {'RepetitionTime'}, {'num'});
+        TR   = res{1}/1000; % ms -> s
         
         jobs{j}.spm.tools.physio.scan_timing.sqpar.Nslices = nrSlices;
         jobs{j}.spm.tools.physio.scan_timing.sqpar.NslicesPerBeat = [];
@@ -164,7 +178,24 @@ for subj = 1:nrSubject
             jobs{j}.spm.tools.physio.model.hrv.no = struct([]);
         end
         
-        jobs{j}.spm.tools.physio.model.noise_rois.no = struct([]); % will be coded later
+         % Noise ROI model (PCA) ------------------------------------------
+        
+         if par.noiseROI
+             
+             fmri_files     = get_subdir_regex_files( dirFunc{subj}(run) , par.noiseROI_files_regex, p );
+             noiseROI_files = get_subdir_regex_files( dirNoiseROI{subj}  , par.noiseROI_mask_regex, p );
+             
+             jobs{j}.spm.tools.physio.model.noise_rois.yes.fmri_files   = fmri_files; % requires 4D volume
+             jobs{j}.spm.tools.physio.model.noise_rois.yes.roi_files    = cellstr(char(noiseROI_files));
+             jobs{j}.spm.tools.physio.model.noise_rois.yes.thresholds   = par.noiseROI_thresholds;
+             jobs{j}.spm.tools.physio.model.noise_rois.yes.n_voxel_crop = par.noiseROI_n_voxel_crop;
+             jobs{j}.spm.tools.physio.model.noise_rois.yes.n_components = par.noiseROI_n_components;
+             
+         else
+             
+             jobs{j}.spm.tools.physio.model.noise_rois.no = struct([]); % will be coded later
+             
+         end
         
         % Realignment parameters ------------------------------------------
         
