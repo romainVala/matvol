@@ -4,6 +4,7 @@ function varargout = countSeries( examArray )
 % Initialization
 nick = {examArray(1).serie.nick};
 nick = unique(nick);
+nick(cellfun(@isempty,nick)) = []; % remove empty tags
 out = zeros( numel(examArray), numel(nick));
 
 for ex = 1 : numel(examArray)
