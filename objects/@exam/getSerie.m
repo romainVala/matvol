@@ -58,7 +58,7 @@ end % exam
 for ex_ = 1 : size(serieArray,1)
     for ser_ = 1 : size(serieArray,2)
         if isempty(serieArray(ex_,ser_).(type))
-            serieArray(ex_,ser_).exam = examArray(ex);
+            serieArray(ex_,ser_).exam = examArray(ex_);
         end
     end
 end

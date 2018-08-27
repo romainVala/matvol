@@ -6,6 +6,7 @@ classdef serie < mvObject
         volume = volume.empty % volumes associated with this serie
         exam   = exam.empty   % exam    associated with this serie
         stim   = stim.empty   % stim    associated with this serie
+        json   = json.empty   % json    associated with this serie
         
         nick = '' % nick = tag *given by the user*, not the one with auto-increment (_001, _002, ...)
         inc  = 1  % when add* methods increments the tag number (_001, _002, ...), this fields is updated
