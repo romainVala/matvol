@@ -193,18 +193,21 @@ for subj = 1:nrSubject
              
          else
              
-             jobs{j}.spm.tools.physio.model.noise_rois.no = struct([]); % will be coded later
+             jobs{j}.spm.tools.physio.model.noise_rois.no = struct([]);
              
          end
         
         % Realignment parameters ------------------------------------------
         
         if par.rp
+            
             rp = get_subdir_regex_files( dirFunc{subj}(run) , par.rp_regex , 1 );
+            
             jobs{j}.spm.tools.physio.model.movement.yes.file_realignment_parameters = rp;
-            jobs{j}.spm.tools.physio.model.movement.yes.order = par.rp_order;
+            jobs{j}.spm.tools.physio.model.movement.yes.order                  = par.rp_order;
             jobs{j}.spm.tools.physio.model.movement.yes.outlier_translation_mm = par.rp_outlier_translation_mm;
             jobs{j}.spm.tools.physio.model.movement.yes.outlier_rotation_deg   = par.rp_outlier_rotation_deg;
+            
         end
         
         % Other regressors ------------------------------------------------
