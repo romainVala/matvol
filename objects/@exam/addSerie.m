@@ -115,19 +115,25 @@ for ex = 1 : numel(examArray)
                 '#%d : %s ' ...
                 ], length(serieList), nrSeries, sprintf('%s ', recursive_args{:}), ...
                 ex, examArray(ex).path)
+        else
+            
+            % Add the series
+            for ser = 1 : length(serieList)
+                counter = counter + 1;
+                if autoIncrement
+                    tag  = sprintf('%s_%0.3d',char(tags),counter);
+                    nick = char(tags);
+                    inc  = counter;
+                else
+                    tag  = tags{ser};
+                    nick = tags{ser};
+                    inc  = [];
+                end
+                examArray(ex).serie(lengthSeries + counter) = serie(serieList{ser}, tag, nick, inc, examArray(ex) );
+            end % found dir (== series)
+            
         end
-        
-        % Add the series
-        for ser = 1 : length(serieList)
-            counter = counter + 1;
-            if autoIncrement
-                tag = sprintf('%s_%0.3d',char(tags),counter);
-            else
-                tag = tags{ser};
-            end
-            examArray(ex).serie(lengthSeries + counter) = serie(serieList{ser}, tag, examArray(ex) );
-        end % found dir (== series)
-        
+
     else
         
         % When dirs are not found
