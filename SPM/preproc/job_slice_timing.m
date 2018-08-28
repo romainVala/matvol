@@ -15,10 +15,10 @@ defpar.prefix = 'a';
 
 defpar.file_reg        = '^f.*nii';
 
-defpar.reference_slice = 'middle'; % first / middle / last
+defpar.reference_slice = 'middle'; % first / middle / last / sliceNumber (integer)
 
 defpar.use_JSON        = 1;
-defpar.use_JSON_regex  = 'dic_.*json$';
+defpar.use_JSON_regex  = 'json$';
 
 defpar.slice_order     = 'interleaved_ascending'; % only usefull when par.use_JSON=0
 

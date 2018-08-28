@@ -35,7 +35,7 @@ classdef exam < mvObject
                 dirList = get_subdir_regex(indir, reg_ex, varargin{:});
                 
                 if numel(dirList) == 0
-                    error('Could not find recursivly any dir corresponding to the regex [ %s ]\n in : %s', ...
+                    error('No dir found with regex [ %s ]\n in : %s', ...
                         reg_ex, indir )
                 end
                 
