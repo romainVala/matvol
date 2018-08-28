@@ -8,13 +8,15 @@ for idx = 1 : numel(mvArray)
         
         for l = size(mvArray(idx).path,1)
             
+            fprintf('%s -> %s\n', mvArray(idx).tag, mvArray(idx).name)
+            
             if exist( mvArray(idx).path , 'dir' )
                 unix([cmd ' ' mvArray(idx).path(l,:)]);
-                
             else
                 unix([cmd ' ' get_parent_path(mvArray(idx).path(l,:))]);
-                
             end
+            
+             fprintf('\n')
             
         end
         

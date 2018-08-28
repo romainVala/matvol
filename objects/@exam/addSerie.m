@@ -20,7 +20,7 @@ function varargout = addSerie( examArray, varargin)
 %% Check inputs
 
 % Need at least dir_regex + tag
-assert( length(varargin)>=2 , '[%s]: requires at least 2 input arguments dir_regex + tag')
+assert( length(varargin)>=2 , '[%s]: requires at least 2 input arguments dir_regex + tag', mfilename)
 
 % nrSeries defined ?
 if isnumeric( varargin{end} )
@@ -110,30 +110,38 @@ for ex = 1 : numel(examArray)
         % Check if N series are found for N tags.
         if checkNr && ( length(serieList) ~= nrSeries )
             examArray(ex).is_incomplete = 1; % set incomplete flag
-            error([
-                'Number of input (%d) tag/nrSeries differs from number of series found \n'...
+            warning([
+                'Found %d/%d series with recursive_regex_path [ %s] \n'...
                 '#%d : %s ' ...
-                ], nrSeries, ex, examArray(ex).path)
+                ], length(serieList), nrSeries, sprintf('%s ', recursive_args{:}), ...
+                ex, examArray(ex).path)
+        else
+            
+            % Add the series
+            for ser = 1 : length(serieList)
+                counter = counter + 1;
+                if autoIncrement
+                    tag  = sprintf('%s_%0.3d',char(tags),counter);
+                    nick = char(tags);
+                    inc  = counter;
+                else
+                    tag  = tags{ser};
+                    nick = tags{ser};
+                    inc  = [];
+                end
+                examArray(ex).serie(lengthSeries + counter) = serie(serieList{ser}, tag, nick, inc, examArray(ex) );
+            end % found dir (== series)
+            
         end
-        
-        % Add the series
-        for ser = 1 : length(serieList)
-            counter = counter + 1;
-            if autoIncrement
-                tag = sprintf('%s_%0.3d',char(tags),counter);
-            else
-                tag = tags{ser};
-            end
-            examArray(ex).serie(lengthSeries + counter) = serie(serieList{ser}, tag, examArray(ex) );
-        end % found dir (== series)
-        
+
     else
         
         % When dirs are not found
         warning([
-            'Could not find recursivly any dir corresponding to the regex [ %s] \n'...
+            'Dir not found for recursive_regex_path [ %s] \n'...
             '#%d : %s' ...
-            ], sprintf('%s ',recursive_args{:}), ex, examArray(ex).path ) %#ok<SPWRN>
+            ], sprintf('%s ',recursive_args{:}), ...
+            ex, examArray(ex).path ) %#ok<SPWRN>
         
         examArray(ex).is_incomplete = 1; % set incomplete flag
         

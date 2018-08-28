@@ -49,4 +49,12 @@ for ex = 1 : size(serieArray,1)
     
 end % exam
 
+
+%% Error if nothing found
+
+if isempty(stimArray)
+    warning('No @stim.%s found for regex [ %s ]', type, regex )
+end
+
+
 end % function

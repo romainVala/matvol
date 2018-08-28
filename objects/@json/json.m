@@ -1,5 +1,5 @@
-classdef stim < mvObject
-    % STIM object construction is encapsulated inside [ serie.addStim ].
+classdef json < mvObject
+    % JSON object construction is encapsulated inside [ serie.addJson ].
     
     properties
         
@@ -11,7 +11,7 @@ classdef stim < mvObject
     methods
         
         % --- Constructor -------------------------------------------------
-        function self = stim(inputPath, tag, examObj, serieObj)
+        function self = json(inputPath, tag, examObj, serieObj)
             %
             
             % Input args ?

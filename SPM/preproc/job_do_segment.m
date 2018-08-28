@@ -35,7 +35,7 @@ defpar.GM   = [0 0 1 0]; % Unmodulated / modulated / native_space / dartel impor
 defpar.WM   = [0 0 1 0];
 defpar.CSF  = [0 0 1 0];
 defpar.bias = [0 1]; % bias field / bias corrected image
-defpar.warp = [1 1];
+defpar.warp = [1 1]; % warp field native->template / warp field native<-template
 
 defpar.run     = 0;
 defpar.display = 0;

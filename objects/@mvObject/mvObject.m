@@ -23,7 +23,7 @@ classdef mvObject < handle
             % --- cfg ---
             
             if isempty(mvObject_cfg)
-                p = matvol_config; % Load config
+                p = matvol_config;             % Load config : you can copy the function matvol_config.m to use your personnal configuration
                 mvObject_cfg = p.mvObject_cfg; % Save config in global workspace
             end
             

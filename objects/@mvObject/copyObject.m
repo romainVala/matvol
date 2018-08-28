@@ -16,7 +16,7 @@ switch class(in)
         send_ptr     = {'exam'};           % send down pointers
     case 'serie'
         do_not_copy  = {'exam'};
-        to_deep_copy = {'volume', 'stim'};
+        to_deep_copy = {'volume', 'stim', 'json'};
         send_ptr     = {'exam', 'serie'};
     case 'volume'
         do_not_copy  = {'exam', 'serie'};
@@ -30,6 +30,10 @@ switch class(in)
         do_not_copy  = {'exam'};
         to_deep_copy = {};
         send_ptr     = {'exam', 'model'};
+    case 'json'
+        do_not_copy  = {'exam', 'serie'};
+        to_deep_copy = {};
+        send_ptr     = {'exam', 'serie', 'json'};
     otherwise
         error('Unknown object class. Is it really an mvObject ?')
 end

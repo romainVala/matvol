@@ -56,9 +56,17 @@ end % exam
 for ex_ = 1 : size(modelArray,1)
     for ser_ = 1 : size(modelArray,2)
         if isempty(modelArray(ex_,ser_).(type))
-            modelArray(ex_,ser_).exam = examArray(ex);
+            modelArray(ex_,ser_).exam = examArray(ex_);
         end
     end
 end
+
+
+%% Error if nothing found
+
+if isempty(modelArray)
+    warning('No @model.%s found for regex [ %s ]', type, regex )
+end
+
 
 end % function

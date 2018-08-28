@@ -23,12 +23,15 @@ for idx = 1 : numel( mvArray )
                 case 'serie'
                     res1 = mvArray(idx).volume.checkIntegrity;
                     res2 = mvArray(idx).stim  .checkIntegrity;
-                    result = all([res1 res2]);
+                    res3 = mvArray(idx).json  .checkIntegrity;
+                    result = all([res1 res2 res3]);
                 case 'model'
                     % pass
                 case 'volume'
                     % pass
                 case 'stim'
+                    % pass
+                case 'json'
                     % pass
                 otherwise
                     warning('non-coded routine for the object')

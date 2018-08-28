@@ -17,6 +17,8 @@ if nargin < 2
             flag = 0;
         case 'model'
             flag = 0;
+        case 'json'
+            flag = 0;
         otherwise
             error('Unknown object class. Is it really an mvObject ?')
     end
