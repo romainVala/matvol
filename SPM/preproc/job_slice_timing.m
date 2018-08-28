@@ -88,25 +88,26 @@ for subj=1:nSubj
         end
         res = get_string_from_json(json, {'CsaSeries.MrPhoenixProtocol.sSliceArray.lSize', 'RepetitionTime', 'CsaImage.MosaicRefAcqTimes'}, {'num', 'num', 'vect'});
         nrSlices    = res{1};
-        TR          = res{2}/1000; % ms -> s
-        sliceonsets = res{3}; % keep ms
+        TR          = res{2}/1000; % millisecond -> second
+        sliceonsets = res{3};      % keep millisecond
         
-        % here refslice is in slice number (integer)
+        assert( max(sliceonsets)/1000 <= TR , ' slice onset > TR ! pb with the JSON ? pb unit conversion ?' )
+        
+        unique_sliceonsets = unique(sliceonsets);
+        
+        % Refslice is milliseconds
         switch par.reference_slice
             case 'first'
-                refslice = 1;
+                refslice = unique_sliceonsets(1);
             case 'middle'
-                refslice = round(nrSlices/2);
+                refslice = unique_sliceonsets( round( length(unique_sliceonsets)/2 ) ); % i.e. middle of the vector unique_sliceonsets
             case 'last'
-                refslice = nrSlices;
+                refslice = unique_sliceonsets(end);
             otherwise
-                refslice = par.slice_to_realign; % integer
+                refslice = par.reference_slice; % in millisecond !!
         end
         
-        % now we convert slice number (integer) in slice timing (float, milliseconds)
-        refslice = sliceonsets(refslice);
-        
-        jobs{subj}.spm.temporal.st.so = sliceonsets;
+        jobs{subj}.spm.temporal.st.so       = sliceonsets;
         jobs{subj}.spm.temporal.st.refslice = refslice;
         
         TA = 0; % not relevent for slice timing in ms

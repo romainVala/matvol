@@ -51,7 +51,7 @@ defpar.jobname  = 'spm_physio';
 defpar.walltime = '04:00:00';
 defpar.sge      = 0;
 
-defpar.run      = 0;
+defpar.run      = 1;
 defpar.display  = 0;
 defpar.redo     = 0;
 
