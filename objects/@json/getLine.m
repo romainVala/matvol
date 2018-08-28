@@ -1,4 +1,4 @@
-function out = getLine( volumeArray , regex, format )
+function out = getLine( jsonArray , regex, format )
 
 
 %% Check input arguments
@@ -14,18 +14,18 @@ end
 
 %% Fetch
 
-out = cell(size(volumeArray));
+out = cell(size(jsonArray));
 
-for vol = 1 : numel(volumeArray)
+for vol = 1 : numel(jsonArray)
     
-    if ~isempty(volumeArray(vol).path)
+    if ~isempty(jsonArray(vol).path)
         
-        fprintf('%s : ', volumeArray(vol).path)
+        fprintf('%s : ', jsonArray(vol).path)
         
         % Read the file
-        fid = fopen(volumeArray(vol).path, 'rt');
+        fid = fopen(jsonArray(vol).path, 'rt');
         if fid == -1
-            error('file cannot be opened : %s', volumeArray(vol).path)
+            error('file cannot be opened : %s', jsonArray(vol).path)
         end
         content = fread(fid, '*char')'; % read the whole file as a single char
         fclose(fid);
