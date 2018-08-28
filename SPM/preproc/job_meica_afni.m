@@ -36,6 +36,8 @@ defpar.sge           = 0; % for ICM cluster, run the jobs in paralle
 defpar.redo          = 0; % overwrite previous files
 defpar.fake          = 0; % do everything exept running
 defpar.verbose       = 2; % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
+defpar.jobname       = 'job_meica';
+
 
 par = complet_struct(par,defpar);
 

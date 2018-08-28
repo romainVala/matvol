@@ -9,7 +9,8 @@ fi=cellstr(char(fi));
 for nbs=1:length(fi)
     [pp ff ] = fileparts(fi{nbs});
     try
-        fdic = get_subdir_regex_files(pp,'^dic.*json',1) ;
+        fdic = get_subdir_regex_files(pp,'^dic.*json') ;
+        fdic{1} = fdic{1}(1,:) ;
         
     catch
         error('can not find json dicom parama in %s ',pp)
@@ -34,9 +35,9 @@ for nbs=1:length(fi)
     phase_sign = j.global.const.PhaseEncodingDirectionPositive;
     switch phase_dir
         case 'COL'
-            phase_dir = 'y'
+            phase_dir = 'y';
         case 'ROW'
-            phase_dir = 'x'
+            phase_dir = 'x';
     end
     if phase_sign
         phase_dir = [phase_dir '-'];

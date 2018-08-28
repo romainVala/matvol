@@ -11,6 +11,7 @@ defpar.separate_include = 0;
 defpar.jobname = 'mrtrix_filter_track';
 defpar.sge=1;
 defpar.tck_weights='';
+defpar.ref='';
 
 par = complet_struct(par,defpar);
 
@@ -84,7 +85,7 @@ for nbsuj = 1:length(track_in)
     else
         if ~isempty(par.track_name),            out_name = par.track_name;        end
         
-        cmd = sprintf('cd %s;tckedit -force %s %s.tck %s %s',...
+        cmd = sprintf('cd %s;\ntckedit -force %s %s.tck %s %s',...
             dir_mrtrix,track_in{nbsuj},out_name,str_include,str_exclude);
         if ~isempty(    par.tck_weights)
             cmd = sprintf('%s -tck_weights_in %s -tck_weights_out %s_weights.txt',...
@@ -95,7 +96,14 @@ for nbsuj = 1:length(track_in)
         
     end
     
+    fout{nbsuj} = fullfile(dir_mrtrix,[out_name '.tck']);
 end%for nbsuj = 1:length(track_in)
 
-do_cmd_sge(job,par);
+if ~isempty(par.ref)
+    job  = mrtrix_tracks2prob(fout',par.ref,par,job);
+else
+    do_cmd_sge(job,par);
+
+end
+
 
