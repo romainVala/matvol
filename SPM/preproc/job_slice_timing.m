@@ -117,6 +117,7 @@ for subj=1:nSubj
         V        = spm_vol( subjFiles{1}(1,:) );
         nrSlices = V(1).dim(3);
         TR       = V(1).private.timing.tspace;
+	if par.TR > 0, TR = par.TR; end
         
         parameters.slicetiming.slice_order = par.slice_order;
         parameters.slicetiming.reference_slice = par.reference_slice;
