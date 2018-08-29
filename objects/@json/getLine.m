@@ -20,41 +20,45 @@ for vol = 1 : numel(jsonArray)
     
     if ~isempty(jsonArray(vol).path)
         
-        fprintf('%s : ', jsonArray(vol).path)
-        
-        % Read the file
-        fid = fopen(jsonArray(vol).path, 'rt');
-        if fid == -1
-            error('file cannot be opened : %s', jsonArray(vol).path)
-        end
-        content = fread(fid, '*char')'; % read the whole file as a single char
-        fclose(fid);
-        
-        %         token = regexp(content, [ '"' 'EchoTime' '": "([A-Za-z0-9-_,;]+)",' ],'tokens')
-        %         token = regexp(content, [ '"' 'EchoTime' '": (([-e.]|\d)+),' ],'tokens')
-        
-        % Fetch the line content
-        start = regexp(content           , regex, 'once');
-        stop  = regexp(content(start:end), ','  , 'once');
-        line = content(start:start+stop); % extract the value from the line
-        token = regexp(line, ': (.*),','tokens');
-        
-        if ~isempty(token)
+        for j = 1 : size(jsonArray(vol).path,1)
             
-            res = token{1}{1};
+            fprintf('%s : ', deblank(jsonArray(vol).path(j,:)))
             
-            % Remoce " at begining & end
-            if strcmp(res(1),'"') && strcmp(res(end),'"')
-                out{vol} = res(2:end-1);
-            else
-                out{vol} = res;
+            % Read the file
+            fid = fopen(deblank(jsonArray(vol).path(j,:)), 'rt');
+            if fid == -1
+                error('file cannot be opened : %s', deblank(jsonArray(vol).path(j,:)))
+            end
+            content = fread(fid, '*char')'; % read the whole file as a single char
+            fclose(fid);
+            
+            %         token = regexp(content, [ '"' 'EchoTime' '": "([A-Za-z0-9-_,;]+)",' ],'tokens')
+            %         token = regexp(content, [ '"' 'EchoTime' '": (([-e.]|\d)+),' ],'tokens')
+            
+            % Fetch the line content
+            start = regexp(content           , regex, 'once');
+            stop  = regexp(content(start:end), ','  , 'once');
+            line = content(start:start+stop); % extract the value from the line
+            token = regexp(line, ': (.*),','tokens');
+            
+            if ~isempty(token)
+                
+                res = token{1}{1};
+                
+                % Remoce " at begining & end
+                if strcmp(res(1),'"') && strcmp(res(end),'"')
+                    out{vol} = res(2:end-1);
+                else
+                    out{vol} = res;
+                end
+                
+                fprintf('%s', line);
+                
             end
             
-            fprintf('%s', line);
+            fprintf('\n');
             
         end
-        
-        fprintf('\n');
         
     end
     
