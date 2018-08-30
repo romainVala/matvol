@@ -40,7 +40,10 @@ end
 
 % Empty array of object, happens when copy a 0x0 array
 if numel(in) == 0
-    out = eval([className '.empty']);
+    out = eval( sprintf('%s.empty',className) );
+else
+    % sorry this is a bit tricky to create dynamicly an array of objects
+    eval( sprintf('out(%s) = %s;', regexprep(num2str(size(in)),'\s+',','), className) );
 end
 
 for idx = 1:numel(in)
@@ -53,7 +56,9 @@ for idx = 1:numel(in)
         for var = 1 : numel(varargin{1})
             upperclassName = class(varargin{1}{var});
             out(idx).(upperclassName) = varargin{1}{var};
-            assert( out(idx).(upperclassName) ~= in(idx).(upperclassName) , 'Problem in the copy of prointers from upper container' )
+            if numel(out(idx).(upperclassName))>0
+                assert( out(idx).(upperclassName) ~= in(idx).(upperclassName) , 'Problem in the copy of prointers from upper container' )
+            end
         end
     end
     
@@ -66,7 +71,9 @@ for idx = 1:numel(in)
                 assert( out(idx) ~= in(idx) , 'Problem in the copy of prointers in the current object' )
             else
                 ptrArray{ptr} = out(idx).(send_ptr{ptr});
-                assert( out(idx).(send_ptr{ptr}) ~= in(idx).(send_ptr{ptr}) , 'Problem in the copy of prointers in the current object' )
+                if numel(out(idx).(send_ptr{ptr}))>0
+                    assert( out(idx).(send_ptr{ptr}) ~= in(idx).(send_ptr{ptr}) , 'Problem in the copy of prointers in the current object' )
+                end
             end
         end
     end
@@ -100,6 +107,6 @@ if isa(in,'exam')
 end
 
 % Check if a real deep copy has been done
-assert( ~any(out==in) , 'Not a deep copy for the object %s ', className )
+assert( ~any(out(:)==in(:)) , 'Not a deep copy for the object %s ', className )
 
 end % function
