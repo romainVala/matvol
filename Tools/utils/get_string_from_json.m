@@ -1,4 +1,4 @@
-function [ out ] = get_string_from_json( filename , field_to_get , field_type )
+function [ out, content ] = get_string_from_json( filename , field_to_get , field_type )
 %GET_STRING_FROM_JSON extracts some values from a JSON file
 %
 %   SYNTHAX :
