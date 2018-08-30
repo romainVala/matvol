@@ -1,4 +1,4 @@
-function out = getLine( jsonArray , regex, format )
+function out = getLine( jsonArray , regex, display, format )
 
 
 %% Check input arguments
@@ -6,6 +6,12 @@ function out = getLine( jsonArray , regex, format )
 assert( ~isempty(regex ) && ischar(regex ),      'regex must be a non-empy char' )
 
 if nargin > 2
+    
+else
+    display = 1;
+end
+
+if nargin > 3
     assert( ~isempty(format) && ischar(format), 'format must be a non-empy char' )
 else
     format = '';
@@ -24,7 +30,7 @@ for vol = 1 : numel(jsonArray)
             
             multiple_level = 0;
             
-            out{vol} = fetch_content(jsonArray(vol).path,regex);
+            out{vol} = fetch_content(deblank(jsonArray(vol).path), regex, display);
             
         else
             
@@ -33,7 +39,7 @@ for vol = 1 : numel(jsonArray)
             
             for j = 1 : size(jsonArray(vol).path,1)
                 
-                result = fetch_content(jsonArray(vol).path(j,:),regex);
+                result = fetch_content(deblank(jsonArray(vol).path(j,:)), regex, display);
                 
                 out_tmp{end+1,1} = result; %#ok<AGROW>
                 
@@ -84,9 +90,11 @@ end
 
 end % function
 
-function result = fetch_content(filename,regex)
+function result = fetch_content(filename,regex, display)
 
-fprintf('%s : ', deblank(filename))
+if display
+    fprintf('%s : ', deblank(filename))
+end
 
 % Read the file
 fid = fopen(deblank(filename), 'rt');
@@ -116,10 +124,14 @@ if ~isempty(token)
         result = res;
     end
     
-    fprintf('%s', line);
+    if display
+        fprintf('%s', line);
+    end
     
 end
 
-fprintf('\n');
+if display
+    fprintf('\n');
+end
 
 end % function
