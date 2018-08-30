@@ -97,12 +97,7 @@ if display
 end
 
 % Read the file
-fid = fopen(deblank(filename), 'rt');
-if fid == -1
-    error('file cannot be opened : %s', deblank(filename))
-end
-content = fread(fid, '*char')'; % read the whole file as a single char
-fclose(fid);
+content = get_file_content_as_char( deblank(filename) );
 
 %         token = regexp(content, [ '"' 'EchoTime' '": "([A-Za-z0-9-_,;]+)",' ],'tokens')
 %         token = regexp(content, [ '"' 'EchoTime' '": (([-e.]|\d)+),' ],'tokens')

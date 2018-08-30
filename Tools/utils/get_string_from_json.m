@@ -42,12 +42,7 @@ end
 
 %% Read the file
 
-fid = fopen(filename, 'rt');
-if fid == -1
-    error('file cannot be opened : %s',filename)
-end
-content = fread(fid, '*char')'; % read the whole file as a single char
-fclose(fid);
+content = get_file_content_as_char( filename );
 
 
 %% Extract tokens
