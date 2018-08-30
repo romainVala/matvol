@@ -127,8 +127,9 @@ for e = 1:nrExam
                 if size(V.path,1) == 1 % single echo **********************
                     
                     % Volume ..............................................
-                    [~,V_name,~] = fileparts(V.path);
-                    V_ext = file_ext(V.path);
+                    file_path = deblank(V.path);
+                    V_ext = file_ext(file_path);
+                    [~,V_name,~] = fileparts(V.path(1:end-length(V_ext)));
                     V_name = del_(V_name);
                     V_base = fullfile( func_path, sprintf('%s_%s_task-%s_bold', sub_name, ses_name, V_name) );
                     V_vol_path = [ V_base V_ext ];
@@ -230,8 +231,8 @@ end % function
 function job_subj = write_json_bids( job_subj, json_bids, newJSON, prevJSON  )
 
 % Write BIDS data in the new JSON file, and append the previous JSON file
-job_subj = [ job_subj sprintf('echo "%s" >> %s \n', json_bids , newJSON ) ];
-job_subj = [ job_subj sprintf('cat %s >> %s \n', prevJSON , newJSON ) ];
+job_subj = [ job_subj sprintf('echo ''%s'' >> %s \n', json_bids , newJSON ) ];
+% job_subj = [ job_subj sprintf('cat %s >> %s \n', prevJSON , newJSON ) ];
 
 end % function
 
@@ -252,6 +253,6 @@ for idx = 1:numel(fields)
         json_bids = [json_bids sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
     end
 end % fields
-json_bids = [ json_bids sprintf('}\n') ];
+json_bids = [ json_bids(1:end-2) sprintf('\n}') ];
 
 end % end
