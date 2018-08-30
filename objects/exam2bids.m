@@ -126,8 +126,6 @@ for e = 1:nrExam
                 
                 if size(V.path,1) == 1 % single echo **********************
                     
-                    clc
-                    
                     % Volume ..............................................
                     [~,V_name,~] = fileparts(V.path);
                     V_ext = file_ext(V.path);
@@ -152,26 +150,8 @@ for e = 1:nrExam
                     to_write.FlipAngle      = res{4};
                     to_write.ParallelReductionFactorInPlane = res{5};
                     
-                    % Prepare info for .json BIDS
-                    fields = fieldnames(to_write);
-                    json_bids = sprintf('{\n');
-                    for idx = 1:numel(fields)
-                        if numel(to_write.(fields{idx})) == 1
-                            json_bids = [json_bids sprintf( '\t "%s": %g,\n', fields{idx}, to_write.(fields{idx}) ) ];
-                        else
-                            % Concatenation
-                            rep  = repmat('%g, ',[1 length(to_write.(fields{idx}))]);
-                            rep  = rep(1:end-2);
-                            rep   = ['[' rep ']'];
-                            final = sprintf(rep,to_write.(fields{idx}));
-                            json_bids = [json_bids sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
-                        end
-                    end % fields
-                    json_bids = [ json_bids sprintf('}\n') ];
-                    
-                    % Write BIDS data in the new JSON file, and append the previous JSON file
-                    job_subj = [ job_subj sprintf('echo "%s" >> %s \n', json_bids , J_path ) ];
-                    job_subj = [ job_subj sprintf('cat %s >> %s \n', J.path , J_path ) ];
+                    json_bids = struct2json( to_write );
+                    job_subj = write_json_bids( job_subj, json_bids, J_path, J.path  );
                     
                     
                 else % multi echo *****************************************
@@ -246,3 +226,32 @@ else
 end
 
 end % function
+
+function job_subj = write_json_bids( job_subj, json_bids, newJSON, prevJSON  )
+
+% Write BIDS data in the new JSON file, and append the previous JSON file
+job_subj = [ job_subj sprintf('echo "%s" >> %s \n', json_bids , newJSON ) ];
+job_subj = [ job_subj sprintf('cat %s >> %s \n', prevJSON , newJSON ) ];
+
+end % function
+
+function json_bids = struct2json( input_structure )
+
+% Prepare info for .json BIDS
+fields = fieldnames(input_structure);
+json_bids = sprintf('{\n');
+for idx = 1:numel(fields)
+    if numel(input_structure.(fields{idx})) == 1
+        json_bids = [json_bids sprintf( '\t "%s": %g,\n', fields{idx}, input_structure.(fields{idx}) ) ];
+    else
+        % Concatenation
+        rep  = repmat('%g, ',[1 length(input_structure.(fields{idx}))]);
+        rep  = rep(1:end-2);
+        rep   = ['[' rep ']'];
+        final = sprintf(rep,input_structure.(fields{idx}));
+        json_bids = [json_bids sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
+    end
+end % fields
+json_bids = [ json_bids sprintf('}\n') ];
+
+end % end
