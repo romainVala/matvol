@@ -40,6 +40,8 @@ if ~SUCCESS
 end
 
 for e = 1:nrExam
+    %% --------------------------------------------------------------------
+    % Initialization
     
     E = examArray(e); % shortcut (E is a pointer, not a copy of the object)
     
@@ -47,19 +49,22 @@ for e = 1:nrExam
     fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, e, nrExam, E.path);
     job_subj = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, e, nrExam, E.path); % initialize
     
-    %----------------------------------------------------------------------
+    
+    %% --------------------------------------------------------------------
     % sub DIR
     sub_name = sprintf('sub-%s',del_(E.name));
     sub_path = fullfile( bidsDir, sub_name );
-    job_subj = [ job_subj sprintf('mkdir %s \n', sub_path) ]; %#ok<*AGROW>
+    job_subj = [ job_subj sprintf('mkdir -p %s \n', sub_path) ]; %#ok<*AGROW>
     
-    %----------------------------------------------------------------------
+    
+    %% --------------------------------------------------------------------
     % ses-Sx DIR
     ses_name = 'ses-S1';
     ses_path = fullfile( sub_path, ses_name );
-    job_subj = [ job_subj sprintf('mkdir %s \n', ses_path) ];
+    job_subj = [ job_subj sprintf('mkdir -p %s \n', ses_path) ];
     
-    %----------------------------------------------------------------------
+    
+    %% --------------------------------------------------------------------
     % ANAT
     
     A = E.getSerie('anat');
@@ -69,12 +74,12 @@ for e = 1:nrExam
             
             anat_path = fullfile( ses_path, 'anat' );
             job_subj = [ job_subj sprintf('### anat ###\n') ];
-            job_subj = [ job_subj sprintf('mkdir %s \n', anat_path) ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n', anat_path) ];
             
-            %------------------------------------------------------------------
+            %--------------------------------------------------------------
             % anat NII/NII.GZ & JSON
             
-            % Volume
+            % Volume ......................................................
             T1w_vol = A.getVolume('T1w');
             assert( ~isempty(T1w_vol), 'Found 0/1 @volume found for [ T1w ] in : \n %s' , numel(A), A.path )
             assert( numel(A)==1      , 'Found %d/1 @volume found for [ T1w ] in : \n %s', numel(A), A.path )
@@ -84,7 +89,7 @@ for e = 1:nrExam
             T1w_vol_path = [T1w_base T1w_ext];
             job_subj = [ job_subj sprintf('ln -sf %s %s \n', T1w_vol.path, T1w_vol_path) ];
             
-            % Json
+            % Json ........................................................
             T1w_json = A.getJson('j');
             assert( ~isempty(T1w_json), 'No @json found for [ j ] in : \n %s'                  , A.path )
             assert( numel(A)==1       , 'Found %d/1 @json found for [ j ] in : \n %s', numel(A), A.path )
@@ -97,7 +102,8 @@ for e = 1:nrExam
         
     end % ANAT
     
-    %----------------------------------------------------------------------
+    
+    %% --------------------------------------------------------------------
     % FUNC
     
     F = E.getSerie('func');
@@ -110,16 +116,19 @@ for e = 1:nrExam
             
             func_path = fullfile( ses_path, 'func' );
             job_subj = [ job_subj sprintf('### func ###\n') ];
-            job_subj = [ job_subj sprintf('mkdir %s \n', func_path) ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n', func_path) ];
             
             for f = 1 : numel(F)
                 
                 V = F(f).getVolume('f');
                 assert( ~isempty(V), 'Found 0/1 @volume found for [ func ] in : \n %s' , F.path )
                 
-                % Volume
-                if size(V.path,1) == 1 % single echo
+                
+                if size(V.path,1) == 1 % single echo **********************
                     
+                    clc
+                    
+                    % Volume ..............................................
                     [~,V_name,~] = fileparts(V.path);
                     V_ext = file_ext(V.path);
                     V_name = del_(V_name);
@@ -127,28 +136,58 @@ for e = 1:nrExam
                     V_vol_path = [ V_base V_ext ];
                     job_subj = [ job_subj sprintf('ln -sf %s %s \n', V.path, V_vol_path) ];
                     
-                    % Json
-                    J = F(f).getJson('j',0);
+                    % Json ................................................
+                    J = F(f).getJson('j');
                     assert( ~isempty(J), 'No @json found for [ j ] in : \n %s'                  , F.path )
                     assert( numel(J)==1, 'Found %d/1 @json found for [ j ] in : \n %s', numel(J), F.path )
                     J_path = [V_base '.json'];
-                    job_subj = [ job_subj sprintf('ln -sf %s %s \n', J.path, J_path) ];
                     
-                else % multi echo
+                    % Get data from the Json that we will append on the to, to match BIDS architecture
+                    [ res ] = get_string_from_json(J.path, ...
+                        {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'}, ...
+                        {'num', 'num', 'vect', 'num','num'});
+                    to_write.RepetitionTime = res{1}/1000; % ms -> s
+                    to_write.EchoTime       = res{2}/1000; % ms -> s
+                    to_write.SliceTiming    = res{3}/1000; % ms -> s
+                    to_write.FlipAngle      = res{4};
+                    to_write.ParallelReductionFactorInPlane = res{5};
                     
-                    % Json
+                    % Prepare info for .json BIDS
+                    fields = fieldnames(to_write);
+                    json_bids = sprintf('{\n');
+                    for idx = 1:numel(fields)
+                        if numel(to_write.(fields{idx})) == 1
+                            json_bids = [json_bids sprintf( '\t "%s": %g,\n', fields{idx}, to_write.(fields{idx}) ) ];
+                        else
+                            % Concatenation
+                            rep  = repmat('%g, ',[1 length(to_write.(fields{idx}))]);
+                            rep  = rep(1:end-2);
+                            rep   = ['[' rep ']'];
+                            final = sprintf(rep,to_write.(fields{idx}));
+                            json_bids = [json_bids sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
+                        end
+                    end % fields
+                    json_bids = [ json_bids sprintf('}\n') ];
+                    
+                    % Write BIDS data in the new JSON file, and append the previous JSON file
+                    job_subj = [ job_subj sprintf('echo "%s" >> %s \n', json_bids , J_path ) ];
+                    job_subj = [ job_subj sprintf('cat %s >> %s \n', J.path , J_path ) ];
+                    
+                    
+                else % multi echo *****************************************
+                    
+                    % Json ................................................
                     J = F(f).getJson('j');
                     assert( ~isempty(J), 'No @json found for [ j ] in : \n %s'                  , F.path )
                     assert( numel(J)==1, 'Found %d/1 @json found for [ j ] in : \n %s', numel(J), F.path )
                     
-                    allTE = cell2mat(J.getLine('EchoTime'));
+                    allTE = cell2mat(J.getLine('EchoTime',0));
                     [sortedTE,order] = sort(allTE); %#ok<ASGLU>
-                    % fprintf(['TEs are : ' repmat('%g ',[1,length(allTE)])], allTE);
-                    % fprintf(['sorted as : ' repmat('%g ',[1,length(sortedTE)]) 'ms \n'], sortedTE)
                     
+                    % Volume ..............................................
                     % Fetch volume extension, because MATLAB's fileparts.m function is stupid : it doesnt understand .nii.gz
                     file_1_path = deblank(V.path(1,:));
-                    V_ext = file_ext(file_1_path); 
+                    V_ext = file_ext(file_1_path);
                     [~,V_name,~] = fileparts( file_1_path(1:end-length(V_ext)) ); % Remove the extension before calling 'fileparts' function
                     V_name = del_(V_name);
                     V_base = fullfile( func_path, sprintf('%s_%s_task-%s', sub_name, ses_name, V_name) );
@@ -176,6 +215,7 @@ for e = 1:nrExam
     % Save job_subj
     job{e} = job_subj;
     disp(job_subj)
+    
     
 end
 
