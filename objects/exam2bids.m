@@ -14,6 +14,10 @@ assert( ischar(bidsDir)         , 'bidsDir must be a dir'                  )
 
 %% defpar
 
+defpar.regex_anat = 'anat';
+defpar.regex_func = 'func';
+defpar.regex_json = 'json';
+
 defpar.sge      = 0;
 defpar.jobname  = 'matvol_exam2bids';
 defpar.walltime = '00:30:00';
@@ -22,7 +26,7 @@ defpar.pct      = 0;
 defpar.redo     = 0;
 defpar.run      = 0;
 defpar.display  = 0;
-degpar.verbose  = 2;
+defpar.verbose  = 2;
 
 par = complet_struct(par,defpar);
 
@@ -109,7 +113,7 @@ for e = 1:nrExam
     %% --------------------------------------------------------------------
     % ANAT
     
-    A = E.getSerie('anat');
+    A = E.getSerie( par.regex_anat );
     
     if ~isempty(A)
         if numel(A)==1
@@ -132,7 +136,7 @@ for e = 1:nrExam
             job_subj = [ job_subj sprintf('ln -sf %s %s \n', T1w_vol.path, T1w_vol_path) ];
             
             % Json ........................................................
-            T1w_json = A.getJson('j');
+            T1w_json = A.getJson( par.regex_json );
             assert( ~isempty(T1w_json), 'No @json found for [ j ] in : \n %s'                  , A.path )
             assert( numel(A)==1       , 'Found %d/1 @json found for [ j ] in : \n %s', numel(A), A.path )
             T1w_json_path = [T1w_base '.json'];
@@ -148,7 +152,7 @@ for e = 1:nrExam
     %% --------------------------------------------------------------------
     % FUNC
     
-    F = E.getSerie('func');
+    F = E.getSerie( par.regex_func );
     
     if ~isempty(F)
         
@@ -178,7 +182,7 @@ for e = 1:nrExam
                     job_subj = [ job_subj sprintf('ln -sf %s %s \n', V.path, V_vol_path) ];
                     
                     % Json ................................................
-                    J = F(f).getJson('j');
+                    J = F(f).getJson( par.regex_json );
                     assert( ~isempty(J), 'No @json found for [ j ] in : \n %s'                  , F.path )
                     assert( numel(J)==1, 'Found %d/1 @json found for [ j ] in : \n %s', numel(J), F.path )
                     J_path = [V_base '.json'];
@@ -195,13 +199,13 @@ for e = 1:nrExam
                     to_write.TaskName       = V.name(1:end-length(V_ext));
                     
                     json_bids = struct2json( to_write );
-                    job_subj = write_json_bids( job_subj, json_bids, J_path, J.path  );
+                    job_subj = write_json_bids( job_subj, json_bids, J_path );
                     
                     
                 else % multi echo *****************************************
                     
                     % Json ................................................
-                    J = F(f).getJson('j');
+                    J = F(f).getJson( par.regex_json );
                     assert( ~isempty(J), 'No @json found for [ j ] in : \n %s'                  , F.path )
                     assert( numel(J)==1, 'Found %d/1 @json found for [ j ] in : \n %s', numel(J), F.path )
                     
@@ -224,8 +228,26 @@ for e = 1:nrExam
                         ln_json_path = [ V_base sprintf('_echo-%d_bold',echo) '.json'];
                         
                         job_subj = [ job_subj sprintf('ln -sf %s %s \n', deblank( V.path(order(echo),:) ), ln_vol_path ) ];
-                        job_subj = [ job_subj sprintf('ln -sf %s %s \n', deblank( J.path(order(echo),:) ), ln_json_path) ];
                         
+                        % Get data from the Json that we will append on the to, to match BIDS architecture
+                        [ res ] = get_string_from_json(J.path(order(echo),:), ...
+                            {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'}, ...
+                            {'num', 'num', 'vect', 'num','num'});
+                        to_write.RepetitionTime = res{1}/1000; % ms -> s
+                        to_write.EchoTime       = res{2}/1000; % ms -> s
+                        to_write.SliceTiming    = res{3}/1000; % ms -> s
+                        to_write.FlipAngle      = res{4};
+                        to_write.ParallelReductionFactorInPlane = res{5};
+                        echo_x_name = deblank(V.name(order(echo),:));
+                        echo_x_name = echo_x_name(1:end-length(V_ext));
+                        if order(echo) > 1
+                            echo_x_name = echo_x_name(1:end-5); % delete _V00X (echo name);
+                        end
+                        to_write.TaskName       = echo_x_name;
+                        
+                        json_bids = struct2json( to_write );
+                        job_subj = write_json_bids( job_subj, json_bids, ln_json_path );
+
                     end % echo
                     
                 end % single-echo / multi-echo ?
