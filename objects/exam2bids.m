@@ -14,9 +14,13 @@ assert( ischar(bidsDir)         , 'bidsDir must be a dir'                  )
 
 %% defpar
 
-defpar.regex_anat = 'anat';
-defpar.regex_func = 'func';
-defpar.regex_json = 'json';
+defpar.regex_anat_serie  = 'anat';
+defpar.regex_anat_volume = '^s';
+defpar.regex_anat_json   = '.*';
+
+defpar.regex_func_serie  = 'func';
+defpar.regex_func_volume = '^f';
+defpar.regex_func_json   = '.*';
 
 defpar.sge      = 0;
 defpar.jobname  = 'matvol_exam2bids';
@@ -117,7 +121,7 @@ for e = 1:nrExam
     %% --------------------------------------------------------------------
     % ANAT
     
-    A = E.getSerie( par.regex_anat );
+    A = E.getSerie( par.regex_anat_serie );
     
     if ~isempty(A)
         if numel(A)==1
@@ -127,7 +131,7 @@ for e = 1:nrExam
             job_subj = [ job_subj sprintf('mkdir -p %s \n', anat_path) ];
             
             % Volume ......................................................
-            T1w_vol = A.getVolume('T1w');
+            T1w_vol = A.getVolume( par.regex_anat_volume );
             assert( ~isempty(T1w_vol), 'Found 0/1 @volume found for [ T1w ] in : \n %s' , numel(A), A.path )
             assert( numel(A)==1      , 'Found %d/1 @volume found for [ T1w ] in : \n %s', numel(A), A.path )
             T1w_name = 'T1w';
@@ -137,7 +141,7 @@ for e = 1:nrExam
             job_subj = [ job_subj sprintf('ln -sf %s %s \n', T1w_vol.path, T1w_vol_path) ];
             
             % Json ........................................................
-            T1w_json = A.getJson( par.regex_json );
+            T1w_json = A.getJson( par.regex_anat_json );
             assert( ~isempty(T1w_json), 'No @json found for [ j ] in : \n %s'                  , A.path )
             assert( numel(A)==1       , 'Found %d/1 @json found for [ j ] in : \n %s', numel(A), A.path )
             T1w_json_path = [T1w_base '.json'];
@@ -157,7 +161,7 @@ for e = 1:nrExam
     %% --------------------------------------------------------------------
     % FUNC
     
-    F = E.getSerie( par.regex_func );
+    F = E.getSerie( par.regex_func_serie );
     
     if ~isempty(F)
         
@@ -171,7 +175,7 @@ for e = 1:nrExam
             
             for f = 1 : numel(F)
                 
-                V = F(f).getVolume('f');
+                V = F(f).getVolume( par.regex_func_volume );
                 assert( ~isempty(V), 'Found 0/1 @volume found for [ func ] in : \n %s' , F.path )
                 
                 if size(V.path,1) == 1 % single echo **********************
@@ -186,7 +190,7 @@ for e = 1:nrExam
                     job_subj = [ job_subj sprintf('ln -sf %s %s \n', V.path, V_vol_path) ];
                     
                     % Json ................................................
-                    J = F(f).getJson( par.regex_json );
+                    J = F(f).getJson( par.regex_func_json );
                     assert( ~isempty(J), 'No @json found for [ j ] in : \n %s'                  , F.path )
                     assert( numel(J)==1, 'Found %d/1 @json found for [ j ] in : \n %s', numel(J), F.path )
                     J_path = [V_base '.json'];
@@ -213,7 +217,7 @@ for e = 1:nrExam
                 else % multi echo *****************************************
                     
                     % Json ................................................
-                    J = F(f).getJson( par.regex_json );
+                    J = F(f).getJson( par.regex_func_json );
                     assert( ~isempty(J), 'No @json found for [ j ] in : \n %s'                  , F.path )
                     assert( numel(J)==1, 'Found %d/1 @json found for [ j ] in : \n %s', numel(J), F.path )
                     
