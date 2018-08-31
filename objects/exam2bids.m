@@ -33,7 +33,9 @@ par = complet_struct(par,defpar);
 
 %% Prepare all commands
 
-fprintf('\n')
+if par.verbose > 0
+    fprintf('\n')
+end
 
 nrExam = numel(examArray);
 job = cell(nrExam,1); % pre-allocation, this is the job containter
@@ -49,7 +51,7 @@ end
 
 % Name
 study_path = examArray(1).path;
-if strcmp(study_path(end),filesep), study_path = study_path(1:end-1); end
+if strcmp(study_path(end),filesep), study_path = study_path(1:end-1); end % remove '/' at the end, if exists
 study_path = fileparts(study_path);
 dataset_description.Name = study_path; % dir of the study, such as /export/dataCENIR/dicom/nifti_raw/PRISMA_STIMPNEE
 
@@ -91,7 +93,9 @@ for e = 1:nrExam
     E = examArray(e); % shortcut (E is a pointer, not a copy of the object)
     
     % Echo in terminal & initialize job_subj
-    fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, e, nrExam, E.path);
+    if par.verbose > 0
+        fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, e, nrExam, E.path);
+    end
     job_subj = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, e, nrExam, E.path); % initialize
     %#ok<*AGROW>
     
@@ -122,9 +126,6 @@ for e = 1:nrExam
             job_subj = [ job_subj sprintf('### anat ###\n') ];
             job_subj = [ job_subj sprintf('mkdir -p %s \n', anat_path) ];
             
-            %--------------------------------------------------------------
-            % anat NII/NII.GZ & JSON
-            
             % Volume ......................................................
             T1w_vol = A.getVolume('T1w');
             assert( ~isempty(T1w_vol), 'Found 0/1 @volume found for [ T1w ] in : \n %s' , numel(A), A.path )
@@ -142,6 +143,10 @@ for e = 1:nrExam
             T1w_json_path = [T1w_base '.json'];
             job_subj = [ job_subj sprintf('ln -sf %s %s \n', T1w_json.path, T1w_json_path) ];
             
+            % Echo
+            if par.verbose > 1
+                fprintf('[%s]: Preparing ANAT : %s \n', mfilename, T1w_vol.path );
+            end
         else
             warning( 'Found %d/1 @serie found for [ anat ] in : \n %s', numel(A), E.path )
         end
@@ -168,7 +173,6 @@ for e = 1:nrExam
                 
                 V = F(f).getVolume('f');
                 assert( ~isempty(V), 'Found 0/1 @volume found for [ func ] in : \n %s' , F.path )
-                
                 
                 if size(V.path,1) == 1 % single echo **********************
                     
@@ -201,6 +205,10 @@ for e = 1:nrExam
                     json_bids = struct2json( to_write );
                     job_subj = write_json_bids( job_subj, json_bids, J_path );
                     
+                    % Echo
+                    if par.verbose > 1
+                        fprintf('[%s]: Preparing FUNC - SingleEcho : %s \n', mfilename, V.path );
+                    end
                     
                 else % multi echo *****************************************
                     
@@ -247,7 +255,12 @@ for e = 1:nrExam
                         
                         json_bids = struct2json( to_write );
                         job_subj = write_json_bids( job_subj, json_bids, ln_json_path );
-
+                        
+                        % Echo
+                        if par.verbose > 1
+                            fprintf('[%s]: Preparing FUNC - MultiEcho - echo %d : %s \n', mfilename, echo, V.path(order(echo),:) );
+                        end
+                        
                     end % echo
                     
                 end % single-echo / multi-echo ?
@@ -261,6 +274,9 @@ for e = 1:nrExam
     % Save job_subj
     job{e} = job_subj;
     
+    if par.verbose > 1
+        fprintf('\n')
+    end
     
 end
 
@@ -273,6 +289,7 @@ job = [ {job_header} ; job ];
 %% Run the jobs
 
 % Run CPU, run !
+par.verbose = 0; % too much display in do_cmd_sge
 job = do_cmd_sge(job, par);
 
 
