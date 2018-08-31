@@ -1,5 +1,18 @@
 function [ job ] = exam2bids( examArray , bidsDir , par )
-%EXAM2BIDS
+%EXAM2BIDS transform an array of @exam objects into BIDS architecture
+%
+% Syntax : [ job ] = exam2bids( examArray , bidsDir , par )
+%
+%
+% See also exam
+%
+
+% In this code, variables in CAPITAL letters are objects : EXAM, ANAT_serie, ANAT_volume, ...
+
+if nargin == 0
+    help(mfilename)
+    return
+end
 
 
 %% Check input arguments
@@ -14,13 +27,19 @@ assert( ischar(bidsDir)         , 'bidsDir must be a dir'                  )
 
 %% defpar
 
+% BIDS architecture :
+
+% anat
 defpar.regex_anat_serie  = 'anat';
 defpar.regex_anat_volume = '^s';
 defpar.regex_anat_json   = '.*';
 
+% func
 defpar.regex_func_serie  = 'func';
 defpar.regex_func_volume = '^f';
 defpar.regex_func_json   = '.*';
+
+%--------------------------------------------------------------------------
 
 defpar.sge      = 0;
 defpar.jobname  = 'matvol_exam2bids';
@@ -44,20 +63,22 @@ end
 nrExam = numel(examArray);
 job = cell(nrExam,1); % pre-allocation, this is the job containter
 
-[SUCCESS,MESSAGE] = mkdir(bidsDir);
-if ~SUCCESS
-    error('%s : bidsDir', MESSAGE)
+[success,message] = mkdir(bidsDir);
+if ~success
+    error('%s : bidsDir', message)
 end
 
 
-%% --------------------------------------------------------------------
+%% ########################################################################
 % dataset_description.json
 
 % Name
 study_path = examArray(1).path;
-if strcmp(study_path(end),filesep), study_path = study_path(1:end-1); end % remove '/' at the end, if exists
+if strcmp(study_path(end),filesep) % remove '/' at the end, if exists
+    study_path = study_path(1:end-1);
+end
 study_path = fileparts(study_path);
-dataset_description.Name = study_path; % dir of the study, such as /export/dataCENIR/dicom/nifti_raw/PRISMA_STIMPNEE
+dataset_description.Name = study_path; % dir of the study, such as /export/dataCENIR/dicom/nifti_raw/PRISMA_CENIR_DEV
 
 % BIDSVersion
 dataset_description.BIDSVersion = '1.1.1';
@@ -83,186 +104,199 @@ dataset_description.ReferencesAndLinks = {'https://github.com/romainVala/matvol'
 % DatasetDOI
 dataset_description.DatasetDOI = '';
 
-json_bids = struct2json( dataset_description );
+json_dataset_description = struct2jsonSTR( dataset_description );
 job_header = sprintf('## dataset_description.json ## \n');
-job_header = write_json_bids( job_header, json_bids, fullfile(bidsDir,'dataset_description.json') );
+job_header = job_write_json_bids( job_header, json_dataset_description, fullfile(bidsDir,'dataset_description.json') );
 
 
 %% Main loop
 
 for e = 1:nrExam
-    %% --------------------------------------------------------------------
+    %% ####################################################################
     % Initialization
     
-    E = examArray(e); % shortcut (E is a pointer, not a copy of the object)
+    EXAM = examArray(e); % shortcut (E is a pointer, not a copy of the object)
     
     % Echo in terminal & initialize job_subj
     if par.verbose > 0
-        fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, e, nrExam, E.path);
+        fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, e, nrExam, EXAM.path);
     end
-    job_subj = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, e, nrExam, E.path); % initialize
+    job_subj = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, e, nrExam, EXAM.path); % initialize
     %#ok<*AGROW>
     
     
-    %% --------------------------------------------------------------------
+    %% ####################################################################
     % sub DIR
-    sub_name = sprintf('sub-%s',del_(E.name));
+    
+    sub_name = sprintf('sub-%s',del_(EXAM.name));
     sub_path = fullfile( bidsDir, sub_name );
     job_subj = [ job_subj sprintf('mkdir -p %s \n', sub_path) ];
     
     
-    %% --------------------------------------------------------------------
+    %% ####################################################################
     % ses-Sx DIR
+    
     ses_name = 'ses-S1';
     ses_path = fullfile( sub_path, ses_name );
     job_subj = [ job_subj sprintf('mkdir -p %s \n', ses_path) ];
     
     
-    %% --------------------------------------------------------------------
-    % ANAT
+    %% ####################################################################
+    % anat
     
-    A = E.getSerie( par.regex_anat_serie );
+    ANAT_IN__serie = EXAM.getSerie( par.regex_anat_serie );
     
-    if ~isempty(A)
-        if numel(A)==1
+    if ~isempty(ANAT_IN__serie)
+        if numel(ANAT_IN__serie)==1 % only 1 anat, or discard
             
-            anat_path = fullfile( ses_path, 'anat' );
+            anat_OUT__dir_path = fullfile( ses_path, 'anat' );
             job_subj = [ job_subj sprintf('### anat ###\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n', anat_path) ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n', anat_OUT__dir_path) ];
             
-            % Volume ......................................................
-            T1w_vol = A.getVolume( par.regex_anat_volume );
-            assert( ~isempty(T1w_vol), 'Found 0/1 @volume found for [ T1w ] in : \n %s' , numel(A), A.path )
-            assert( numel(A)==1      , 'Found %d/1 @volume found for [ T1w ] in : \n %s', numel(A), A.path )
-            T1w_name = 'T1w';
-            T1w_base = fullfile( anat_path, sprintf('%s_%s_%s', sub_name, ses_name, T1w_name) );
-            T1w_ext = file_ext(T1w_vol.path);
-            T1w_vol_path = [T1w_base T1w_ext];
-            job_subj = [ job_subj sprintf('ln -sf %s %s \n', T1w_vol.path, T1w_vol_path) ];
+            % Volume ------------------------------------------------------
             
-            % Json ........................................................
-            T1w_json = A.getJson( par.regex_anat_json );
-            assert( ~isempty(T1w_json), 'No @json found for [ j ] in : \n %s'                  , A.path )
-            assert( numel(A)==1       , 'Found %d/1 @json found for [ j ] in : \n %s', numel(A), A.path )
-            T1w_json_path = [T1w_base '.json'];
-            job_subj = [ job_subj sprintf('ln -sf %s %s \n', T1w_json.path, T1w_json_path) ];
+            ANAT_IN___vol      = ANAT_IN__serie.getVolume( par.regex_anat_volume );
+            assert( ~isempty(ANAT_IN___vol)    , 'Found  0/1 @volume for [ %s ] in : \n %s',                        par.regex_anat_volume, ANAT_IN__serie.path )
+            assert(    numel(ANAT_IN___vol)==1 , 'Found %d/1 @volume for [ %S ] in : \n %s', numel(ANAT_IN__serie), par.regex_anat_volume, ANAT_IN__serie.path )
+            
+            anat_OUT__name     = 'T1w';
+            anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
+            anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
+            anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
+            
+            job_subj           = [ job_subj sprintf('ln -sf %s %s \n', ANAT_IN___vol.path, anat_OUT__vol_path) ];
+            
+            % Json --------------------------------------------------------
+            
+            ANAT_IN__json        = ANAT_IN__serie.getJson( par.regex_anat_json );
+            assert( ~isempty(ANAT_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                        par.regex_anat_json, ANAT_IN__serie.path )
+            assert(    numel(ANAT_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(ANAT_IN__serie), par.regex_anat_json, ANAT_IN__serie.path )
+            
+            anat_OUT__json_path = [anat_OUT__base '.json'];
+            
+            job_subj            = [ job_subj sprintf('ln -sf %s %s \n', ANAT_IN__json.path, anat_OUT__json_path) ];
             
             % Echo
             if par.verbose > 1
-                fprintf('[%s]: Preparing ANAT : %s \n', mfilename, T1w_vol.path );
+                fprintf('[%s]: Preparing ANAT : %s \n', mfilename, ANAT_IN___vol.path );
             end
+            
         else
-            warning( 'Found %d/1 @serie found for [ anat ] in : \n %s', numel(A), E.path )
+            warning( 'Found %d/1 @serie found for [ %s ] in : \n %s', numel(ANAT_IN__serie), par.regex_anat_serie, EXAM.path )
         end
         
     end % ANAT
     
     
-    %% --------------------------------------------------------------------
-    % FUNC
+    %% ####################################################################
+    % func
     
-    F = E.getSerie( par.regex_func_serie );
+    FUNC_IN__serie = EXAM.getSerie( par.regex_func_serie );
     
-    if ~isempty(F)
+    if ~isempty(FUNC_IN__serie)
         
-        if length(F)==1 && isempty(F.path)
+        if length(FUNC_IN__serie)==1 && isempty(FUNC_IN__serie.path)
             % pass, this in exeption
         else
             
-            func_path = fullfile( ses_path, 'func' );
+            func_OUT__dir = fullfile( ses_path, 'func' );
             job_subj = [ job_subj sprintf('### func ###\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n', func_path) ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n', func_OUT__dir) ];
             
-            for f = 1 : numel(F)
+            for F = 1 : numel(FUNC_IN__serie)
                 
-                V = F(f).getVolume( par.regex_func_volume );
-                assert( ~isempty(V), 'Found 0/1 @volume found for [ func ] in : \n %s' , F.path )
+                FUNC_IN___vol = FUNC_IN__serie(F).getVolume( par.regex_func_volume );
+                assert(~isempty(FUNC_IN___vol), 'Found 0/1 @volume found for [ %s ] in : \n %s', par.regex_func_volume, FUNC_IN__serie.path )
                 
-                if size(V.path,1) == 1 % single echo **********************
+                % Json ------------------------------------------------
+                
+                FUNC_IN__json = FUNC_IN__serie(F).getJson( par.regex_func_json );
+                assert( ~isempty(FUNC_IN__json)   , 'Found  0/1 @json found for [ %s ] in : \n %s',                       par.regex_func_json, FUNC_IN__serie.path )
+                assert(    numel(FUNC_IN__json)==1, 'Found %d/1 @json found for [ %s ] in : \n %s', numel(FUNC_IN__json), par.regex_func_json, FUNC_IN__serie.path )
+                
+                if size(FUNC_IN___vol.path,1) == 1 % single echo **********************
                     
-                    % Volume ..............................................
-                    file_path = deblank(V.path);
-                    V_ext = file_ext(file_path);
-                    [~,V_name,~] = fileparts(V.path(1:end-length(V_ext)));
-                    V_name = del_(V_name);
-                    V_base = fullfile( func_path, sprintf('%s_%s_task-%s_bold', sub_name, ses_name, V_name) );
-                    V_vol_path = [ V_base V_ext ];
-                    job_subj = [ job_subj sprintf('ln -sf %s %s \n', V.path, V_vol_path) ];
+                    % Volume ----------------------------------------------
                     
-                    % Json ................................................
-                    J = F(f).getJson( par.regex_func_json );
-                    assert( ~isempty(J), 'No @json found for [ j ] in : \n %s'                  , F.path )
-                    assert( numel(J)==1, 'Found %d/1 @json found for [ j ] in : \n %s', numel(J), F.path )
-                    J_path = [V_base '.json'];
+                    func_IN___vol_path       = deblank (FUNC_IN___vol.path);
+                    func_IN___vol_ext        = file_ext(func_IN___vol_path   );
+                    [~,func_OUT__vol_name,~] = fileparts(FUNC_IN___vol.path(1:end-length(func_IN___vol_ext)));
+                    func_OUT__vol_name       = del_(func_OUT__vol_name);
+                    func_OUT__vol_base       = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_bold', sub_name, ses_name, func_OUT__vol_name) );
+                    func_OUT__vol_path       = [ func_OUT__vol_base func_IN___vol_ext ];
+                    
+                    job_subj                 = [ job_subj sprintf('ln -sf %s %s \n', FUNC_IN___vol.path, func_OUT__vol_path) ];
+                    
+                    % Json ------------------------------------------------
+                    
+                    func_OUT__json_path = [func_OUT__vol_base '.json'];
                     
                     % Get data from the Json that we will append on the to, to match BIDS architecture
-                    [ res ] = get_string_from_json(J.path, ...
+                    [ res ] = get_string_from_json(FUNC_IN__json.path, ...
                         {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'}, ...
                         {'num', 'num', 'vect', 'num','num'});
-                    to_write.RepetitionTime = res{1}/1000; % ms -> s
-                    to_write.EchoTime       = res{2}/1000; % ms -> s
-                    to_write.SliceTiming    = res{3}/1000; % ms -> s
-                    to_write.FlipAngle      = res{4};
-                    to_write.ParallelReductionFactorInPlane = res{5};
-                    to_write.TaskName       = V.name(1:end-length(V_ext));
+                    json_func_struct.RepetitionTime = res{1}/1000; % ms -> s
+                    json_func_struct.EchoTime       = res{2}/1000; % ms -> s
+                    json_func_struct.SliceTiming    = res{3}/1000; % ms -> s
+                    json_func_struct.FlipAngle      = res{4};
+                    json_func_struct.ParallelReductionFactorInPlane = res{5};
+                    json_func_struct.TaskName       = FUNC_IN___vol.name(1:end-length(func_IN___vol_ext));
                     
-                    json_bids = struct2json( to_write );
-                    job_subj = write_json_bids( job_subj, json_bids, J_path );
+                    json_func_str = struct2jsonSTR( json_func_struct );
+                    job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path );
                     
                     % Echo
                     if par.verbose > 1
-                        fprintf('[%s]: Preparing FUNC - SingleEcho : %s \n', mfilename, V.path );
+                        fprintf('[%s]: Preparing FUNC - SingleEcho : %s \n', mfilename, FUNC_IN___vol.path );
                     end
                     
                 else % multi echo *****************************************
                     
-                    % Json ................................................
-                    J = F(f).getJson( par.regex_func_json );
-                    assert( ~isempty(J), 'No @json found for [ j ] in : \n %s'                  , F.path )
-                    assert( numel(J)==1, 'Found %d/1 @json found for [ j ] in : \n %s', numel(J), F.path )
+                    % Json ------------------------------------------------
                     
-                    allTE = cell2mat(J.getLine('EchoTime',0));
-                    [sortedTE,order] = sort(allTE); %#ok<ASGLU>
+                    allTE = cell2mat(FUNC_IN__json.getLine('EchoTime',0));
+                    [sortedTE,orderTE] = sort(allTE); %#ok<ASGLU>
                     
-                    % Volume ..............................................
+                    % Volume ----------------------------------------------
+                    
                     % Fetch volume extension, because MATLAB's fileparts.m function is stupid : it doesnt understand .nii.gz
-                    file_1_path = deblank(V.path(1,:));
-                    V_ext = file_ext(file_1_path);
-                    [~,V_name,~] = fileparts( file_1_path(1:end-length(V_ext)) ); % Remove the extension before calling 'fileparts' function
-                    V_name = del_(V_name);
-                    V_base = fullfile( func_path, sprintf('%s_%s_task-%s', sub_name, ses_name, V_name) );
+                    file_1_path = deblank(FUNC_IN___vol.path(1,:));
+                    func_IN___vol_ext = file_ext(file_1_path);
+                    [~,func_OUT__vol_name,~] = fileparts( file_1_path(1:end-length(func_IN___vol_ext)) ); % Remove the extension before calling 'fileparts' function
+                    func_OUT__vol_name = del_(func_OUT__vol_name);
+                    func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s', sub_name, ses_name, func_OUT__vol_name) );
                     
                     % Fetch volume corrsponding to the echo
-                    for echo = 1 : length(order)
+                    for echo = 1 : length(orderTE)
                         
-                        V_ext = file_ext( deblank( V.path(order(echo),:) ) );
-                        ln_vol_path  = [ V_base sprintf('_echo-%d_bold',echo) V_ext  ];
-                        ln_json_path = [ V_base sprintf('_echo-%d_bold',echo) '.json'];
+                        func_IN___vol_ext   = file_ext( deblank( FUNC_IN___vol.path(orderTE(echo),:) ) );
+                        func_OUT__vol_path  = [ func_OUT__vol_base sprintf('_echo-%d_bold',echo) func_IN___vol_ext  ];
+                        func_OUT__json_path = [ func_OUT__vol_base sprintf('_echo-%d_bold',echo) '.json'];
                         
-                        job_subj = [ job_subj sprintf('ln -sf %s %s \n', deblank( V.path(order(echo),:) ), ln_vol_path ) ];
+                        job_subj            = [ job_subj sprintf('ln -sf %s %s \n', deblank( FUNC_IN___vol.path(orderTE(echo),:) ), func_OUT__vol_path ) ];
                         
                         % Get data from the Json that we will append on the to, to match BIDS architecture
-                        [ res ] = get_string_from_json(J.path(order(echo),:), ...
+                        res = get_string_from_json(FUNC_IN__json.path(orderTE(echo),:), ...
                             {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'}, ...
                             {'num', 'num', 'vect', 'num','num'});
-                        to_write.RepetitionTime = res{1}/1000; % ms -> s
-                        to_write.EchoTime       = res{2}/1000; % ms -> s
-                        to_write.SliceTiming    = res{3}/1000; % ms -> s
-                        to_write.FlipAngle      = res{4};
-                        to_write.ParallelReductionFactorInPlane = res{5};
-                        echo_x_name = deblank(V.name(order(echo),:));
-                        echo_x_name = echo_x_name(1:end-length(V_ext));
-                        if order(echo) > 1
+                        json_func_struct.RepetitionTime = res{1}/1000; % ms -> s
+                        json_func_struct.EchoTime       = res{2}/1000; % ms -> s
+                        json_func_struct.SliceTiming    = res{3}/1000; % ms -> s
+                        json_func_struct.FlipAngle      = res{4};
+                        json_func_struct.ParallelReductionFactorInPlane = res{5};
+                        echo_x_name = deblank(FUNC_IN___vol.name(orderTE(echo),:));
+                        echo_x_name = echo_x_name(1:end-length(func_IN___vol_ext));
+                        if orderTE(echo) > 1
                             echo_x_name = echo_x_name(1:end-5); % delete _V00X (echo name);
                         end
-                        to_write.TaskName       = echo_x_name;
+                        json_func_struct.TaskName       = echo_x_name;
                         
-                        json_bids = struct2json( to_write );
-                        job_subj = write_json_bids( job_subj, json_bids, ln_json_path );
+                        json_func_str = struct2jsonSTR( json_func_struct );
+                        job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path );
                         
                         % Echo
                         if par.verbose > 1
-                            fprintf('[%s]: Preparing FUNC - MultiEcho - echo %d : %s \n', mfilename, echo, V.path(order(echo),:) );
+                            fprintf('[%s]: Preparing FUNC - MultiEcho - echo %d : %s \n', mfilename, echo, FUNC_IN___vol.path(orderTE(echo),:) );
                         end
                         
                     end % echo
@@ -299,12 +333,14 @@ job = do_cmd_sge(job, par);
 
 end % function
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function out = del_(in)
 
 out = strrep(in,'_','');
 
 end % function
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function out = file_ext(in)
 
 % File extension ?
@@ -318,47 +354,55 @@ end
 
 end % function
 
-function job_subj = write_json_bids( job_subj, json_bids, newJSON, prevJSON  )
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function job_subj = job_write_json_bids( job_subj, json_str, newJSON_path, prevJSON_path  )
 
 % Write BIDS data in the new JSON file, and append the previous JSON file
-job_subj = [ job_subj sprintf('echo ''%s'' >> %s \n', json_bids , newJSON ) ];
-% job_subj = [ job_subj sprintf('cat %s >> %s \n', prevJSON , newJSON ) ];
+job_subj = [ job_subj sprintf('echo ''%s'' >> %s \n', json_str , newJSON_path ) ];
+% job_subj = [ job_subj sprintf('cat %s >> %s \n', prevJSON_path , newJSON_path ) ];
 
 end % function
 
-function json_bids = struct2json( input_structure )
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function json_str = struct2jsonSTR( structure )
 
 % Prepare info for .json BIDS
-fields = fieldnames(input_structure);
-json_bids = sprintf('{\n');
+fields = fieldnames( structure );
+
+% Initialize the output
+json_str = sprintf('{\n');
+
 for idx = 1:numel(fields)
-    switch class(input_structure.(fields{idx}))
+    
+    switch class( structure.(fields{idx}) )
         
         case 'double'
-            if numel(input_structure.(fields{idx})) == 1
-                json_bids = [json_bids sprintf( '\t "%s": %g,\n', fields{idx}, input_structure.(fields{idx}) ) ];
+            if numel(structure.(fields{idx})) == 1
+                json_str = [json_str sprintf( '\t "%s": %g,\n', fields{idx}, structure.(fields{idx}) ) ];
             else
                 % Concatenation
-                rep  = repmat('%g, ',[1 length(input_structure.(fields{idx}))]);
+                rep  = repmat( '%g, ', [1 length(structure.(fields{idx}))] );
                 rep  = rep(1:end-2);
                 rep   = ['[' rep ']'];
-                final = sprintf(rep,input_structure.(fields{idx}));
-                json_bids = [json_bids sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
+                final = sprintf(rep, structure.(fields{idx}) );
+                json_str = [json_str sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
             end
             
         case 'char'
-            json_bids = [json_bids sprintf( '\t "%s": "%s",\n', fields{idx}, input_structure.(fields{idx}) ) ];
+            json_str = [json_str sprintf( '\t "%s": "%s",\n', fields{idx}, structure.(fields{idx}) ) ];
             
         case 'cell'
             % Concatenation
-            rep  = repmat('"%s", ',[1 length(input_structure.(fields{idx}))]);
+            rep  = repmat( '"%s", ', [1 length(structure.(fields{idx}))] );
             rep  = rep(1:end-2);
             rep   = ['[' rep ']'];
-            final = sprintf(rep,input_structure.(fields{idx}){:});
-            json_bids = [json_bids sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
+            final = sprintf(rep, structure.(fields{idx}){:} );
+            json_str = [json_str sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
             
     end
+    
 end % fields
-json_bids = [ json_bids(1:end-2) sprintf('\n}') ];
+
+json_str = [ json_str(1:end-2) sprintf('\n}') ];
 
 end % end
