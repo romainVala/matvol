@@ -22,7 +22,7 @@ defpar.pct      = 0;
 defpar.redo     = 0;
 defpar.run      = 0;
 defpar.display  = 0;
-par.verbose     = 2;
+degpar.verbose  = 2;
 
 par = complet_struct(par,defpar);
 
@@ -39,6 +39,47 @@ if ~SUCCESS
     error('%s : bidsDir', MESSAGE)
 end
 
+
+%% --------------------------------------------------------------------
+% dataset_description.json
+
+% Name
+study_path = examArray(1).path;
+if strcmp(study_path(end),filesep), study_path = study_path(1:end-1); end
+study_path = fileparts(study_path);
+dataset_description.Name = study_path; % dir of the study, such as /export/dataCENIR/dicom/nifti_raw/PRISMA_STIMPNEE
+
+% BIDSVersion
+dataset_description.BIDSVersion = '1.1.1';
+
+% License
+dataset_description.License = 'PDDL';
+
+% Authors
+dataset_description.Authors = {'CENIR-ICM', 'Romain Valabrègue', 'Benoît Béranger'};
+
+% Acknowledgements
+dataset_description.Acknowledgements = '';
+
+% HowToAcknowledge
+dataset_description.HowToAcknowledge = '';
+
+% Funding
+dataset_description.Funding = {''};
+
+% ReferencesAndLinks
+dataset_description.ReferencesAndLinks = {'https://github.com/romainVala/matvol'};
+
+% DatasetDOI
+dataset_description.DatasetDOI = '';
+
+json_bids = struct2json( dataset_description );
+job_header = sprintf('## dataset_description.json ## \n');
+job_header = write_json_bids( job_header, json_bids, fullfile(bidsDir,'dataset_description.json') );
+
+
+%% Main loop
+
 for e = 1:nrExam
     %% --------------------------------------------------------------------
     % Initialization
@@ -48,13 +89,14 @@ for e = 1:nrExam
     % Echo in terminal & initialize job_subj
     fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, e, nrExam, E.path);
     job_subj = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, e, nrExam, E.path); % initialize
+    %#ok<*AGROW>
     
     
     %% --------------------------------------------------------------------
     % sub DIR
     sub_name = sprintf('sub-%s',del_(E.name));
     sub_path = fullfile( bidsDir, sub_name );
-    job_subj = [ job_subj sprintf('mkdir -p %s \n', sub_path) ]; %#ok<*AGROW>
+    job_subj = [ job_subj sprintf('mkdir -p %s \n', sub_path) ];
     
     
     %% --------------------------------------------------------------------
@@ -150,6 +192,7 @@ for e = 1:nrExam
                     to_write.SliceTiming    = res{3}/1000; % ms -> s
                     to_write.FlipAngle      = res{4};
                     to_write.ParallelReductionFactorInPlane = res{5};
+                    to_write.TaskName       = V.name(1:end-length(V_ext));
                     
                     json_bids = struct2json( to_write );
                     job_subj = write_json_bids( job_subj, json_bids, J_path, J.path  );
@@ -195,10 +238,14 @@ for e = 1:nrExam
     
     % Save job_subj
     job{e} = job_subj;
-    disp(job_subj)
     
     
 end
+
+
+%% Concatenate HEADER + JOB
+
+job = [ {job_header} ; job ];
 
 
 %% Run the jobs
@@ -242,15 +289,31 @@ function json_bids = struct2json( input_structure )
 fields = fieldnames(input_structure);
 json_bids = sprintf('{\n');
 for idx = 1:numel(fields)
-    if numel(input_structure.(fields{idx})) == 1
-        json_bids = [json_bids sprintf( '\t "%s": %g,\n', fields{idx}, input_structure.(fields{idx}) ) ];
-    else
-        % Concatenation
-        rep  = repmat('%g, ',[1 length(input_structure.(fields{idx}))]);
-        rep  = rep(1:end-2);
-        rep   = ['[' rep ']'];
-        final = sprintf(rep,input_structure.(fields{idx}));
-        json_bids = [json_bids sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
+    switch class(input_structure.(fields{idx}))
+        
+        case 'double'
+            if numel(input_structure.(fields{idx})) == 1
+                json_bids = [json_bids sprintf( '\t "%s": %g,\n', fields{idx}, input_structure.(fields{idx}) ) ];
+            else
+                % Concatenation
+                rep  = repmat('%g, ',[1 length(input_structure.(fields{idx}))]);
+                rep  = rep(1:end-2);
+                rep   = ['[' rep ']'];
+                final = sprintf(rep,input_structure.(fields{idx}));
+                json_bids = [json_bids sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
+            end
+            
+        case 'char'
+            json_bids = [json_bids sprintf( '\t "%s": "%s",\n', fields{idx}, input_structure.(fields{idx}) ) ];
+            
+        case 'cell'
+            % Concatenation
+            rep  = repmat('"%s", ',[1 length(input_structure.(fields{idx}))]);
+            rep  = rep(1:end-2);
+            rep   = ['[' rep ']'];
+            final = sprintf(rep,input_structure.(fields{idx}){:});
+            json_bids = [json_bids sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
+            
     end
 end % fields
 json_bids = [ json_bids(1:end-2) sprintf('\n}') ];
