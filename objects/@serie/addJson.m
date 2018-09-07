@@ -99,13 +99,13 @@ for ser = 1 : numel(serieArray)
         
     else % empty serie
         
-        warning([
-            'Empty serie : cannot add json \n'...
-            '#[%d %d] tag=%s \n' ...
-            '%s' ...
-            ], exam_idx, serie_idx, serieArray(ser).tag, serieArray(ser).exam.path )
-        
-        serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
+        %         warning([
+        %             'Empty serie : cannot add json \n'...
+        %             '#[%d %d] tag=%s \n' ...
+        %             '%s' ...
+        %             ], exam_idx, serie_idx, serieArray(ser).tag, serieArray(ser).exam.path )
+        %
+        %         serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
         
     end
     

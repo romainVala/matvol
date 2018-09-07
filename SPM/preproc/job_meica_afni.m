@@ -322,7 +322,7 @@ for subj = 1 : nrSubject
     
 end % subj
 
-% No the jobs are prepared
+% Now the jobs are prepared
 
 
 %% Run the jobs

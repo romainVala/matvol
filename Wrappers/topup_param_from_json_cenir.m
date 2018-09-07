@@ -24,7 +24,11 @@ if nargin<3
         fdic = get_subdir_regex_files(niftidir,'^dic.*json',1) ;
         
     catch
-        error('can not find json dicom parama ')
+        try %may be multiecho so take the volume 2 json
+            fdic = get_subdir_regex_files(niftidir,'^dic.*V002.json',1) ;
+        catch
+            error('can not find json dicom parama ')
+        end
     end
 end
 

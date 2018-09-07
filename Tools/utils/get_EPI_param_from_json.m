@@ -10,7 +10,7 @@ for nbs=1:length(fi)
     [pp ff ] = fileparts(fi{nbs});
     try
         fdic = get_subdir_regex_files(pp,'^dic.*json') ;
-        fdic{1} = fdic{1}(1,:) ;
+        fdic{1} = deblank(fdic{1}(1,:) );
         
     catch
         error('can not find json dicom parama in %s ',pp)

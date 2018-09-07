@@ -1,7 +1,7 @@
 function jobs = job_first_level_contrast(fspm,contrast,par)
 % JOB_FIRST_LEVEL_CONTRAST - SPM:Stats:contrast manager
 %
-% par.sessrep = 
+% par.sessrep =
 % 'none'   => do nothing fancy
 % 'repl'   => replicate contrast over all sessions
 % 'replsc' => replicate contrast over all sessions & scale (for comparaison with 2nd lvl analysis)
@@ -19,8 +19,9 @@ end
 
 %% defpar
 
-defpar.sessrep         = 'none'; 
+defpar.sessrep         = 'none';
 defpar.file_reg        = '^s.*nii';
+defpar.report          = 1;
 
 defpar.jobname         ='spm_glm';
 defpar.walltime        = '04:00:00';
@@ -34,10 +35,10 @@ par = complet_struct(par,defpar);
 
 
 %% SPM:Stats:contrast manager
-
-for idx = 1:length(fspm)
+idx = 1;
+for nbs = 1:length(fspm)
     
-    jobs{idx}.spm.stats.con.spmmat(1) = fspm(idx) ; %#ok<*AGROW>
+    jobs{idx}.spm.stats.con.spmmat(1) = fspm(nbs) ; %#ok<*AGROW>
     
     for nbc = 1:length(contrast.names)
         switch contrast.types{nbc}
@@ -55,6 +56,24 @@ for idx = 1:length(fspm)
     end
     
     jobs{idx}.spm.stats.con.delete = par.delete_previous;
+    
+    idx=idx+1;
+    
+    if (par.report)
+        
+        jobs{idx}.spm.stats.results.spmmat = fspm(nbs);
+        jobs{idx}.spm.stats.results.conspec.titlestr = '';
+        jobs{idx}.spm.stats.results.conspec.contrasts = Inf;
+        jobs{idx}.spm.stats.results.conspec.threshdesc = 'FWE';
+        jobs{idx}.spm.stats.results.conspec.thresh = 0.05;
+        jobs{idx}.spm.stats.results.conspec.extent = 0;
+        jobs{idx}.spm.stats.results.conspec.conjunction = 1;
+        jobs{idx}.spm.stats.results.conspec.mask.none = 1;
+        jobs{idx}.spm.stats.results.units = 1;
+        jobs{idx}.spm.stats.results.print = 'pdf';
+        jobs{idx}.spm.stats.results.write.none = 1;
+        idx=idx+1;
+    end
     
 end
 

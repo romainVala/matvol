@@ -113,13 +113,13 @@ for ser = 1 : numel(serieArray)
         
     else % no file found
         
-        % When stim are not found at all
-        warning([
-            'Found 0 files with regex [ %s ] \n'...
-            '#[%d %d] : %s ' ...
-            ], regex, exam_idx, serie_idx, where )
-        
-        serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
+        %         % When stim are not found at all
+        %         warning([
+        %             'Found 0 files with regex [ %s ] \n'...
+        %             '#[%d %d] : %s ' ...
+        %             ], regex, exam_idx, serie_idx, where )
+        %
+        %         serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
         
     end
     
