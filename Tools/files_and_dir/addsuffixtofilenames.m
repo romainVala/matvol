@@ -51,10 +51,10 @@ newlist = cell(length(filelist),1);
 for i=1:length(filelist)
     
     wfiles = [];
-    
-    for line = 1:size(filelist{i},1)
+    filelistchar = char(filelist{i}); %for case where you have cell of cell
+    for line = 1:size(filelistchar,1)
         
-        [pathstr,name,extension] = fileparts(deblank(filelist{i}(line,:)));
+        [pathstr,name,extension] = fileparts(deblank(filelistchar(line,:)));
         
         %for double extention (.nii.gz)
         [~,nm2,xt2] = fileparts(name);
