@@ -27,7 +27,7 @@ fbval = get_subdir_regex_files(dti_dir,par.bval,1);
 
 
 for k=1:length(fi_4D)
-   cmd{k} = sprintf('dwiextract %s - -fslgrad %s %s -bzero | mrmath - mean %s -axis 3\n',...
+   cmd{k} = sprintf('LD_LIBRARY_PATH=;dwiextract %s - -fslgrad %s %s -bzero | mrmath - mean %s -axis 3\n',...
        fi_4D{k},fbvec{k},fbval{k},fo{k});
  
 end

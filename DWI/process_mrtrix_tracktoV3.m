@@ -47,7 +47,7 @@ for nbsuj = 1:length(sdata)
     
     mask_filename = par.mask{nbsuj};
     
-    cmd = sprintf('tckgen -force -seed_image %s -select %d -algorithm %s -grad %s -nthreads %d',...
+    cmd = sprintf('LD_LIBRARY_PATH=;tckgen -force -seed_image %s -select %d -algorithm %s -grad %s -nthreads %d',...
         seed_file, par.track_num, par.type, fullfile(dir_mrtrix,par.grad_file), par.nthreads);
     
     if ~isempty(par.act)
@@ -132,9 +132,9 @@ for nbsuj = 1:length(sdata)
         cmd = job{end};
         
         if par.nthreads>1
-            cmd = sprintf('%s\n tcksift2 -nthreads %d',cmd,par.nthreads);
+            cmd = sprintf('%s\nLD_LIBRARY_PATH=; tcksift2 -nthreads %d',cmd,par.nthreads);
         else
-            cmd = sprintf('%s\n tcksift2 ',cmd);
+            cmd = sprintf('%s\nLD_LIBRARY_PATH=; tcksift2 ',cmd);
         end
         cmd = sprintf('%s %s.tck %s %s_weights.txt',cmd,track_name,sdata{nbsuj},track_name);
         job{end} = cmd;
