@@ -277,14 +277,19 @@ for e = 1:nrExam
                         
                         % Get data from the Json that we will append on the to, to match BIDS architecture
                         res = get_string_from_json(FUNC_IN__json.path(orderTE(echo),:), ...
-                            {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'}, ...
-                            {'num', 'num', 'vect', 'num','num'});
+                            {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE', 'CsaSeries.MrPhoenixProtocol.sWipMemBlock.alFree\[13\]'}, ...
+                            {'num', 'num', 'vect', 'num','num','num'});
+                        json_func_struct.TaskName       = func_OUT__vol_name;
                         json_func_struct.RepetitionTime = res{1}/1000; % ms -> s
                         json_func_struct.EchoTime       = res{2}/1000; % ms -> s
                         json_func_struct.SliceTiming    = res{3}/1000; % ms -> s
                         json_func_struct.FlipAngle      = res{4};
-                        json_func_struct.ParallelReductionFactorInPlane = res{5};
-                        json_func_struct.TaskName       = func_OUT__vol_name;
+                        if ~isempty(res{5})
+                            json_func_struct.ParallelReductionFactorInPlane = res{5};
+                        end
+                        if ~isempty(res{6})
+                            json_func_struct.MultibandAccelerationFactor = res{6};
+                        end
                         
                         json_func_str = struct2jsonSTR( json_func_struct );
                         job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path(orderTE(echo),:) );
