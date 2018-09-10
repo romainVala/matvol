@@ -87,7 +87,7 @@ dataset_description.BIDSVersion = '1.1.1';
 dataset_description.License = 'PDDL';
 
 % Authors
-dataset_description.Authors = {'CENIR-ICM', 'Romain Valabrègue', 'Benoît Béranger'};
+dataset_description.Authors = {'CENIR-ICM', 'Romain Valabregue', 'Benoit Beranger'};
 
 % Acknowledgements
 dataset_description.Acknowledgements = '';
@@ -243,7 +243,7 @@ for e = 1:nrExam
                     json_func_struct.TaskName       = func_OUT__vol_name;
                     
                     json_func_str = struct2jsonSTR( json_func_struct );
-                    job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path );
+                    job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path );
                     
                     % Echo
                     if par.verbose > 1
@@ -287,7 +287,7 @@ for e = 1:nrExam
                         json_func_struct.TaskName       = func_OUT__vol_name;
                         
                         json_func_str = struct2jsonSTR( json_func_struct );
-                        job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path );
+                        job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path(orderTE(echo),:) );
                         
                         % Echo
                         if par.verbose > 1
@@ -353,8 +353,14 @@ end % function
 function job_subj = job_write_json_bids( job_subj, json_str, newJSON_path, prevJSON_path  )
 
 % Write BIDS data in the new JSON file, and append the previous JSON file
-job_subj = [ job_subj sprintf('echo ''%s'' >> %s \n', json_str , newJSON_path ) ];
-% job_subj = [ job_subj sprintf('cat %s >> %s \n', prevJSON_path , newJSON_path ) ];
+
+if nargin > 3
+    new_str  = sprintf('%s,\n',json_str(1:end-2));
+    job_subj = [ job_subj sprintf('echo ''%s''>> %s \n'    , new_str       , newJSON_path ) ];
+    job_subj = [ job_subj sprintf('tail -n +2 %s  >> %s \n', prevJSON_path , newJSON_path ) ];
+else
+    job_subj = [ job_subj sprintf('echo ''%s''>> %s \n'    , json_str      , newJSON_path ) ];
+end
 
 end % function
 
@@ -398,6 +404,6 @@ for idx = 1:numel(fields)
     
 end % fields
 
-json_str = [ json_str(1:end-2) sprintf('\n}') ];
+json_str = [ json_str(1:end-2) sprintf('\n}') ]; % delete the last ',\n" and close the json
 
 end % end
