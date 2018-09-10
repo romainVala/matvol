@@ -232,15 +232,7 @@ for e = 1:nrExam
                     func_OUT__json_path = [func_OUT__vol_base '.json'];
                     
                     % Get data from the Json that we will append on the to, to match BIDS architecture
-                    [ res ] = get_string_from_json(FUNC_IN__json.path, ...
-                        {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'}, ...
-                        {'num', 'num', 'vect', 'num','num'});
-                    json_func_struct.RepetitionTime = res{1}/1000; % ms -> s
-                    json_func_struct.EchoTime       = res{2}/1000; % ms -> s
-                    json_func_struct.SliceTiming    = res{3}/1000; % ms -> s
-                    json_func_struct.FlipAngle      = res{4};
-                    json_func_struct.ParallelReductionFactorInPlane = res{5};
-                    json_func_struct.TaskName       = func_OUT__vol_name;
+                    json_func_struct = func_getJSON_params( FUNC_IN__json.path, func_OUT__vol_name );
                     
                     json_func_str = struct2jsonSTR( json_func_struct );
                     job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path );
@@ -276,20 +268,7 @@ for e = 1:nrExam
                         job_subj            = [ job_subj sprintf('ln -sf %s %s \n', deblank( FUNC_IN___vol.path(orderTE(echo),:) ), func_OUT__vol_path ) ];
                         
                         % Get data from the Json that we will append on the to, to match BIDS architecture
-                        res = get_string_from_json(FUNC_IN__json.path(orderTE(echo),:), ...
-                            {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE', 'CsaSeries.MrPhoenixProtocol.sWipMemBlock.alFree\[13\]'}, ...
-                            {'num', 'num', 'vect', 'num','num','num'});
-                        json_func_struct.TaskName       = func_OUT__vol_name;
-                        json_func_struct.RepetitionTime = res{1}/1000; % ms -> s
-                        json_func_struct.EchoTime       = res{2}/1000; % ms -> s
-                        json_func_struct.SliceTiming    = res{3}/1000; % ms -> s
-                        json_func_struct.FlipAngle      = res{4};
-                        if ~isempty(res{5})
-                            json_func_struct.ParallelReductionFactorInPlane = res{5};
-                        end
-                        if ~isempty(res{6})
-                            json_func_struct.MultibandAccelerationFactor = res{6};
-                        end
+                        json_func_struct = func_getJSON_params( FUNC_IN__json.path(orderTE(echo),:), func_OUT__vol_name );
                         
                         json_func_str = struct2jsonSTR( json_func_struct );
                         job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path(orderTE(echo),:) );
@@ -412,3 +391,55 @@ end % fields
 json_str = [ json_str(1:end-2) sprintf('\n}') ]; % delete the last ',\n" and close the json
 
 end % end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function json_func_struct = func_getJSON_params( json_path, TaskName )
+
+res = get_string_from_json(json_path, ...
+    {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', ...
+    'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE', 'CsaSeries.MrPhoenixProtocol.sWipMemBlock.alFree\[13\]','MagneticFieldStrength',...
+    'NumberOfPhaseEncodingSteps','CsaImage.BandwidthPerPixelPhaseEncode',...
+    'InPlanePhaseEncodingDirection','CsaImage.PhaseEncodingDirectionPositive'}, ...
+    {'num', 'num', 'vect', 'num',...
+    'num','num','num',...
+    'num','num',...
+    'str','num'});
+
+% Classic
+json_func_struct.TaskName       = TaskName;
+json_func_struct.RepetitionTime = res{1}/1000; % ms -> s
+json_func_struct.EchoTime       = res{2}/1000; % ms -> s
+json_func_struct.SliceTiming    = res{3}/1000; % ms -> s
+json_func_struct.FlipAngle      = res{4};
+
+% Acceleration factors
+if ~isempty(res{5})
+    json_func_struct.ParallelReductionFactorInPlane = res{5}; % iPat
+end
+if ~isempty(res{6})
+    json_func_struct.MultibandAccelerationFactor = res{6}; % MultiBand
+end
+json_func_struct.MagneticFieldStrength = res{7};
+
+% Phase : echo spacing stuff
+ReconMatrixPE        = res{8}; % NumberOfPhaseEncodingSteps
+BWPPPE               = res{9}; % BandwidthPerPixelPhaseEncode
+EffectiveEchoSpacing = 1 / (BWPPPE * ReconMatrixPE); % SIEMENS
+TotalReadoutTime     = EffectiveEchoSpacing * (ReconMatrixPE - 1); % FSL
+json_func_struct.EffectiveEchoSpacing = EffectiveEchoSpacing;
+json_func_struct.TotalReadoutTime     = TotalReadoutTime;
+
+% Phase : encoding direction
+switch res{10}
+    case 'COL'
+        phase_dir = 'j';
+    case 'ROW'
+        phase_dir = 'i';
+end
+if res{11}
+    phase_dir = [phase_dir '-'];
+end
+json_func_struct.PhaseEncodingDirection = phase_dir;
+
+
+end % function
