@@ -30,14 +30,19 @@ assert( ischar(bidsDir)         , 'bidsDir must be a dir'                  )
 % BIDS architecture :
 
 % anat
-defpar.regex_anat_serie  = 'anat';
-defpar.regex_anat_volume = '^s';
-defpar.regex_anat_json   = '.*';
+defpar.regextag_anat_serie  = 'anat';
+defpar.regextag_anat_volume = '^s';
+defpar.regextag_anat_json   = '.*';
 
 % func
-defpar.regex_func_serie  = 'func';
-defpar.regex_func_volume = '^f';
-defpar.regex_func_json   = '.*';
+defpar.regextag_func_serie  = 'func';
+defpar.regextag_func_volume = '^f';
+defpar.regextag_func_json   = '.*';
+
+% dwi
+defpar.regextag_dwi_serie   = 'dwi';
+defpar.regextag_dwi_volume  = '^f';
+defpar.regextag_dwi_json    = '.*';
 
 %--------------------------------------------------------------------------
 
@@ -106,7 +111,7 @@ dataset_description.DatasetDOI = '';
 
 json_dataset_description = struct2jsonSTR( dataset_description );
 job_header = sprintf('## dataset_description.json ## \n');
-job_header = job_write_json_bids( job_header, json_dataset_description, fullfile(bidsDir,'dataset_description.json') );
+job_header = jobcmd_write_json_bids( job_header, json_dataset_description, fullfile(bidsDir,'dataset_description.json') );
 
 
 %% Main loop
@@ -144,7 +149,7 @@ for e = 1:nrExam
     %% ####################################################################
     % anat
     
-    ANAT_IN__serie = EXAM.getSerie( par.regex_anat_serie );
+    ANAT_IN__serie = EXAM.getSerie( par.regextag_anat_serie );
     
     if ~isempty(ANAT_IN__serie)
         if numel(ANAT_IN__serie)==1 % only 1 anat, or discard
@@ -155,9 +160,9 @@ for e = 1:nrExam
             
             % Volume ------------------------------------------------------
             
-            ANAT_IN___vol      = ANAT_IN__serie.getVolume( par.regex_anat_volume );
-            assert( ~isempty(ANAT_IN___vol)    , 'Found  0/1 @volume for [ %s ] in : \n %s',                        par.regex_anat_volume, ANAT_IN__serie.path )
-            assert(    numel(ANAT_IN___vol)==1 , 'Found %d/1 @volume for [ %S ] in : \n %s', numel(ANAT_IN__serie), par.regex_anat_volume, ANAT_IN__serie.path )
+            ANAT_IN___vol      = ANAT_IN__serie.getVolume( par.regextag_anat_volume );
+            assert( ~isempty(ANAT_IN___vol)    , 'Found  0/1 @volume for [ %s ] in : \n %s',                        par.regextag_anat_volume, ANAT_IN__serie.path )
+            assert(    numel(ANAT_IN___vol)==1 , 'Found %d/1 @volume for [ %S ] in : \n %s', numel(ANAT_IN__serie), par.regextag_anat_volume, ANAT_IN__serie.path )
             
             anat_OUT__name     = 'T1w';
             anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
@@ -168,21 +173,21 @@ for e = 1:nrExam
             
             % Json --------------------------------------------------------
             
-            ANAT_IN__json        = ANAT_IN__serie.getJson( par.regex_anat_json );
-            assert( ~isempty(ANAT_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                        par.regex_anat_json, ANAT_IN__serie.path )
-            assert(    numel(ANAT_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(ANAT_IN__serie), par.regex_anat_json, ANAT_IN__serie.path )
+            ANAT_IN__json        = ANAT_IN__serie.getJson( par.regextag_anat_json );
+            assert( ~isempty(ANAT_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                        par.regextag_anat_json, ANAT_IN__serie.path )
+            assert(    numel(ANAT_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(ANAT_IN__serie), par.regextag_anat_json, ANAT_IN__serie.path )
             
             anat_OUT__json_path = [anat_OUT__base '.json'];
             
             job_subj            = [ job_subj sprintf('ln -sf %s %s \n', ANAT_IN__json.path, anat_OUT__json_path) ];
             
-            % Echo
+            % Verbose
             if par.verbose > 1
                 fprintf('[%s]: Preparing ANAT : %s \n', mfilename, ANAT_IN___vol.path );
             end
             
         else
-            warning( 'Found %d/1 @serie found for [ %s ] in : \n %s', numel(ANAT_IN__serie), par.regex_anat_serie, EXAM.path )
+            warning( 'Found %d/1 @serie for [ %s ] in : \n %s', numel(ANAT_IN__serie), par.regextag_anat_serie, EXAM.path )
         end
         
     end % ANAT
@@ -191,7 +196,7 @@ for e = 1:nrExam
     %% ####################################################################
     % func
     
-    FUNC_IN__serie = EXAM.getSerie( par.regex_func_serie );
+    FUNC_IN__serie = EXAM.getSerie( par.regextag_func_serie );
     
     if ~isempty(FUNC_IN__serie)
         
@@ -205,23 +210,23 @@ for e = 1:nrExam
             
             for F = 1 : numel(FUNC_IN__serie)
                 
-                FUNC_IN___vol = FUNC_IN__serie(F).getVolume( par.regex_func_volume );
-                assert(~isempty(FUNC_IN___vol), 'Found 0/1 @volume found for [ %s ] in : \n %s', par.regex_func_volume, FUNC_IN__serie.path )
+                FUNC_IN___vol = FUNC_IN__serie(F).getVolume( par.regextag_func_volume );
+                assert(~isempty(FUNC_IN___vol), 'Found 0/1 @volume for [ %s ] in : \n %s', par.regextag_func_volume, FUNC_IN__serie.path )
                 
                 % Json ------------------------------------------------
                 
-                FUNC_IN__json = FUNC_IN__serie(F).getJson( par.regex_func_json );
-                assert( ~isempty(FUNC_IN__json)   , 'Found  0/1 @json found for [ %s ] in : \n %s',                       par.regex_func_json, FUNC_IN__serie.path )
-                assert(    numel(FUNC_IN__json)==1, 'Found %d/1 @json found for [ %s ] in : \n %s', numel(FUNC_IN__json), par.regex_func_json, FUNC_IN__serie.path )
+                FUNC_IN__json = FUNC_IN__serie(F).getJson( par.regextag_func_json );
+                assert( ~isempty(FUNC_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_func_json, FUNC_IN__serie.path )
+                assert(    numel(FUNC_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(FUNC_IN__json), par.regextag_func_json, FUNC_IN__serie.path )
                 
                 if size(FUNC_IN___vol.path,1) == 1 % single echo **********************
                     
                     % Volume ----------------------------------------------
                     
-                    func_IN___vol_path       = deblank (FUNC_IN___vol.path);
-                    func_IN___vol_ext        = file_ext(func_IN___vol_path   );
+                    func_IN___vol_path       = deblank  (FUNC_IN___vol.path);
+                    func_IN___vol_ext        = file_ext (func_IN___vol_path);
                     [~,func_OUT__vol_name,~] = fileparts(FUNC_IN___vol.path(1:end-length(func_IN___vol_ext)));
-                    func_OUT__vol_name       = del_(func_OUT__vol_name);
+                    func_OUT__vol_name       =      del_(func_OUT__vol_name);
                     func_OUT__vol_base       = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_bold', sub_name, ses_name, func_OUT__vol_name) );
                     func_OUT__vol_path       = [ func_OUT__vol_base func_IN___vol_ext ];
                     
@@ -229,15 +234,15 @@ for e = 1:nrExam
                     
                     % Json ------------------------------------------------
                     
-                    func_OUT__json_path = [func_OUT__vol_base '.json'];
+                    func_OUT__json_path = [ func_OUT__vol_base '.json' ];
                     
                     % Get data from the Json that we will append on the to, to match BIDS architecture
-                    json_func_struct = func_getJSON_params( FUNC_IN__json.path, func_OUT__vol_name );
+                    json_func_struct = getJSON_params_EPI( FUNC_IN__json.path, func_OUT__vol_name );
                     
                     json_func_str = struct2jsonSTR( json_func_struct );
-                    job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path );
+                    job_subj      = jobcmd_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path );
                     
-                    % Echo
+                    % Verbose
                     if par.verbose > 1
                         fprintf('[%s]: Preparing FUNC - SingleEcho : %s \n', mfilename, FUNC_IN___vol.path );
                     end
@@ -268,12 +273,12 @@ for e = 1:nrExam
                         job_subj            = [ job_subj sprintf('ln -sf %s %s \n', deblank( FUNC_IN___vol.path(orderTE(echo),:) ), func_OUT__vol_path ) ];
                         
                         % Get data from the Json that we will append on the to, to match BIDS architecture
-                        json_func_struct = func_getJSON_params( FUNC_IN__json.path(orderTE(echo),:), func_OUT__vol_name );
+                        json_func_struct = getJSON_params_EPI( FUNC_IN__json.path(orderTE(echo),:), func_OUT__vol_name );
                         
                         json_func_str = struct2jsonSTR( json_func_struct );
-                        job_subj      = job_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path(orderTE(echo),:) );
+                        job_subj      = jobcmd_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path(orderTE(echo),:) );
                         
-                        % Echo
+                        % Verbose
                         if par.verbose > 1
                             fprintf('[%s]: Preparing FUNC - MultiEcho - echo %d : %s \n', mfilename, echo, FUNC_IN___vol.path(orderTE(echo),:) );
                         end
@@ -282,11 +287,77 @@ for e = 1:nrExam
                     
                 end % single-echo / multi-echo ?
                 
-            end % f
+            end % F
             
         end
         
     end % FUNC
+    
+    
+    %% ####################################################################
+    % dwi
+    
+    DWI_IN__serie = EXAM.getSerie( par.regextag_dwi_serie );
+    
+    if ~isempty(DWI_IN__serie)
+        
+        if length(DWI_IN__serie)==1 && isempty(DWI_IN__serie.path)
+            % pass, this in exeption
+        else
+            
+            dwi_OUT__dir = fullfile( ses_path, 'dwi' );
+            job_subj = [ job_subj sprintf('### dwi ###\n') ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n', dwi_OUT__dir) ];
+            
+            for D = 1 : numel(DWI_IN__serie)
+                
+                DWI_IN___vol  = DWI_IN__serie(D).getVolume( par.regextag_dwi_volume );
+                assert(~isempty(DWI_IN___vol), 'Found 0/1 @volume for [ %s ] in : \n %s', par.regextag_dwi_volume, DWI_IN__serie.path )
+                
+                % Volume --------------------------------------------------
+                
+                dwi_IN___vol_path       = deblank  (DWI_IN___vol.path);
+                dwi_IN___vol_ext        = file_ext (dwi_IN___vol_path);
+                [~,dwi_OUT__vol_name,~] = fileparts(DWI_IN___vol.path(1:end-length(dwi_IN___vol_ext)));
+                dwi_OUT__vol_name       =      del_(dwi_OUT__vol_name);
+                dwi_OUT__vol_base       = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_dwi', sub_name, ses_name, dwi_OUT__vol_name) );
+                dwi_OUT__vol_path       = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
+                
+                job_subj                = [ job_subj sprintf('ln -sf %s %s \n', DWI_IN___vol.path, dwi_OUT__vol_path) ];
+                
+                % Json ----------------------------------------------------
+                
+                DWI_IN__json = DWI_IN__serie(D).getJson( par.regextag_dwi_json );
+                assert( ~isempty(DWI_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                      par.regextag_dwi_json, DWI_IN__serie.path )
+                assert(    numel(DWI_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(DWI_IN__json), par.regextag_dwi_json, DWI_IN__serie.path )
+                
+                dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
+                
+                % Get data from the Json that we will append on the to, to match BIDS architecture
+                json_dwi_struct = getJSON_params_EPI( DWI_IN__json.path, dwi_OUT__vol_name );
+                
+                json_dwi_str = struct2jsonSTR( json_dwi_struct );
+                job_subj     = jobcmd_write_json_bids( job_subj, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path );
+                
+                % bval & bvec ---------------------------------------------
+                dwi_IN___bval_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvals'); assert( exist(dwi_IN___bval_path,'file')==2, 'Found  0/1 file : \n %s', dwi_IN___bval_path)
+                dwi_IN___bvec_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvecs'); assert( exist(dwi_IN___bvec_path,'file')==2, 'Found  0/1 file : \n %s', dwi_IN___bvec_path)
+                dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
+                dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
+                job_subj           = [ job_subj sprintf('ln -sf %s %s \n', dwi_IN___bval_path, dwi_OUT__bval_path) ];
+                job_subj           = [ job_subj sprintf('ln -sf %s %s \n', dwi_IN___bvec_path, dwi_OUT__bvec_path) ];
+                
+                % Verbose
+                if par.verbose > 1
+                    fprintf('[%s]: Preparing DWI : %s \n', mfilename, DWI_IN___vol.path );
+                end
+                
+            end % D
+            
+        end
+        
+    end % DWI
+    
     
     % Save job_subj
     job{e} = job_subj;
@@ -334,15 +405,14 @@ end
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function job_subj = job_write_json_bids( job_subj, json_str, newJSON_path, prevJSON_path  )
-
+function job_subj = jobcmd_write_json_bids( job_subj, json_str, newJSON_path, prevJSON_path  )
 % Write BIDS data in the new JSON file, and append the previous JSON file
 
-if nargin > 3
+if nargin > 3 % concatenate json_str + prevJSON_path content and write
     new_str  = sprintf('%s,\n',json_str(1:end-2));
     job_subj = [ job_subj sprintf('echo ''%s''>> %s \n'    , new_str       , newJSON_path ) ];
     job_subj = [ job_subj sprintf('tail -n +2 %s  >> %s \n', prevJSON_path , newJSON_path ) ];
-else
+else % just write json_str
     job_subj = [ job_subj sprintf('echo ''%s''>> %s \n'    , json_str      , newJSON_path ) ];
 end
 
@@ -366,10 +436,10 @@ for idx = 1:numel(fields)
                 json_str = [json_str sprintf( '\t "%s": %g,\n', fields{idx}, structure.(fields{idx}) ) ];
             else
                 % Concatenation
-                rep  = repmat( '%g, ', [1 length(structure.(fields{idx}))] );
-                rep  = rep(1:end-2);
-                rep   = ['[' rep ']'];
-                final = sprintf(rep, structure.(fields{idx}) );
+                rep      = repmat( '%g, ', [1 length(structure.(fields{idx}))] );
+                rep      = rep(1:end-2);
+                rep      = ['[' rep ']'];
+                final    = sprintf(rep, structure.(fields{idx}) );
                 json_str = [json_str sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
             end
             
@@ -378,10 +448,10 @@ for idx = 1:numel(fields)
             
         case 'cell'
             % Concatenation
-            rep  = repmat( '"%s", ', [1 length(structure.(fields{idx}))] );
-            rep  = rep(1:end-2);
-            rep   = ['[' rep ']'];
-            final = sprintf(rep, structure.(fields{idx}){:} );
+            rep      = repmat( '"%s", ', [1 length(structure.(fields{idx}))] );
+            rep      = rep(1:end-2);
+            rep      = ['[' rep ']'];
+            final    = sprintf(rep, structure.(fields{idx}){:} );
             json_str = [json_str sprintf( '\t "%s": %s,\n', fields{idx}, final ) ];
             
     end
@@ -393,7 +463,7 @@ json_str = [ json_str(1:end-2) sprintf('\n}') ]; % delete the last ',\n" and clo
 end % end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function json_func_struct = func_getJSON_params( json_path, TaskName )
+function json_func_struct = getJSON_params_EPI( json_path, TaskName )
 
 res = get_string_from_json(json_path, ...
     {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', ...
@@ -430,13 +500,13 @@ json_func_struct.EffectiveEchoSpacing = EffectiveEchoSpacing;
 json_func_struct.TotalReadoutTime     = TotalReadoutTime;
 
 % Phase : encoding direction
-switch res{10}
+switch res{10} % InPlanePhaseEncodingDirection
     case 'COL'
         phase_dir = 'j';
     case 'ROW'
         phase_dir = 'i';
 end
-if res{11}
+if res{11} % PhaseEncodingDirectionPositive
     phase_dir = [phase_dir '-'];
 end
 json_func_struct.PhaseEncodingDirection = phase_dir;
