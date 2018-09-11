@@ -141,8 +141,9 @@ for ex = 1 : numel(examArray)
         
         [~, upper_dir_name] = get_parent_path(subdir(where));          % extract dir name
         
-        % Special case for func : 
+        % Special case for func :
         if strcmp(SequenceCategory{idx,2},'func')
+            
             type = exam_SequenceData(where,3); % mag or phase
             
             type_M = ~cellfun(@isempty,regexp(type,'M'));
@@ -150,10 +151,27 @@ for ex = 1 : numel(examArray)
             examArray(ex).addSerie(upper_dir_name(type_M), 'func_mag'  )
             examArray(ex).addSerie(upper_dir_name(type_P), 'func_phase')
             
+        elseif strcmp(SequenceCategory{idx,2},'anat')
+            
+            subcategory = {'_INV1','_INV2','_UNI_Images','_T1_Images'}; % mp2rage
+            for sc = 1 : length(subcategory)
+                
+                where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
+                if ~isempty(where_sc) % yes
+                    examArray(ex).addSerie(upper_dir_name(where_sc), ['anat' subcategory{sc}]  )% add them
+                    upper_dir_name(where_sc) = []; % remove them from the list
+                end
+                
+            end
+            
+            if ~isempty(upper_dir_name) % if the list is not empty, it means some non-mp2rage sereies remains, such as classic mprage, or else...
+                examArray(ex).addSerie(upper_dir_name,'anat')
+            end
+            
         else
             examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
         end
-                
+        
         % Add volume & json
         examArray(ex).getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
         examArray(ex).getSerie(SequenceCategory{idx,2}).addJson('json$',SequenceCategory{idx,5});

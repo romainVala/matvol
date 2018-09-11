@@ -74,6 +74,24 @@ if ~success
 end
 
 
+%% .bidsignore
+% For BIDS Validator @ https://incf.github.io/bids-validator/ , ignore some non-official patterns
+
+bidsignore = {
+    '*boldphase*'
+    '*inv-1*'
+    '*inv-2*'
+    '*T1map*'
+    };
+
+fileID = fopen( fullfile(bidsDir,'.bidsignore') , 'w' , 'n' , 'UTF-8' );
+if fileID < 0
+    warning('[%s]: Could not open %s', mfilename, filename)
+end
+fprintf(fileID,'%s\n',bidsignore{:});
+fclose(fileID);
+
+
 %% ########################################################################
 % dataset_description.json
 
@@ -161,14 +179,27 @@ for e = 1:nrExam
             job_subj = [ job_subj sprintf('### anat ###\n') ];
             job_subj = [ job_subj sprintf('mkdir -p %s \n', anat_OUT__dir_path) ];
             
+            % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
+            % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
             for A = 1 : numel(ANAT_IN__serie)
+                if     strfind(ANAT_IN__serie(A).tag,'_INV1'  )
+                    suffix_anat = 'inv-1';
+                elseif strfind(ANAT_IN__serie(A).tag,'_INV2')
+                    suffix_anat = 'inv-2';
+                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images')
+                    suffix_anat = 'T1w';
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images')
+                    suffix_anat = 'T1map';
+                else
+                    suffix_anat = 'T1w';
+                end
                 
                 ANAT_IN___vol  = ANAT_IN__serie(A).getVolume( par.regextag_anat_volume );
                 assert( ~isempty(ANAT_IN___vol) , 'Found  0/1 @volume for [ %s ] in : \n %s', par.regextag_anat_volume, ANAT_IN__serie.path )
                 
                 % Volume ------------------------------------------------------
                 
-                anat_OUT__name     = sprintf('run-%d_T1w',A);
+                anat_OUT__name     = sprintf('run-%d_%s', A, suffix_anat);
                 anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
                 anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
                 anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
