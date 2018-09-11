@@ -214,6 +214,14 @@ for e = 1:nrExam
             
             for F = 1 : numel(FUNC_IN__serie)
                 
+                if     strfind(FUNC_IN__serie(F).tag,'_mag'  )
+                    suffix_func = 'bold';
+                elseif strfind(FUNC_IN__serie(F).tag,'_phase')
+                    suffix_func = 'boldphase';
+                else
+                    suffix_func = 'bold';
+                end
+                
                 FUNC_IN___vol = FUNC_IN__serie(F).getVolume( par.regextag_func_volume );
                 assert(~isempty(FUNC_IN___vol), 'Found 0/1 @volume for [ %s ] in : \n %s', par.regextag_func_volume, FUNC_IN__serie.path )
                 
@@ -231,7 +239,7 @@ for e = 1:nrExam
                     func_IN___vol_ext        = file_ext (func_IN___vol_path);
                     [~,func_OUT__vol_name,~] = fileparts(FUNC_IN___vol.path(1:end-length(func_IN___vol_ext)));
                     func_OUT__vol_name       =      del_(func_OUT__vol_name);
-                    func_OUT__vol_base       = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_bold', sub_name, ses_name, func_OUT__vol_name) );
+                    func_OUT__vol_base       = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_%s', sub_name, ses_name, func_OUT__vol_name, suffix_func) );
                     func_OUT__vol_path       = [ func_OUT__vol_base func_IN___vol_ext ];
                     
                     job_subj                 = [ job_subj sprintf('ln -sf %s %s \n', FUNC_IN___vol.path, func_OUT__vol_path) ];
@@ -271,8 +279,8 @@ for e = 1:nrExam
                     for echo = 1 : length(orderTE)
                         
                         func_IN___vol_ext   = file_ext( deblank( FUNC_IN___vol.path(orderTE(echo),:) ) );
-                        func_OUT__vol_path  = [ func_OUT__vol_base sprintf('_echo-%d_bold',echo) func_IN___vol_ext  ];
-                        func_OUT__json_path = [ func_OUT__vol_base sprintf('_echo-%d_bold',echo) '.json'];
+                        func_OUT__vol_path  = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) func_IN___vol_ext  ];
+                        func_OUT__json_path = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) '.json'];
                         
                         job_subj            = [ job_subj sprintf('ln -sf %s %s \n', deblank( FUNC_IN___vol.path(orderTE(echo),:) ), func_OUT__vol_path ) ];
                         

@@ -145,8 +145,8 @@ for ex = 1 : numel(examArray)
         if strcmp(SequenceCategory{idx,2},'func')
             type = exam_SequenceData(where,3); % mag or phase
             
-            type_M = cellfun(@isempty,regexp(type,'M'));
-            type_P = cellfun(@isempty,regexp(type,'P'));
+            type_M = ~cellfun(@isempty,regexp(type,'M'));
+            type_P = ~cellfun(@isempty,regexp(type,'P'));
             examArray(ex).addSerie(upper_dir_name(type_M), 'func_mag'  )
             examArray(ex).addSerie(upper_dir_name(type_P), 'func_phase')
             
