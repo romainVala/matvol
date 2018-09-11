@@ -22,7 +22,7 @@ if ~exist('par','var')
 end
 
 assert( isa( examArray, 'exam' ), 'examArray must be a @exam object array' )
-assert( ischar(bidsDir)         , 'bidsDir must be a dir'                  )
+assert( ischar(bidsDir)         , 'bidsDir must be a char'                 )
 
 
 %% defpar
@@ -52,7 +52,7 @@ defpar.walltime = '00:30:00';
 defpar.pct      = 0;
 
 defpar.redo     = 0;
-defpar.run      = 0;
+defpar.run      = 1;
 defpar.display  = 0;
 defpar.verbose  = 2;
 
