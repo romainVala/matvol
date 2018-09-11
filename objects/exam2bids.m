@@ -149,7 +149,7 @@ for e = 1:nrExam
     %% ####################################################################
     % anat
     
-    ANAT_IN__serie = EXAM.getSerie( par.regextag_anat_serie );
+    ANAT_IN__serie = EXAM.getSerie( par.regextag_anat_serie, 'tag', 0 );
     
     if ~isempty(ANAT_IN__serie)
         if numel(ANAT_IN__serie)==1 % only 1 anat, or discard
@@ -196,7 +196,7 @@ for e = 1:nrExam
     %% ####################################################################
     % func
     
-    FUNC_IN__serie = EXAM.getSerie( par.regextag_func_serie );
+    FUNC_IN__serie = EXAM.getSerie( par.regextag_func_serie, 'tag', 0 );
     
     if ~isempty(FUNC_IN__serie)
         
@@ -297,7 +297,7 @@ for e = 1:nrExam
     %% ####################################################################
     % dwi
     
-    DWI_IN__serie = EXAM.getSerie( par.regextag_dwi_serie );
+    DWI_IN__serie = EXAM.getSerie( par.regextag_dwi_serie, 'tag', 0 );
     
     if ~isempty(DWI_IN__serie)
         
