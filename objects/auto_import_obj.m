@@ -26,6 +26,18 @@ assert(  exist(baseDir,'dir')==7 , 'baseDir must be a valid dir' )
 
 %% defpar
 
+defpar.anat_regex_volume = '^s.*nii';
+defpar.anat_tag_volume   = 's';
+defpar.anat_tag_json     = 'json';
+
+defpar.dwi_regex_volume  = '^f.*nii';
+defpar.dwi_tag_volume    = 'f';
+defpar.dwi_tag_json      = 'json';
+
+defpar.func_regex_volume = '^f.*nii';
+defpar.func_tag_volume   = 'f';
+defpar.func_tag_json     = 'json';
+
 %--------------------------------------------------------------------------
 
 defpar.sge      = 0;
@@ -36,7 +48,7 @@ defpar.pct      = 0;
 defpar.redo     = 0;
 defpar.run      = 1;
 defpar.display  = 0;
-defpar.verbose  = 2;
+defpar.verbose  = 1;
 
 par = complet_struct(par,defpar);
 
@@ -45,12 +57,15 @@ par = complet_struct(par,defpar);
 
 SequenceRegex = 'CsaSeries.MrPhoenixProtocol.tSequenceFileName';
 
-% Left  : sequence name contains this
-% Right : BIDS modality
+% 1 : sequence name contains this
+% 2 : BIDS modality
+% 3 : volume regex
+% 4 : volume tag
+% 5 : json   tag
 SequenceCategory = {
-    'tfl'  'T1w'
-    'diff' 'dwi'
-    'bold' 'bold'
+    'tfl'  'anat' defpar.anat_regex_volume defpar.anat_tag_volume defpar.anat_tag_json
+    'diff' 'dwi'  defpar.dwi_regex_volume  defpar.dwi_tag_volume  defpar.dwi_tag_json
+    'bold' 'func' defpar.func_regex_volume defpar.func_tag_volume defpar.func_tag_json
     };
 
 
@@ -117,6 +132,10 @@ for ex = 1 : numel(examArray)
         
         [~, upper_dir_name] = get_parent_path(subdir(where));          % extract dir name
         examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
+        
+        % Add volume & json
+        examArray(ex).getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
+        examArray(ex).getSerie(SequenceCategory{idx,2}).addJson('json$',SequenceCategory{idx,5});
         
     end % categ
     
