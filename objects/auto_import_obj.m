@@ -55,7 +55,11 @@ par = complet_struct(par,defpar);
 
 %% Some parameters
 
-SequenceRegex = 'CsaSeries.MrPhoenixProtocol.tSequenceFileName';
+fetch.SequenceFileName  = 'CsaSeries.MrPhoenixProtocol.tSequenceFileName';
+fetch.SequenceName      = 'SequenceName';
+fetch.ImageType         = 'ImageType';
+fetch.SeriesDescription = 'SeriesDescription';
+
 
 % 1 : sequence name contains this
 % 2 : BIDS modality
@@ -81,7 +85,7 @@ for ex = 1 : numel(examArray)
         continue
     end
     
-    SequenceName = cell(size(subdir)); % container, pre-allocation
+    exam_SequenceData = cell(numel(subdir),4); % container, pre-allocation
     
     if par.verbose > 0
         fprintf( '[%s] : Working on %d/%d : %s \n', mfilename, ex, numel(examArray) , examArray(ex).path )
@@ -100,39 +104,56 @@ for ex = 1 : numel(examArray)
         json = json{1}; % in case of multiple volumes, only keep the first file
         content = get_file_content_as_char(deblank(json(1,:)));
         
-        % Fetch the line content
-        start = regexp(content           , SequenceRegex, 'once');
-        stop  = regexp(content(start:end), ','  , 'once');
-        line = content(start:start+stop); 
-        token = regexp(line, ': (.*),','tokens'); % extract the value from the line
-        if isempty(token)
+        % Fetch the line content ------------------------------------------
+        
+        SequenceFileName = get_field_one(content, fetch.SequenceFileName);
+        if isempty(SequenceFileName)
             continue
         end
-        res = token{1}{1};
-        res = res(2:end-1); % remove " @ beguining and end
+        split = regexp(SequenceFileName,'\\\\','split'); % exemple : "%SiemensSeq%\\ep2d_bold"
+        exam_SequenceData{ser,1} = split{end};
         
-        split = regexp(res,'\\\\','split'); % exemple : "%SiemensSeq%\\ep2d_bold"
-        SequenceName{ser} = split{end};
+        SequenceName = get_field_one(content, fetch.SequenceName);
+        exam_SequenceData{ser,2} = SequenceName;
+        
+        ImageType  = get_field_mul(content, fetch.ImageType);
+        MAGorPHASE = ImageType{3};
+        exam_SequenceData{ser,3} = MAGorPHASE;
+        
+        SeriesDescription = get_field_one(content, fetch.SeriesDescription);
+        exam_SequenceData{ser,4} = SeriesDescription;
         
     end % ser
     
     if par.verbose > 1
         fprintf('SequenceName found : \n')
-        disp(SequenceName)
+        disp(exam_SequenceData)
         fprintf('\n')
     end
     
     % Try to fit the sequence name to the category
     for idx = 1 : size(SequenceCategory, 1)
         
-        where = find( ~cellfun( @isempty , regexp(SequenceName,SequenceCategory{idx,1}) ) );
+        where = find( ~cellfun( @isempty , regexp(exam_SequenceData(:,1),SequenceCategory{idx,1}) ) );
         if isempty(where)
             continue
         end
         
         [~, upper_dir_name] = get_parent_path(subdir(where));          % extract dir name
-        examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
         
+        % Special case for func : 
+        if strcmp(SequenceCategory{idx,2},'func')
+            type = exam_SequenceData(where,3); % mag or phase
+            
+            type_M = cellfun(@isempty,regexp(type,'M'));
+            type_P = cellfun(@isempty,regexp(type,'P'));
+            examArray(ex).addSerie(upper_dir_name(type_M), 'func_mag'  )
+            examArray(ex).addSerie(upper_dir_name(type_P), 'func_phase')
+            
+        else
+            examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
+        end
+                
         % Add volume & json
         examArray(ex).getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
         examArray(ex).getSerie(SequenceCategory{idx,2}).addJson('json$',SequenceCategory{idx,5});
@@ -141,5 +162,44 @@ for ex = 1 : numel(examArray)
     
 end % ex
 
+
+end % function
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function result = get_field_one(content, regex)
+
+% Fetch the line content
+start = regexp(content           , regex, 'once');
+stop  = regexp(content(start:end), ','  , 'once');
+line = content(start:start+stop);
+token = regexp(line, ': (.*),','tokens'); % extract the value from the line
+if isempty(token)
+    result = [];
+else
+    res    = token{1}{1};
+    result = res(2:end-1); % remove " @ beguining and end
+end
+
+end % function
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function result = get_field_mul(content, regex)
+
+% Fetch the line content
+start = regexp(content           , regex, 'once');
+stop  = regexp(content(start:end), ']'  , 'once');
+line = content(start:start+stop);
+token = regexp(line, ': (.*),','tokens'); % extract the value from the line
+if isempty(token)
+    result = [];
+else
+    res    = token{1}{1};
+    VECT_cell_raw = strsplit(res,'\n')';
+    VECT_cell = VECT_cell_raw(2:end-1);
+    VECT_cell = strrep(VECT_cell,',','');
+    VECT_cell = strrep(VECT_cell,' ','');
+    result    = strrep(VECT_cell,'"','');
+end
 
 end % function
