@@ -152,42 +152,46 @@ for e = 1:nrExam
     ANAT_IN__serie = EXAM.getSerie( par.regextag_anat_serie, 'tag', 0 );
     
     if ~isempty(ANAT_IN__serie)
-        if numel(ANAT_IN__serie)==1 % only 1 anat, or discard
+        
+        if length(ANAT_IN__serie)==1 && isempty(ANAT_IN__serie.path)
+            % pass, this in exeption
+        else
             
             anat_OUT__dir_path = fullfile( ses_path, 'anat' );
             job_subj = [ job_subj sprintf('### anat ###\n') ];
             job_subj = [ job_subj sprintf('mkdir -p %s \n', anat_OUT__dir_path) ];
             
-            % Volume ------------------------------------------------------
+            for A = 1 : numel(ANAT_IN__serie)
+                
+                ANAT_IN___vol  = ANAT_IN__serie(A).getVolume( par.regextag_anat_volume );
+                assert( ~isempty(ANAT_IN___vol) , 'Found  0/1 @volume for [ %s ] in : \n %s', par.regextag_anat_volume, ANAT_IN__serie.path )
+                
+                % Volume ------------------------------------------------------
+                
+                anat_OUT__name     = sprintf('run-%d_T1w',A);
+                anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
+                anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
+                anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
+                
+                job_subj           = [ job_subj sprintf('ln -sf %s %s \n', ANAT_IN___vol.path, anat_OUT__vol_path) ];
+                
+                % Json --------------------------------------------------------
+                
+                ANAT_IN__json        = ANAT_IN__serie(A).getJson( par.regextag_anat_json );
+                assert( ~isempty(ANAT_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_anat_json, ANAT_IN__serie.path )
+                assert(    numel(ANAT_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(ANAT_IN__json), par.regextag_anat_json, ANAT_IN__serie.path )
+                
+                anat_OUT__json_path = [anat_OUT__base '.json'];
+                
+                job_subj            = [ job_subj sprintf('ln -sf %s %s \n', ANAT_IN__json.path, anat_OUT__json_path) ];
+                
+                % Verbose
+                if par.verbose > 1
+                    fprintf('[%s]: Preparing ANAT : %s \n', mfilename, ANAT_IN___vol.path );
+                end
+                
+            end % A
             
-            ANAT_IN___vol      = ANAT_IN__serie.getVolume( par.regextag_anat_volume );
-            assert( ~isempty(ANAT_IN___vol)    , 'Found  0/1 @volume for [ %s ] in : \n %s',                        par.regextag_anat_volume, ANAT_IN__serie.path )
-            assert(    numel(ANAT_IN___vol)==1 , 'Found %d/1 @volume for [ %S ] in : \n %s', numel(ANAT_IN__serie), par.regextag_anat_volume, ANAT_IN__serie.path )
-            
-            anat_OUT__name     = 'T1w';
-            anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
-            anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
-            anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
-            
-            job_subj           = [ job_subj sprintf('ln -sf %s %s \n', ANAT_IN___vol.path, anat_OUT__vol_path) ];
-            
-            % Json --------------------------------------------------------
-            
-            ANAT_IN__json        = ANAT_IN__serie.getJson( par.regextag_anat_json );
-            assert( ~isempty(ANAT_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                        par.regextag_anat_json, ANAT_IN__serie.path )
-            assert(    numel(ANAT_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(ANAT_IN__serie), par.regextag_anat_json, ANAT_IN__serie.path )
-            
-            anat_OUT__json_path = [anat_OUT__base '.json'];
-            
-            job_subj            = [ job_subj sprintf('ln -sf %s %s \n', ANAT_IN__json.path, anat_OUT__json_path) ];
-            
-            % Verbose
-            if par.verbose > 1
-                fprintf('[%s]: Preparing ANAT : %s \n', mfilename, ANAT_IN___vol.path );
-            end
-            
-        else
-            warning( 'Found %d/1 @serie for [ %s ] in : \n %s', numel(ANAT_IN__serie), par.regextag_anat_serie, EXAM.path )
         end
         
     end % ANAT
