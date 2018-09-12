@@ -49,6 +49,9 @@ defpar.regextag_fmap_serie   = 'fmap';
 defpar.regextag_fmap_volume  = '^s';
 defpar.regextag_fmap_json    = '.*';
 
+% Other options :
+defpar.copytype = 'link'; % can be 'link' or 'copy'
+
 %--------------------------------------------------------------------------
 
 defpar.sge      = 0;
@@ -210,7 +213,7 @@ for e = 1:nrExam
                 anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
                 anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
                 
-                job_subj           = [ job_subj sprintf('ln -sf %s %s \n', ANAT_IN___vol.path, anat_OUT__vol_path) ];
+                job_subj = link_or_copy(job_subj, ANAT_IN___vol.path, anat_OUT__vol_path, par.copytype);
                 
                 % Json --------------------------------------------------------
                 
@@ -220,7 +223,7 @@ for e = 1:nrExam
                 
                 anat_OUT__json_path = [anat_OUT__base '.json'];
                 
-                job_subj            = [ job_subj sprintf('ln -sf %s %s \n', ANAT_IN__json.path, anat_OUT__json_path) ];
+                job_subj = link_or_copy(job_subj, ANAT_IN__json.path, anat_OUT__json_path, par.copytype);
                 
                 % Verbose
                 if par.verbose > 1
@@ -279,7 +282,7 @@ for e = 1:nrExam
                     func_OUT__vol_base       = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_%s', sub_name, ses_name, func_OUT__vol_name, suffix_func) );
                     func_OUT__vol_path       = [ func_OUT__vol_base func_IN___vol_ext ];
                     
-                    job_subj                 = [ job_subj sprintf('ln -sf %s %s \n', FUNC_IN___vol.path, func_OUT__vol_path) ];
+                    job_subj = link_or_copy(job_subj, FUNC_IN___vol.path, func_OUT__vol_path, par.copytype);
                     
                     % Json ------------------------------------------------
                     
@@ -319,7 +322,7 @@ for e = 1:nrExam
                         func_OUT__vol_path  = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) func_IN___vol_ext  ];
                         func_OUT__json_path = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) '.json'];
                         
-                        job_subj            = [ job_subj sprintf('ln -sf %s %s \n', deblank( FUNC_IN___vol.path(orderTE(echo),:) ), func_OUT__vol_path ) ];
+                        job_subj = link_or_copy(job_subj, deblank( FUNC_IN___vol.path(orderTE(echo),:) ), func_OUT__vol_path, par.copytype);
                         
                         % Get data from the Json that we will append on the to, to match BIDS architecture
                         json_func_struct = getJSON_params_EPI( FUNC_IN__json.path(orderTE(echo),:), func_OUT__vol_name );
@@ -372,7 +375,7 @@ for e = 1:nrExam
                 dwi_OUT__vol_base       = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_dwi', sub_name, ses_name, dwi_OUT__vol_name) );
                 dwi_OUT__vol_path       = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
                 
-                job_subj                = [ job_subj sprintf('ln -sf %s %s \n', DWI_IN___vol.path, dwi_OUT__vol_path) ];
+                job_subj = link_or_copy(job_subj, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
                 
                 % Json ----------------------------------------------------
                 
@@ -393,8 +396,9 @@ for e = 1:nrExam
                 dwi_IN___bvec_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvecs'); assert( exist(dwi_IN___bvec_path,'file')==2, 'Found  0/1 file : \n %s', dwi_IN___bvec_path)
                 dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
                 dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
-                job_subj           = [ job_subj sprintf('ln -sf %s %s \n', dwi_IN___bval_path, dwi_OUT__bval_path) ];
-                job_subj           = [ job_subj sprintf('ln -sf %s %s \n', dwi_IN___bvec_path, dwi_OUT__bvec_path) ];
+                
+                job_subj = link_or_copy(job_subj, dwi_IN___bval_path, dwi_OUT__bval_path, par.copytype);
+                job_subj = link_or_copy(job_subj, dwi_IN___bvec_path, dwi_OUT__bvec_path, par.copytype);
                 
                 % Verbose
                 if par.verbose > 1
@@ -444,7 +448,7 @@ for e = 1:nrExam
                         fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path(echo,:)) );
                         fmap_OUT__vol_path = [ fmap_OUT__base fmap_IN___vol_ext ];
                         
-                        job_subj           = [ job_subj sprintf('ln -sf %s %s \n', FMAP_IN___vol.path(echo,:), fmap_OUT__vol_path) ];
+                        job_subj = link_or_copy(job_subj, FMAP_IN___vol.path(echo,:), fmap_OUT__vol_path, par.copytype);
                         
                         % Json --------------------------------------------
                         
@@ -454,7 +458,7 @@ for e = 1:nrExam
                         
                         fmap_OUT__json_path = [fmap_OUT__base '.json'];
                         
-                        job_subj            = [ job_subj sprintf('ln -sf %s %s \n', FMAP_IN__json.path(echo,:), fmap_OUT__json_path) ];
+                        job_subj = link_or_copy(job_subj, FMAP_IN__json.path(echo,:), fmap_OUT__json_path, par.copytype);
                         
                         % Verbose
                         if par.verbose > 1
@@ -477,7 +481,7 @@ for e = 1:nrExam
                     fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path) );
                     fmap_OUT__vol_path = [ fmap_OUT__base fmap_IN___vol_ext ];
                     
-                    job_subj           = [ job_subj sprintf('ln -sf %s %s \n', FMAP_IN___vol.path, fmap_OUT__vol_path) ];
+                    job_subj = link_or_copy(job_subj, FMAP_IN___vol.path, fmap_OUT__vol_path, par.copytype);
                     
                     % Json ------------------------------------------------
                     
@@ -550,6 +554,18 @@ elseif strcmp(in(end-3:end),'.nii')
     out = '.nii';
 else
     error('WTF ? supported files are .nii and .nii.gz')
+end
+
+end % function
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function job_subj = link_or_copy(job_subj, IN_path, OUT_path, type)
+
+switch type
+    case 'link'
+        job_subj   = [ job_subj sprintf('ln -sf %s %s \n', IN_path, OUT_path) ];
+    case 'copy'
+        job_subj   = [ job_subj sprintf( 'cp -f %s %s \n', IN_path, OUT_path) ];
 end
 
 end % function
