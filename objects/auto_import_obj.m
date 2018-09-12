@@ -26,17 +26,27 @@ assert(  exist(baseDir,'dir')==7 , 'baseDir must be a valid dir' )
 
 %% defpar
 
+% BIDS names :
+
+% anat
 defpar.anat_regex_volume = '^s.*nii';
 defpar.anat_tag_volume   = 's';
-defpar.anat_tag_json     = 'json';
+defpar.anat_tag_json     = 'j';
 
+% dwi
 defpar.dwi_regex_volume  = '^f.*nii';
 defpar.dwi_tag_volume    = 'f';
-defpar.dwi_tag_json      = 'json';
+defpar.dwi_tag_json      = 'j';
 
+% func
 defpar.func_regex_volume = '^f.*nii';
 defpar.func_tag_volume   = 'f';
-defpar.func_tag_json     = 'json';
+defpar.func_tag_json     = 'j';
+
+% fmap
+defpar.fmap_regex_volume = '^s.*nii';
+defpar.fmap_tag_volume   = 's';
+defpar.fmap_tag_json     = 'j';
 
 %--------------------------------------------------------------------------
 
@@ -67,9 +77,10 @@ fetch.SeriesDescription = 'SeriesDescription';
 % 4 : volume tag
 % 5 : json   tag
 SequenceCategory = {
-    'tfl'  'anat' defpar.anat_regex_volume defpar.anat_tag_volume defpar.anat_tag_json
-    'diff' 'dwi'  defpar.dwi_regex_volume  defpar.dwi_tag_volume  defpar.dwi_tag_json
-    'bold' 'func' defpar.func_regex_volume defpar.func_tag_volume defpar.func_tag_json
+    'tfl'               'anat' defpar.anat_regex_volume defpar.anat_tag_volume defpar.anat_tag_json
+    'diff'              'dwi'  defpar. dwi_regex_volume defpar. dwi_tag_volume defpar. dwi_tag_json
+    'bold'              'func' defpar.func_regex_volume defpar.func_tag_volume defpar.func_tag_json
+    'gre_field_mapping' 'fmap' defpar.fmap_regex_volume defpar.fmap_tag_volume defpar.fmap_tag_json
     };
 
 
@@ -141,7 +152,7 @@ for ex = 1 : numel(examArray)
         
         [~, upper_dir_name] = get_parent_path(subdir(where));          % extract dir name
         
-        % Special case for func :
+        % Special cases :
         if strcmp(SequenceCategory{idx,2},'func')
             
             type = exam_SequenceData(where,3); % mag or phase
@@ -167,6 +178,15 @@ for ex = 1 : numel(examArray)
             if ~isempty(upper_dir_name) % if the list is not empty, it means some non-mp2rage sereies remains, such as classic mprage, or else...
                 examArray(ex).addSerie(upper_dir_name,'anat')
             end
+            
+        elseif strcmp(SequenceCategory{idx,2},'fmap')
+            
+            type = exam_SequenceData(where,3); % mag or phase
+            
+            type_M = ~cellfun(@isempty,regexp(type,'M'));
+            type_P = ~cellfun(@isempty,regexp(type,'P'));
+            examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  )
+            examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase')
             
         else
             examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
