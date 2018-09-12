@@ -44,6 +44,11 @@ defpar.regextag_dwi_serie   = 'dwi';
 defpar.regextag_dwi_volume  = '^f';
 defpar.regextag_dwi_json    = '.*';
 
+% fmap
+defpar.regextag_fmap_serie   = 'fmap';
+defpar.regextag_fmap_volume  = '^s';
+defpar.regextag_fmap_json    = '.*';
+
 %--------------------------------------------------------------------------
 
 defpar.sge      = 0;
@@ -182,6 +187,7 @@ for e = 1:nrExam
             % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
             % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
             for A = 1 : numel(ANAT_IN__serie)
+                
                 if     strfind(ANAT_IN__serie(A).tag,'_INV1'  )
                     suffix_anat = 'inv-1';
                 elseif strfind(ANAT_IN__serie(A).tag,'_INV2')
@@ -402,6 +408,107 @@ for e = 1:nrExam
     end % DWI
     
     
+    %% ####################################################################
+    % fmap
+    
+    FMAP_IN__serie = EXAM.getSerie( par.regextag_fmap_serie, 'tag', 0 );
+    
+    if ~isempty(FMAP_IN__serie)
+        
+        if length(FMAP_IN__serie)==1 && isempty(FMAP_IN__serie.path)
+            % pass, this in exeption
+        else
+            
+            fmap_OUT__dir_path = fullfile( ses_path, 'fmap' );
+            job_subj = [ job_subj sprintf('### fmap ###\n') ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n', fmap_OUT__dir_path) ];
+            
+            for FM = 1 : numel(FMAP_IN__serie)
+                
+                FMAP_IN___vol  = FMAP_IN__serie(FM).getVolume( par.regextag_fmap_volume );
+                assert( ~isempty(FMAP_IN___vol) , 'Found  0/1 @volume for [ %s ] in : \n %s', par.regextag_fmap_volume, FMAP_IN__serie.path )
+                
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % MAGNITUDE
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                if strfind(FMAP_IN__serie(FM).tag,'_mag'  )
+                    
+                    suffix_fmap = 'magnitude';
+                    
+                    for echo = 1 : size(FMAP_IN___vol.path,1)
+                        
+                        % Volume ------------------------------------------
+                        
+                        fmap_OUT__name     = sprintf('run-%d_%s%d', FM, suffix_fmap, echo);
+                        fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
+                        fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path(echo,:)) );
+                        fmap_OUT__vol_path = [ fmap_OUT__base fmap_IN___vol_ext ];
+                        
+                        job_subj           = [ job_subj sprintf('ln -sf %s %s \n', FMAP_IN___vol.path(echo,:), fmap_OUT__vol_path) ];
+                        
+                        % Json --------------------------------------------
+                        
+                        FMAP_IN__json  = FMAP_IN__serie(FM).getJson( par.regextag_fmap_json );
+                        assert( ~isempty(FMAP_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_fmap_json, FMAP_IN__serie.path )
+                        assert(    numel(FMAP_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(FMAP_IN__json), par.regextag_fmap_json, FMAP_IN__serie.path )
+                        
+                        fmap_OUT__json_path = [fmap_OUT__base '.json'];
+                        
+                        job_subj            = [ job_subj sprintf('ln -sf %s %s \n', FMAP_IN__json.path(echo,:), fmap_OUT__json_path) ];
+                        
+                        % Verbose
+                        if par.verbose > 1
+                            fprintf('[%s]: Preparing FMAP - Magnitude %d : %s \n', mfilename, echo, FMAP_IN___vol.path(echo,:) );
+                        end
+                        
+                    end
+                    
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    % PHASE
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                elseif strfind(FMAP_IN__serie(FM).tag,'_phase')
+                    
+                    suffix_fmap = 'phasediff';
+                    
+                    % Volume ----------------------------------------------
+                    
+                    fmap_OUT__name     = sprintf('run-%d_%s', FM, suffix_fmap);
+                    fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
+                    fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path) );
+                    fmap_OUT__vol_path = [ fmap_OUT__base fmap_IN___vol_ext ];
+                    
+                    job_subj           = [ job_subj sprintf('ln -sf %s %s \n', FMAP_IN___vol.path, fmap_OUT__vol_path) ];
+                    
+                    % Json ------------------------------------------------
+                    
+                    FMAP_IN__json  = FMAP_IN__serie(FM).getJson( par.regextag_fmap_json );
+                    assert( ~isempty(FMAP_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_fmap_json, FMAP_IN__serie.path )
+                    assert(    numel(FMAP_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(FMAP_IN__json), par.regextag_fmap_json, FMAP_IN__serie.path )
+                    
+                    fmap_OUT__json_path = [fmap_OUT__base '.json'];
+                    
+                    % Get data from the Json that we will append on the to, to match BIDS architecture
+                    json_fmap_struct = getJSON_params_GRE_FIELD_MAP( FMAP_IN__json.path );
+                    
+                    json_fmap_str = struct2jsonSTR( json_fmap_struct );
+                    job_subj      = jobcmd_write_json_bids( job_subj, json_fmap_str, fmap_OUT__json_path, FMAP_IN__json.path );
+                    
+                    % Verbose
+                    if par.verbose > 1
+                        fprintf('[%s]: Preparing FMAP - Phasediff : %s \n', mfilename, FMAP_IN___vol.path );
+                    end
+                    
+                else
+                    warning('not sure what is happening here with fmap : %s', FMAP_IN__serie(FM).path)
+                end
+                
+            end % FM
+            
+        end
+        
+    end % FMAP
+    
+    
     % Save job_subj
     job{e} = job_subj;
     
@@ -554,5 +661,41 @@ if res{11} % PhaseEncodingDirectionPositive
 end
 json_func_struct.PhaseEncodingDirection = phase_dir;
 
+end % function
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function json_func_struct = getJSON_params_GRE_FIELD_MAP( json_path )
+
+res = get_string_from_json(json_path, ...
+    {'RepetitionTime', 'EchoTime', 'FlipAngle', ...
+    'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE','MagneticFieldStrength',...
+    'InPlanePhaseEncodingDirection','CsaImage.PhaseEncodingDirectionPositive'}, ...
+    {'num', 'num', 'num',...
+    'num','num',...
+    'str','num'});
+
+% Classic
+json_func_struct.EchoTime1      = (res{2}-2.46)/1000; % ms -> s % the difference is only 2.46ms for SIEMENS scanners with gre_field_map
+json_func_struct.EchoTime2      =  res{2}      /1000; % ms -> s
+json_func_struct.RepetitionTime = res{1}/1000; % ms -> s
+json_func_struct.FlipAngle      = res{3};
+
+% Acceleration factors
+if ~isempty(res{4})
+    json_func_struct.ParallelReductionFactorInPlane = res{4}; % iPat
+end
+json_func_struct.MagneticFieldStrength = res{5};
+
+% Phase : encoding direction
+switch res{6} % InPlanePhaseEncodingDirection
+    case 'COL'
+        phase_dir = 'j';
+    case 'ROW'
+        phase_dir = 'i';
+end
+if res{7} % PhaseEncodingDirectionPositive
+    phase_dir = [phase_dir '-'];
+end
+json_func_struct.PhaseEncodingDirection = phase_dir;
 
 end % function
