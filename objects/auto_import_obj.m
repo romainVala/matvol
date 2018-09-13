@@ -20,8 +20,8 @@ if ~exist('par','var')
     par = ''; % for defpar
 end
 
-assert( ischar(baseDir)          , 'baseDir must be a char'      )
-assert(  exist(baseDir,'dir')==7 , 'baseDir must be a valid dir' )
+assert( ischar(baseDir)          , 'baseDir must be a char'          )
+assert(  exist(baseDir,'dir')==7 , 'Not a valid dir : %s'  , baseDir )
 
 
 %% defpar
@@ -168,7 +168,7 @@ for ex = 1 : numel(examArray)
             for sc = 1 : length(subcategory)
                 
                 where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
-                if ~isempty(where_sc) % yes
+                if any(where_sc) % yes
                     examArray(ex).addSerie(upper_dir_name(where_sc), ['anat' subcategory{sc}]  )% add them
                     upper_dir_name(where_sc) = []; % remove them from the list
                 end
