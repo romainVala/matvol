@@ -152,7 +152,7 @@ for e = 1:nrExam
     if par.verbose > 0
         fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, e, nrExam, EXAM.path);
     end
-    job_subj = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, e, nrExam, EXAM.path); % initialize
+    job_subj = sprintf('#################### [%s] JOB %d/%d for %s #################### \n\n', mfilename, e, nrExam, EXAM.path); % initialize
     %#ok<*AGROW>
     
     
@@ -161,7 +161,7 @@ for e = 1:nrExam
     
     sub_name = sprintf('sub-%s',del_(EXAM.name));
     sub_path = fullfile( bidsDir, sub_name );
-    job_subj = [ job_subj sprintf('mkdir -p %s \n', sub_path) ];
+    job_subj = [ job_subj sprintf('mkdir -p %s \n\n', sub_path) ];
     
     
     %% ####################################################################
@@ -169,7 +169,7 @@ for e = 1:nrExam
     
     ses_name = 'ses-S1';
     ses_path = fullfile( sub_path, ses_name );
-    job_subj = [ job_subj sprintf('mkdir -p %s \n', ses_path) ];
+    job_subj = [ job_subj sprintf('mkdir -p %s \n\n', ses_path) ];
     
     
     %% ####################################################################
@@ -184,8 +184,8 @@ for e = 1:nrExam
         else
             
             anat_OUT__dir_path = fullfile( ses_path, 'anat' );
-            job_subj = [ job_subj sprintf('### anat ###\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n', anat_OUT__dir_path) ];
+            job_subj = [ job_subj sprintf('### anat ###\n\n') ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n\n', anat_OUT__dir_path) ];
             
             % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
             % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
@@ -249,8 +249,8 @@ for e = 1:nrExam
         else
             
             func_OUT__dir = fullfile( ses_path, 'func' );
-            job_subj = [ job_subj sprintf('### func ###\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n', func_OUT__dir) ];
+            job_subj = [ job_subj sprintf('### func ###\n\n') ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n\n', func_OUT__dir) ];
             
             for F = 1 : numel(FUNC_IN__serie)
                 
@@ -358,8 +358,8 @@ for e = 1:nrExam
         else
             
             dwi_OUT__dir = fullfile( ses_path, 'dwi' );
-            job_subj = [ job_subj sprintf('### dwi ###\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n', dwi_OUT__dir) ];
+            job_subj = [ job_subj sprintf('### dwi ###\n\n') ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n\n', dwi_OUT__dir) ];
             
             for D = 1 : numel(DWI_IN__serie)
                 
@@ -424,8 +424,8 @@ for e = 1:nrExam
         else
             
             fmap_OUT__dir_path = fullfile( ses_path, 'fmap' );
-            job_subj = [ job_subj sprintf('### fmap ###\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n', fmap_OUT__dir_path) ];
+            job_subj = [ job_subj sprintf('### fmap ###\n\n') ];
+            job_subj = [ job_subj sprintf('mkdir -p %s \n\n', fmap_OUT__dir_path) ];
             
             for FM = 1 : numel(FMAP_IN__serie)
                 
@@ -563,9 +563,9 @@ function job_subj = link_or_copy(job_subj, IN_path, OUT_path, type)
 
 switch type
     case 'link'
-        job_subj   = [ job_subj sprintf('ln -sf %s %s \n', IN_path, OUT_path) ];
+        job_subj   = [ job_subj sprintf('ln -sf %s %s \n\n', IN_path, OUT_path) ];
     case 'copy'
-        job_subj   = [ job_subj sprintf( 'cp -f %s %s \n', IN_path, OUT_path) ];
+        job_subj   = [ job_subj sprintf( 'cp -f %s %s \n\n', IN_path, OUT_path) ];
 end
 
 end % function
@@ -576,10 +576,10 @@ function job_subj = jobcmd_write_json_bids( job_subj, json_str, newJSON_path, pr
 
 if nargin > 3 % concatenate json_str + prevJSON_path content and write
     new_str  = sprintf('%s,\n',json_str(1:end-2));
-    job_subj = [ job_subj sprintf('echo ''%s''>> %s \n'    , new_str       , newJSON_path ) ];
-    job_subj = [ job_subj sprintf('tail -n +2 %s  >> %s \n', prevJSON_path , newJSON_path ) ];
+    job_subj = [ job_subj sprintf('echo ''%s''>> %s \n\n'    , new_str       , newJSON_path ) ];
+    job_subj = [ job_subj sprintf('tail -n +2 %s  >> %s \n\n', prevJSON_path , newJSON_path ) ];
 else % just write json_str
-    job_subj = [ job_subj sprintf('echo ''%s''>> %s \n'    , json_str      , newJSON_path ) ];
+    job_subj = [ job_subj sprintf('echo ''%s''>> %s \n\n'    , json_str      , newJSON_path ) ];
 end
 
 end % function

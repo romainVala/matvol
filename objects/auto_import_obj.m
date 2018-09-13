@@ -34,12 +34,12 @@ defpar.anat_tag_volume   = 's';
 defpar.anat_tag_json     = 'j';
 
 % dwi
-defpar.dwi_regex_volume  = '^f.*nii';
+defpar.dwi_regex_volume  = '^(f|s).*nii'; % f : multiple volumes (99% of cases) // s : only one volume (1% of cases, but it may happen)
 defpar.dwi_tag_volume    = 'f';
 defpar.dwi_tag_json      = 'j';
 
 % func
-defpar.func_regex_volume = '^f.*nii';
+defpar.func_regex_volume = '^(f|s).*nii'; % f : multiple volumes (99% of cases) // s : only one volume (1% of cases, but it may happen)
 defpar.func_tag_volume   = 'f';
 defpar.func_tag_json     = 'j';
 
@@ -79,7 +79,7 @@ fetch.SeriesDescription = 'SeriesDescription';
 SequenceCategory = {
     'tfl'               'anat' defpar.anat_regex_volume defpar.anat_tag_volume defpar.anat_tag_json
     'diff'              'dwi'  defpar. dwi_regex_volume defpar. dwi_tag_volume defpar. dwi_tag_json
-    'bold'              'func' defpar.func_regex_volume defpar.func_tag_volume defpar.func_tag_json
+    '(bold)|(pace)'     'func' defpar.func_regex_volume defpar.func_tag_volume defpar.func_tag_json
     'gre_field_mapping' 'fmap' defpar.fmap_regex_volume defpar.fmap_tag_volume defpar.fmap_tag_json
     };
 
