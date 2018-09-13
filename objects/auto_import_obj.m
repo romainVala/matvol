@@ -26,6 +26,9 @@ assert(  exist(baseDir,'dir')==7 , 'Not a valid dir : %s'  , baseDir )
 
 %% defpar
 
+defpar.exam_regex  = '.*';
+defpar.serie_regex = '.*';
+
 % BIDS names :
 
 % anat
@@ -77,21 +80,21 @@ fetch.SeriesDescription = 'SeriesDescription';
 % 4 : volume tag
 % 5 : json   tag
 SequenceCategory = {
-    'tfl'               'anat' defpar.anat_regex_volume defpar.anat_tag_volume defpar.anat_tag_json
-    'diff'              'dwi'  defpar. dwi_regex_volume defpar. dwi_tag_volume defpar. dwi_tag_json
-    '(bold)|(pace)'     'func' defpar.func_regex_volume defpar.func_tag_volume defpar.func_tag_json
-    'gre_field_mapping' 'fmap' defpar.fmap_regex_volume defpar.fmap_tag_volume defpar.fmap_tag_json
+    'tfl'               'anat' par.anat_regex_volume par.anat_tag_volume par.anat_tag_json
+    'diff'              'dwi'  par. dwi_regex_volume par. dwi_tag_volume par. dwi_tag_json
+    '(bold)|(pace)'     'func' par.func_regex_volume par.func_tag_volume par.func_tag_json
+    'gre_field_mapping' 'fmap' par.fmap_regex_volume par.fmap_tag_volume par.fmap_tag_json
     };
 
 
 %% Go
 
-examArray = exam(baseDir, '.*'); % add all subdir as @exam objects
+examArray = exam(baseDir, par.exam_regex); % add all subdir as @exam objects
 
 for ex = 1 : numel(examArray)
     
     % Fetch all subdir
-    subdir = gdir(examArray(ex).path,'.*');
+    subdir = gdir(examArray(ex).path, par.serie_regex);
     if isempty(subdir)
         continue
     end
