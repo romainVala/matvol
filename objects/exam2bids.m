@@ -204,7 +204,7 @@ for e = 1:nrExam
                 end
                 
                 ANAT_IN___vol  = ANAT_IN__serie(A).getVolume( par.regextag_anat_volume );
-                assert( ~isempty(ANAT_IN___vol) , 'Found  0/1 @volume for [ %s ] in : \n %s', par.regextag_anat_volume, ANAT_IN__serie.path )
+                assert( ~isempty(ANAT_IN___vol) , 'Found  0/1 @volume for [ %s ] in : \n %s', par.regextag_anat_volume, ANAT_IN__serie(A).path )
                 
                 % Volume ------------------------------------------------------
                 
@@ -218,8 +218,8 @@ for e = 1:nrExam
                 % Json --------------------------------------------------------
                 
                 ANAT_IN__json        = ANAT_IN__serie(A).getJson( par.regextag_anat_json );
-                assert( ~isempty(ANAT_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_anat_json, ANAT_IN__serie.path )
-                assert(    numel(ANAT_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(ANAT_IN__json), par.regextag_anat_json, ANAT_IN__serie.path )
+                assert( ~isempty(ANAT_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_anat_json, ANAT_IN__serie(A).path )
+                assert(    numel(ANAT_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(ANAT_IN__json), par.regextag_anat_json, ANAT_IN__serie(A).path )
                 
                 anat_OUT__json_path = [anat_OUT__base '.json'];
                 
@@ -263,13 +263,13 @@ for e = 1:nrExam
                 end
                 
                 FUNC_IN___vol = FUNC_IN__serie(F).getVolume( par.regextag_func_volume );
-                assert(~isempty(FUNC_IN___vol), 'Found 0/1 @volume for [ %s ] in : \n %s', par.regextag_func_volume, FUNC_IN__serie.path )
+                assert(~isempty(FUNC_IN___vol), 'Found 0/1 @volume for [ %s ] in : \n %s', par.regextag_func_volume, FUNC_IN__serie(F).path )
                 
                 % Json ------------------------------------------------
                 
                 FUNC_IN__json = FUNC_IN__serie(F).getJson( par.regextag_func_json );
-                assert( ~isempty(FUNC_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_func_json, FUNC_IN__serie.path )
-                assert(    numel(FUNC_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(FUNC_IN__json), par.regextag_func_json, FUNC_IN__serie.path )
+                assert( ~isempty(FUNC_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_func_json, FUNC_IN__serie(F).path )
+                assert(    numel(FUNC_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(FUNC_IN__json), par.regextag_func_json, FUNC_IN__serie(F).path )
                 
                 if size(FUNC_IN___vol.path,1) == 1 % single echo **********************
                     
@@ -380,8 +380,8 @@ for e = 1:nrExam
                 % Json ----------------------------------------------------
                 
                 DWI_IN__json = DWI_IN__serie(D).getJson( par.regextag_dwi_json );
-                assert( ~isempty(DWI_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                      par.regextag_dwi_json, DWI_IN__serie.path )
-                assert(    numel(DWI_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(DWI_IN__json), par.regextag_dwi_json, DWI_IN__serie.path )
+                assert( ~isempty(DWI_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                      par.regextag_dwi_json, DWI_IN__serie(D).path )
+                assert(    numel(DWI_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(DWI_IN__json), par.regextag_dwi_json, DWI_IN__serie(D).path )
                 
                 dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
                 
