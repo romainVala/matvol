@@ -159,8 +159,8 @@ for ex = 1 : numel(examArray)
             
             type_M = ~cellfun(@isempty,regexp(type,'M'));
             type_P = ~cellfun(@isempty,regexp(type,'P'));
-            examArray(ex).addSerie(upper_dir_name(type_M), 'func_mag'  )
-            examArray(ex).addSerie(upper_dir_name(type_P), 'func_phase')
+            if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'func_mag'  ), end
+            if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'func_phase'), end
             
         elseif strcmp(SequenceCategory{idx,2},'anat')
             
@@ -185,8 +185,8 @@ for ex = 1 : numel(examArray)
             
             type_M = ~cellfun(@isempty,regexp(type,'M'));
             type_P = ~cellfun(@isempty,regexp(type,'P'));
-            examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  )
-            examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase')
+            if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  ), end
+            if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase'), end
             
         else
             examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
