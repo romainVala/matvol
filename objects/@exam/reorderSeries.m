@@ -1,4 +1,4 @@
-function reorderSeries( examArray, kind )
+function examArray = reorderSeries( examArray, kind )
 % REORDERSERIES
 % See help serie.reorder
 

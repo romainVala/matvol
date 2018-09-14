@@ -4,6 +4,12 @@ function [ examArray ] = auto_import_obj( baseDir, par )
 %
 % Syntax : [ examArray ] = auto_import_obj( baseDir, par )
 %
+% IMPORTANT note : this funcion assumes the the series alphabetical order
+% is the the same as the sequence order For exemple, if you have
+% S25_gre_field_map and S26_gre_field_map_phase , they come from the SAME
+% sequence even if the magnitude and phase diff arrive in different
+% directories.
+%
 %
 % See also exam
 %
@@ -72,7 +78,8 @@ fetch.SequenceFileName  = 'CsaSeries.MrPhoenixProtocol.tSequenceFileName';
 fetch.SequenceName      = 'SequenceName';
 fetch.ImageType         = 'ImageType';
 fetch.SeriesDescription = 'SeriesDescription';
-
+fetch.SeriesNumber      = 'SeriesNumber';
+fetch.SequenceID        = 'CsaSeries.MrPhoenixProtocol.lSequenceID';
 
 % 1 : sequence name contains this
 % 2 : BIDS modality
@@ -87,7 +94,7 @@ SequenceCategory = {
     };
 
 
-%% Go
+%% Fetch exam, fill series, volumes ans jsons
 
 examArray = exam(baseDir, par.exam_regex); % add all subdir as @exam objects
 
@@ -134,8 +141,8 @@ for ex = 1 : numel(examArray)
         MAGorPHASE = ImageType{3};
         exam_SequenceData{ser,3} = MAGorPHASE;
         
-        SeriesDescription = get_field_one(content, fetch.SeriesDescription);
-        exam_SequenceData{ser,4} = SeriesDescription;
+        SequenceID  = get_field_one(content, fetch.SequenceID);
+        exam_SequenceData{ser,4} = str2double(SequenceID);
         
     end % ser
     
@@ -145,15 +152,19 @@ for ex = 1 : numel(examArray)
         fprintf('\n')
     end
     
+    %     [~,~,SeqIDX] = unique(cell2mat(exam_SequenceData(:,4)));
+    
     % Try to fit the sequence name to the category
     for idx = 1 : size(SequenceCategory, 1)
         
         where = find( ~cellfun( @isempty , regexp(exam_SequenceData(:,1),SequenceCategory{idx,1}) ) );
+        %         where_SeqIDX = SeqIDX(where);
+        %         where_SeqIDX = cellstr(num2str(where_SeqIDX,'%.3d'));
         if isempty(where)
             continue
         end
         
-        [~, upper_dir_name] = get_parent_path(subdir(where));          % extract dir name
+        [~, upper_dir_name] = get_parent_path(subdir(where)); % extract dir name
         
         % Special cases :
         if strcmp(SequenceCategory{idx,2},'func')
@@ -162,9 +173,10 @@ for ex = 1 : numel(examArray)
             
             type_M = ~cellfun(@isempty,regexp(type,'M'));
             type_P = ~cellfun(@isempty,regexp(type,'P'));
+            %             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), strcat('func_', where_SeqIDX(type_M), '_mag'  )), end
+            %             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), strcat('func_', where_SeqIDX(type_P), '_phase')), end
             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'func_mag'  ), end
             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'func_phase'), end
-            
         elseif strcmp(SequenceCategory{idx,2},'anat')
             
             subcategory = {'_INV1','_INV2','_UNI_Images','_T1_Images'}; % mp2rage
@@ -172,7 +184,8 @@ for ex = 1 : numel(examArray)
                 
                 where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
                 if any(where_sc) % yes
-                    examArray(ex).addSerie(upper_dir_name(where_sc), ['anat' subcategory{sc}]  )% add them
+                    %                     examArray(ex).addSerie(upper_dir_name(where_sc), strcat('anat_', where_SeqIDX(where_sc), subcategory{sc})  )% add them
+                    examArray(ex).addSerie(upper_dir_name(where_sc), strcat('anat', subcategory{sc})  )% add them
                     upper_dir_name(where_sc) = []; % remove them from the list
                 end
                 
@@ -188,9 +201,10 @@ for ex = 1 : numel(examArray)
             
             type_M = ~cellfun(@isempty,regexp(type,'M'));
             type_P = ~cellfun(@isempty,regexp(type,'P'));
+            %             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), strcat('fmap_', where_SeqIDX(type_M), '_mag'  )), end
+            %             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), strcat('fmap_', where_SeqIDX(type_P), '_phase')), end
             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  ), end
             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase'), end
-            
         else
             examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
         end
@@ -202,6 +216,12 @@ for ex = 1 : numel(examArray)
     end % categ
     
 end % ex
+
+
+%% Post operations
+
+% Reorder series to they are in alphabetical==time order, according to their name S01, S02, S03, ...
+examArray.reorderSeries;
 
 
 end % function
@@ -218,8 +238,12 @@ token = regexp(line, ': (.*),','tokens'); % extract the value from the line
 if isempty(token)
     result = [];
 else
-    res    = token{1}{1};
-    result = res(2:end-1); % remove " @ beguining and end
+    res = token{1}{1};
+    if strcmp(res(1),'"')
+        result = res(2:end-1); % remove " @ beguining and end
+    else
+        result = res;
+    end
 end
 
 end % function
