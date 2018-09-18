@@ -189,20 +189,27 @@ for e = 1:nrExam
             job_subj = [ job_subj sprintf('############\n\n') ];
             job_subj = [ job_subj sprintf('mkdir -p %s \n\n', anat_OUT__dir_path) ];
             
-            % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
-            % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
+            anat_run_number = interprete_run_number( {ANAT_IN__serie.name}' );
+            
             for A = 1 : numel(ANAT_IN__serie)
                 
+                % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
+                % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
                 if     strfind(ANAT_IN__serie(A).tag,'_INV1'  )
                     suffix_anat = 'inv-1';
+                    to_remove   = length('_INV1');
                 elseif strfind(ANAT_IN__serie(A).tag,'_INV2')
                     suffix_anat = 'inv-2';
+                    to_remove   = length('_INV2');
                 elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images')
                     suffix_anat = 'T1w';
+                    to_remove   = length('_UNI_Images');
                 elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images')
                     suffix_anat = 'T1map';
+                    to_remove   = length('_T1_Images');
                 else
                     suffix_anat = 'T1w';
+                    to_remove   = 0;
                 end
                 
                 ANAT_IN___vol  = ANAT_IN__serie(A).getVolume( par.regextag_anat_volume );
@@ -210,8 +217,10 @@ for e = 1:nrExam
                 
                 % Volume ------------------------------------------------------
                 
-                anat_IN___run      = fetch_run_number(ANAT_IN__serie(A));
-                anat_OUT__name     = sprintf('run-%d_%s', anat_IN___run, suffix_anat);
+                anat_OUT__name     = remove_serie_prefix(ANAT_IN___vol.serie.name);
+                anat_OUT__name     = anat_OUT__name(1:end-to_remove);
+                anat_OUT__name     = del_(anat_OUT__name);
+                anat_OUT__name     = sprintf('acq-%s_run-%d_%s', anat_OUT__name, anat_run_number(A), suffix_anat);
                 anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
                 anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
                 anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
@@ -258,7 +267,7 @@ for e = 1:nrExam
             job_subj = [ job_subj sprintf('mkdir -p %s \n\n', func_OUT__dir) ];
             
             % Compute the run number of each acquisition
-            run_number = interprete_run_number({FUNC_IN__serie.name}');
+            fun_run_number = interprete_run_number({FUNC_IN__serie.name}');
             
             for F = 1 : numel(FUNC_IN__serie)
                 
@@ -287,7 +296,7 @@ for e = 1:nrExam
                     func_IN___vol_ext  = file_ext (func_IN___vol_path);
                     func_OUT__vol_name = remove_serie_prefix(FUNC_IN___vol.serie.name);
                     func_OUT__vol_name = del_(func_OUT__vol_name);
-                    func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d_%s', sub_name, ses_name, func_OUT__vol_name, run_number(F), suffix_func) );
+                    func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d_%s', sub_name, ses_name, func_OUT__vol_name, fun_run_number(F), suffix_func) );
                     func_OUT__vol_path = [ func_OUT__vol_base func_IN___vol_ext ];
                     
                     job_subj = link_or_copy(job_subj, FUNC_IN___vol.path, func_OUT__vol_path, par.copytype);
@@ -318,7 +327,7 @@ for e = 1:nrExam
                     
                     func_OUT__vol_name = remove_serie_prefix(FUNC_IN___vol.serie.name);
                     func_OUT__vol_name = del_(func_OUT__vol_name);
-                    func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d', sub_name, ses_name, func_OUT__vol_name, run_number(F)) );
+                    func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d', sub_name, ses_name, func_OUT__vol_name, fun_run_number(F)) );
                     
                     % Fetch volume corrsponding to the echo
                     for echo = 1 : length(orderTE)
@@ -369,7 +378,7 @@ for e = 1:nrExam
             job_subj = [ job_subj sprintf('mkdir -p %s \n\n', dwi_OUT__dir) ];
             
             % Compute the run number of each acquisition
-            run_number = interprete_run_number({DWI_IN__serie.name}');
+            dwi_run_number = interprete_run_number({DWI_IN__serie.name}');
             
             for D = 1 : numel(DWI_IN__serie)
                 
@@ -382,7 +391,7 @@ for e = 1:nrExam
                 dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
                 dwi_OUT__vol_name = remove_serie_prefix(DWI_IN___vol.serie.name);
                 dwi_OUT__vol_name = del_(dwi_OUT__vol_name);
-                dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, run_number(D)) );
+                dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D)) );
                 dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
                 
                 job_subj = link_or_copy(job_subj, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
@@ -439,6 +448,8 @@ for e = 1:nrExam
             job_subj = [ job_subj sprintf('############\n\n') ];
             job_subj = [ job_subj sprintf('mkdir -p %s \n\n', fmap_OUT__dir_path) ];
             
+            fmap_run_number = interprete_run_number( {FMAP_IN__serie.name}' );
+            
             for FM = 1 : numel(FMAP_IN__serie)
                 
                 FMAP_IN___vol  = FMAP_IN__serie(FM).getVolume( par.regextag_fmap_volume );
@@ -455,8 +466,9 @@ for e = 1:nrExam
                         
                         % Volume ------------------------------------------
                         
-                        fmap_IN___run      = fetch_run_number(FMAP_IN__serie(FM));
-                        fmap_OUT__name     = sprintf('run-%d_%s%d', fmap_IN___run, suffix_fmap, echo);
+                        fmap_OUT__name     = remove_serie_prefix(FMAP_IN___vol.serie.name);
+                        fmap_OUT__name     = del_(fmap_OUT__name);
+                        fmap_OUT__name     = sprintf('acq-%s_run-%d_%s%d', fmap_OUT__name, fmap_run_number(FM), suffix_fmap, echo);
                         fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
                         fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path(echo,:)) );
                         fmap_OUT__vol_path = [ fmap_OUT__base fmap_IN___vol_ext ];
@@ -489,8 +501,10 @@ for e = 1:nrExam
                     
                     % Volume ----------------------------------------------
                     
-                    fmap_IN___run      = fetch_run_number(FMAP_IN__serie(FM));
-                    fmap_OUT__name     = sprintf('run-%d_%s', fmap_IN___run, suffix_fmap);
+                    fmap_OUT__name     = remove_serie_prefix(FMAP_IN___vol.serie.name);
+                    fmap_OUT__name     = fmap_OUT__name(1:end-length('_phase'));
+                    fmap_OUT__name     = del_(fmap_OUT__name);
+                    fmap_OUT__name     = sprintf('acq-%s_run-%d_%s', fmap_OUT__name, fmap_run_number(FM), suffix_fmap);
                     fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
                     fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path) );
                     fmap_OUT__vol_path = [ fmap_OUT__base fmap_IN___vol_ext ];
@@ -545,8 +559,14 @@ job = [ {job_header} ; job ];
 %% Run the jobs
 
 % Run CPU, run !
-par.verbose = 0; % too much display in do_cmd_sge
-job = do_cmd_sge(job, par);
+parSGE = par;
+parSGE.verbose = 0; % too much display in do_cmd_sge
+job = do_cmd_sge(job, parSGE);
+
+
+if par.verbose > 1
+    fprintf('[%s]: done %d jobs \n', mfilename, length(job) );
+end
 
 
 end % function
@@ -571,24 +591,24 @@ name = regexprep(str,'^S\d+_','');
 
 end % function
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function name = remove_volume_prefix(str)
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% function name = remove_volume_prefix(str)
+%
+% name = regexprep(str,'^(f|s)\d+_S\d+_','');
+%
+% end % function
 
-name = regexprep(str,'^(f|s)\d+_S\d+_','');
-
-end % function
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function run_number = fetch_run_number(obj)
-
-run_number = regexp(obj.tag,'_\d+$','match');
-if ~isempty(run_number)
-    run_number = str2double(run_number{1}(2:end));
-else
-    error('Unknown run number for tag=%s : %s', obj.tag, obj.path)
-end
-
-end % function
+% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% function run_number = fetch_run_number(obj)
+%
+% run_number = regexp(obj.tag,'_\d+$','match');
+% if ~isempty(run_number)
+%     run_number = str2double(run_number{1}(2:end));
+% else
+%     error('Unknown run number for tag=%s : %s', obj.tag, obj.path)
+% end
+%
+% end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function out = del_(in)
