@@ -275,6 +275,8 @@ for e = 1:nrExam
                     suffix_func = 'bold';
                 elseif strfind(FUNC_IN__serie(F).tag,'_phase')
                     suffix_func = 'boldphase';
+                elseif strfind(FUNC_IN__serie(F).tag,'_sbref')
+                    suffix_func = 'sbref';
                 else
                     suffix_func = 'bold';
                 end
@@ -547,6 +549,7 @@ for e = 1:nrExam
     if par.verbose > 1
         fprintf('\n')
     end
+    
     
 end
 

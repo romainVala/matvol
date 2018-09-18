@@ -106,7 +106,7 @@ for ex = 1 : numel(examArray)
         continue
     end
     
-    exam_SequenceData = cell(numel(subdir),4); % container, pre-allocation
+    exam_SequenceData = cell(numel(subdir),5); % container, pre-allocation
     
     if par.verbose > 0
         fprintf( '[%s] : Working on %d/%d : %s \n', mfilename, ex, numel(examArray) , examArray(ex).path )
@@ -131,7 +131,7 @@ for ex = 1 : numel(examArray)
         if isempty(SequenceFileName)
             continue
         end
-        split = regexp(SequenceFileName,'\\\\','split'); % exemple : "%SiemensSeq%\\ep2d_bold"
+        split = regexp(SequenceFileName,'\\\\','split'); % example : "%SiemensSeq%\\ep2d_bold"
         exam_SequenceData{ser,1} = split{end};
         
         SequenceName = get_field_one(content, fetch.SequenceName);
@@ -143,6 +143,9 @@ for ex = 1 : numel(examArray)
         
         SequenceID  = get_field_one(content, fetch.SequenceID);
         exam_SequenceData{ser,4} = str2double(SequenceID);
+        
+        SeriesDescription = get_field_one(content, fetch.SeriesDescription);
+        exam_SequenceData{ser,5} = SeriesDescription;
         
     end % ser
     
@@ -166,17 +169,30 @@ for ex = 1 : numel(examArray)
         
         [~, upper_dir_name] = get_parent_path(subdir(where)); % extract dir name
         
-        % Special cases :
+        %%%%%%%%%%%%%%%%%
+        % Special cases %
+        %%%%%%%%%%%%%%%%%
+        
+        % func ------------------------------------------------------------
         if strcmp(SequenceCategory{idx,2},'func')
             
             type = exam_SequenceData(where,3); % mag or phase
+            name = exam_SequenceData(where,5); % serie name
             
-            type_M = ~cellfun(@isempty,regexp(type,'M'));
-            type_P = ~cellfun(@isempty,regexp(type,'P'));
+            type_SBRef = ~cellfun(@isempty,regexp(name,'SBRef$'));
+            
+            type_M = strcmp(type,'M');
+            type_P = strcmp(type,'P');
+            
+            type_M = logical( type_M - type_SBRef );
+            
             %             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), strcat('func_', where_SeqIDX(type_M), '_mag'  )), end
             %             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), strcat('func_', where_SeqIDX(type_P), '_phase')), end
-            if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'func_mag'  ), end
-            if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'func_phase'), end
+            if any(type_SBRef), examArray(ex).addSerie(upper_dir_name(type_SBRef), 'func_sbref'), end
+            if any(type_M)    , examArray(ex).addSerie(upper_dir_name(type_M    ), 'func_mag'  ), end
+            if any(type_P)    , examArray(ex).addSerie(upper_dir_name(type_P    ), 'func_phase'), end
+            
+            % anat --------------------------------------------------------
         elseif strcmp(SequenceCategory{idx,2},'anat')
             
             subcategory = {'_INV1','_INV2','_UNI_Images','_T1_Images'}; % mp2rage
@@ -195,16 +211,18 @@ for ex = 1 : numel(examArray)
                 examArray(ex).addSerie(upper_dir_name,'anat')
             end
             
+            % fmap --------------------------------------------------------
         elseif strcmp(SequenceCategory{idx,2},'fmap')
             
             type = exam_SequenceData(where,3); % mag or phase
             
-            type_M = ~cellfun(@isempty,regexp(type,'M'));
-            type_P = ~cellfun(@isempty,regexp(type,'P'));
+            type_M = strcmp(type,'M');
+            type_P = strcmp(type,'P');
             %             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), strcat('fmap_', where_SeqIDX(type_M), '_mag'  )), end
             %             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), strcat('fmap_', where_SeqIDX(type_P), '_phase')), end
             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  ), end
             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase'), end
+            
         else
             examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
         end
