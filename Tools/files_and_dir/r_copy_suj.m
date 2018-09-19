@@ -6,13 +6,17 @@ if ~exist('par','var'),par ='';end
 
 defpar.serreg = '^S';
 defpar.filereg = '.*';
-
+defpar.subdir = 1;
 
 par = complet_struct(par,defpar);
 
 for nbs=1:length(suj)
     
     ser = get_subdir_regex(suj(nbs),par.serreg);
+    if isempty(ser)
+        continue
+    end
+    
     files = get_subdir_regex_files(ser,par.filereg,struct('verbose',0));
     
     [p sujname ] = get_parent_path(suj(nbs));
@@ -23,12 +27,14 @@ for nbs=1:length(suj)
     
     r_movefile(files,serout,'link');
     
-    for kk=1:length(ser)
-        subdir = get_subdir_regex(ser(kk),'.*');
-        if ~isempty(subdir)
-            pp.serreg='.*';
-            r_copy_suj(ser(kk),sujout{nbs},pp);
-            
+    if par.subdir
+        for kk=1:length(ser)
+            subdir = get_subdir_regex(ser(kk),'.*');
+            if ~isempty(subdir)
+                pp.serreg='.*';
+                r_copy_suj(ser(kk),sujout{nbs},pp);
+                
+            end
         end
     end
 end
