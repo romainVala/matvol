@@ -11,6 +11,7 @@ def_par.software_version = '';
 def_par.software_path = '';
 def_par.job_append = 1;
 def_par.matlab_opt = '-singleCompThread -nodesktop -nojvm -nosoftwareopengl';
+def_par.get_matlab_path = 1;
 
 def_par.jobdir=pwd; 
 %def_par.sge_queu = 'matlab_nodes';
@@ -75,13 +76,15 @@ for k=1:length(job)
     job_fonc{k} = fullfile(job_dir,['mfonc_' jname]);
     
     fpnfonc = fopen([job_fonc{k} '.m'],'w');
-    llp = path;
-    if nargout>=1
-        fprintf(fpnfonc,' path(''%s'');\nload %s;\n\n',llp,job_variable{k});
-    else
-        fprintf(fpnfonc,' path(''%s'');',llp);
+    if par.get_matlab_path
+        llp = path;
+        fprintf(fpnfonc,' path(''%s'');\n',llp);
     end
-%    fprintf(fpnfonc,'\n %s \n quit force \n',llp,job{k});
+
+    if nargout>=1
+        fprintf(fpnfonc,'\nload %s;\n\n',llp,job_variable{k});
+    end
+    
     jjj=job{k};
     
 fprintf(fpnfonc,'\n\ntry\n\n ');
