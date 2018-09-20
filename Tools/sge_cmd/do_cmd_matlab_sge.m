@@ -6,9 +6,6 @@ if ~exist('jobappend','var'), jobappend ='';end
 if ~exist('qsubappend','var'), qsubappend ='';end
 
 def_par.jobname='jobname';
-def_par.software = '';%fsl freesurfer
-def_par.software_version = '';
-def_par.software_path = '';
 def_par.job_append = 1;
 def_par.matlab_opt = '-singleCompThread -nodesktop -nojvm -nosoftwareopengl';
 def_par.get_matlab_path = 1;
