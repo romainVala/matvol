@@ -9,6 +9,7 @@ defpar.roiregex = '';
 defpar.fadir='';
 defpar.roidir='';
 defpar.seuil = 0;
+defpar.skip_std=0;
 
 par = complet_struct(par,defpar);
 
@@ -76,8 +77,9 @@ for kfa=1:length(faregex)
         fr_name = [ 'vol_' nettoie_dir([change_file_extension(roiname{kfp},'') ])];
         cout = setfield(cout,fr_name,vol(:,2)')
         cout = setfield(cout,fi_name,y');
-        cout = setfield(cout,[fi_name 'std'],ystd./y');
-        
+        if ~par.skip_std
+            cout = setfield(cout,[fi_name 'std'],ystd./y');
+        end
     end
 end
 
