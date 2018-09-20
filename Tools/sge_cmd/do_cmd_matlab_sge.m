@@ -79,7 +79,7 @@ for k=1:length(job)
     end
 
     if nargout>=1
-        fprintf(fpnfonc,'\nload %s;\n\n',llp,job_variable{k});
+        fprintf(fpnfonc,'\nload %s;\n\n',job_variable{k});
     end
     
     jjj=job{k};
