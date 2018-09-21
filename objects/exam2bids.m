@@ -50,7 +50,8 @@ defpar.regextag_fmap_volume  = '^s';
 defpar.regextag_fmap_json    = '.*';
 
 % Other options :
-defpar.copytype = 'link'; % can be 'link' or 'copy'
+defpar.copytype    = 'link'; % can be 'link' or 'copy'
+defpar.sge_verbose = 0;      % too much display in do_cmd_sge
 
 %--------------------------------------------------------------------------
 
@@ -239,7 +240,7 @@ for e = 1:nrExam
                 
                 % Verbose
                 if par.verbose > 1
-                    fprintf('[%s]: Preparing ANAT : %s \n', mfilename, ANAT_IN___vol.path );
+                    fprintf('[%s]: Preparing ANAT - %s : %s \n', mfilename, suffix_anat, ANAT_IN___vol.path );
                 end
                 
             end % A
@@ -563,12 +564,12 @@ job = [ {job_header} ; job ];
 
 % Run CPU, run !
 parSGE = par;
-parSGE.verbose = 0; % too much display in do_cmd_sge
+parSGE.verbose = par.sge_verbose; % too much display in do_cmd_sge
 job = do_cmd_sge(job, parSGE);
 
 
-if par.verbose > 1
-    fprintf('[%s]: done %d jobs \n', mfilename, length(job) );
+if par.verbose > 0
+    fprintf('[%s]: done %d jobs (+1 header) \n', mfilename, length(job)-1 );
 end
 
 
