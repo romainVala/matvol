@@ -112,6 +112,8 @@ for ex = 1 : numel(examArray)
         fprintf( '[%s] : Working on %d/%d : %s \n', mfilename, ex, numel(examArray) , examArray(ex).path )
     end
     
+    %======================================================================
+    
     % For all subdir found, try to recognize if there is a json,
     % and then try to extract the sequence name i nhe json
     for ser = 1 : numel(subdir)
@@ -154,6 +156,8 @@ for ex = 1 : numel(examArray)
         disp(exam_SequenceData)
         fprintf('\n')
     end
+    
+    %======================================================================
     
     %     [~,~,SeqIDX] = unique(cell2mat(exam_SequenceData(:,4)));
     

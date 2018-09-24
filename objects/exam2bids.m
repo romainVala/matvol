@@ -1,4 +1,4 @@
-function [ job ] = exam2bids( examArray , bidsDir , par )
+function [ job, log ] = exam2bids( examArray , bidsDir , par )
 %EXAM2BIDS transform an array of @exam objects into BIDS architecture
 %
 % Syntax : [ job ] = exam2bids( examArray , bidsDir , par )
@@ -75,7 +75,8 @@ if par.verbose > 0
 end
 
 nrExam = numel(examArray);
-job = cell(nrExam,1); % pre-allocation, this is the job containter
+job = cell(nrExam,1); % pre-allocation, this is the job containter, 1 single char for each exam
+log = cell(nrExam,1); % will contain the error log
 
 [success,message] = mkdir(bidsDir);
 if ~success
@@ -155,6 +156,7 @@ for e = 1:nrExam
     end
     job_subj = sprintf('#################### [%s] JOB %d/%d for %s #################### \n\n', mfilename, e, nrExam, EXAM.path); % initialize
     %#ok<*AGROW>
+    log_subj = job_subj;
     
     
     %% ####################################################################
@@ -176,7 +178,9 @@ for e = 1:nrExam
     %% ####################################################################
     % anat
     
-    ANAT_IN__serie = EXAM.getSerie( par.regextag_anat_serie, 'tag', 0 );
+    ANAT_IN__serie  = EXAM.getSerie( par.regextag_anat_serie, 'tag', 0 );
+    subjob_anat     = cell(numel(ANAT_IN__serie),1);
+    error_flag_anat = 0;
     
     if ~isempty(ANAT_IN__serie)
         
@@ -185,14 +189,12 @@ for e = 1:nrExam
         else
             
             anat_OUT__dir_path = fullfile( ses_path, 'anat' );
-            job_subj = [ job_subj sprintf('############\n'  ) ];
-            job_subj = [ job_subj sprintf('### anat ###\n'  ) ];
-            job_subj = [ job_subj sprintf('############\n\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n\n', anat_OUT__dir_path) ];
             
             anat_run_number = interprete_run_number( {ANAT_IN__serie.name}' );
             
             for A = 1 : numel(ANAT_IN__serie)
+                
+                subjob_anat{A} = '';
                 
                 % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
                 % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
@@ -213,34 +215,55 @@ for e = 1:nrExam
                     to_remove   = 0;
                 end
                 
-                ANAT_IN___vol  = ANAT_IN__serie(A).getVolume( par.regextag_anat_volume );
-                assert( ~isempty(ANAT_IN___vol) , 'Found  0/1 @volume for [ %s ] in : \n %s', par.regextag_anat_volume, ANAT_IN__serie(A).path )
+                % Volume --------------------------------------------------
                 
-                % Volume ------------------------------------------------------
-                
-                anat_OUT__name     = remove_serie_prefix(ANAT_IN___vol.serie.name);
-                anat_OUT__name     = anat_OUT__name(1:end-to_remove);
-                anat_OUT__name     = del_(anat_OUT__name);
-                anat_OUT__name     = sprintf('acq-%s_run-%d_%s', anat_OUT__name, anat_run_number(A), suffix_anat);
-                anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
-                anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
-                anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
-                
-                job_subj = link_or_copy(job_subj, ANAT_IN___vol.path, anat_OUT__vol_path, par.copytype);
-                
-                % Json --------------------------------------------------------
-                
-                ANAT_IN__json        = ANAT_IN__serie(A).getJson( par.regextag_anat_json );
-                assert( ~isempty(ANAT_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_anat_json, ANAT_IN__serie(A).path )
-                assert(    numel(ANAT_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(ANAT_IN__json), par.regextag_anat_json, ANAT_IN__serie(A).path )
-                
-                anat_OUT__json_path = [anat_OUT__base '.json'];
-                
-                job_subj = link_or_copy(job_subj, ANAT_IN__json.path, anat_OUT__json_path, par.copytype);
+                ANAT_IN___vol  = ANAT_IN__serie(A).getVolume( par.regextag_anat_volume, 'tag', 0 );
                 
                 % Verbose
                 if par.verbose > 1
                     fprintf('[%s]: Preparing ANAT - %s : %s \n', mfilename, suffix_anat, ANAT_IN___vol.path );
+                end
+                
+                if numel(ANAT_IN___vol)~=1
+                    errorSTR           = warning('Found  %d/1 @volume for [ %s ] in : %s', numel(ANAT_IN___vol), par.regextag_anat_volume, ANAT_IN__serie(A).path );
+                    log_subj           = [ log_subj errorSTR sprintf('\n') ];
+                    error_flag_anat    = 1;
+                else
+                    anat_OUT__name     = remove_serie_prefix(ANAT_IN___vol.serie.name);
+                    anat_OUT__name     = anat_OUT__name(1:end-to_remove);
+                    anat_OUT__name     = del_(anat_OUT__name);
+                    anat_OUT__name     = sprintf('acq-%s_run-%d_%s', anat_OUT__name, anat_run_number(A), suffix_anat);
+                    anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
+                    anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
+                    anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
+                    subjob_anat{A}     = link_or_copy(subjob_anat{A}, ANAT_IN___vol.path, anat_OUT__vol_path, par.copytype);
+                end
+                
+                % Json ----------------------------------------------------
+                
+                ANAT_IN__json           = ANAT_IN__serie(A).getJson( par.regextag_anat_json, 'tag', 0 );
+                if numel(ANAT_IN__json)~=1
+                    errorSTR            = warning( 'Found %d/1 @json for [ %s ] in : %s', numel(ANAT_IN__json), par.regextag_anat_json, ANAT_IN__serie(A).path );
+                    log_subj            = [ log_subj errorSTR sprintf('\n') ];
+                    error_flag_anat     = 1;
+                else
+                    anat_OUT__json_path = [anat_OUT__base '.json'];
+                    subjob_anat{A}      = link_or_copy(subjob_anat{A}, ANAT_IN__json.path, anat_OUT__json_path, par.copytype);
+                end
+                
+                % Error managment
+                if ~error_flag_anat
+                    nrGood          = sum(~cellfun(@isempty,subjob_anat));
+                    if nrGood == 1
+                        job_subj    = [ job_subj sprintf('############\n'  ) ];
+                        job_subj    = [ job_subj sprintf('### anat ###\n'  ) ];
+                        job_subj    = [ job_subj sprintf('############\n\n') ];
+                        job_subj    = [ job_subj sprintf('mkdir -p %s \n\n', anat_OUT__dir_path) ];
+                    end
+                    job_subj        = [ job_subj subjob_anat{A} ];
+                else
+                    subjob_anat{A}  = ''; % empty the current subjob, or nrGood wont be accurate
+                    error_flag_anat = 0; % reset
                 end
                 
             end % A
@@ -253,7 +276,9 @@ for e = 1:nrExam
     %% ####################################################################
     % func
     
-    FUNC_IN__serie = EXAM.getSerie( par.regextag_func_serie, 'tag', 0 );
+    FUNC_IN__serie  = EXAM.getSerie( par.regextag_func_serie, 'tag', 0 );
+    subjob_func     = cell(numel(FUNC_IN__serie),1);
+    error_flag_func = 0;
     
     if ~isempty(FUNC_IN__serie)
         
@@ -262,15 +287,13 @@ for e = 1:nrExam
         else
             
             func_OUT__dir = fullfile( ses_path, 'func' );
-            job_subj = [ job_subj sprintf('############\n'  ) ];
-            job_subj = [ job_subj sprintf('### func ###\n'  ) ];
-            job_subj = [ job_subj sprintf('############\n\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n\n', func_OUT__dir) ];
             
             % Compute the run number of each acquisition
             fun_run_number = interprete_run_number({FUNC_IN__serie.name}');
             
             for F = 1 : numel(FUNC_IN__serie)
+                
+                subjob_func{F} = '';
                 
                 if     strfind(FUNC_IN__serie(F).tag,'_mag'  )
                     suffix_func = 'bold';
@@ -282,79 +305,98 @@ for e = 1:nrExam
                     suffix_func = 'bold';
                 end
                 
-                FUNC_IN___vol = FUNC_IN__serie(F).getVolume( par.regextag_func_volume );
-                assert(~isempty(FUNC_IN___vol), 'Found 0/1 @volume for [ %s ] in : \n %s', par.regextag_func_volume, FUNC_IN__serie(F).path )
-                
                 % Json ------------------------------------------------
                 
-                FUNC_IN__json = FUNC_IN__serie(F).getJson( par.regextag_func_json );
-                assert( ~isempty(FUNC_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_func_json, FUNC_IN__serie(F).path )
-                assert(    numel(FUNC_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(FUNC_IN__json), par.regextag_func_json, FUNC_IN__serie(F).path )
+                FUNC_IN__json = FUNC_IN__serie(F).getJson( par.regextag_func_json, 'tag', 0 );
+                if numel(FUNC_IN__json)~=1
+                    errorSTR        = warning('Found %d/1 @json for [ %s ] in : %s', numel(FUNC_IN__json), par.regextag_func_json, FUNC_IN__serie(F).path );
+                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                    error_flag_func = 1;
+                end
                 
-                if size(FUNC_IN___vol.path,1) == 1 % single echo **********************
+                FUNC_IN___vol = FUNC_IN__serie(F).getVolume( par.regextag_func_volume, 'tag', 0 );
+                if numel(FUNC_IN___vol)~=1
+                    errorSTR        = warning('Found %d/1 @volume for [ %s ] in : %s', numel(FUNC_IN___vol), par.regextag_func_volume, FUNC_IN__serie(F).path );
+                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                    error_flag_func = 1;
+                end
+                
+                if ~error_flag_func
                     
-                    % Volume ----------------------------------------------
-                    
-                    func_IN___vol_path = deblank  (FUNC_IN___vol.path);
-                    func_IN___vol_ext  = file_ext (func_IN___vol_path);
-                    func_OUT__vol_name = remove_serie_prefix(FUNC_IN___vol.serie.name);
-                    func_OUT__vol_name = del_(func_OUT__vol_name);
-                    func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d_%s', sub_name, ses_name, func_OUT__vol_name, fun_run_number(F), suffix_func) );
-                    func_OUT__vol_path = [ func_OUT__vol_base func_IN___vol_ext ];
-                    
-                    job_subj = link_or_copy(job_subj, FUNC_IN___vol.path, func_OUT__vol_path, par.copytype);
-                    
-                    % Json ------------------------------------------------
-                    
-                    func_OUT__json_path = [ func_OUT__vol_base '.json' ];
-                    
-                    % Get data from the Json that we will append on the to, to match BIDS architecture
-                    json_func_struct = getJSON_params_EPI( FUNC_IN__json.path, func_OUT__vol_name );
-                    
-                    json_func_str = struct2jsonSTR( json_func_struct );
-                    job_subj      = jobcmd_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path );
-                    
-                    % Verbose
-                    if par.verbose > 1
-                        fprintf('[%s]: Preparing FUNC - SingleEcho : %s \n', mfilename, FUNC_IN___vol.path );
-                    end
-                    
-                else % multi echo *****************************************
-                    
-                    % Json ------------------------------------------------
-                    
-                    allTE = cell2mat(FUNC_IN__json.getLine('EchoTime',0));
-                    [sortedTE,orderTE] = sort(allTE); %#ok<ASGLU>
-                    
-                    % Volume ----------------------------------------------
-                    
-                    func_OUT__vol_name = remove_serie_prefix(FUNC_IN___vol.serie.name);
-                    func_OUT__vol_name = del_(func_OUT__vol_name);
-                    func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d', sub_name, ses_name, func_OUT__vol_name, fun_run_number(F)) );
-                    
-                    % Fetch volume corrsponding to the echo
-                    for echo = 1 : length(orderTE)
-                        
-                        func_IN___vol_ext   = file_ext( deblank( FUNC_IN___vol.path(orderTE(echo),:) ) );
-                        func_OUT__vol_path  = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) func_IN___vol_ext  ];
-                        func_OUT__json_path = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) '.json'];
-                        
-                        job_subj = link_or_copy(job_subj, deblank( FUNC_IN___vol.path(orderTE(echo),:) ), func_OUT__vol_path, par.copytype);
-                        
-                        % Get data from the Json that we will append on the to, to match BIDS architecture
-                        json_func_struct = getJSON_params_EPI( FUNC_IN__json.path(orderTE(echo),:), func_OUT__vol_name );
-                        
-                        json_func_str = struct2jsonSTR( json_func_struct );
-                        job_subj      = jobcmd_write_json_bids( job_subj, json_func_str, func_OUT__json_path, FUNC_IN__json.path(orderTE(echo),:) );
+                    if size(FUNC_IN___vol.path,1) == 1 % single echo **********************
                         
                         % Verbose
                         if par.verbose > 1
-                            fprintf('[%s]: Preparing FUNC - MultiEcho - echo %d : %s \n', mfilename, echo, FUNC_IN___vol.path(orderTE(echo),:) );
+                            fprintf('[%s]: Preparing FUNC - SingleEcho : %s \n', mfilename, FUNC_IN___vol.path );
                         end
                         
-                    end % echo
+                        % Volume ----------------------------------------------
+                        
+                        func_IN___vol_path = deblank  (FUNC_IN___vol.path);
+                        func_IN___vol_ext  = file_ext (func_IN___vol_path);
+                        func_OUT__vol_name = remove_serie_prefix(FUNC_IN___vol.serie.name);
+                        func_OUT__vol_name = del_(func_OUT__vol_name);
+                        func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d_%s', sub_name, ses_name, func_OUT__vol_name, fun_run_number(F), suffix_func) );
+                        func_OUT__vol_path = [ func_OUT__vol_base func_IN___vol_ext ];
+                        subjob_func{F}     = link_or_copy(subjob_func{F}, FUNC_IN___vol.path, func_OUT__vol_path, par.copytype);
+                        
+                        % Json ------------------------------------------------
+                        
+                        func_OUT__json_path = [ func_OUT__vol_base '.json' ];
+                        json_func_struct    = getJSON_params_EPI( FUNC_IN__json.path, func_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                        json_func_str       = struct2jsonSTR( json_func_struct );
+                        subjob_func{F}      = jobcmd_write_json_bids( subjob_func{F}, json_func_str, func_OUT__json_path, FUNC_IN__json.path );
+                        
+                    else % multi echo *****************************************
+                        
+                        % Json ------------------------------------------------
+                        
+                        allTE              = cell2mat(FUNC_IN__json.getLine('EchoTime',0));
+                        [sortedTE,orderTE] = sort(allTE); %#ok<ASGLU>
+                        
+                        % Volume ----------------------------------------------
+                        
+                        func_OUT__vol_name = remove_serie_prefix(FUNC_IN___vol.serie.name);
+                        func_OUT__vol_name = del_(func_OUT__vol_name);
+                        func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d', sub_name, ses_name, func_OUT__vol_name, fun_run_number(F)) );
+                        
+                        % Fetch volume corrsponding to the echo
+                        for echo = 1 : length(orderTE)
+                            
+                            % Verbose
+                            if par.verbose > 1
+                                fprintf('[%s]: Preparing FUNC - MultiEcho - echo %d : %s \n', mfilename, echo, FUNC_IN___vol.path(orderTE(echo),:) );
+                            end
+                            
+                            func_IN___vol_ext   = file_ext( deblank( FUNC_IN___vol.path(orderTE(echo),:) ) );
+                            func_OUT__vol_path  = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) func_IN___vol_ext  ];
+                            func_OUT__json_path = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) '.json'];
+                            subjob_func{F}      = link_or_copy(subjob_func{F}, deblank( FUNC_IN___vol.path(orderTE(echo),:) ), func_OUT__vol_path, par.copytype);
+                            
+                            json_func_struct = getJSON_params_EPI( FUNC_IN__json.path(orderTE(echo),:), func_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                            json_func_str    = struct2jsonSTR( json_func_struct );
+                            subjob_func{F}   = jobcmd_write_json_bids( subjob_func{F}, json_func_str, func_OUT__json_path, FUNC_IN__json.path(orderTE(echo),:) );
+                            
+                        end % echo
+                        
+                    end % single-echo / multi-echo ?
                     
-                end % single-echo / multi-echo ?
+                end
+                
+                % Error managment
+                if ~error_flag_func
+                    nrGood          = sum(~cellfun(@isempty,subjob_func));
+                    if nrGood == 1
+                        job_subj = [ job_subj sprintf('############\n'  ) ];
+                        job_subj = [ job_subj sprintf('### func ###\n'  ) ];
+                        job_subj = [ job_subj sprintf('############\n\n') ];
+                        job_subj = [ job_subj sprintf('mkdir -p %s \n\n', func_OUT__dir) ];
+                    end
+                    job_subj        = [ job_subj subjob_func{F} ];
+                else
+                    subjob_func{F}  = ''; % empty the current subjob, or nrGood wont be accurate
+                    error_flag_func = 0; % reset
+                end
                 
             end % F
             
@@ -366,7 +408,9 @@ for e = 1:nrExam
     %% ####################################################################
     % dwi
     
-    DWI_IN__serie = EXAM.getSerie( par.regextag_dwi_serie, 'tag', 0 );
+    DWI_IN__serie  = EXAM.getSerie( par.regextag_dwi_serie, 'tag', 0 );
+    subjob_dwi     = cell(numel(DWI_IN__serie),1);
+    error_flag_dwi = 0;
     
     if ~isempty(DWI_IN__serie)
         
@@ -375,57 +419,93 @@ for e = 1:nrExam
         else
             
             dwi_OUT__dir = fullfile( ses_path, 'dwi' );
-            job_subj = [ job_subj sprintf('###########\n'  ) ];
-            job_subj = [ job_subj sprintf('### dwi ###\n'  ) ];
-            job_subj = [ job_subj sprintf('###########\n\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n\n', dwi_OUT__dir) ];
+            
             
             % Compute the run number of each acquisition
             dwi_run_number = interprete_run_number({DWI_IN__serie.name}');
             
             for D = 1 : numel(DWI_IN__serie)
                 
-                DWI_IN___vol  = DWI_IN__serie(D).getVolume( par.regextag_dwi_volume );
-                assert(~isempty(DWI_IN___vol), 'Found 0/1 @volume for [ %s ] in : \n %s', par.regextag_dwi_volume, DWI_IN__serie.path )
                 
                 % Volume --------------------------------------------------
                 
-                dwi_IN___vol_path = deblank  (DWI_IN___vol.path);
-                dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
-                dwi_OUT__vol_name = remove_serie_prefix(DWI_IN___vol.serie.name);
-                dwi_OUT__vol_name = del_(dwi_OUT__vol_name);
-                dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D)) );
-                dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
-                
-                job_subj = link_or_copy(job_subj, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
-                
-                % Json ----------------------------------------------------
-                
-                DWI_IN__json = DWI_IN__serie(D).getJson( par.regextag_dwi_json );
-                assert( ~isempty(DWI_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                      par.regextag_dwi_json, DWI_IN__serie(D).path )
-                assert(    numel(DWI_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(DWI_IN__json), par.regextag_dwi_json, DWI_IN__serie(D).path )
-                
-                dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
-                
-                % Get data from the Json that we will append on the to, to match BIDS architecture
-                json_dwi_struct = getJSON_params_EPI( DWI_IN__json.path, dwi_OUT__vol_name );
-                
-                json_dwi_str = struct2jsonSTR( json_dwi_struct );
-                job_subj     = jobcmd_write_json_bids( job_subj, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path );
-                
-                % bval & bvec ---------------------------------------------
-                dwi_IN___bval_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvals'); assert( exist(dwi_IN___bval_path,'file')==2, 'Found  0/1 file : \n %s', dwi_IN___bval_path)
-                dwi_IN___bvec_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvecs'); assert( exist(dwi_IN___bvec_path,'file')==2, 'Found  0/1 file : \n %s', dwi_IN___bvec_path)
-                dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
-                dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
-                
-                job_subj = link_or_copy(job_subj, dwi_IN___bval_path, dwi_OUT__bval_path, par.copytype);
-                job_subj = link_or_copy(job_subj, dwi_IN___bvec_path, dwi_OUT__bvec_path, par.copytype);
+                DWI_IN___vol  = DWI_IN__serie(D).getVolume( par.regextag_dwi_volume, 'tag', 0 );
                 
                 % Verbose
                 if par.verbose > 1
                     fprintf('[%s]: Preparing DWI : %s \n', mfilename, DWI_IN___vol.path );
                 end
+                
+                if numel(DWI_IN___vol)~=1
+                    errorSTR = warning('Found %d/1 @volume for [ %s ] in : %s', numel(DWI_IN___vol), par.regextag_dwi_volume, DWI_IN__serie(D).path );
+                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                    error_flag_dwi  = 1;
+                else
+                    dwi_IN___vol_path = deblank  (DWI_IN___vol.path);
+                    dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
+                    dwi_OUT__vol_name = remove_serie_prefix(DWI_IN___vol.serie.name);
+                    dwi_OUT__vol_name = del_(dwi_OUT__vol_name);
+                    dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D)) );
+                    dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
+                    subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
+                end
+                
+                % Json ----------------------------------------------------
+                
+                DWI_IN__json = DWI_IN__serie(D).getJson( par.regextag_dwi_json, 'tag', 0 );
+                if numel(DWI_IN__json)~=1
+                    errorSTR = warning( 'Found %d/1 @json for [ %s ] in : %s', numel(DWI_IN__json), par.regextag_dwi_json, DWI_IN__serie(D).path );
+                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                    error_flag_dwi  = 1;
+                else
+                    dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
+                    
+                    % Get data from the Json that we will append on the to, to match BIDS architecture
+                    json_dwi_struct = getJSON_params_EPI( DWI_IN__json.path, dwi_OUT__vol_name );
+                    
+                    json_dwi_str = struct2jsonSTR( json_dwi_struct );
+                    subjob_dwi{D} = jobcmd_write_json_bids( subjob_dwi{D}, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path );
+                    
+                    % bval & bvec -----------------------------------------
+                    
+                    dwi_IN___bval_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvals');
+                    if ~(exist(dwi_IN___bval_path,'file')==2)
+                        errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bval_path);
+                        log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                        error_flag_dwi  = 1;
+                    else
+                        dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
+                        subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bval_path, dwi_OUT__bval_path, par.copytype);
+                    end
+                    
+                    dwi_IN___bvec_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvecs');
+                    if ~(exist(dwi_IN___bvec_path,'file')==2)
+                        errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bvec_path);
+                        log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                        error_flag_dwi  = 1;
+                    else
+                        dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
+                        subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bvec_path, dwi_OUT__bvec_path, par.copytype);
+                    end
+                    
+                end
+                
+                % Error managment
+                if ~error_flag_dwi
+                    nrGood          = sum(~cellfun(@isempty,subjob_dwi));
+                    if nrGood == 1
+                        job_subj = [ job_subj sprintf('###########\n'  ) ];
+                        job_subj = [ job_subj sprintf('### dwi ###\n'  ) ];
+                        job_subj = [ job_subj sprintf('###########\n\n') ];
+                        job_subj = [ job_subj sprintf('mkdir -p %s \n\n', dwi_OUT__dir) ];
+                    end
+                    job_subj        = [ job_subj subjob_dwi{D} ];
+                else
+                    subjob_dwi{D}  = ''; % empty the current subjob, or nrGood wont be accurate
+                    error_flag_dwi = 0; % reset
+                end
+                
+                
                 
             end % D
             
@@ -437,7 +517,9 @@ for e = 1:nrExam
     %% ####################################################################
     % fmap
     
-    FMAP_IN__serie = EXAM.getSerie( par.regextag_fmap_serie, 'tag', 0 );
+    FMAP_IN__serie  = EXAM.getSerie( par.regextag_fmap_serie, 'tag', 0 );
+    subjob_fmap     = cell(numel(FMAP_IN__serie),1);
+    error_flag_fmap = 0;
     
     if ~isempty(FMAP_IN__serie)
         
@@ -446,95 +528,115 @@ for e = 1:nrExam
         else
             
             fmap_OUT__dir_path = fullfile( ses_path, 'fmap' );
-            job_subj = [ job_subj sprintf('############\n'  ) ];
-            job_subj = [ job_subj sprintf('### fmap ###\n'  ) ];
-            job_subj = [ job_subj sprintf('############\n\n') ];
-            job_subj = [ job_subj sprintf('mkdir -p %s \n\n', fmap_OUT__dir_path) ];
             
             fmap_run_number = interprete_run_number( {FMAP_IN__serie.name}' );
             
             for FM = 1 : numel(FMAP_IN__serie)
                 
-                FMAP_IN___vol  = FMAP_IN__serie(FM).getVolume( par.regextag_fmap_volume );
-                assert( ~isempty(FMAP_IN___vol) , 'Found  0/1 @volume for [ %s ] in : \n %s', par.regextag_fmap_volume, FMAP_IN__serie.path )
+                FMAP_IN___vol  = FMAP_IN__serie(FM).getVolume( par.regextag_fmap_volume, 'tag', 0 );
                 
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                % MAGNITUDE
-                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                if strfind(FMAP_IN__serie(FM).tag,'_mag'  )
+                % Volume --------------------------------------------------
+                
+                if numel(FMAP_IN___vol)~=1
+                    errorSTR        = warning('Found  0/1 @volume for [ %s ] in : %s', par.regextag_fmap_volume, FMAP_IN__serie(FM).path );
+                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                    error_flag_fmap = 1;
+                else
                     
-                    suffix_fmap = 'magnitude';
-                    
-                    for echo = 1 : size(FMAP_IN___vol.path,1)
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    % MAGNITUDE
+                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    if strfind(FMAP_IN__serie(FM).tag,'_mag'  )
+                        
+                        suffix_fmap = 'magnitude';
+                        
+                        for echo = 1 : size(FMAP_IN___vol.path,1)
+                            
+                            % Verbose
+                            if par.verbose > 1
+                                fprintf('[%s]: Preparing FMAP - Magnitude %d : %s \n', mfilename, echo, FMAP_IN___vol.path(echo,:) );
+                            end
+                            
+                            % Volume --------------------------------------
+                            
+                            fmap_OUT__name     = remove_serie_prefix(FMAP_IN___vol.serie.name);
+                            fmap_OUT__name     = del_(fmap_OUT__name);
+                            fmap_OUT__name     = sprintf('acq-%s_run-%d_%s%d', fmap_OUT__name, fmap_run_number(FM), suffix_fmap, echo);
+                            fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
+                            fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path(echo,:)) );
+                            fmap_OUT__vol_path = [ fmap_OUT__base fmap_IN___vol_ext ];
+                            subjob_fmap{FM}    = link_or_copy(subjob_fmap{FM}, FMAP_IN___vol.path(echo,:), fmap_OUT__vol_path, par.copytype);
+                            
+                            % Json ----------------------------------------
+                            
+                            FMAP_IN__json       = FMAP_IN__serie(FM).getJson( par.regextag_fmap_json, 'tag', 0 );
+                            if numel(FMAP_IN__json)~=1
+                                errorSTR = warning('Found %d/1 @json for [ %s ] in : %s', numel(FMAP_IN__json), par.regextag_fmap_json, FMAP_IN__serie(FM).path );
+                                log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                                error_flag_fmap = 1;
+                            else
+                                fmap_OUT__json_path = [fmap_OUT__base '.json'];
+                                subjob_fmap{FM}     = link_or_copy(subjob_fmap{FM}, FMAP_IN__json.path(echo,:), fmap_OUT__json_path, par.copytype);
+                            end
+                            
+                        end
+                        
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                        % PHASE
+                        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                    elseif strfind(FMAP_IN__serie(FM).tag,'_phase')
+                        
+                        % Verbose
+                        if par.verbose > 1
+                            fprintf('[%s]: Preparing FMAP - Phasediff : %s \n', mfilename, FMAP_IN___vol.path );
+                        end
+                        
+                        suffix_fmap = 'phasediff';
                         
                         % Volume ------------------------------------------
                         
                         fmap_OUT__name     = remove_serie_prefix(FMAP_IN___vol.serie.name);
+                        fmap_OUT__name     = fmap_OUT__name(1:end-length('_phase'));
                         fmap_OUT__name     = del_(fmap_OUT__name);
-                        fmap_OUT__name     = sprintf('acq-%s_run-%d_%s%d', fmap_OUT__name, fmap_run_number(FM), suffix_fmap, echo);
+                        fmap_OUT__name     = sprintf('acq-%s_run-%d_%s', fmap_OUT__name, fmap_run_number(FM), suffix_fmap);
                         fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
-                        fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path(echo,:)) );
+                        fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path) );
                         fmap_OUT__vol_path = [ fmap_OUT__base fmap_IN___vol_ext ];
-                        
-                        job_subj = link_or_copy(job_subj, FMAP_IN___vol.path(echo,:), fmap_OUT__vol_path, par.copytype);
+                        subjob_fmap{FM}    = link_or_copy(subjob_fmap{FM}, FMAP_IN___vol.path, fmap_OUT__vol_path, par.copytype);
                         
                         % Json --------------------------------------------
                         
-                        FMAP_IN__json  = FMAP_IN__serie(FM).getJson( par.regextag_fmap_json );
-                        assert( ~isempty(FMAP_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_fmap_json, FMAP_IN__serie.path )
-                        assert(    numel(FMAP_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(FMAP_IN__json), par.regextag_fmap_json, FMAP_IN__serie.path )
-                        
-                        fmap_OUT__json_path = [fmap_OUT__base '.json'];
-                        
-                        job_subj = link_or_copy(job_subj, FMAP_IN__json.path(echo,:), fmap_OUT__json_path, par.copytype);
-                        
-                        % Verbose
-                        if par.verbose > 1
-                            fprintf('[%s]: Preparing FMAP - Magnitude %d : %s \n', mfilename, echo, FMAP_IN___vol.path(echo,:) );
+                        FMAP_IN__json       = FMAP_IN__serie(FM).getJson( par.regextag_fmap_json, 'tag', 0 );
+                        if numel(FMAP_IN__json)~=1
+                            errorSTR = warning('Found %d/1 @json for [ %s ] in : %s', numel(FMAP_IN__json), par.regextag_fmap_json, FMAP_IN__serie(FM).path );
+                            log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                            error_flag_fmap = 1;
+                        else
+                            fmap_OUT__json_path = [fmap_OUT__base '.json'];
+                            json_fmap_struct    = getJSON_params_GRE_FIELD_MAP( FMAP_IN__json.path ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                            json_fmap_str       = struct2jsonSTR( json_fmap_struct );
+                            subjob_fmap{FM}     = jobcmd_write_json_bids( subjob_fmap{FM}, json_fmap_str, fmap_OUT__json_path, FMAP_IN__json.path );
                         end
                         
+                    else
+                        warning('not sure what is happening here with fmap : %s', FMAP_IN__serie(FM).path)
                     end
                     
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                    % PHASE
-                    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                elseif strfind(FMAP_IN__serie(FM).tag,'_phase')
-                    
-                    suffix_fmap = 'phasediff';
-                    
-                    % Volume ----------------------------------------------
-                    
-                    fmap_OUT__name     = remove_serie_prefix(FMAP_IN___vol.serie.name);
-                    fmap_OUT__name     = fmap_OUT__name(1:end-length('_phase'));
-                    fmap_OUT__name     = del_(fmap_OUT__name);
-                    fmap_OUT__name     = sprintf('acq-%s_run-%d_%s', fmap_OUT__name, fmap_run_number(FM), suffix_fmap);
-                    fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
-                    fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path) );
-                    fmap_OUT__vol_path = [ fmap_OUT__base fmap_IN___vol_ext ];
-                    
-                    job_subj = link_or_copy(job_subj, FMAP_IN___vol.path, fmap_OUT__vol_path, par.copytype);
-                    
-                    % Json ------------------------------------------------
-                    
-                    FMAP_IN__json  = FMAP_IN__serie(FM).getJson( par.regextag_fmap_json );
-                    assert( ~isempty(FMAP_IN__json)   , 'Found  0/1 @json for [ %s ] in : \n %s',                       par.regextag_fmap_json, FMAP_IN__serie.path )
-                    assert(    numel(FMAP_IN__json)==1, 'Found %d/1 @json for [ %s ] in : \n %s', numel(FMAP_IN__json), par.regextag_fmap_json, FMAP_IN__serie.path )
-                    
-                    fmap_OUT__json_path = [fmap_OUT__base '.json'];
-                    
-                    % Get data from the Json that we will append on the to, to match BIDS architecture
-                    json_fmap_struct = getJSON_params_GRE_FIELD_MAP( FMAP_IN__json.path );
-                    
-                    json_fmap_str = struct2jsonSTR( json_fmap_struct );
-                    job_subj      = jobcmd_write_json_bids( job_subj, json_fmap_str, fmap_OUT__json_path, FMAP_IN__json.path );
-                    
-                    % Verbose
-                    if par.verbose > 1
-                        fprintf('[%s]: Preparing FMAP - Phasediff : %s \n', mfilename, FMAP_IN___vol.path );
+                end
+                
+                % Error managment
+                if ~error_flag_fmap
+                    nrGood          = sum(~cellfun(@isempty,subjob_fmap));
+                    if nrGood == 1
+                        job_subj = [ job_subj sprintf('############\n'  ) ];
+                        job_subj = [ job_subj sprintf('### fmap ###\n'  ) ];
+                        job_subj = [ job_subj sprintf('############\n\n') ];
+                        job_subj = [ job_subj sprintf('mkdir -p %s \n\n', fmap_OUT__dir_path) ];
                     end
-                    
+                    job_subj     = [ job_subj subjob_fmap{FM} ];
                 else
-                    warning('not sure what is happening here with fmap : %s', FMAP_IN__serie(FM).path)
+                    subjob_fmap{FM} = ''; % empty the current subjob, or nrGood wont be accurate
+                    error_flag_fmap = 0; % reset
                 end
                 
             end % FM
@@ -546,6 +648,7 @@ for e = 1:nrExam
     
     % Save job_subj
     job{e} = job_subj;
+    log{e} = log_subj;
     
     if par.verbose > 1
         fprintf('\n')
