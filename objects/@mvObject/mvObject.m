@@ -1,5 +1,5 @@
 classdef mvObject < handle
-    % MVOBJECT is a 'virtual' class : all subclasses (exam/serie/volume) contain this virtual class methods and attributes
+    % MVOBJECT is a 'virtual' class : all subclasses (exam/serie/volume/...) contain this virtual class methods and attributes
     
     properties
         
