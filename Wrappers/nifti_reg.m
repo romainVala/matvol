@@ -26,6 +26,7 @@ defpar.do_affine = 1;
 defpar.do_NL = 1;
 defpar.mask = '';
 defpar.nl_args = '' ; % mouse '-ln 4 -lp 2 -pad 0 --lncc -5 '; % crane -be 0.05 -sx -10
+defpar.nl_aff_args ='';
 
 defpar.nb_thread = 1;
 
@@ -56,6 +57,7 @@ for k=1:length(fmov)
     
     if par.do_affine
         cmd = sprintf('%s reg_aladin -flo %s -ref %s ',cmd,fname_mov{k},fref{k});
+        cmd = sprintf('%s %s ',cmd,par.nl_aff_args);
         cmd = sprintf('%s -aff aff_%s.txt -res aff_%s.nii.gz -omp %d \n',cmd,transform,transform,par.nb_thread);
     end
     
