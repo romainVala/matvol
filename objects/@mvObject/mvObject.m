@@ -3,12 +3,14 @@ classdef mvObject < handle
     
     properties
         
-        name = ''     % name of the directory/file
-        path = ''     % path of the directory/file
+        name  = ''     % name of the directory/file
+        path  = ''     % path of the directory/file
         
-        tag  = ''     % tag of the subclass object (exam/serie/volume)
+        tag   = ''     % tag of the subclass object (exam/serie/volume)
         
-        cfg  = struct % configuration parameters
+        cfg   = struct % configuration parameters
+        
+        other = struct % user can use this structure however he wants
         
     end
     
