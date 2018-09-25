@@ -1,4 +1,4 @@
-function [ job, log ] = exam2bids( examArray , bidsDir , par )
+function [ job, error_log ] = exam2bids( examArray , bidsDir , par )
 %EXAM2BIDS transform an array of @exam objects into BIDS architecture
 %
 % Syntax : [ job ] = exam2bids( examArray , bidsDir , par )
@@ -74,9 +74,9 @@ if par.verbose > 0
     fprintf('\n')
 end
 
-nrExam = numel(examArray);
-job = cell(nrExam,1); % pre-allocation, this is the job containter, 1 single char for each exam
-log = cell(nrExam,1); % will contain the error log
+nrExam    = numel(examArray);
+job       = cell(nrExam,1); % pre-allocation, this is the job containter, 1 single char for each exam
+error_log = cell(nrExam,1); % will contain the error log
 
 [success,message] = mkdir(bidsDir);
 if ~success
@@ -441,13 +441,13 @@ for e = 1:nrExam
                     log_subj        = [ log_subj errorSTR sprintf('\n') ];
                     error_flag_dwi  = 1;
                 else
-                    dwi_IN___vol_path = deblank  (DWI_IN___vol.path);
+                    dwi_IN___vol_path = deblank  (DWI_IN___vol.path(1,:));
                     dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
                     dwi_OUT__vol_name = remove_serie_prefix(DWI_IN___vol.serie.name);
                     dwi_OUT__vol_name = del_(dwi_OUT__vol_name);
                     dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D)) );
                     dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
-                    subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
+                    subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path(1,:), dwi_OUT__vol_path, par.copytype);
                 end
                 
                 % Json ----------------------------------------------------
@@ -459,32 +459,45 @@ for e = 1:nrExam
                     error_flag_dwi  = 1;
                 else
                     dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
+                    json_dwi_struct    = getJSON_params_EPI( DWI_IN__json.path(1,:), dwi_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                    json_dwi_str       = struct2jsonSTR( json_dwi_struct );
+                    subjob_dwi{D}      = jobcmd_write_json_bids( subjob_dwi{D}, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path(1,:) );
                     
-                    % Get data from the Json that we will append on the to, to match BIDS architecture
-                    json_dwi_struct = getJSON_params_EPI( DWI_IN__json.path, dwi_OUT__vol_name );
-                    
-                    json_dwi_str = struct2jsonSTR( json_dwi_struct );
-                    subjob_dwi{D} = jobcmd_write_json_bids( subjob_dwi{D}, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path );
-                    
-                    % bval & bvec -----------------------------------------
-                    
+                    % bval ------------------------------------------------
+                    dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
                     dwi_IN___bval_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvals');
                     if ~(exist(dwi_IN___bval_path,'file')==2)
-                        errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bval_path);
-                        log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                        error_flag_dwi  = 1;
+                        if isfield(DWI_IN__serie(D).other,'SequenceData') && isfield(DWI_IN__serie(D).other.SequenceData,'B_value') && ~isempty(DWI_IN__serie(D).other.SequenceData.B_value)
+                            B_value = DWI_IN__serie(D).other.SequenceData.B_value;
+                            B_value = num2str(B_value);
+                            subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_value, dwi_OUT__bval_path) ];
+                        else
+                            errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bval_path);
+                            log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                            error_flag_dwi  = 1;
+                        end
                     else
-                        dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
                         subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bval_path, dwi_OUT__bval_path, par.copytype);
                     end
                     
+                    % bvec ------------------------------------------------
+                    dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
                     dwi_IN___bvec_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvecs');
                     if ~(exist(dwi_IN___bvec_path,'file')==2)
-                        errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bvec_path);
-                        log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                        error_flag_dwi  = 1;
+                        if isfield(DWI_IN__serie(D).other,'SequenceData') && isfield(DWI_IN__serie(D).other.SequenceData,'B_vect') && ~isempty(DWI_IN__serie(D).other.SequenceData.B_vect)
+                            B_vect = DWI_IN__serie(D).other.SequenceData.B_vect;
+                            B_vect = num2str(B_vect);
+                            B_vect_str = '';
+                            for line = 1 : 3
+                                B_vect_str = [ B_vect_str B_vect(line,:) sprintf('\n') ] ;
+                            end
+                            subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_vect_str, dwi_OUT__bvec_path) ];
+                        else
+                            errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bvec_path);
+                            log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                            error_flag_dwi  = 1;
+                        end
                     else
-                        dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
                         subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bvec_path, dwi_OUT__bvec_path, par.copytype);
                     end
                     
@@ -596,7 +609,6 @@ for e = 1:nrExam
                         % Volume ------------------------------------------
                         
                         fmap_OUT__name     = remove_serie_prefix(FMAP_IN___vol.serie.name);
-                        fmap_OUT__name     = fmap_OUT__name(1:end-length('_phase'));
                         fmap_OUT__name     = del_(fmap_OUT__name);
                         fmap_OUT__name     = sprintf('acq-%s_run-%d_%s', fmap_OUT__name, fmap_run_number(FM), suffix_fmap);
                         fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
@@ -647,8 +659,8 @@ for e = 1:nrExam
     
     
     % Save job_subj
-    job{e} = job_subj;
-    log{e} = log_subj;
+    job{e}       = job_subj;
+    error_log{e} = log_subj;
     
     if par.verbose > 1
         fprintf('\n')
