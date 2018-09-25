@@ -1,4 +1,4 @@
-function [ examArray ] = auto_import_obj( baseDir, par )
+function [ examArray, error_log ] = auto_import_obj( baseDir, par )
 %AUTO_IMPORT_OBJ will analyse recursively **baseDir** to build objects
 %according to the dirs found and json content (sequence name)
 %
@@ -78,8 +78,10 @@ fetch.SequenceFileName  = 'CsaSeries.MrPhoenixProtocol.tSequenceFileName';
 fetch.SequenceName      = 'SequenceName';
 fetch.ImageType         = 'ImageType';
 fetch.SeriesDescription = 'SeriesDescription';
-fetch.SeriesNumber      = 'SeriesNumber';
+% fetch.SeriesNumber      = 'SeriesNumber';
 fetch.SequenceID        = 'CsaSeries.MrPhoenixProtocol.lSequenceID';
+fetch.B_value           = 'CsaImage.B_value';
+fetch.B_vect            = 'CsaImage.DiffusionGradientDirection';
 
 % 1 : sequence name contains this
 % 2 : BIDS modality
@@ -97,6 +99,7 @@ SequenceCategory = {
 %% Fetch exam, fill series, volumes ans jsons
 
 examArray = exam(baseDir, par.exam_regex); % add all subdir as @exam objects
+error_log = cell(size(examArray));
 
 for ex = 1 : numel(examArray)
     
@@ -106,10 +109,10 @@ for ex = 1 : numel(examArray)
         continue
     end
     
-    exam_SequenceData = cell(numel(subdir),5); % container, pre-allocation
+    exam_SequenceData = cell(numel(subdir),7); % container, pre-allocation
     
     if par.verbose > 0
-        fprintf( '[%s] : Working on %d/%d : %s \n', mfilename, ex, numel(examArray) , examArray(ex).path )
+        error_log = log(error_log,ex,sprintf( '[%s] : Working on %d/%d : %s \n', mfilename, ex, numel(examArray) , examArray(ex).path ));
     end
     
     %======================================================================
@@ -149,24 +152,33 @@ for ex = 1 : numel(examArray)
         SeriesDescription = get_field_one(content, fetch.SeriesDescription);
         exam_SequenceData{ser,5} = SeriesDescription;
         
+        if regexp(split{end}, 'diff')
+            
+            B_value = get_field_mul(content, fetch.B_value);
+            exam_SequenceData{ser,6} = str2double(B_value)';
+            
+            B_vect  = get_field_mul_vect(content, fetch.B_vect);
+            exam_SequenceData{ser,7} = B_vect;
+            
+        end
+        
     end % ser
     
-    if par.verbose > 1
+    examArray(ex).other.SequenceData = exam_SequenceData;
+    
+    if par.verbose > 2
         fprintf('SequenceName found : \n')
         disp(exam_SequenceData)
         fprintf('\n')
     end
+
     
     %======================================================================
-    
-    %     [~,~,SeqIDX] = unique(cell2mat(exam_SequenceData(:,4)));
     
     % Try to fit the sequence name to the category
     for idx = 1 : size(SequenceCategory, 1)
         
         where = find( ~cellfun( @isempty , regexp(exam_SequenceData(:,1),SequenceCategory{idx,1}) ) );
-        %         where_SeqIDX = SeqIDX(where);
-        %         where_SeqIDX = cellstr(num2str(where_SeqIDX,'%.3d'));
         if isempty(where)
             continue
         end
@@ -190,8 +202,6 @@ for ex = 1 : numel(examArray)
             
             type_M = logical( type_M - type_SBRef );
             
-            %             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), strcat('func_', where_SeqIDX(type_M), '_mag'  )), end
-            %             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), strcat('func_', where_SeqIDX(type_P), '_phase')), end
             if any(type_SBRef), examArray(ex).addSerie(upper_dir_name(type_SBRef), 'func_sbref'), end
             if any(type_M)    , examArray(ex).addSerie(upper_dir_name(type_M    ), 'func_mag'  ), end
             if any(type_P)    , examArray(ex).addSerie(upper_dir_name(type_P    ), 'func_phase'), end
@@ -204,7 +214,6 @@ for ex = 1 : numel(examArray)
                 
                 where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
                 if any(where_sc) % yes
-                    %                     examArray(ex).addSerie(upper_dir_name(where_sc), strcat('anat_', where_SeqIDX(where_sc), subcategory{sc})  )% add them
                     examArray(ex).addSerie(upper_dir_name(where_sc), strcat('anat', subcategory{sc})  )% add them
                     upper_dir_name(where_sc) = []; % remove them from the list
                 end
@@ -222,8 +231,7 @@ for ex = 1 : numel(examArray)
             
             type_M = strcmp(type,'M');
             type_P = strcmp(type,'P');
-            %             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), strcat('fmap_', where_SeqIDX(type_M), '_mag'  )), end
-            %             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), strcat('fmap_', where_SeqIDX(type_P), '_phase')), end
+            
             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  ), end
             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase'), end
             
@@ -235,6 +243,13 @@ for ex = 1 : numel(examArray)
         examArray(ex).getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
         examArray(ex).getSerie(SequenceCategory{idx,2}).addJson('json$',SequenceCategory{idx,5});
         
+        % Add sequence data to each serie
+        SeqData_struct = cell2struct(exam_SequenceData(where,:),fieldnames(fetch),2);
+        Serie_obj = examArray(ex).getSerie(SequenceCategory{idx,2});
+        for s = 1 : length(Serie_obj)
+            Serie_obj(s).other.SequenceData = SeqData_struct(s);
+        end
+        
     end % categ
     
 end % ex
@@ -243,11 +258,23 @@ end % ex
 %% Post operations
 
 % Reorder series to they are in alphabetical==time order, according to their name S01, S02, S03, ...
-examArray.reorderSeries;
+examArray.reorderSeries('name');
 
 
 end % function
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function error_log = log(error_log,ex,str)
+
+fprintf('%s',str)
+
+if isempty(error_log{ex})
+    error_log{ex} = str;
+else
+    error_log{ex} = [error_log{ex} str];
+end
+
+end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function result = get_field_one(content, regex)
@@ -277,16 +304,61 @@ function result = get_field_mul(content, regex)
 start = regexp(content           , regex, 'once');
 stop  = regexp(content(start:end), ']'  , 'once');
 line = content(start:start+stop);
+
+if strfind(line(length(regex):end),'Csa') % in cas of single value, and not multiple ( such as signle B0 value for diff )
+    stop  = regexp(content(start:end), ','  , 'once');
+    line = content(start:start+stop);
+end
+
 token = regexp(line, ': (.*),','tokens'); % extract the value from the line
 if isempty(token)
     result = [];
 else
     res    = token{1}{1};
     VECT_cell_raw = strsplit(res,'\n')';
-    VECT_cell = VECT_cell_raw(2:end-1);
+    if length(VECT_cell_raw)>1
+        VECT_cell = VECT_cell_raw(2:end-1);
+    else
+        VECT_cell = VECT_cell_raw;
+    end
     VECT_cell = strrep(VECT_cell,',','');
     VECT_cell = strrep(VECT_cell,' ','');
     result    = strrep(VECT_cell,'"','');
 end
+
+end % function
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function result = get_field_mul_vect(content, regex)
+
+% with Siemens product, [0,0,0] vectors are written as 'null'
+% but 'null' is dirty, i prefrer real null vectors [0,0,0]
+content_new = regexprep(content,'null',sprintf('[\n 0,\n 0,\n 0 \n]'));
+
+% Fetch the line content
+start = regexp(content_new           , regex, 'once');
+stop  = regexp(content_new(start:end), '\]\s+\]'  , 'once');
+line = content_new(start:start+stop+1);
+
+if strfind(line(length(regex):end),'Csa') % in cas of single value, and not multiple ( such as signle B0 value for diff )
+    stop  = regexp(content(start:end), '\],\s+"'  , 'once');
+    line = content(start:start+stop);
+end
+
+VECT_cell_raw = strsplit(line,'\n')';
+
+if length(VECT_cell_raw)>1
+    VECT_cell = VECT_cell_raw(2:end-1);
+else
+    VECT_cell = VECT_cell_raw;
+end
+VECT_cell = strrep(VECT_cell,',','');
+VECT_cell = strrep(VECT_cell,' ','');
+VECT_cell = strrep(VECT_cell,'[','');
+VECT_cell = strrep(VECT_cell,']','');
+VECT_cell = VECT_cell(~cellfun(@isempty,VECT_cell));
+
+v = str2double(VECT_cell);
+result = reshape(v,[3 numel(v)/3]);
 
 end % function
