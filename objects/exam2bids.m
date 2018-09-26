@@ -14,6 +14,8 @@ if nargin == 0
     return
 end
 
+global log_subj
+
 
 %% Check input arguments
 
@@ -180,7 +182,6 @@ for e = 1:nrExam
     
     ANAT_IN__serie  = EXAM.getSerie( par.regextag_anat_serie, 'tag', 0 );
     subjob_anat     = cell(numel(ANAT_IN__serie),1);
-    error_flag_anat = 0;
     
     if ~isempty(ANAT_IN__serie)
         
@@ -217,18 +218,15 @@ for e = 1:nrExam
                 
                 % Volume --------------------------------------------------
                 
-                ANAT_IN___vol  = ANAT_IN__serie(A).getVolume( par.regextag_anat_volume, 'tag', 0 );
+                [ ANAT_IN___vol , error_flag_anat ] = CHECK(  ANAT_IN__serie(A), 'volume', par.regextag_anat_volume );
                 
-                % Verbose
-                if par.verbose > 1
-                    fprintf('[%s]: Preparing ANAT - %s : %s \n', mfilename, suffix_anat, ANAT_IN___vol.path );
-                end
-                
-                if numel(ANAT_IN___vol)~=1
-                    errorSTR           = warning('Found  %d/1 @volume for [ %s ] in : %s', numel(ANAT_IN___vol), par.regextag_anat_volume, ANAT_IN__serie(A).path );
-                    log_subj           = [ log_subj errorSTR sprintf('\n') ];
-                    error_flag_anat    = 1;
-                else
+                if ~error_flag_anat
+                    
+                    % Verbose
+                    if par.verbose > 1
+                        fprintf('[%s]: Preparing ANAT - %s : %s \n', mfilename, suffix_anat, ANAT_IN___vol.path );
+                    end
+                    
                     anat_OUT__name     = remove_serie_prefix(ANAT_IN___vol.serie.name);
                     anat_OUT__name     = anat_OUT__name(1:end-to_remove);
                     anat_OUT__name     = del_(anat_OUT__name);
@@ -241,12 +239,9 @@ for e = 1:nrExam
                 
                 % Json ----------------------------------------------------
                 
-                ANAT_IN__json           = ANAT_IN__serie(A).getJson( par.regextag_anat_json, 'tag', 0 );
-                if numel(ANAT_IN__json)~=1
-                    errorSTR            = warning( 'Found %d/1 @json for [ %s ] in : %s', numel(ANAT_IN__json), par.regextag_anat_json, ANAT_IN__serie(A).path );
-                    log_subj            = [ log_subj errorSTR sprintf('\n') ];
-                    error_flag_anat     = 1;
-                else
+                [ ANAT_IN__json , error_flag_anat ] = CHECK( ANAT_IN__serie(A), 'json', par.regextag_anat_json );
+                
+                if ~error_flag_anat
                     anat_OUT__json_path = [anat_OUT__base '.json'];
                     subjob_anat{A}      = link_or_copy(subjob_anat{A}, ANAT_IN__json.path, anat_OUT__json_path, par.copytype);
                 end
@@ -263,7 +258,6 @@ for e = 1:nrExam
                     job_subj        = [ job_subj subjob_anat{A} ];
                 else
                     subjob_anat{A}  = ''; % empty the current subjob, or nrGood wont be accurate
-                    error_flag_anat = 0; % reset
                 end
                 
             end % A
@@ -278,7 +272,6 @@ for e = 1:nrExam
     
     FUNC_IN__serie  = EXAM.getSerie( par.regextag_func_serie, 'tag', 0 );
     subjob_func     = cell(numel(FUNC_IN__serie),1);
-    error_flag_func = 0;
     
     if ~isempty(FUNC_IN__serie)
         
@@ -307,19 +300,10 @@ for e = 1:nrExam
                 
                 % Json ------------------------------------------------
                 
-                FUNC_IN__json = FUNC_IN__serie(F).getJson( par.regextag_func_json, 'tag', 0 );
-                if numel(FUNC_IN__json)~=1
-                    errorSTR        = warning('Found %d/1 @json for [ %s ] in : %s', numel(FUNC_IN__json), par.regextag_func_json, FUNC_IN__serie(F).path );
-                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                    error_flag_func = 1;
-                end
+                [ FUNC_IN___vol , error_flag_func_vol  ] = CHECK( FUNC_IN__serie(F), 'volume', par.regextag_func_volume, Inf );
+                [ FUNC_IN__json , error_flag_func_json ] = CHECK( FUNC_IN__serie(F), 'json'  , par.regextag_func_json  , Inf );
                 
-                FUNC_IN___vol = FUNC_IN__serie(F).getVolume( par.regextag_func_volume, 'tag', 0 );
-                if numel(FUNC_IN___vol)~=1
-                    errorSTR        = warning('Found %d/1 @volume for [ %s ] in : %s', numel(FUNC_IN___vol), par.regextag_func_volume, FUNC_IN__serie(F).path );
-                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                    error_flag_func = 1;
-                end
+                error_flag_func = error_flag_func_vol && error_flag_func_json;
                 
                 if ~error_flag_func
                     
@@ -395,7 +379,6 @@ for e = 1:nrExam
                     job_subj        = [ job_subj subjob_func{F} ];
                 else
                     subjob_func{F}  = ''; % empty the current subjob, or nrGood wont be accurate
-                    error_flag_func = 0; % reset
                 end
                 
             end % F
@@ -410,7 +393,6 @@ for e = 1:nrExam
     
     DWI_IN__serie  = EXAM.getSerie( par.regextag_dwi_serie, 'tag', 0 );
     subjob_dwi     = cell(numel(DWI_IN__serie),1);
-    error_flag_dwi = 0;
     
     if ~isempty(DWI_IN__serie)
         
@@ -426,42 +408,37 @@ for e = 1:nrExam
             
             for D = 1 : numel(DWI_IN__serie)
                 
-                
                 % Volume --------------------------------------------------
                 
-                DWI_IN___vol  = DWI_IN__serie(D).getVolume( par.regextag_dwi_volume, 'tag', 0 );
+                [ DWI_IN___vol , error_flag_dwi ] = CHECK( DWI_IN__serie(D), 'volume', par.regextag_dwi_volume );
                 
-                % Verbose
-                if par.verbose > 1
-                    fprintf('[%s]: Preparing DWI : %s \n', mfilename, DWI_IN___vol.path );
-                end
-                
-                if numel(DWI_IN___vol)~=1
-                    errorSTR = warning('Found %d/1 @volume for [ %s ] in : %s', numel(DWI_IN___vol), par.regextag_dwi_volume, DWI_IN__serie(D).path );
-                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                    error_flag_dwi  = 1;
-                else
-                    dwi_IN___vol_path = deblank  (DWI_IN___vol.path(1,:));
+                if ~error_flag_dwi
+                    
+                    % Verbose
+                    if par.verbose > 1
+                        fprintf('[%s]: Preparing DWI : %s \n', mfilename, DWI_IN___vol.path );
+                    end
+                    
+                    dwi_IN___vol_path = deblank  (DWI_IN___vol.path);
                     dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
                     dwi_OUT__vol_name = remove_serie_prefix(DWI_IN___vol.serie.name);
                     dwi_OUT__vol_name = del_(dwi_OUT__vol_name);
                     dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D)) );
                     dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
-                    subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path(1,:), dwi_OUT__vol_path, par.copytype);
+                    subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
+                    
                 end
                 
                 % Json ----------------------------------------------------
                 
-                DWI_IN__json = DWI_IN__serie(D).getJson( par.regextag_dwi_json, 'tag', 0 );
-                if numel(DWI_IN__json)~=1
-                    errorSTR = warning( 'Found %d/1 @json for [ %s ] in : %s', numel(DWI_IN__json), par.regextag_dwi_json, DWI_IN__serie(D).path );
-                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                    error_flag_dwi  = 1;
-                else
+                [ DWI_IN__json , error_flag_dwi ] = CHECK( DWI_IN__serie(D), 'json', par.regextag_dwi_json );
+                
+                if ~error_flag_dwi
+                    
                     dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
-                    json_dwi_struct    = getJSON_params_EPI( DWI_IN__json.path(1,:), dwi_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                    json_dwi_struct    = getJSON_params_EPI( DWI_IN__json.path, dwi_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
                     json_dwi_str       = struct2jsonSTR( json_dwi_struct );
-                    subjob_dwi{D}      = jobcmd_write_json_bids( subjob_dwi{D}, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path(1,:) );
+                    subjob_dwi{D}      = jobcmd_write_json_bids( subjob_dwi{D}, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path );
                     
                     % bval ------------------------------------------------
                     dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
@@ -515,9 +492,7 @@ for e = 1:nrExam
                     job_subj        = [ job_subj subjob_dwi{D} ];
                 else
                     subjob_dwi{D}  = ''; % empty the current subjob, or nrGood wont be accurate
-                    error_flag_dwi = 0; % reset
                 end
-                
                 
                 
             end % D
@@ -532,7 +507,6 @@ for e = 1:nrExam
     
     FMAP_IN__serie  = EXAM.getSerie( par.regextag_fmap_serie, 'tag', 0 );
     subjob_fmap     = cell(numel(FMAP_IN__serie),1);
-    error_flag_fmap = 0;
     
     if ~isempty(FMAP_IN__serie)
         
@@ -546,15 +520,11 @@ for e = 1:nrExam
             
             for FM = 1 : numel(FMAP_IN__serie)
                 
-                FMAP_IN___vol  = FMAP_IN__serie(FM).getVolume( par.regextag_fmap_volume, 'tag', 0 );
+                [ FMAP_IN___vol , error_flag_fmap ] = CHECK( FMAP_IN__serie(FM), 'volume', par.regextag_fmap_volume, Inf );
                 
                 % Volume --------------------------------------------------
                 
-                if numel(FMAP_IN___vol)~=1
-                    errorSTR        = warning('Found  0/1 @volume for [ %s ] in : %s', par.regextag_fmap_volume, FMAP_IN__serie(FM).path );
-                    log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                    error_flag_fmap = 1;
-                else
+                if ~error_flag_fmap
                     
                     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
                     % MAGNITUDE
@@ -581,13 +551,8 @@ for e = 1:nrExam
                             subjob_fmap{FM}    = link_or_copy(subjob_fmap{FM}, FMAP_IN___vol.path(echo,:), fmap_OUT__vol_path, par.copytype);
                             
                             % Json ----------------------------------------
-                            
-                            FMAP_IN__json       = FMAP_IN__serie(FM).getJson( par.regextag_fmap_json, 'tag', 0 );
-                            if numel(FMAP_IN__json)~=1
-                                errorSTR = warning('Found %d/1 @json for [ %s ] in : %s', numel(FMAP_IN__json), par.regextag_fmap_json, FMAP_IN__serie(FM).path );
-                                log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                                error_flag_fmap = 1;
-                            else
+                            [ FMAP_IN__json , error_flag_fmap ] = CHECK( FMAP_IN__serie(FM), 'json', par.regextag_fmap_json, Inf );
+                            if ~error_flag_fmap
                                 fmap_OUT__json_path = [fmap_OUT__base '.json'];
                                 subjob_fmap{FM}     = link_or_copy(subjob_fmap{FM}, FMAP_IN__json.path(echo,:), fmap_OUT__json_path, par.copytype);
                             end
@@ -648,7 +613,6 @@ for e = 1:nrExam
                     job_subj     = [ job_subj subjob_fmap{FM} ];
                 else
                     subjob_fmap{FM} = ''; % empty the current subjob, or nrGood wont be accurate
-                    error_flag_fmap = 0; % reset
                 end
                 
             end % FM
@@ -687,6 +651,40 @@ if par.verbose > 0
     fprintf('[%s]: done %d jobs (+1 header) \n', mfilename, length(job)-1 );
 end
 
+
+end % function
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [ TARGET , error_flag ] = CHECK( SERIE, target_class, target_regex, nrVolume )
+global log_subj
+
+if ~exist('nrVolume','var')
+    nrVolume = 1;
+end
+
+switch target_class
+    case 'volume'
+        TARGET  = SERIE.getVolume( target_regex, 'tag', 0 );
+    case 'json'
+        TARGET  = SERIE.getJson  ( target_regex, 'tag', 0 );
+end
+
+error_flag = [ 0 0 ];
+
+if numel(TARGET)~=1
+    errorSTR   = warning('Found %d/1 @%s for [ %s ] in : %s', numel(TARGET), target_class, target_regex, SERIE.path );
+    log_subj   = [ log_subj errorSTR sprintf('\n') ];
+    error_flag(1) = 1;
+end
+
+if nrVolume==1 && size(TARGET.path,1)>1
+    errorSTR   = warning('Found %d/1 @%s.path for [ %s ] in : %s', size(TARGET.path,1), target_class, target_regex, SERIE.path );
+    log_subj   = [ log_subj errorSTR sprintf('\n') ];
+    error_flag(2) = 1;
+end
+
+error_flag = logical(sum(error_flag));
 
 end % function
 
