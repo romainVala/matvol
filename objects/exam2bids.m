@@ -1,7 +1,7 @@
-function [ job, error_log ] = exam2bids( examArray , bidsDir , par )
+function [ job , error_log ] = exam2bids( examArray , bidsDir , par )
 %EXAM2BIDS transform an array of @exam objects into BIDS architecture
 %
-% Syntax : [ job ] = exam2bids( examArray , bidsDir , par )
+% Syntax : [ job , error_log ] = exam2bids( examArray , bidsDir , par )
 %
 %
 % See also exam
