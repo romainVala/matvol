@@ -90,6 +90,7 @@ fetch.B_vect            = 'CsaImage.DiffusionGradientDirection';
 % 5 : json   tag
 SequenceCategory = {
     'tfl'               'anat' par.anat_regex_volume par.anat_tag_volume par.anat_tag_json
+    'vfl'               'anat' par.anat_regex_volume par.anat_tag_volume par.anat_tag_json
     'diff'              'dwi'  par. dwi_regex_volume par. dwi_tag_volume par. dwi_tag_json
     '(bold)|(pace)'     'func' par.func_regex_volume par.func_tag_volume par.func_tag_json
     'gre_field_mapping' 'fmap' par.fmap_regex_volume par.fmap_tag_volume par.fmap_tag_json
@@ -109,10 +110,10 @@ for ex = 1 : numel(examArray)
         continue
     end
     
-    exam_SequenceData = cell(numel(subdir),7); % container, pre-allocation
+    exam_SequenceData = cell(numel(subdir),8); % container, pre-allocation
     
     if par.verbose > 0
-        error_log = log(error_log,ex,sprintf( '[%s] : Working on %d/%d : %s \n', mfilename, ex, numel(examArray) , examArray(ex).path ));
+        error_log = log(error_log,ex,sprintf( '[%s] : Working on %d/%d : %s \n', mfilename, ex, numel(examArray) , examArray(ex).path ), 1);
     end
     
     %======================================================================
@@ -171,7 +172,7 @@ for ex = 1 : numel(examArray)
         disp(exam_SequenceData)
         fprintf('\n')
     end
-
+    
     
     %======================================================================
     
@@ -202,9 +203,9 @@ for ex = 1 : numel(examArray)
             
             type_M = logical( type_M - type_SBRef );
             
-            if any(type_SBRef), examArray(ex).addSerie(upper_dir_name(type_SBRef), 'func_sbref'), end
-            if any(type_M)    , examArray(ex).addSerie(upper_dir_name(type_M    ), 'func_mag'  ), end
-            if any(type_P)    , examArray(ex).addSerie(upper_dir_name(type_P    ), 'func_phase'), end
+            if any(type_SBRef), examArray(ex).addSerie(upper_dir_name(type_SBRef), 'func_sbref'), exam_SequenceData(where(type_SBRef),end) = {'func_sbref'}; end
+            if any(type_M)    , examArray(ex).addSerie(upper_dir_name(type_M    ), 'func_mag'  ), exam_SequenceData(where(type_M    ),end) = {'func_mag'  }; end
+            if any(type_P)    , examArray(ex).addSerie(upper_dir_name(type_P    ), 'func_phase'), exam_SequenceData(where(type_P    ),end) = {'func_phase'}; end
             
             % anat --------------------------------------------------------
         elseif strcmp(SequenceCategory{idx,2},'anat')
@@ -215,13 +216,34 @@ for ex = 1 : numel(examArray)
                 where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
                 if any(where_sc) % yes
                     examArray(ex).addSerie(upper_dir_name(where_sc), strcat('anat', subcategory{sc})  )% add them
+                    exam_SequenceData(where(where_sc),end) = {strcat('anat', subcategory{sc})};
                     upper_dir_name(where_sc) = []; % remove them from the list
+                    where(where_sc) = [];
                 end
                 
             end
             
             if ~isempty(upper_dir_name) % if the list is not empty, it means some non-mp2rage sereies remains, such as classic mprage, or else...
-                examArray(ex).addSerie(upper_dir_name,'anat')
+                
+                SequenceFileName = exam_SequenceData{where,1};
+                SequenceName     = exam_SequenceData{where,2};
+                
+                if strcmp(SequenceFileName,'tfl')
+                    
+                    examArray(ex).addSerie(upper_dir_name,'anat_T1w')
+                    exam_SequenceData(where,end) =       {'anat_T1w'};
+                    
+                elseif strcmp(SequenceFileName,               'tse_vfl')
+                    
+                    if strfind(SequenceName,                  'spcir_')
+                        examArray(ex).addSerie(upper_dir_name,'anat_FLAIR')
+                        exam_SequenceData(where,end) =       {'anat_FLAIR'};
+                    elseif strfind(SequenceName,              'spc_')
+                        examArray(ex).addSerie(upper_dir_name,'anat_T2w')
+                        exam_SequenceData(where,end) =       {'anat_T2w'};
+                    end
+                    
+                end
             end
             
             % fmap --------------------------------------------------------
@@ -232,25 +254,45 @@ for ex = 1 : numel(examArray)
             type_M = strcmp(type,'M');
             type_P = strcmp(type,'P');
             
-            if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  ), end
-            if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase'), end
+            if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  ), exam_SequenceData(where(type_M),end) = {'fmap_mag'  }; end
+            if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase'), exam_SequenceData(where(type_P),end) = {'fmap_phase'}; end
             
         else
             examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
+            exam_SequenceData(where,end) = SequenceCategory(idx,2);
         end
         
         % Add volume & json
         examArray(ex).getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
         examArray(ex).getSerie(SequenceCategory{idx,2}).addJson('json$',SequenceCategory{idx,5});
         
-        % Add sequence data to each serie
-        SeqData_struct = cell2struct(exam_SequenceData(where,:),fieldnames(fetch),2);
-        Serie_obj = examArray(ex).getSerie(SequenceCategory{idx,2});
-        for s = 1 : length(Serie_obj)
-            Serie_obj(s).other.SequenceData = SeqData_struct(s);
+    end % categ
+    
+    % Add sequence data to each serie, or write a line in error_log
+    for ser = 1 : numel(subdir)
+        
+        % Add sequence data
+        if ~isempty( exam_SequenceData{ser,end} )
+            Serie_obj      = examArray(ex).getSerie(exam_SequenceData{ser,end});
+            SeqData_struct = cell2struct( exam_SequenceData( ~cellfun(@isempty,regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end})) , 1:end-1) , fieldnames(fetch) , 2 );
+            if ~isempty( Serie_obj )
+                for s = 1 : length(Serie_obj)
+                    Serie_obj(s).other.SequenceData = SeqData_struct(s);
+                end
+            else
+                str = warning('[%s] : we have a problem, I can''t find any serie for [ %s ]', mfilename, exam_SequenceData{ser,end});
+                error_log = log(error_log,ex,str);
+            end
+            
+            
+        else % Error log
+            in = exam_SequenceData(ser,:);
+            out=cellfun(@num2str,in,'UniformOutput',0); % transform num to str
+            str = sprintf(['Unrecognized Sequence : %s with this parameters = [ ' repmat('%s ', [1 numel(out)]) ']'], subdir{ser}, out{:});
+            error_log = log(error_log,ex,str);
         end
         
-    end % categ
+    end % ser
     
 end % ex
 
@@ -264,14 +306,20 @@ examArray.reorderSeries('name');
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function error_log = log(error_log,ex,str)
+function error_log = log(error_log,ex,str,print)
 
-fprintf('%s',str)
+if nargin < 4
+    print = 0;
+end
+
+if print
+    fprintf('%s',str)
+end
 
 if isempty(error_log{ex})
     error_log{ex} = str;
 else
-    error_log{ex} = [error_log{ex} str];
+    error_log{ex} = [error_log{ex} str sprintf('\n')];
 end
 
 end % function

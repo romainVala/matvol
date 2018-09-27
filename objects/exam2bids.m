@@ -211,7 +211,25 @@ for e = 1:nrExam
                 elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images')
                     suffix_anat = 'T1map';
                     to_remove   = length('_T1_Images');
+                    
+                    % classic mprage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1w') 
+                    suffix_anat = 'T1w';
+                    to_remove   = length('_T1w');
+                    
+                    % T2
+                elseif strfind(ANAT_IN__serie(A).tag,'_T2w')
+                    suffix_anat = 'T2w';
+                    to_remove   = length('_T2w');
+                    
+                    % FLAIR
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR')
+                    suffix_anat = 'FLAIR';
+                    to_remove   = length('_FLAIR');
+                    
                 else
+                    warninbgSTR = waring('Using T1w sufix because unknown tag : %s', ANAT_IN__serie(A).tag);
+                    log_subj    = [ log_subj warninbgSTR sprintf('\n') ];
                     suffix_anat = 'T1w';
                     to_remove   = 0;
                 end
