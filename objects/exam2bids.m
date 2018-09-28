@@ -47,9 +47,14 @@ defpar.regextag_dwi_volume  = '^f';
 defpar.regextag_dwi_json    = '.*';
 
 % fmap
-defpar.regextag_fmap_serie   = 'fmap';
-defpar.regextag_fmap_volume  = '^s';
-defpar.regextag_fmap_json    = '.*';
+defpar.regextag_fmap_serie  = 'fmap';
+defpar.regextag_fmap_volume = '^s';
+defpar.regextag_fmap_json   = '.*';
+
+% swi
+defpar.regextag_swi_serie  = 'swi';
+defpar.regextag_swi_volume = '^s';
+defpar.regextag_swi_json   = '.*';
 
 % Other options :
 defpar.copytype    = 'link'; % can be 'link' or 'copy'
@@ -94,6 +99,7 @@ bidsignore = {
     '*inv-1*'
     '*inv-2*'
     '*T1map*'
+    '*_part-*' % FLASH  : mag / pahse
     };
 
 fileID = fopen( fullfile(bidsDir,'.bidsignore') , 'w' , 'n' , 'UTF-8' );
@@ -199,33 +205,15 @@ for e = 1:nrExam
                 
                 % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
                 % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
-                if     strfind(ANAT_IN__serie(A).tag,'_INV1'  )
-                    suffix_anat = 'inv-1';
-                    to_remove   = length('_INV1');
-                elseif strfind(ANAT_IN__serie(A).tag,'_INV2')
-                    suffix_anat = 'inv-2';
-                    to_remove   = length('_INV2');
-                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images')
-                    suffix_anat = 'T1w';
-                    to_remove   = length('_UNI_Images');
-                elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images')
-                    suffix_anat = 'T1map';
-                    to_remove   = length('_T1_Images');
-                    
-                    % classic mprage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T1w') 
-                    suffix_anat = 'T1w';
-                    to_remove   = length('_T1w');
-                    
-                    % T2
-                elseif strfind(ANAT_IN__serie(A).tag,'_T2w')
-                    suffix_anat = 'T2w';
-                    to_remove   = length('_T2w');
-                    
-                    % FLAIR
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR')
-                    suffix_anat = 'FLAIR';
-                    to_remove   = length('_FLAIR');
+                if     strfind(ANAT_IN__serie(A).tag,'_INV1'       ), suffix_anat = 'inv-1'; to_remove   = length('_INV1'      ); % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_INV2'       ), suffix_anat = 'inv-2'; to_remove   = length('_INV2'      ); % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images' ), suffix_anat = 'T1w'  ; to_remove   = length('_UNI_Images'); % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images'  ), suffix_anat = 'T1map'; to_remove   = length('_T1_Images' ); % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1w'        ), suffix_anat = 'T1w'  ; to_remove   = 0                    ; % mprage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T2w'        ), suffix_anat = 'T2w'  ; to_remove   = 0                    ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR'      ), suffix_anat = 'FLAIR'; to_remove   = 0                    ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_mag'  ), suffix_anat = 'FLASH'; to_remove   = 0                    ; part = 'mag'  ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_phase'), suffix_anat = 'FLASH'; to_remove   = length('_phase'     ); part = 'phase';
                     
                 else
                     warninbgSTR = waring('Using T1w sufix because unknown tag : %s', ANAT_IN__serie(A).tag);
@@ -234,34 +222,80 @@ for e = 1:nrExam
                     to_remove   = 0;
                 end
                 
-                % Volume --------------------------------------------------
-                
-                [ ANAT_IN___vol , error_flag_anat ] = CHECK(  ANAT_IN__serie(A), 'volume', par.regextag_anat_volume );
-                
-                if ~error_flag_anat
-                    
-                    % Verbose
-                    if par.verbose > 1
-                        fprintf('[%s]: Preparing ANAT - %s : %s \n', mfilename, suffix_anat, ANAT_IN___vol.path );
-                    end
-                    
-                    anat_OUT__name     = remove_serie_prefix(ANAT_IN___vol.serie.name);
-                    anat_OUT__name     = anat_OUT__name(1:end-to_remove);
-                    anat_OUT__name     = del_(anat_OUT__name);
-                    anat_OUT__name     = sprintf('acq-%s_run-%d_%s', anat_OUT__name, anat_run_number(A), suffix_anat);
-                    anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
-                    anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
-                    anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
-                    subjob_anat{A}     = link_or_copy(subjob_anat{A}, ANAT_IN___vol.path, anat_OUT__vol_path, par.copytype);
+                % FLASH can have multiple echos, but not the other ones (exept mp2rage, but they will apear in different series)
+                if strcmp(suffix_anat, 'FLASH')
+                    nrVolume = Inf;
+                else
+                    nrVolume = 1;
                 end
                 
-                % Json ----------------------------------------------------
+                [ ANAT_IN___vol , error_flag_anat_vol  ] = CHECK( ANAT_IN__serie(A), 'volume', par.regextag_anat_volume, nrVolume );
+                [ ANAT_IN__json , error_flag_anat_josn ] = CHECK( ANAT_IN__serie(A), 'json'  , par.regextag_anat_json  , nrVolume );
                 
-                [ ANAT_IN__json , error_flag_anat ] = CHECK( ANAT_IN__serie(A), 'json', par.regextag_anat_json );
+                error_flag_anat = error_flag_anat_vol && error_flag_anat_josn;
                 
                 if ~error_flag_anat
-                    anat_OUT__json_path = [anat_OUT__base '.json'];
-                    subjob_anat{A}      = link_or_copy(subjob_anat{A}, ANAT_IN__json.path, anat_OUT__json_path, par.copytype);
+                    
+                    % Volume ------------------------------------------
+                    
+                    if size(ANAT_IN___vol.path,1) == 1 % single echo ******
+                        
+                        % Verbose
+                        if par.verbose > 1
+                            fprintf('[%s]: Preparing ANAT - %s : %s \n', mfilename, suffix_anat, ANAT_IN___vol.path );
+                        end
+                        
+                        % Volume ------------------------------------------
+                        
+                        anat_OUT__name     = remove_serie_prefix(ANAT_IN___vol.serie.name);
+                        anat_OUT__name     = anat_OUT__name(1:end-to_remove);
+                        anat_OUT__name     = del_(anat_OUT__name);
+                        
+                        anat_OUT__name     = sprintf('acq-%s_run-%d_%s', anat_OUT__name, anat_run_number(A), suffix_anat);
+                        anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
+                        anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
+                        anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
+                        subjob_anat{A}     = link_or_copy(subjob_anat{A}, ANAT_IN___vol.path, anat_OUT__vol_path, par.copytype);
+                        
+                        % Json --------------------------------------------
+                        
+                        anat_OUT__json_path = [anat_OUT__base '.json'];
+                        subjob_anat{A}      = link_or_copy(subjob_anat{A}, ANAT_IN__json.path, anat_OUT__json_path, par.copytype);
+                        
+                    else % multi echo *************************************
+                        
+                        allTE              = cell2mat(ANAT_IN__json.getLine('EchoTime',0));
+                        [sortedTE,orderTE] = sort(allTE); %#ok<ASGLU>
+                        
+                        % Fetch volume corrsponding to the echo
+                        for echo = 1 : length(orderTE)
+                            
+                            % Verbose
+                            if par.verbose > 1
+                                fprintf('[%s]: Preparing ANAT - %s - echo %d : %s \n', mfilename, suffix_anat, echo, ANAT_IN___vol.path(orderTE(echo),:) );
+                            end
+                            
+                            % Volume ------------------------------------------
+                            
+                            anat_OUT__name     = remove_serie_prefix(ANAT_IN___vol.serie.name);
+                            anat_OUT__name     = anat_OUT__name(1:end-to_remove);
+                            anat_OUT__name     = del_(anat_OUT__name);
+                            
+                            anat_OUT__name     = sprintf('acq-%s_run-%d_echo-%0.2d_part-%s_%s', anat_OUT__name, anat_run_number(A), echo, part, suffix_anat);
+                            anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
+                            anat_IN___vol_ext  = file_ext( deblank(ANAT_IN___vol.path(orderTE(echo),:)) );
+                            anat_OUT__vol_path = [ anat_OUT__base anat_IN___vol_ext ];
+                            subjob_anat{A}     = link_or_copy(subjob_anat{A}, ANAT_IN___vol.path(orderTE(echo),:), anat_OUT__vol_path, par.copytype);
+                            
+                            % Json --------------------------------------------
+                            
+                            anat_OUT__json_path = [anat_OUT__base '.json'];
+                            subjob_anat{A}      = link_or_copy(subjob_anat{A}, ANAT_IN__json.path(orderTE(echo),:), anat_OUT__json_path, par.copytype);
+                            
+                        end % echo
+                        
+                    end
+                    
                 end
                 
                 % Error managment
@@ -306,17 +340,11 @@ for e = 1:nrExam
                 
                 subjob_func{F} = '';
                 
-                if     strfind(FUNC_IN__serie(F).tag,'_mag'  )
-                    suffix_func = 'bold';
-                elseif strfind(FUNC_IN__serie(F).tag,'_phase')
-                    suffix_func = 'boldphase';
-                elseif strfind(FUNC_IN__serie(F).tag,'_sbref')
-                    suffix_func = 'sbref';
-                else
-                    suffix_func = 'bold';
+                if     strfind(FUNC_IN__serie(F).tag,'_mag'  ), suffix_func = 'bold'     ;
+                elseif strfind(FUNC_IN__serie(F).tag,'_phase'), suffix_func = 'boldphase';
+                elseif strfind(FUNC_IN__serie(F).tag,'_sbref'), suffix_func = 'sbref'    ;
+                else                                          , suffix_func = 'bold'     ;
                 end
-                
-                % Json ------------------------------------------------
                 
                 [ FUNC_IN___vol , error_flag_func_vol  ] = CHECK( FUNC_IN__serie(F), 'volume', par.regextag_func_volume, Inf );
                 [ FUNC_IN__json , error_flag_func_json ] = CHECK( FUNC_IN__serie(F), 'json'  , par.regextag_func_json  , Inf );
@@ -325,14 +353,14 @@ for e = 1:nrExam
                 
                 if ~error_flag_func
                     
-                    if size(FUNC_IN___vol.path,1) == 1 % single echo **********************
+                    if size(FUNC_IN___vol.path,1) == 1 % single echo ******
                         
                         % Verbose
                         if par.verbose > 1
-                            fprintf('[%s]: Preparing FUNC - SingleEcho : %s \n', mfilename, FUNC_IN___vol.path );
+                            fprintf('[%s]: Preparing FUNC : %s \n', mfilename, FUNC_IN___vol.path );
                         end
                         
-                        % Volume ----------------------------------------------
+                        % Volume ------------------------------------------
                         
                         func_IN___vol_path = deblank  (FUNC_IN___vol.path);
                         func_IN___vol_ext  = file_ext (func_IN___vol_path);
@@ -342,21 +370,19 @@ for e = 1:nrExam
                         func_OUT__vol_path = [ func_OUT__vol_base func_IN___vol_ext ];
                         subjob_func{F}     = link_or_copy(subjob_func{F}, FUNC_IN___vol.path, func_OUT__vol_path, par.copytype);
                         
-                        % Json ------------------------------------------------
+                        % Json --------------------------------------------
                         
                         func_OUT__json_path = [ func_OUT__vol_base '.json' ];
                         json_func_struct    = getJSON_params_EPI( FUNC_IN__json.path, func_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
                         json_func_str       = struct2jsonSTR( json_func_struct );
                         subjob_func{F}      = jobcmd_write_json_bids( subjob_func{F}, json_func_str, func_OUT__json_path, FUNC_IN__json.path );
                         
-                    else % multi echo *****************************************
-                        
-                        % Json ------------------------------------------------
+                    else % multi echo *************************************
                         
                         allTE              = cell2mat(FUNC_IN__json.getLine('EchoTime',0));
                         [sortedTE,orderTE] = sort(allTE); %#ok<ASGLU>
                         
-                        % Volume ----------------------------------------------
+                        % Volume ------------------------------------------
                         
                         func_OUT__vol_name = remove_serie_prefix(FUNC_IN___vol.serie.name);
                         func_OUT__vol_name = del_(func_OUT__vol_name);
@@ -367,13 +393,17 @@ for e = 1:nrExam
                             
                             % Verbose
                             if par.verbose > 1
-                                fprintf('[%s]: Preparing FUNC - MultiEcho - echo %d : %s \n', mfilename, echo, FUNC_IN___vol.path(orderTE(echo),:) );
+                                fprintf('[%s]: Preparing FUNC - echo %d : %s \n', mfilename, echo, FUNC_IN___vol.path(orderTE(echo),:) );
                             end
+                            
+                            % Volume --------------------------------------
                             
                             func_IN___vol_ext   = file_ext( deblank( FUNC_IN___vol.path(orderTE(echo),:) ) );
                             func_OUT__vol_path  = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) func_IN___vol_ext  ];
                             func_OUT__json_path = [ func_OUT__vol_base sprintf('_echo-%d_%s', echo, suffix_func) '.json'];
                             subjob_func{F}      = link_or_copy(subjob_func{F}, deblank( FUNC_IN___vol.path(orderTE(echo),:) ), func_OUT__vol_path, par.copytype);
+                            
+                            % Json --------------------------------------------
                             
                             json_func_struct = getJSON_params_EPI( FUNC_IN__json.path(orderTE(echo),:), func_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
                             json_func_str    = struct2jsonSTR( json_func_struct );
@@ -592,7 +622,7 @@ for e = 1:nrExam
                         % Volume ------------------------------------------
                         
                         fmap_OUT__name     = remove_serie_prefix(FMAP_IN___vol.serie.name);
-                        fmap_OUT__name     = del_(fmap_OUT__name);
+                        fmap_OUT__name     = del_(fmap_OUT__name(1:end-length('_phase')));
                         fmap_OUT__name     = sprintf('acq-%s_run-%d_%s', fmap_OUT__name, fmap_run_number(FM), suffix_fmap);
                         fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
                         fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path) );
@@ -639,8 +669,154 @@ for e = 1:nrExam
         
     end % FMAP
     
+    %% ####################################################################
+    % swi
     
-    % Save job_subj
+    SWI_IN__serie  = EXAM.getSerie( par.regextag_swi_serie, 'tag', 0 );
+    subjob_swi     = cell(numel(SWI_IN__serie),1);
+    
+    if ~isempty(SWI_IN__serie)
+        
+        if length(SWI_IN__serie)==1 && isempty(SWI_IN__serie.path)
+            % pass, this in exeption
+        else
+            
+            swi_OUT__dir_path = fullfile( ses_path, 'swi' );
+            
+            swi_run_number = interprete_run_number( {SWI_IN__serie.name}' );
+            
+            for S = 1 : numel(SWI_IN__serie)
+                
+                subjob_swi{S} = '';
+                
+                % https://docs.google.com/document/d/1kyw9mGgacNqeMbp4xZet3RnDhcMmf4_BmRgKaOkO2Sc/edit#
+                if     strfind(SWI_IN__serie(S).tag,'_Mag'), part_swi = 'mag'  ; suffix_swi = 'GRE'  ;
+                elseif strfind(SWI_IN__serie(S).tag,'_Pha'), part_swi = 'phase'; suffix_swi = 'GRE';
+                elseif strfind(SWI_IN__serie(S).tag,'_mIP'), part_swi = ''     ; suffix_swi = 'minIP';
+                elseif strfind(SWI_IN__serie(S).tag,'_SWI'), part_swi = ''     ; suffix_swi = 'swi'  ;
+                    
+                else
+                    warninbgSTR = waring('Using swi sufix because unknown tag : %s', SWI_IN__serie(S).tag);
+                    log_subj    = [ log_subj warninbgSTR sprintf('\n') ];
+                    part_swi    = ''; suffix_swi  = 'swi';
+                end
+                
+                [ SWI_IN___vol , error_flag_swi_vol  ] = CHECK( SWI_IN__serie(S), 'volume', par.regextag_swi_volume, Inf );
+                [ SWI_IN__json , error_flag_swi_josn ] = CHECK( SWI_IN__serie(S), 'json'  , par.regextag_swi_json  , Inf );
+                
+                error_flag_swi = error_flag_swi_vol && error_flag_swi_josn;
+                
+                if ~error_flag_swi
+                    
+                    % Volume ------------------------------------------
+                    
+                    if size(SWI_IN___vol.path,1) == 1 % single echo *******
+                        
+                        % Verbose
+                        if par.verbose > 1
+                            if ~isempty(part_swi)
+                                fprintf('[%s]: Preparing SWI - %s : %s \n', mfilename, part_swi  , SWI_IN___vol.path );
+                            else
+                                fprintf('[%s]: Preparing SWI - %s : %s \n', mfilename, suffix_swi, SWI_IN___vol.path );
+                            end
+                        end
+                        
+                        % Volume ------------------------------------------
+                        
+                        if isfield(SWI_IN__serie(S).other,'SequenceData') && isfield(SWI_IN__serie(S).other.SequenceData,'B_vect') && ~isempty(SWI_IN__serie(S).other.SequenceData.ProtocolName)
+                            swi_OUT__name = SWI_IN__serie(S).other.SequenceData.ProtocolName;
+                        else
+                            swi_OUT__name = remove_serie_prefix(SWI_IN___vol.serie.name);
+                        end
+                        swi_OUT__name     = del_(swi_OUT__name);
+                        
+                        if ~isempty(part_swi)
+                            swi_OUT__name = sprintf('acq-%s_run-%d_part-%s_%s', swi_OUT__name, swi_run_number(S), part_swi, suffix_swi);
+                        else
+                            swi_OUT__name = sprintf('acq-%s_run-%d_%s'        , swi_OUT__name, swi_run_number(S),           suffix_swi);
+                        end
+                        swi_OUT__base     = fullfile( swi_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, swi_OUT__name) );
+                        swi_IN___vol_ext  = file_ext( SWI_IN___vol.path);
+                        swi_OUT__vol_path = [ swi_OUT__base swi_IN___vol_ext ];
+                        subjob_swi{S}     = link_or_copy(subjob_swi{S}, SWI_IN___vol.path, swi_OUT__vol_path, par.copytype);
+                        
+                        % Json --------------------------------------------
+                        
+                        swi_OUT__json_path = [swi_OUT__base '.json'];
+                        subjob_swi{S}      = link_or_copy(subjob_swi{S}, SWI_IN__json.path, swi_OUT__json_path, par.copytype);
+                        
+                    else % multi echo *************************************
+                        
+                        allTE              = cell2mat(SWI_IN__json.getLine('EchoTime',0));
+                        [sortedTE,orderTE] = sort(allTE); %#ok<ASGLU>
+                        
+                        % Fetch volume corrsponding to the echo
+                        for echo = 1 : length(orderTE)
+                            
+                            % Verbose
+                            if par.verbose > 1
+                                if ~isempty(part_swi)
+                                    fprintf('[%s]: Preparing SWI - %s - echo %d : %s \n', mfilename, part_swi  , echo, SWI_IN___vol.path(orderTE(echo),:) );
+                                else
+                                    fprintf('[%s]: Preparing SWI - %s - echo %d : %s \n', mfilename, suffix_swi, echo, SWI_IN___vol.path(orderTE(echo),:) );
+                                end
+                            end
+                            
+                            % Volume ------------------------------------------
+                            
+                            % The name of the serie, as we enter it in the machine is "ProtocolName"
+                            % This is an exeption for SWI, compared to all other sequences
+                            if isfield(SWI_IN__serie(S).other,'SequenceData') && isfield(SWI_IN__serie(S).other.SequenceData,'B_vect') && ~isempty(SWI_IN__serie(S).other.SequenceData.ProtocolName)
+                                swi_OUT__name = SWI_IN__serie(S).other.SequenceData.ProtocolName;
+                            else
+                                swi_OUT__name = remove_serie_prefix(SWI_IN___vol.serie.name);
+                            end
+                            swi_OUT__name     = del_(swi_OUT__name);
+                            
+                            if ~isempty(part_swi)
+                                swi_OUT__name     = sprintf('acq-%s_run-%d_echo-%d_part-%s_%s', swi_OUT__name, swi_run_number(S), echo, part_swi, suffix_swi);
+                            else
+                                swi_OUT__name     = sprintf('acq-%s_run-%d_echo-%d_%s'        , swi_OUT__name, swi_run_number(S), echo,           suffix_swi);
+                            end
+                            swi_OUT__base     = fullfile( swi_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, swi_OUT__name) );
+                            swi_IN___vol_ext  = file_ext( deblank(SWI_IN___vol.path(orderTE(echo),:)) );
+                            swi_OUT__vol_path = [ swi_OUT__base swi_IN___vol_ext ];
+                            subjob_swi{S}     = link_or_copy(subjob_swi{S}, SWI_IN___vol.path(orderTE(echo),:), swi_OUT__vol_path, par.copytype);
+                            
+                            % Json --------------------------------------------
+                            
+                            swi_OUT__json_path = [swi_OUT__base '.json'];
+                            subjob_swi{S}      = link_or_copy(subjob_swi{S}, SWI_IN__json.path(orderTE(echo),:), swi_OUT__json_path, par.copytype);
+                            
+                        end % echo
+                        
+                    end
+                    
+                end
+                
+                % Error managment
+                if ~error_flag_swi
+                    nrGood          = sum(~cellfun(@isempty,subjob_swi));
+                    if nrGood == 1
+                        job_subj    = [ job_subj sprintf('###########\n'  ) ];
+                        job_subj    = [ job_subj sprintf('### swi ###\n'  ) ];
+                        job_subj    = [ job_subj sprintf('###########\n\n') ];
+                        job_subj    = [ job_subj sprintf('mkdir -p %s \n\n', swi_OUT__dir_path) ];
+                    end
+                    job_subj        = [ job_subj subjob_swi{S} ];
+                else
+                    subjob_swi{S}  = ''; % empty the current subjob, or nrGood wont be accurate
+                end
+                
+            end % A
+            
+        end
+        
+    end % SWI
+    
+    
+    %% Save job_subj
+    
     job{e}       = job_subj;
     error_log{e} = log_subj;
     

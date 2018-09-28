@@ -57,6 +57,11 @@ defpar.fmap_regex_volume = '^s.*nii';
 defpar.fmap_tag_volume   = 's';
 defpar.fmap_tag_json     = 'j';
 
+% swi
+defpar.swi_regex_volume = '^s.*nii';
+defpar.swi_tag_volume   = 's';
+defpar.swi_tag_json     = 'j';
+
 %--------------------------------------------------------------------------
 
 defpar.sge      = 0;
@@ -82,6 +87,7 @@ fetch.SeriesDescription = 'SeriesDescription';
 fetch.SequenceID        = 'CsaSeries.MrPhoenixProtocol.lSequenceID';
 fetch.B_value           = 'CsaImage.B_value';
 fetch.B_vect            = 'CsaImage.DiffusionGradientDirection';
+fetch.ProtocolName      = 'CsaSeries.MrPhoenixProtocol.tProtocolName';
 
 % 1 : sequence name contains this
 % 2 : BIDS modality
@@ -89,12 +95,21 @@ fetch.B_vect            = 'CsaImage.DiffusionGradientDirection';
 % 4 : volume tag
 % 5 : json   tag
 SequenceCategory = {
-    'tfl'               'anat' par.anat_regex_volume par.anat_tag_volume par.anat_tag_json
-    'vfl'               'anat' par.anat_regex_volume par.anat_tag_volume par.anat_tag_json
-    'diff'              'dwi'  par. dwi_regex_volume par. dwi_tag_volume par. dwi_tag_json
-    '(bold)|(pace)'     'func' par.func_regex_volume par.func_tag_volume par.func_tag_json
-    'gre_field_mapping' 'fmap' par.fmap_regex_volume par.fmap_tag_volume par.fmap_tag_json
+    'tfl'                'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % 3DT1 mprage & mp2rage
+    'tse_vfl'            'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % 3DT2 space & 3DFLAIR space_ir
+    'diff'               'dwi'   par. dwi_regex_volume  par. dwi_tag_volume  par. dwi_tag_json % diffusion
+    '(bold)|(pace)'      'func'  par.func_regex_volume  par.func_tag_volume  par.func_tag_json % bold fmri
+    'gre_field_mapping'  'fmap'  par.fmap_regex_volume  par.fmap_tag_volume  par.fmap_tag_json % gre_field_mapping
+    '^gre$'              'swi'   par. swi_regex_volume  par. swi_tag_volume  par. swi_tag_json % gre SWI
+    '^gre$'              'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % gre FLASH
     };
+
+
+to_discard = {'haste'};
+
+for d = 1 : length(to_discard)
+    SequenceCategory(end+1,[1 2]) = [to_discard(d) {'discard'}]; %#ok<AGROW>
+end
 
 
 %% Fetch exam, fill series, volumes ans jsons
@@ -110,7 +125,7 @@ for ex = 1 : numel(examArray)
         continue
     end
     
-    exam_SequenceData = cell(numel(subdir),8); % container, pre-allocation
+    exam_SequenceData = cell(numel(subdir),9); % container, pre-allocation
     
     if par.verbose > 0
         error_log = log(error_log,ex,sprintf( '[%s] : Working on %d/%d : %s \n', mfilename, ex, numel(examArray) , examArray(ex).path ), 1);
@@ -163,6 +178,9 @@ for ex = 1 : numel(examArray)
             
         end
         
+        ProtocolName = get_field_one(content, fetch.ProtocolName);
+        exam_SequenceData{ser,8} = ProtocolName;
+        
     end % ser
     
     examArray(ex).other.SequenceData = exam_SequenceData;
@@ -190,7 +208,9 @@ for ex = 1 : numel(examArray)
         % Special cases %
         %%%%%%%%%%%%%%%%%
         
-        % func ------------------------------------------------------------
+        %------------------------------------------------------------------
+        % func
+        %------------------------------------------------------------------
         if strcmp(SequenceCategory{idx,2},'func')
             
             type = exam_SequenceData(where,3); % mag or phase
@@ -207,7 +227,9 @@ for ex = 1 : numel(examArray)
             if any(type_M)    , examArray(ex).addSerie(upper_dir_name(type_M    ), 'func_mag'  ), exam_SequenceData(where(type_M    ),end) = {'func_mag'  }; end
             if any(type_P)    , examArray(ex).addSerie(upper_dir_name(type_P    ), 'func_phase'), exam_SequenceData(where(type_P    ),end) = {'func_phase'}; end
             
-            % anat --------------------------------------------------------
+            %--------------------------------------------------------------
+            % anat
+            %--------------------------------------------------------------
         elseif strcmp(SequenceCategory{idx,2},'anat')
             
             subcategory = {'_INV1','_INV2','_UNI_Images','_T1_Images'}; % mp2rage
@@ -225,28 +247,38 @@ for ex = 1 : numel(examArray)
             
             if ~isempty(upper_dir_name) % if the list is not empty, it means some non-mp2rage sereies remains, such as classic mprage, or else...
                 
-                SequenceFileName = exam_SequenceData{where,1};
-                SequenceName     = exam_SequenceData{where,2};
+                SequenceFileName = exam_SequenceData(where,1);
+                SequenceName     = exam_SequenceData(where,2);
                 
-                if strcmp(SequenceFileName,'tfl')
+                tfl = strcmp(SequenceFileName, 'tfl');
+                if any( tfl ), examArray(ex).addSerie(upper_dir_name( tfl ),'anat_T1w'), exam_SequenceData(where( tf ),end) = {'anat_T1w'}; end
+                
+                tse_vfl = strcmp(SequenceFileName, 'tse_vfl');
+                if any( tse_vfl )
+                    spcir = ~isemptyCELL(strfind(SequenceName, 'spcir_')); if any( spcir ), examArray(ex).addSerie(upper_dir_name( spcir ),'anat_FLAIR'), exam_SequenceData(where( spcir ),end) = {'anat_FLAIR'}; end
+                    spc   = ~isemptyCELL(strfind(SequenceName, 'spc_'  )); if any( spc   ), examArray(ex).addSerie(upper_dir_name( spc   ),'anat_T2w'  ), exam_SequenceData(where( spc   ),end) = {'anat_T2w'  }; end
+                end
+                
+                gre = strcmp(SequenceFileName, 'gre');
+                if any( gre )
                     
-                    examArray(ex).addSerie(upper_dir_name,'anat_T1w')
-                    exam_SequenceData(where,end) =       {'anat_T1w'};
+                    fl = ~isemptyCELL(strfind(SequenceName, 'fl'));
                     
-                elseif strcmp(SequenceFileName,               'tse_vfl')
+                    type   = exam_SequenceData(where,3); % mag or phase
                     
-                    if strfind(SequenceName,                  'spcir_')
-                        examArray(ex).addSerie(upper_dir_name,'anat_FLAIR')
-                        exam_SequenceData(where,end) =       {'anat_FLAIR'};
-                    elseif strfind(SequenceName,              'spc_')
-                        examArray(ex).addSerie(upper_dir_name,'anat_T2w')
-                        exam_SequenceData(where,end) =       {'anat_T2w'};
-                    end
+                    type_M = strcmp(type,'M'); fl_mag = fl & type_M;
+                    type_P = strcmp(type,'P'); fl_pha = fl & type_P;
+                    
+                    if any( fl_mag ), examArray(ex).addSerie(upper_dir_name( fl_mag ), 'anat_FLASH_mag'  ), exam_SequenceData(where( fl_mag ),end) = {'anat_FLASH_mag'  }; end
+                    if any( fl_pha ), examArray(ex).addSerie(upper_dir_name( fl_pha ), 'anat_FLASH_phase'), exam_SequenceData(where( fl_pha ),end) = {'anat_FLASH_phase'}; end
                     
                 end
+                
             end
             
-            % fmap --------------------------------------------------------
+            %--------------------------------------------------------------
+            % fmap
+            %--------------------------------------------------------------
         elseif strcmp(SequenceCategory{idx,2},'fmap')
             
             type = exam_SequenceData(where,3); % mag or phase
@@ -257,6 +289,49 @@ for ex = 1 : numel(examArray)
             if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  ), exam_SequenceData(where(type_M),end) = {'fmap_mag'  }; end
             if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase'), exam_SequenceData(where(type_P),end) = {'fmap_phase'}; end
             
+            
+            %--------------------------------------------------------------
+            % swi
+            %--------------------------------------------------------------
+        elseif strcmp(SequenceCategory{idx,2},'swi')
+            
+            subcategory = {'Mag_','Pha_','mIP_','SWI_'}; % swi
+            
+            for sc = 1 : length(subcategory)
+                
+                where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
+                
+                if any(where_sc) % yes
+                    examArray(ex).addSerie(upper_dir_name(where_sc), strcat('swi', '_', subcategory{sc}(1:end-1)) )% add them
+                    exam_SequenceData(where(where_sc),end) =       { strcat('swi', '_', subcategory{sc}(1:end-1)) };
+                    upper_dir_name(where_sc) = []; % remove them from the list
+                    where(where_sc) = [];
+                end
+                
+            end
+            
+            if ~isempty(upper_dir_name) % if the list is not empty, it means some non-mp2rage sereies remains, such as classic mprage, or else...
+                
+                SequenceName     = exam_SequenceData(where,2);
+                
+                for f = 1 : length(SequenceName)
+                    
+                    if strfind(SequenceName{f},'fl')
+                        % ok its a classic gre-flash, it will be analyzed as 'anat'
+                    else
+                        str = warning('we have a problem with what i suppose is a SWI [ %s ]', upper_dir_name{f});
+                        error_log = log(error_log,ex,str,0);
+                    end
+                    
+                end % SequenceFileName
+                
+            end
+            
+            
+            % discard -----------------------------------------------------
+        elseif strcmp(SequenceCategory{idx,2},'discard')
+            exam_SequenceData(where,end) = SequenceCategory(idx,2);
+            continue
         else
             examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
             exam_SequenceData(where,end) = SequenceCategory(idx,2);
@@ -273,17 +348,23 @@ for ex = 1 : numel(examArray)
         
         % Add sequence data
         if ~isempty( exam_SequenceData{ser,end} )
-            Serie_obj      = examArray(ex).getSerie(exam_SequenceData{ser,end});
-            SeqData_struct = cell2struct( exam_SequenceData( ~cellfun(@isempty,regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end})) , 1:end-1) , fieldnames(fetch) , 2 );
-            if ~isempty( Serie_obj )
-                for s = 1 : length(Serie_obj)
-                    Serie_obj(s).other.SequenceData = SeqData_struct(s);
-                end
-            else
-                str = warning('[%s] : we have a problem, I can''t find any serie for [ %s ]', mfilename, exam_SequenceData{ser,end});
-                error_log = log(error_log,ex,str);
-            end
             
+            if strcmp(exam_SequenceData{ser,end},'discard')
+                % pass
+            else
+                
+                Serie_obj      = examArray(ex).getSerie(exam_SequenceData{ser,end});
+                SeqData_struct = cell2struct( exam_SequenceData( ~cellfun(@isempty,regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end})) , 1:end-1) , fieldnames(fetch) , 2 );
+                if ~isempty( Serie_obj )
+                    for s = 1 : length(Serie_obj)
+                        Serie_obj(s).other.SequenceData = SeqData_struct(s);
+                    end
+                else
+                    str = warning('[%s] : we have a problem, I can''t find any serie for [ %s ]', mfilename, exam_SequenceData{ser,end});
+                    error_log = log(error_log,ex,str,0);
+                end
+                
+            end
             
         else % Error log
             in = exam_SequenceData(ser,:);
@@ -302,6 +383,13 @@ end % ex
 % Reorder series to they are in alphabetical==time order, according to their name S01, S02, S03, ...
 examArray.reorderSeries('name');
 
+
+end % function
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function result = isemptyCELL( input )
+
+result = cellfun(@isempty, input);
 
 end % function
 
