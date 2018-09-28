@@ -102,6 +102,7 @@ SequenceCategory = {
     'gre_field_mapping'  'fmap'  par.fmap_regex_volume  par.fmap_tag_volume  par.fmap_tag_json % gre_field_mapping
     '^gre$'              'swi'   par. swi_regex_volume  par. swi_tag_volume  par. swi_tag_json % gre SWI
     '^gre$'              'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % gre FLASH
+    '^tse$'              'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % tse, usually AX_2DT1 or AX_2DT2
     };
 
 
@@ -276,6 +277,9 @@ for ex = 1 : numel(examArray)
                     if any( fl_pha ), examArray(ex).addSerie(upper_dir_name( fl_pha ), 'anat_FLASH_phase'), exam_SequenceData(where( fl_pha ),end) = {'anat_FLASH_phase'}; flag_add = 1; end
                     
                 end
+                
+                tse = strcmp(SequenceFileName, 'tse');
+                if any( tse ), examArray(ex).addSerie(upper_dir_name( tse ),'anat_T1w'), exam_SequenceData(where( tse ),end) = {'anat_T1w'}; flag_add = 1; end
                 
             end
             
