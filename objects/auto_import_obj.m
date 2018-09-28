@@ -197,6 +197,8 @@ for ex = 1 : numel(examArray)
     % Try to fit the sequence name to the category
     for idx = 1 : size(SequenceCategory, 1)
         
+        flag_add = 0;
+        
         where = find( ~cellfun( @isempty , regexp(exam_SequenceData(:,1),SequenceCategory{idx,1}) ) );
         if isempty(where)
             continue
@@ -223,9 +225,9 @@ for ex = 1 : numel(examArray)
             
             type_M = logical( type_M - type_SBRef );
             
-            if any(type_SBRef), examArray(ex).addSerie(upper_dir_name(type_SBRef), 'func_sbref'), exam_SequenceData(where(type_SBRef),end) = {'func_sbref'}; end
-            if any(type_M)    , examArray(ex).addSerie(upper_dir_name(type_M    ), 'func_mag'  ), exam_SequenceData(where(type_M    ),end) = {'func_mag'  }; end
-            if any(type_P)    , examArray(ex).addSerie(upper_dir_name(type_P    ), 'func_phase'), exam_SequenceData(where(type_P    ),end) = {'func_phase'}; end
+            if any(type_SBRef), examArray(ex).addSerie(upper_dir_name(type_SBRef), 'func_sbref'), exam_SequenceData(where(type_SBRef),end) = {'func_sbref'}; flag_add = 1; end
+            if any(type_M)    , examArray(ex).addSerie(upper_dir_name(type_M    ), 'func_mag'  ), exam_SequenceData(where(type_M    ),end) = {'func_mag'  }; flag_add = 1; end
+            if any(type_P)    , examArray(ex).addSerie(upper_dir_name(type_P    ), 'func_phase'), exam_SequenceData(where(type_P    ),end) = {'func_phase'}; flag_add = 1; end
             
             %--------------------------------------------------------------
             % anat
@@ -238,6 +240,7 @@ for ex = 1 : numel(examArray)
                 where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
                 if any(where_sc) % yes
                     examArray(ex).addSerie(upper_dir_name(where_sc), strcat('anat', subcategory{sc})  )% add them
+                     flag_add = 1; 
                     exam_SequenceData(where(where_sc),end) = {strcat('anat', subcategory{sc})};
                     upper_dir_name(where_sc) = []; % remove them from the list
                     where(where_sc) = [];
@@ -251,12 +254,12 @@ for ex = 1 : numel(examArray)
                 SequenceName     = exam_SequenceData(where,2);
                 
                 tfl = strcmp(SequenceFileName, 'tfl');
-                if any( tfl ), examArray(ex).addSerie(upper_dir_name( tfl ),'anat_T1w'), exam_SequenceData(where( tf ),end) = {'anat_T1w'}; end
+                if any( tfl ), examArray(ex).addSerie(upper_dir_name( tfl ),'anat_T1w'), exam_SequenceData(where( tfl ),end) = {'anat_T1w'}; flag_add = 1; end
                 
                 tse_vfl = strcmp(SequenceFileName, 'tse_vfl');
                 if any( tse_vfl )
-                    spcir = ~isemptyCELL(strfind(SequenceName, 'spcir_')); if any( spcir ), examArray(ex).addSerie(upper_dir_name( spcir ),'anat_FLAIR'), exam_SequenceData(where( spcir ),end) = {'anat_FLAIR'}; end
-                    spc   = ~isemptyCELL(strfind(SequenceName, 'spc_'  )); if any( spc   ), examArray(ex).addSerie(upper_dir_name( spc   ),'anat_T2w'  ), exam_SequenceData(where( spc   ),end) = {'anat_T2w'  }; end
+                    spcir = ~isemptyCELL(strfind(SequenceName, 'spcir_')); if any( spcir ), examArray(ex).addSerie(upper_dir_name( spcir ),'anat_FLAIR'), exam_SequenceData(where( spcir ),end) = {'anat_FLAIR'}; flag_add = 1; end
+                    spc   = ~isemptyCELL(strfind(SequenceName, 'spc_'  )); if any( spc   ), examArray(ex).addSerie(upper_dir_name( spc   ),'anat_T2w'  ), exam_SequenceData(where( spc   ),end) = {'anat_T2w'  }; flag_add = 1; end
                 end
                 
                 gre = strcmp(SequenceFileName, 'gre');
@@ -269,8 +272,8 @@ for ex = 1 : numel(examArray)
                     type_M = strcmp(type,'M'); fl_mag = fl & type_M;
                     type_P = strcmp(type,'P'); fl_pha = fl & type_P;
                     
-                    if any( fl_mag ), examArray(ex).addSerie(upper_dir_name( fl_mag ), 'anat_FLASH_mag'  ), exam_SequenceData(where( fl_mag ),end) = {'anat_FLASH_mag'  }; end
-                    if any( fl_pha ), examArray(ex).addSerie(upper_dir_name( fl_pha ), 'anat_FLASH_phase'), exam_SequenceData(where( fl_pha ),end) = {'anat_FLASH_phase'}; end
+                    if any( fl_mag ), examArray(ex).addSerie(upper_dir_name( fl_mag ), 'anat_FLASH_mag'  ), exam_SequenceData(where( fl_mag ),end) = {'anat_FLASH_mag'  }; flag_add = 1; end
+                    if any( fl_pha ), examArray(ex).addSerie(upper_dir_name( fl_pha ), 'anat_FLASH_phase'), exam_SequenceData(where( fl_pha ),end) = {'anat_FLASH_phase'}; flag_add = 1; end
                     
                 end
                 
@@ -286,8 +289,8 @@ for ex = 1 : numel(examArray)
             type_M = strcmp(type,'M');
             type_P = strcmp(type,'P');
             
-            if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  ), exam_SequenceData(where(type_M),end) = {'fmap_mag'  }; end
-            if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase'), exam_SequenceData(where(type_P),end) = {'fmap_phase'}; end
+            if any(type_M), examArray(ex).addSerie(upper_dir_name(type_M), 'fmap_mag'  ), exam_SequenceData(where(type_M),end) = {'fmap_mag'  }; flag_add = 1; end
+            if any(type_P), examArray(ex).addSerie(upper_dir_name(type_P), 'fmap_phase'), exam_SequenceData(where(type_P),end) = {'fmap_phase'}; flag_add = 1; end
             
             
             %--------------------------------------------------------------
@@ -303,6 +306,7 @@ for ex = 1 : numel(examArray)
                 
                 if any(where_sc) % yes
                     examArray(ex).addSerie(upper_dir_name(where_sc), strcat('swi', '_', subcategory{sc}(1:end-1)) )% add them
+                    flag_add = 1;
                     exam_SequenceData(where(where_sc),end) =       { strcat('swi', '_', subcategory{sc}(1:end-1)) };
                     upper_dir_name(where_sc) = []; % remove them from the list
                     where(where_sc) = [];
@@ -334,12 +338,15 @@ for ex = 1 : numel(examArray)
             continue
         else
             examArray(ex).addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
+            flag_add = 1;
             exam_SequenceData(where,end) = SequenceCategory(idx,2);
         end
         
         % Add volume & json
-        examArray(ex).getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
-        examArray(ex).getSerie(SequenceCategory{idx,2}).addJson('json$',SequenceCategory{idx,5});
+        if flag_add
+            examArray(ex).getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
+            examArray(ex).getSerie(SequenceCategory{idx,2}).addJson('json$',SequenceCategory{idx,5});
+        end
         
     end % categ
     
@@ -354,8 +361,8 @@ for ex = 1 : numel(examArray)
             else
                 
                 Serie_obj      = examArray(ex).getSerie(exam_SequenceData{ser,end});
-                SeqData_struct = cell2struct( exam_SequenceData( ~cellfun(@isempty,regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end})) , 1:end-1) , fieldnames(fetch) , 2 );
                 if ~isempty( Serie_obj )
+                    SeqData_struct = cell2struct( exam_SequenceData( ~cellfun(@isempty,regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end})) , 1:end-1) , fieldnames(fetch) , 2 );
                     for s = 1 : length(Serie_obj)
                         Serie_obj(s).other.SequenceData = SeqData_struct(s);
                     end

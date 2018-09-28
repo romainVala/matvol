@@ -99,7 +99,8 @@ bidsignore = {
     '*inv-1*'
     '*inv-2*'
     '*T1map*'
-    '*_part-*' % FLASH  : mag / pahse
+    '*_part-*' % FLASH  : mag / pahse, SWI : mag / phase
+    'swi'
     };
 
 fileID = fopen( fullfile(bidsDir,'.bidsignore') , 'w' , 'n' , 'UTF-8' );
