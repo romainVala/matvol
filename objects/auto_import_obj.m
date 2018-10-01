@@ -79,12 +79,11 @@ par = complet_struct(par,defpar);
 
 %% Some parameters
 
-fetch.SequenceFileName  = 'CsaSeries.MrPhoenixProtocol.tSequenceFileName';
-fetch.SequenceName      = 'SequenceName';
-fetch.ImageType         = 'ImageType';
-fetch.SeriesDescription = 'SeriesDescription';
-% fetch.SeriesNumber      = 'SeriesNumber';
+fetch.SequenceFileName  = 'CsaSeries.MrPhoenixProtocol.tSequenceFileName'; % 'tfl'
+fetch.SequenceName      = 'SequenceName';                                  % '*tfl3d1_ns'
+fetch.ImageType         = 'ImageType';                                     % 'M' / 'P' / ...
 fetch.SequenceID        = 'CsaSeries.MrPhoenixProtocol.lSequenceID';
+fetch.SeriesDescription = 'SeriesDescription';
 fetch.B_value           = 'CsaImage.B_value';
 fetch.B_vect            = 'CsaImage.DiffusionGradientDirection';
 fetch.ProtocolName      = 'CsaSeries.MrPhoenixProtocol.tProtocolName';
