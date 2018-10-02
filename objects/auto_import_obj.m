@@ -79,15 +79,6 @@ par = complet_struct(par,defpar);
 
 %% Some parameters
 
-fetch.SequenceFileName  = 'CsaSeries.MrPhoenixProtocol.tSequenceFileName'; % 'tfl'
-fetch.SequenceName      = 'SequenceName';                                  % '*tfl3d1_ns'
-fetch.ImageType         = 'ImageType';                                     % 'M' / 'P' / ...
-fetch.SequenceID        = 'CsaSeries.MrPhoenixProtocol.lSequenceID';
-fetch.SeriesDescription = 'SeriesDescription';
-fetch.B_value           = 'CsaImage.B_value';
-fetch.B_vect            = 'CsaImage.DiffusionGradientDirection';
-fetch.ProtocolName      = 'CsaSeries.MrPhoenixProtocol.tProtocolName';
-
 % 1 : sequence name contains this
 % 2 : BIDS modality
 % 3 : volume regex
@@ -125,72 +116,28 @@ for ex = 1 : numel(examArray)
         continue
     end
     
-    exam_SequenceData = cell(numel(subdir),9); % container, pre-allocation
-    
     if par.verbose > 0
         error_log = log(error_log,ex,sprintf( '[%s] : Working on %d/%d : %s \n', mfilename, ex, numel(examArray) , examArray(ex).path ), 1);
     end
     
     %======================================================================
     
-    % For all subdir found, try to recognize if there is a json,
-    % and then try to extract the sequence name i nhe json
-    for ser = 1 : numel(subdir)
-        
-        % Fetch all json files
-        json = gfile(subdir{ser},'json$',struct('verbose',0));
-        if isempty(json)
-            continue
-        end
-        
-        json = json{1}; % in case of multiple volumes, only keep the first file
-        content = get_file_content_as_char(deblank(json(1,:)));
-        
-        % Fetch the line content ------------------------------------------
-        
-        SequenceFileName = get_field_one(content, fetch.SequenceFileName);
-        if isempty(SequenceFileName)
-            continue
-        end
-        split = regexp(SequenceFileName,'\\\\','split'); % example : "%SiemensSeq%\\ep2d_bold"
-        exam_SequenceData{ser,1} = split{end};
-        
-        SequenceName = get_field_one(content, fetch.SequenceName);
-        exam_SequenceData{ser,2} = SequenceName;
-        
-        ImageType  = get_field_mul(content, fetch.ImageType);
-        MAGorPHASE = ImageType{3};
-        exam_SequenceData{ser,3} = MAGorPHASE;
-        
-        SequenceID  = get_field_one(content, fetch.SequenceID);
-        exam_SequenceData{ser,4} = str2double(SequenceID);
-        
-        SeriesDescription = get_field_one(content, fetch.SeriesDescription);
-        exam_SequenceData{ser,5} = SeriesDescription;
-        
-        if regexp(split{end}, 'diff')
-            
-            B_value = get_field_mul(content, fetch.B_value);
-            exam_SequenceData{ser,6} = str2double(B_value)';
-            
-            B_vect  = get_field_mul_vect(content, fetch.B_vect);
-            exam_SequenceData{ser,7} = B_vect;
-            
-        end
-        
-        ProtocolName = get_field_one(content, fetch.ProtocolName);
-        exam_SequenceData{ser,8} = ProtocolName;
-        
-    end % ser
+    % Fetch all json files
+    json = gfile(subdir,'json$',struct('verbose',0));
     
-    examArray(ex).other.SequenceData = exam_SequenceData;
+    % Extract all parameters
+    param_struct = get_sequence_param_from_json( json, 1 );
+    hdr_str = fieldnames(param_struct{1});
+    hdr = cell2struct(num2cell(1:length(hdr_str)),hdr_str,2);
     
-    if par.verbose > 2
-        fprintf('SequenceName found : \n')
-        disp(exam_SequenceData)
-        fprintf('\n')
+    % Transform the structure into a cell, easier to display and manipulate in that case
+    exam_SequenceData = cell(size(param_struct,1),length(hdr_str));
+    for p = 1 : numel(param_struct)
+        exam_SequenceData(p,:) = struct2cell(param_struct{p}(1))';
     end
     
+    % Add one last column
+    exam_SequenceData{1,end+1} = []; %#ok<AGROW>
     
     %======================================================================
     
@@ -199,7 +146,7 @@ for ex = 1 : numel(examArray)
         
         flag_add = 0;
         
-        where = find( ~cellfun( @isempty , regexp(exam_SequenceData(:,1),SequenceCategory{idx,1}) ) );
+        where = find( ~cellfun( @isempty , regexp(exam_SequenceData(:,hdr.SequenceFileName),SequenceCategory{idx,1}) ) );
         if isempty(where)
             continue
         end
@@ -215,8 +162,8 @@ for ex = 1 : numel(examArray)
         %------------------------------------------------------------------
         if strcmp(SequenceCategory{idx,2},'func')
             
-            type = exam_SequenceData(where,3); % mag or phase
-            name = exam_SequenceData(where,5); % serie name
+            type = exam_SequenceData(where,hdr.ImageType); % mag or phase
+            name = exam_SequenceData(where,hdr.SequenceName); % serie name
             
             type_SBRef = ~cellfun(@isempty,regexp(name,'SBRef$'));
             
@@ -240,7 +187,7 @@ for ex = 1 : numel(examArray)
                 where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
                 if any(where_sc) % yes
                     examArray(ex).addSerie(upper_dir_name(where_sc), strcat('anat', subcategory{sc})  )% add them
-                     flag_add = 1; 
+                    flag_add = 1;
                     exam_SequenceData(where(where_sc),end) = {strcat('anat', subcategory{sc})};
                     upper_dir_name(where_sc) = []; % remove them from the list
                     where(where_sc) = [];
@@ -250,8 +197,8 @@ for ex = 1 : numel(examArray)
             
             if ~isempty(upper_dir_name) % if the list is not empty, it means some non-mp2rage sereies remains, such as classic mprage, or else...
                 
-                SequenceFileName = exam_SequenceData(where,1);
-                SequenceName     = exam_SequenceData(where,2);
+                SequenceFileName = exam_SequenceData(where,hdr.SequenceFileName);
+                SequenceName     = exam_SequenceData(where,hdr.SequenceName);
                 
                 tfl = strcmp(SequenceFileName, 'tfl');
                 if any( tfl ), examArray(ex).addSerie(upper_dir_name( tfl ),'anat_T1w'), exam_SequenceData(where( tfl ),end) = {'anat_T1w'}; flag_add = 1; end
@@ -267,7 +214,7 @@ for ex = 1 : numel(examArray)
                     
                     fl = ~isemptyCELL(strfind(SequenceName, 'fl'));
                     
-                    type   = exam_SequenceData(where,3); % mag or phase
+                    type   = exam_SequenceData(where,hdr.ImageType); % mag or phase
                     
                     type_M = strcmp(type,'M'); fl_mag = fl & type_M;
                     type_P = strcmp(type,'P'); fl_pha = fl & type_P;
@@ -278,7 +225,7 @@ for ex = 1 : numel(examArray)
                 end
                 
                 tse = strcmp(SequenceFileName, 'tse');
-                if any( tse ), examArray(ex).addSerie(upper_dir_name( tse ),'anat_T1w'), exam_SequenceData(where( tse ),end) = {'anat_T1w'}; flag_add = 1; end
+                if any( tse ), examArray(ex).addSerie(upper_dir_name( tse ),'anat_TSE'), exam_SequenceData(where( tse ),end) = {'anat_TSE'}; flag_add = 1; end
                 
             end
             
@@ -287,7 +234,7 @@ for ex = 1 : numel(examArray)
             %--------------------------------------------------------------
         elseif strcmp(SequenceCategory{idx,2},'fmap')
             
-            type = exam_SequenceData(where,3); % mag or phase
+            type = exam_SequenceData(where,hdr.ImageType); % mag or phase
             
             type_M = strcmp(type,'M');
             type_P = strcmp(type,'P');
@@ -319,7 +266,7 @@ for ex = 1 : numel(examArray)
             
             if ~isempty(upper_dir_name) % if the list is not empty, it means some non-mp2rage sereies remains, such as classic mprage, or else...
                 
-                SequenceName     = exam_SequenceData(where,2);
+                SequenceName = exam_SequenceData(where,hdr.SequenceName);
                 
                 for f = 1 : length(SequenceName)
                     
@@ -333,7 +280,6 @@ for ex = 1 : numel(examArray)
                 end % SequenceFileName
                 
             end
-            
             
             % discard -----------------------------------------------------
         elseif strcmp(SequenceCategory{idx,2},'discard')
@@ -365,9 +311,9 @@ for ex = 1 : numel(examArray)
                 
                 Serie_obj      = examArray(ex).getSerie(exam_SequenceData{ser,end});
                 if ~isempty( Serie_obj )
-                    SeqData_struct = cell2struct( exam_SequenceData( ~cellfun(@isempty,regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end})) , 1:end-1) , fieldnames(fetch) , 2 );
+                    SeqData_struct = param_struct(~cellfun(@isempty,regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end})));
                     for s = 1 : length(Serie_obj)
-                        Serie_obj(s).other.SequenceData = SeqData_struct(s);
+                        Serie_obj(s).sequence = SeqData_struct{s};
                     end
                 else
                     str = warning('[%s] : we have a problem, I can''t find any serie for [ %s ]', mfilename, exam_SequenceData{ser,end});
@@ -389,6 +335,15 @@ end % ex
 
 
 %% Post operations
+
+examArray(ex).other.SequenceData     = exam_SequenceData;
+examArray(ex).other.SequenceData_hdr = hdr;
+
+if par.verbose > 2
+    fprintf('SequenceName found : \n')
+    disp(exam_SequenceData)
+    fprintf('\n')
+end
 
 % Reorder series to they are in alphabetical==time order, according to their name S01, S02, S03, ...
 examArray.reorderSeries('name');
@@ -419,92 +374,5 @@ if isempty(error_log{ex})
 else
     error_log{ex} = [error_log{ex} str sprintf('\n')];
 end
-
-end % function
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function result = get_field_one(content, regex)
-
-% Fetch the line content
-start = regexp(content           , regex, 'once');
-stop  = regexp(content(start:end), ','  , 'once');
-line = content(start:start+stop);
-token = regexp(line, ': (.*),','tokens'); % extract the value from the line
-if isempty(token)
-    result = [];
-else
-    res = token{1}{1};
-    if strcmp(res(1),'"')
-        result = res(2:end-1); % remove " @ beguining and end
-    else
-        result = res;
-    end
-end
-
-end % function
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function result = get_field_mul(content, regex)
-
-% Fetch the line content
-start = regexp(content           , regex, 'once');
-stop  = regexp(content(start:end), ']'  , 'once');
-line = content(start:start+stop);
-
-if strfind(line(length(regex):end),'Csa') % in cas of single value, and not multiple ( such as signle B0 value for diff )
-    stop  = regexp(content(start:end), ','  , 'once');
-    line = content(start:start+stop);
-end
-
-token = regexp(line, ': (.*),','tokens'); % extract the value from the line
-if isempty(token)
-    result = [];
-else
-    res    = token{1}{1};
-    VECT_cell_raw = strsplit(res,'\n')';
-    if length(VECT_cell_raw)>1
-        VECT_cell = VECT_cell_raw(2:end-1);
-    else
-        VECT_cell = VECT_cell_raw;
-    end
-    VECT_cell = strrep(VECT_cell,',','');
-    VECT_cell = strrep(VECT_cell,' ','');
-    result    = strrep(VECT_cell,'"','');
-end
-
-end % function
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function result = get_field_mul_vect(content, regex)
-
-% with Siemens product, [0,0,0] vectors are written as 'null'
-% but 'null' is dirty, i prefrer real null vectors [0,0,0]
-content_new = regexprep(content,'null',sprintf('[\n 0,\n 0,\n 0 \n]'));
-
-% Fetch the line content
-start = regexp(content_new           , regex, 'once');
-stop  = regexp(content_new(start:end), '\]\s+\]'  , 'once');
-line = content_new(start:start+stop+1);
-
-if strfind(line(length(regex):end),'Csa') % in cas of single value, and not multiple ( such as signle B0 value for diff )
-    stop  = regexp(content(start:end), '\],\s+"'  , 'once');
-    line = content(start:start+stop);
-end
-
-VECT_cell_raw = strsplit(line,'\n')';
-
-if length(VECT_cell_raw)>1
-    VECT_cell = VECT_cell_raw(2:end-1);
-else
-    VECT_cell = VECT_cell_raw;
-end
-VECT_cell = strrep(VECT_cell,',','');
-VECT_cell = strrep(VECT_cell,' ','');
-VECT_cell = strrep(VECT_cell,'[','');
-VECT_cell = strrep(VECT_cell,']','');
-VECT_cell = VECT_cell(~cellfun(@isempty,VECT_cell));
-
-v = str2double(VECT_cell);
-result = reshape(v,[3 numel(v)/3]);
 
 end % function

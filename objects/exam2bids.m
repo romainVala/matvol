@@ -215,9 +215,10 @@ for e = 1:nrExam
                 elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR'      ), suffix_anat = 'FLAIR'; to_remove   = 0                    ;
                 elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_mag'  ), suffix_anat = 'FLASH'; to_remove   = 0                    ; part = 'mag'  ;
                 elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_phase'), suffix_anat = 'FLASH'; to_remove   = length('_phase'     ); part = 'phase';
+                elseif strfind(ANAT_IN__serie(A).tag,'_TSE'        ), continue % skip
                     
                 else
-                    warninbgSTR = waring('Using T1w sufix because unknown tag : %s', ANAT_IN__serie(A).tag);
+                    warninbgSTR = warning('Using T1w sufix because unknown tag : %s', ANAT_IN__serie(A).tag);
                     log_subj    = [ log_subj warninbgSTR sprintf('\n') ];
                     suffix_anat = 'T1w';
                     to_remove   = 0;
@@ -265,7 +266,11 @@ for e = 1:nrExam
                         
                     else % multi echo *************************************
                         
-                        allTE              = cell2mat(ANAT_IN__json.getLine('EchoTime',0));
+                        if isfield(ANAT_IN__json.serie.sequence,'EchoTime')
+                            allTE          = [ANAT_IN__json.serie.sequence.EchoTime]';
+                        else
+                            allTE          = cell2mat(ANAT_IN__json.getLine('EchoTime',0));
+                        end
                         [sortedTE,orderTE] = sort(allTE); %#ok<ASGLU>
                         
                         % Fetch volume corrsponding to the echo
@@ -374,13 +379,17 @@ for e = 1:nrExam
                         % Json --------------------------------------------
                         
                         func_OUT__json_path = [ func_OUT__vol_base '.json' ];
-                        json_func_struct    = getJSON_params_EPI( FUNC_IN__json.path, func_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                        json_func_struct    = getJSON_params_EPI( FUNC_IN__json, func_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
                         json_func_str       = struct2jsonSTR( json_func_struct );
                         subjob_func{F}      = jobcmd_write_json_bids( subjob_func{F}, json_func_str, func_OUT__json_path, FUNC_IN__json.path );
                         
                     else % multi echo *************************************
                         
-                        allTE              = cell2mat(FUNC_IN__json.getLine('EchoTime',0));
+                        if isfield(FUNC_IN__json.serie.sequence,'EchoTime')
+                            allTE          = [FUNC_IN__json.serie.sequence.EchoTime]';
+                        else
+                            allTE          = cell2mat(FUNC_IN__json.getLine('EchoTime',0));
+                        end
                         [sortedTE,orderTE] = sort(allTE); %#ok<ASGLU>
                         
                         % Volume ------------------------------------------
@@ -406,7 +415,7 @@ for e = 1:nrExam
                             
                             % Json --------------------------------------------
                             
-                            json_func_struct = getJSON_params_EPI( FUNC_IN__json.path(orderTE(echo),:), func_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                            json_func_struct = getJSON_params_EPI( FUNC_IN__json, func_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
                             json_func_str    = struct2jsonSTR( json_func_struct );
                             subjob_func{F}   = jobcmd_write_json_bids( subjob_func{F}, json_func_str, func_OUT__json_path, FUNC_IN__json.path(orderTE(echo),:) );
                             
@@ -485,7 +494,7 @@ for e = 1:nrExam
                 if ~error_flag_dwi
                     
                     dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
-                    json_dwi_struct    = getJSON_params_EPI( DWI_IN__json.path, dwi_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                    json_dwi_struct    = getJSON_params_EPI( DWI_IN__json, dwi_OUT__vol_name ); % Get data from the Json that we will append on the to, to match BIDS architecture
                     json_dwi_str       = struct2jsonSTR( json_dwi_struct );
                     subjob_dwi{D}      = jobcmd_write_json_bids( subjob_dwi{D}, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path );
                     
@@ -639,7 +648,7 @@ for e = 1:nrExam
                             error_flag_fmap = 1;
                         else
                             fmap_OUT__json_path = [fmap_OUT__base '.json'];
-                            json_fmap_struct    = getJSON_params_GRE_FIELD_MAP( FMAP_IN__json.path ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                            json_fmap_struct    = getJSON_params_GRE_FIELD_MAP( FMAP_IN__json ); % Get data from the Json that we will append on the to, to match BIDS architecture
                             json_fmap_str       = struct2jsonSTR( json_fmap_struct );
                             subjob_fmap{FM}     = jobcmd_write_json_bids( subjob_fmap{FM}, json_fmap_str, fmap_OUT__json_path, FMAP_IN__json.path );
                         end
@@ -697,7 +706,7 @@ for e = 1:nrExam
                 elseif strfind(SWI_IN__serie(S).tag,'_SWI'), part_swi = ''     ; suffix_swi = 'swi'  ;
                     
                 else
-                    warninbgSTR = waring('Using swi sufix because unknown tag : %s', SWI_IN__serie(S).tag);
+                    warninbgSTR = warning('Using swi sufix because unknown tag : %s', SWI_IN__serie(S).tag);
                     log_subj    = [ log_subj warninbgSTR sprintf('\n') ];
                     part_swi    = ''; suffix_swi  = 'swi';
                 end
@@ -1014,89 +1023,54 @@ json_str = [ json_str(1:end-2) sprintf('\n}') ]; % delete the last ',\n" and clo
 end % end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function json_func_struct = getJSON_params_EPI( json_path, TaskName )
+function EPI_param = getJSON_params_EPI( TARGET, TaskName )
 
-res = get_string_from_json(json_path, ...
-    {'RepetitionTime', 'EchoTime', 'CsaImage.MosaicRefAcqTimes', 'FlipAngle', ...
-    'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE', 'CsaSeries.MrPhoenixProtocol.sWipMemBlock.alFree\[13\]','MagneticFieldStrength',...
-    'NumberOfPhaseEncodingSteps','CsaImage.BandwidthPerPixelPhaseEncode',...
-    'InPlanePhaseEncodingDirection','CsaImage.PhaseEncodingDirectionPositive'}, ...
-    {'num', 'num', 'vect', 'num',...
-    'num','num','num',...
-    'num','num',...
-    'str','num'});
-
-% Classic
-json_func_struct.TaskName       = TaskName;
-json_func_struct.RepetitionTime = res{1}/1000; % ms -> s
-json_func_struct.EchoTime       = res{2}/1000; % ms -> s
-json_func_struct.SliceTiming    = res{3}/1000; % ms -> s
-json_func_struct.FlipAngle      = res{4};
-
-% Acceleration factors
-if ~isempty(res{5})
-    json_func_struct.ParallelReductionFactorInPlane = res{5}; % iPat
+if isempty( fieldnames( TARGET.serie.sequence ) )
+    
+    % Fetch sequence parameters
+    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, 1);
+    
 end
-if ~isempty(res{6})
-    json_func_struct.MultibandAccelerationFactor = res{6}; % MultiBand
-end
-json_func_struct.MagneticFieldStrength = res{7};
 
-% Phase : echo spacing stuff
-ReconMatrixPE        = res{8}; % NumberOfPhaseEncodingSteps
-BWPPPE               = res{9}; % BandwidthPerPixelPhaseEncode
-EffectiveEchoSpacing = 1 / (BWPPPE * ReconMatrixPE); % SIEMENS
-TotalReadoutTime     = EffectiveEchoSpacing * (ReconMatrixPE - 1); % FSL
-json_func_struct.EffectiveEchoSpacing = EffectiveEchoSpacing;
-json_func_struct.TotalReadoutTime     = TotalReadoutTime;
+seq = TARGET.serie.sequence;
 
-% Phase : encoding direction
-switch res{10} % InPlanePhaseEncodingDirection
-    case 'COL'
-        phase_dir = 'j';
-    case 'ROW'
-        phase_dir = 'i';
-end
-if res{11} % PhaseEncodingDirectionPositive
-    phase_dir = [phase_dir '-'];
-end
-json_func_struct.PhaseEncodingDirection = phase_dir;
+EPI_param.TaskName                       = TaskName;
+EPI_param.RepetitionTime                 = seq.RepetitionTime;
+EPI_param.EchoTime                       = seq.EchoTime;
+EPI_param.SliceTiming                    = seq.SliceTiming;
+EPI_param.FlipAngle                      = seq.FlipAngle;
+
+EPI_param.ParallelReductionFactorInPlane = seq.ParallelReductionFactorInPlane;
+EPI_param.MultibandAccelerationFactor    = seq.MultibandAccelerationFactor;
+
+EPI_param.EffectiveEchoSpacing           = seq.EffectiveEchoSpacing;
+EPI_param.TotalReadoutTime               = seq.TotalReadoutTime;
+
+EPI_param.PhaseEncodingDirection         = seq.PhaseEncodingDirection;
+
 
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function json_func_struct = getJSON_params_GRE_FIELD_MAP( json_path )
+function json_func_struct = getJSON_params_GRE_FIELD_MAP( TARGET )
 
-res = get_string_from_json(json_path, ...
-    {'RepetitionTime', 'EchoTime', 'FlipAngle', ...
-    'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE','MagneticFieldStrength',...
-    'InPlanePhaseEncodingDirection','CsaImage.PhaseEncodingDirectionPositive'}, ...
-    {'num', 'num', 'num',...
-    'num','num',...
-    'str','num'});
-
-% Classic
-json_func_struct.EchoTime1      = (res{2}-2.46)/1000; % ms -> s % the difference is only 2.46ms for SIEMENS scanners with gre_field_map
-json_func_struct.EchoTime2      =  res{2}      /1000; % ms -> s
-json_func_struct.RepetitionTime = res{1}/1000; % ms -> s
-json_func_struct.FlipAngle      = res{3};
-
-% Acceleration factors
-if ~isempty(res{4})
-    json_func_struct.ParallelReductionFactorInPlane = res{4}; % iPat
+if isempty( fieldnames( TARGET.serie.sequence ) )
+    
+    % Fetch sequence parameters
+    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, 1);
+    
 end
-json_func_struct.MagneticFieldStrength = res{5};
 
-% Phase : encoding direction
-switch res{6} % InPlanePhaseEncodingDirection
-    case 'COL'
-        phase_dir = 'j';
-    case 'ROW'
-        phase_dir = 'i';
-end
-if res{7} % PhaseEncodingDirectionPositive
-    phase_dir = [phase_dir '-'];
-end
-json_func_struct.PhaseEncodingDirection = phase_dir;
+seq = TARGET.serie.sequence;
+
+json_func_struct.EchoTime1                      = seq.EchoTime - 2.46/1000; % the difference is only 2.46ms for SIEMENS scanners with gre_field_map
+json_func_struct.EchoTime2                      = seq.EchoTime;
+json_func_struct.RepetitionTime                 = seq.RepetitionTime;
+json_func_struct.FlipAngle                      = seq.FlipAngle;
+
+json_func_struct.ParallelReductionFactorInPlane = seq.ParallelReductionFactorInPlane;
+json_func_struct.MagneticFieldStrength          = seq.MagneticFieldStrength;
+
+json_func_struct.PhaseEncodingDirection         = seq.PhaseEncodingDirection;
 
 end % function
