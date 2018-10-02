@@ -11,7 +11,7 @@ function [ examArray, error_log ] = auto_import_obj( baseDir, par )
 % directories.
 %
 %
-% See also exam
+% See also exam exam2bids
 %
 
 if nargin == 0
@@ -93,6 +93,7 @@ SequenceCategory = {
     '^gre$'              'swi'   par. swi_regex_volume  par. swi_tag_volume  par. swi_tag_json % gre SWI
     '^gre$'              'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % gre FLASH
     '^tse$'              'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % tse, usually AX_2DT1 or AX_2DT2
+    'ep2d_se'            'anat'  par.func_regex_volume  par.anat_tag_volume  par.anat_tag_json % SpinEcho EPI
     };
 
 
@@ -124,9 +125,15 @@ for ex = 1 : numel(examArray)
     
     % Fetch all json files
     json = gfile(subdir,'json$',struct('verbose',0));
+    if isempty(json)
+        exam_SequenceData = cell(0);
+        hdr = cell(0);
+        continue
+    end    
     
     % Extract all parameters
     param_struct = get_sequence_param_from_json( json, 1 );
+    if isstruct(param_struct), param_struct = {param_struct}; end % only happens when there is only 1 serie
     hdr_str = fieldnames(param_struct{1});
     hdr = cell2struct(num2cell(1:length(hdr_str)),hdr_str,2);
     
@@ -137,7 +144,7 @@ for ex = 1 : numel(examArray)
     end
     
     % Add one last column
-    exam_SequenceData{1,end+1} = []; %#ok<AGROW>
+    exam_SequenceData(:,end+1) = {''}; %#ok<AGROW>
     
     %======================================================================
     
@@ -162,8 +169,8 @@ for ex = 1 : numel(examArray)
         %------------------------------------------------------------------
         if strcmp(SequenceCategory{idx,2},'func')
             
-            type = exam_SequenceData(where,hdr.ImageType); % mag or phase
-            name = exam_SequenceData(where,hdr.SequenceName); % serie name
+            type = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
+            name = exam_SequenceData(where,hdr.SeriesDescription); % serie name
             
             type_SBRef = ~cellfun(@isempty,regexp(name,'SBRef$'));
             
@@ -226,6 +233,9 @@ for ex = 1 : numel(examArray)
                 
                 tse = strcmp(SequenceFileName, 'tse');
                 if any( tse ), examArray(ex).addSerie(upper_dir_name( tse ),'anat_TSE'), exam_SequenceData(where( tse ),end) = {'anat_TSE'}; flag_add = 1; end
+                
+                ep2d_se = ~isemptyCELL(strfind(SequenceFileName, 'ep2d_se'));
+                if any( ep2d_se ), examArray(ex).addSerie(upper_dir_name( ep2d_se ),'anat_ep2d_se'), exam_SequenceData(where( ep2d_se ),end) = {'anat_ep2d_se'}; flag_add = 1; end
                 
             end
             
@@ -311,7 +321,7 @@ for ex = 1 : numel(examArray)
                 
                 Serie_obj      = examArray(ex).getSerie(exam_SequenceData{ser,end});
                 if ~isempty( Serie_obj )
-                    SeqData_struct = param_struct(~cellfun(@isempty,regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end})));
+                    SeqData_struct = param_struct( ~cellfun(@isempty, regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end}) ) );
                     for s = 1 : length(Serie_obj)
                         Serie_obj(s).sequence = SeqData_struct{s};
                     end
@@ -331,6 +341,12 @@ for ex = 1 : numel(examArray)
         
     end % ser
     
+    if par.verbose > 2
+        fprintf('SequenceName found : \n')
+        disp(exam_SequenceData)
+        fprintf('\n')
+    end
+    
 end % ex
 
 
@@ -338,12 +354,6 @@ end % ex
 
 examArray(ex).other.SequenceData     = exam_SequenceData;
 examArray(ex).other.SequenceData_hdr = hdr;
-
-if par.verbose > 2
-    fprintf('SequenceName found : \n')
-    disp(exam_SequenceData)
-    fprintf('\n')
-end
 
 % Reorder series to they are in alphabetical==time order, according to their name S01, S02, S03, ...
 examArray.reorderSeries('name');

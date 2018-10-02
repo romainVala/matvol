@@ -45,8 +45,12 @@ for lvl_1 = 1 : numel(json_filename)
         
         % Sequence name in Siemens console
         SequenceFileName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tSequenceFileName');
-        split = regexp(SequenceFileName,'\\\\','split'); % example : "%SiemensSeq%\\ep2d_bold"
-        param{lvl_1}(lvl_2).SequenceFileName = split{end};
+        if ~isempty(SequenceFileName)
+            split = regexp(SequenceFileName,'\\\\','split'); % example : "%SiemensSeq%\\ep2d_bold"
+            param{lvl_1}(lvl_2).SequenceFileName = split{end};
+        else
+            param{lvl_1}(lvl_2).SequenceFileName = '';
+        end
         
         % Sequence binary name ?
         SequenceName = get_field_one(content, 'SequenceName'); % '*tfl3d1_ns'

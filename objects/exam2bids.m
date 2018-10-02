@@ -4,7 +4,7 @@ function [ job , error_log ] = exam2bids( examArray , bidsDir , par )
 % Syntax : [ job , error_log ] = exam2bids( examArray , bidsDir , par )
 %
 %
-% See also exam
+% See also exam auto_import_obj
 %
 
 % In this code, variables in CAPITAL letters are objects : EXAM, ANAT_serie, ANAT_volume, ...
@@ -216,6 +216,7 @@ for e = 1:nrExam
                 elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_mag'  ), suffix_anat = 'FLASH'; to_remove   = 0                    ; part = 'mag'  ;
                 elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_phase'), suffix_anat = 'FLASH'; to_remove   = length('_phase'     ); part = 'phase';
                 elseif strfind(ANAT_IN__serie(A).tag,'_TSE'        ), continue % skip
+                elseif strfind(ANAT_IN__serie(A).tag,'_ep2d_se'    ), continue % skip
                     
                 else
                     warninbgSTR = warning('Using T1w sufix because unknown tag : %s', ANAT_IN__serie(A).tag);
