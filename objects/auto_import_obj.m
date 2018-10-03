@@ -86,6 +86,7 @@ par = complet_struct(par,defpar);
 % 5 : json   tag
 SequenceCategory = {
     'tfl'                'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % 3DT1 mprage & mp2rage
+    'mp2rage'            'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % some mp2rage WIP
     'tse_vfl'            'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % 3DT2 space & 3DFLAIR space_ir
     'diff'               'dwi'   par. dwi_regex_volume  par. dwi_tag_volume  par. dwi_tag_json % diffusion
     '(bold)|(pace)'      'func'  par.func_regex_volume  par.func_tag_volume  par.func_tag_json % bold fmri
@@ -212,14 +213,21 @@ for ex = 1 : numel(examArray)
                 
                 tse_vfl = strcmp(SequenceFileName, 'tse_vfl');
                 if any( tse_vfl )
-                    spcir = ~isemptyCELL(strfind(SequenceName, 'spcir_')); if any( spcir ), examArray(ex).addSerie(upper_dir_name( spcir ),'anat_FLAIR'), exam_SequenceData(where( spcir ),end) = {'anat_FLAIR'}; flag_add = 1; end
-                    spc   = ~isemptyCELL(strfind(SequenceName, 'spc_'  )); if any( spc   ), examArray(ex).addSerie(upper_dir_name( spc   ),'anat_T2w'  ), exam_SequenceData(where( spc   ),end) = {'anat_T2w'  }; flag_add = 1; end
+                    spcir = ~isemptyCELL(strfind(SequenceName, 'spcir')); if any( spcir ), examArray(ex).addSerie(upper_dir_name( spcir ),'anat_FLAIR'), exam_SequenceData(where( spcir ),end) = {'anat_FLAIR'}; flag_add = 1; end
+                    SequenceName(spcir) = {''}; % delete 'spcir', because regex('spcir') & regex('spc') have the same result...
+                    spc   = ~isemptyCELL(strfind(SequenceName, 'spc'  )); if any( spc   ), examArray(ex).addSerie(upper_dir_name( spc   ),'anat_T2w'  ), exam_SequenceData(where( spc   ),end) = {'anat_T2w'  }; flag_add = 1; end
                 end
                 
                 gre = strcmp(SequenceFileName, 'gre');
                 if any( gre )
                     
                     fl = ~isemptyCELL(strfind(SequenceName, 'fl'));
+                    
+                    % Remove the localizer
+                    SeriesDescription = exam_SequenceData(where,hdr.SeriesDescription);
+                    loca              = ~isemptyCELL(strfind(lower(SeriesDescription), 'loca'));
+                    if any( loca ), exam_SequenceData(where( loca ),end) = {'discard'}; end % don't add the serie, just discard it
+                    fl                = logical(fl - loca);
                     
                     type   = exam_SequenceData(where,hdr.ImageType); % mag or phase
                     
@@ -258,7 +266,7 @@ for ex = 1 : numel(examArray)
             %--------------------------------------------------------------
         elseif strcmp(SequenceCategory{idx,2},'swi')
             
-            subcategory = {'Mag_','Pha_','mIP_','SWI_'}; % swi
+            subcategory = {'Mag_Images','Pha_Images','mIP_Images','SWI_Images'}; % swi
             
             for sc = 1 : length(subcategory)
                 

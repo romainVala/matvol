@@ -1042,7 +1042,7 @@ EPI_param.SliceTiming                    = seq.SliceTiming;
 EPI_param.FlipAngle                      = seq.FlipAngle;
 
 EPI_param.ParallelReductionFactorInPlane = seq.ParallelReductionFactorInPlane;
-EPI_param.MultibandAccelerationFactor    = seq.MultibandAccelerationFactor;
+if ~isnan(seq(1).MultibandAccelerationFactor), EPI_param.MultibandAccelerationFactor = seq.MultibandAccelerationFactor; end
 
 EPI_param.EffectiveEchoSpacing           = seq.EffectiveEchoSpacing;
 EPI_param.TotalReadoutTime               = seq.TotalReadoutTime;
