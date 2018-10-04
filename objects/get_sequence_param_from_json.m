@@ -28,6 +28,7 @@ if nargin < 2
     all_fields = 0;
 end
 
+
 %% Main loop
 
 param = cell(size(json_filename));
@@ -39,7 +40,10 @@ for lvl_1 = 1 : numel(json_filename)
         % Open & read the file --------------------------------------------
         
         content = get_file_content_as_char(json_filename{lvl_1}(lvl_2,:));
-        
+        if isempty(content)
+            warning( 'Empty file : %s', json_filename{lvl_1}(lvl_2,:) )
+            continue
+        end
         
         % Fetch all fields ------------------------------------------------
         

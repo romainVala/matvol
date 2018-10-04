@@ -141,7 +141,9 @@ for ex = 1 : numel(examArray)
     % Transform the structure into a cell, easier to display and manipulate in that case
     exam_SequenceData = cell(size(param_struct,1),length(hdr_str));
     for p = 1 : numel(param_struct)
-        exam_SequenceData(p,:) = struct2cell(param_struct{p}(1))';
+        if ~isempty(param_struct{p})
+            exam_SequenceData(p,:) = struct2cell(param_struct{p}(1))';
+        end
     end
     
     % Add one last column
