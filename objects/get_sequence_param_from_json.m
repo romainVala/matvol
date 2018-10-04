@@ -1,4 +1,4 @@
-function [ param ] = get_sequence_param_from_json( json_filename, all_fields )
+function [ param ] = get_sequence_param_from_json( json_filename, all_fields, pct )
 %GET_SEQUENCE_PARAM_FROM_JSON read the content of the json file, and get the most useful parameters
 %
 % IMPORTANT : the parameters are BIDS compatible.
@@ -13,7 +13,9 @@ function [ param ] = get_sequence_param_from_json( json_filename, all_fields )
 % ex : 3DT1 sequence do not have SliceTiming, but EPI does
 % all_fields=1 is usefull if you want to convert the output structure into a cell
 %
-% see also gfile gdir
+% pct is a flag to activate Parallel Computing Toolbox
+%
+% see also gfile gdir parpool
 %
 
 if nargin == 0
@@ -28,135 +30,28 @@ if nargin < 2
     all_fields = 0;
 end
 
+if nargin < 3
+    pct = 0;
+end
+
 
 %% Main loop
 
 param = cell(size(json_filename));
 
-for lvl_1 = 1 : numel(json_filename)
+if pct
     
-    for lvl_2 = 1 : size(json_filename{lvl_1},1)
-        
-        % Open & read the file --------------------------------------------
-        
-        content = get_file_content_as_char(json_filename{lvl_1}(lvl_2,:));
-        if isempty(content)
-            warning( 'Empty file : %s', json_filename{lvl_1}(lvl_2,:) )
-            continue
-        end
-        
-        % Fetch all fields ------------------------------------------------
-        
-        % Sequence name in Siemens console
-        SequenceFileName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tSequenceFileName');
-        if ~isempty(SequenceFileName)
-            split = regexp(SequenceFileName,'\\\\','split'); % example : "%SiemensSeq%\\ep2d_bold"
-            param{lvl_1}(lvl_2).SequenceFileName = split{end};
-        else
-            param{lvl_1}(lvl_2).SequenceFileName = '';
-        end
-        
-        % Sequence binary name ?
-        SequenceName = get_field_one(content, 'SequenceName'); % '*tfl3d1_ns'
-        param{lvl_1}(lvl_2).SequenceName = SequenceName;
-        
-        % TR
-        RepetitionTime = get_field_one(content, 'RepetitionTime'); RepetitionTime = str2double(RepetitionTime)/1000;
-        param{lvl_1}(lvl_2).RepetitionTime = RepetitionTime;
-        
-        % TE
-        EchoTime = get_field_one(content, 'EchoTime'); EchoTime = str2double(EchoTime)/1000;
-        param{lvl_1}(lvl_2).EchoTime = EchoTime;
-        
-        %FA
-        FlipAngle = get_field_one(content, 'FlipAngle'); FlipAngle = str2double(FlipAngle);
-        param{lvl_1}(lvl_2).FlipAngle = FlipAngle;
-        
-        % 2D / 3D
-        MRAcquisitionType = get_field_one(content, 'MRAcquisitionType');
-        param{lvl_1}(lvl_2).MRAcquisitionType = MRAcquisitionType;
-        
-        % Tesla
-        MagneticFieldStrength = get_field_one(content, 'MagneticFieldStrength'); MagneticFieldStrength = str2double(MagneticFieldStrength);
-        param{lvl_1}(lvl_2).MagneticFieldStrength = MagneticFieldStrength;
-        
-        % Slice Timing
-        if all_fields || any(regexp(param{lvl_1}(lvl_2).SequenceFileName, '(bold|pace)'))
-            SliceTiming = get_field_mul(content, 'CsaImage.MosaicRefAcqTimes'); SliceTiming = str2double(SliceTiming(2:end))' / 1000;
-            param{lvl_1}(lvl_2).SliceTiming = SliceTiming;
-        end
-        
-        % Magnitude ? Phase ? ...
-        ImageType  = get_field_mul(content, 'ImageType'); MAGorPHASE = ImageType{3};
-        param{lvl_1}(lvl_2).ImageType = MAGorPHASE; % M' / 'P' / ...
-        
-        % Sequence number on the console
-        % ex1 : mp2rage       will have paramput series but with identical SequenceID (INV1, INV2, UNI_Image)
-        % ex2 : gre_field_map will have paramput series but with identical SequenceID (magnitude, phase)
-        SequenceID  = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.lSequenceID'); SequenceID = str2double(SequenceID);
-        param{lvl_1}(lvl_2).SequenceID = SequenceID;
-        
-        % Name of the serie on the console (95% of cases)
-        SeriesDescription = get_field_one(content, 'SeriesDescription');
-        param{lvl_1}(lvl_2).SeriesDescription = SeriesDescription;
-        
-        % Name of the serie on the console : some sequences will have specific names, such as SWI
-        ProtocolName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tProtocolName');
-        param{lvl_1}(lvl_2).ProtocolName = ProtocolName; % 'SWI_nigrosome'
-        
-        % bvals & bvecs
-        if  all_fields || any(regexp(param{lvl_1}(lvl_2).SequenceFileName, 'diff'))
-            
-            B_value = get_field_mul(content, 'CsaImage.B_value'); B_value = str2double(B_value)';
-            param{lvl_1}(lvl_2).B_value = B_value;
-            
-            B_vect  = get_field_mul_vect(content, 'CsaImage.DiffusionGradientDirection');
-            param{lvl_1}(lvl_2).B_vect = B_vect;
-            
-        end
-        
-        % iPat
-        ParallelReductionFactorInPlane = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'); ParallelReductionFactorInPlane = str2double(ParallelReductionFactorInPlane);
-        param{lvl_1}(lvl_2).ParallelReductionFactorInPlane = ParallelReductionFactorInPlane;
-        
-        if  all_fields || any(regexp(SequenceFileName,'ep2d'))
-            
-            % MB factor
-            MultibandAccelerationFactor = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.sWipMemBlock.alFree\[13\]'); MultibandAccelerationFactor = str2double(MultibandAccelerationFactor);
-            param{lvl_1}(lvl_2).MultibandAccelerationFactor = MultibandAccelerationFactor;
-            
-            % EffectiveEchoSpacing & TotalReadoutTime
-            ReconMatrixPE = get_field_one(content, 'NumberOfPhaseEncodingSteps'); ReconMatrixPE = str2double(ReconMatrixPE);
-            param{lvl_1}(lvl_2).NumberOfPhaseEncodingSteps = ReconMatrixPE;
-            BWPPPE = get_field_one(content, 'CsaImage.BandwidthPerPixelPhaseEncode'); BWPPPE = str2double(BWPPPE);
-            param{lvl_1}(lvl_2).BandwidthPerPixelPhaseEncode = BWPPPE;
-            param{lvl_1}(lvl_2).EffectiveEchoSpacing = 1 / (BWPPPE * ReconMatrixPE); % SIEMENS
-            param{lvl_1}(lvl_2).TotalReadoutTime = param{lvl_1}(lvl_2).EffectiveEchoSpacing * (ReconMatrixPE - 1); % FSL
-            
-        end
-        
-        % Phase : encoding direction
-        InPlanePhaseEncodingDirection = get_field_one(content, 'InPlanePhaseEncodingDirection');
-        param{lvl_1}(lvl_2).InPlanePhaseEncodingDirection = InPlanePhaseEncodingDirection;
-        PhaseEncodingDirectionPositive = get_field_one(content, 'CsaImage.PhaseEncodingDirectionPositive');
-        param{lvl_1}(lvl_2).PhaseEncodingDirectionPositive = PhaseEncodingDirectionPositive;
-        switch InPlanePhaseEncodingDirection % InPlanePhaseEncodingDirection
-            case 'COL'
-                phase_dir = 'j';
-            case 'ROW'
-                phase_dir = 'i';
-            otherwise
-                warning('wtf ? InPlanePhaseEncodingDirection')
-                phase_dir = '';
-        end
-        if PhaseEncodingDirectionPositive % PhaseEncodingDirectionPositive
-            phase_dir = [phase_dir '-']; %#ok<AGROW>
-        end
-        param{lvl_1}(lvl_2).PhaseEncodingDirection = phase_dir;
-        
-    end % lvl_2
+    parfor idx = 1 : numel(json_filename)
+        param{idx} = parse_jsons(json_filename{idx}, all_fields);
+    end
     
-end % lvl_1
+else
+    
+    for idx = 1 : numel(json_filename)
+        param{idx} = parse_jsons(json_filename{idx}, all_fields);
+    end
+    
+end
 
 % Jut for conviniency
 if numel(param) == 1
@@ -166,6 +61,133 @@ end
 
 end % function
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function data = parse_jsons(json_filename, all_fields)
+
+data = struct([]);
+
+for j = 1 : size(json_filename,1)
+    
+    % Open & read the file --------------------------------------------
+    
+    content = get_file_content_as_char(json_filename(j,:));
+    if isempty(content)
+        warning( 'Empty file : %s', json_filename(j,:) )
+        continue
+    end
+    
+    % Fetch all fields ------------------------------------------------
+    
+    % Sequence name in Siemens console
+    SequenceFileName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tSequenceFileName');
+    if ~isempty(SequenceFileName)
+        split = regexp(SequenceFileName,'\\\\','split'); % example : "%SiemensSeq%\\ep2d_bold"
+        data(j).SequenceFileName = split{end};
+    else
+        data(j).SequenceFileName = '';
+    end
+    
+    % Sequence binary name ?
+    SequenceName = get_field_one(content, 'SequenceName'); % '*tfl3d1_ns'
+    data(j).SequenceName = SequenceName;
+    
+    % TR
+    RepetitionTime = get_field_one(content, 'RepetitionTime'); RepetitionTime = str2double(RepetitionTime)/1000;
+    data(j).RepetitionTime = RepetitionTime;
+    
+    % TE
+    EchoTime = get_field_one(content, 'EchoTime'); EchoTime = str2double(EchoTime)/1000;
+    data(j).EchoTime = EchoTime;
+    
+    %FA
+    FlipAngle = get_field_one(content, 'FlipAngle'); FlipAngle = str2double(FlipAngle);
+    data(j).FlipAngle = FlipAngle;
+    
+    % 2D / 3D
+    MRAcquisitionType = get_field_one(content, 'MRAcquisitionType');
+    data(j).MRAcquisitionType = MRAcquisitionType;
+    
+    % Tesla
+    MagneticFieldStrength = get_field_one(content, 'MagneticFieldStrength'); MagneticFieldStrength = str2double(MagneticFieldStrength);
+    data(j).MagneticFieldStrength = MagneticFieldStrength;
+    
+    % Slice Timing
+    if all_fields || any(regexp(data(j).SequenceFileName, '(bold|pace)'))
+        SliceTiming = get_field_mul(content, 'CsaImage.MosaicRefAcqTimes'); SliceTiming = str2double(SliceTiming(2:end))' / 1000;
+        data(j).SliceTiming = SliceTiming;
+    end
+    
+    % Magnitude ? Phase ? ...
+    ImageType  = get_field_mul(content, 'ImageType'); MAGorPHASE = ImageType{3};
+    data(j).ImageType = MAGorPHASE; % M' / 'P' / ...
+    
+    % Sequence number on the console
+    % ex1 : mp2rage       will have paramput series but with identical SequenceID (INV1, INV2, UNI_Image)
+    % ex2 : gre_field_map will have paramput series but with identical SequenceID (magnitude, phase)
+    SequenceID  = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.lSequenceID'); SequenceID = str2double(SequenceID);
+    data(j).SequenceID = SequenceID;
+    
+    % Name of the serie on the console (95% of cases)
+    SeriesDescription = get_field_one(content, 'SeriesDescription');
+    data(j).SeriesDescription = SeriesDescription;
+    
+    % Name of the serie on the console : some sequences will have specific names, such as SWI
+    ProtocolName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tProtocolName');
+    data(j).ProtocolName = ProtocolName; % 'SWI_nigrosome'
+    
+    % bvals & bvecs
+    if  all_fields || any(regexp(data(j).SequenceFileName, 'diff'))
+        
+        B_value = get_field_mul(content, 'CsaImage.B_value'); B_value = str2double(B_value)';
+        data(j).B_value = B_value;
+        
+        B_vect  = get_field_mul_vect(content, 'CsaImage.DiffusionGradientDirection');
+        data(j).B_vect = B_vect;
+        
+    end
+    
+    % iPat
+    ParallelReductionFactorInPlane = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'); ParallelReductionFactorInPlane = str2double(ParallelReductionFactorInPlane);
+    data(j).ParallelReductionFactorInPlane = ParallelReductionFactorInPlane;
+    
+    if  all_fields || any(regexp(SequenceFileName,'ep2d'))
+        
+        % MB factor
+        MultibandAccelerationFactor = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.sWipMemBlock.alFree\[13\]'); MultibandAccelerationFactor = str2double(MultibandAccelerationFactor);
+        data(j).MultibandAccelerationFactor = MultibandAccelerationFactor;
+        
+        % EffectiveEchoSpacing & TotalReadoutTime
+        ReconMatrixPE = get_field_one(content, 'NumberOfPhaseEncodingSteps'); ReconMatrixPE = str2double(ReconMatrixPE);
+        data(j).NumberOfPhaseEncodingSteps = ReconMatrixPE;
+        BWPPPE = get_field_one(content, 'CsaImage.BandwidthPerPixelPhaseEncode'); BWPPPE = str2double(BWPPPE);
+        data(j).BandwidthPerPixelPhaseEncode = BWPPPE;
+        data(j).EffectiveEchoSpacing = 1 / (BWPPPE * ReconMatrixPE); % SIEMENS
+        data(j).TotalReadoutTime = data(j).EffectiveEchoSpacing * (ReconMatrixPE - 1); % FSL
+        
+    end
+    
+    % Phase : encoding direction
+    InPlanePhaseEncodingDirection = get_field_one(content, 'InPlanePhaseEncodingDirection');
+    data(j).InPlanePhaseEncodingDirection = InPlanePhaseEncodingDirection;
+    PhaseEncodingDirectionPositive = get_field_one(content, 'CsaImage.PhaseEncodingDirectionPositive');
+    data(j).PhaseEncodingDirectionPositive = PhaseEncodingDirectionPositive;
+    switch InPlanePhaseEncodingDirection % InPlanePhaseEncodingDirection
+        case 'COL'
+            phase_dir = 'j';
+        case 'ROW'
+            phase_dir = 'i';
+        otherwise
+            warning('wtf ? InPlanePhaseEncodingDirection')
+            phase_dir = '';
+    end
+    if PhaseEncodingDirectionPositive % PhaseEncodingDirectionPositive
+        phase_dir = [phase_dir '-']; %#ok<AGROW>
+    end
+    data(j).PhaseEncodingDirection = phase_dir;
+    
+end % j
+
+end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function result = get_field_one(content, regex)
