@@ -1024,7 +1024,7 @@ json_str = [ json_str(1:end-2) sprintf('\n}') ]; % delete the last ',\n" and clo
 end % end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function EPI_param = getJSON_params_EPI( TARGET, TaskName )
+function param = getJSON_params_EPI( TARGET, TaskName )
 
 if isempty( fieldnames( TARGET.serie.sequence ) )
     
@@ -1035,25 +1035,25 @@ end
 
 seq = TARGET.serie.sequence;
 
-EPI_param.TaskName                       = TaskName;
-EPI_param.RepetitionTime                 = seq.RepetitionTime;
-EPI_param.EchoTime                       = seq.EchoTime;
-EPI_param.SliceTiming                    = seq.SliceTiming;
-EPI_param.FlipAngle                      = seq.FlipAngle;
+param.TaskName                       = TaskName;
+param.RepetitionTime                 = seq.RepetitionTime;
+param.EchoTime                       = seq.EchoTime;
+if ~isnan(seq(1).SliceTiming), param.SliceTiming = seq.SliceTiming; end
+param.FlipAngle                      = seq.FlipAngle;
 
-EPI_param.ParallelReductionFactorInPlane = seq.ParallelReductionFactorInPlane;
-if ~isnan(seq(1).MultibandAccelerationFactor), EPI_param.MultibandAccelerationFactor = seq.MultibandAccelerationFactor; end
+param.ParallelReductionFactorInPlane = seq.ParallelReductionFactorInPlane;
+if ~isnan(seq(1).MultibandAccelerationFactor), param.MultibandAccelerationFactor = seq.MultibandAccelerationFactor; end
 
-EPI_param.EffectiveEchoSpacing           = seq.EffectiveEchoSpacing;
-EPI_param.TotalReadoutTime               = seq.TotalReadoutTime;
+param.EffectiveEchoSpacing           = seq.EffectiveEchoSpacing;
+param.TotalReadoutTime               = seq.TotalReadoutTime;
 
-EPI_param.PhaseEncodingDirection         = seq.PhaseEncodingDirection;
+param.PhaseEncodingDirection         = seq.PhaseEncodingDirection;
 
 
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function json_func_struct = getJSON_params_GRE_FIELD_MAP( TARGET )
+function param = getJSON_params_GRE_FIELD_MAP( TARGET )
 
 if isempty( fieldnames( TARGET.serie.sequence ) )
     
@@ -1064,14 +1064,14 @@ end
 
 seq = TARGET.serie.sequence;
 
-json_func_struct.EchoTime1                      = seq.EchoTime - 2.46/1000; % the difference is only 2.46ms for SIEMENS scanners with gre_field_map
-json_func_struct.EchoTime2                      = seq.EchoTime;
-json_func_struct.RepetitionTime                 = seq.RepetitionTime;
-json_func_struct.FlipAngle                      = seq.FlipAngle;
+param.EchoTime1                      = seq.EchoTime - 2.46/1000; % the difference is only 2.46ms for SIEMENS scanners with gre_field_map
+param.EchoTime2                      = seq.EchoTime;
+param.RepetitionTime                 = seq.RepetitionTime;
+param.FlipAngle                      = seq.FlipAngle;
 
-json_func_struct.ParallelReductionFactorInPlane = seq.ParallelReductionFactorInPlane;
-json_func_struct.MagneticFieldStrength          = seq.MagneticFieldStrength;
+param.ParallelReductionFactorInPlane = seq.ParallelReductionFactorInPlane;
+param.MagneticFieldStrength          = seq.MagneticFieldStrength;
 
-json_func_struct.PhaseEncodingDirection         = seq.PhaseEncodingDirection;
+param.PhaseEncodingDirection         = seq.PhaseEncodingDirection;
 
 end % function
