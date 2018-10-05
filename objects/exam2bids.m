@@ -202,7 +202,7 @@ for e = 1:nrExam
             
             anat_OUT__dir_path = fullfile( ses_path, 'anat' );
             
-            anat_run_number = interprete_run_number( {ANAT_IN__serie.name}' );
+            [anat_run_number, anat_run_name]= interprete_run_number( {ANAT_IN__serie.name}' );
             
             for A = 1 : numel(ANAT_IN__serie)
                 
@@ -210,15 +210,15 @@ for e = 1:nrExam
                 
                 % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
                 % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
-                if     strfind(ANAT_IN__serie(A).tag,'_INV1'       ), suffix_anat = 'inv-1'; to_remove   = length('_INV1'      ); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_INV2'       ), suffix_anat = 'inv-2'; to_remove   = length('_INV2'      ); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images' ), suffix_anat = 'T1w'  ; to_remove   = length('_UNI_Images'); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images'  ), suffix_anat = 'T1map'; to_remove   = length('_T1_Images' ); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T1w'        ), suffix_anat = 'T1w'  ; to_remove   = 0                    ; % mprage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T2w'        ), suffix_anat = 'T2w'  ; to_remove   = 0                    ;
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR'      ), suffix_anat = 'FLAIR'; to_remove   = 0                    ;
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_mag'  ), suffix_anat = 'FLASH'; to_remove   = 0                    ; part = 'mag'  ;
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_phase'), suffix_anat = 'FLASH'; to_remove   = length('_phase'     ); part = 'phase';
+                if     strfind(ANAT_IN__serie(A).tag,'_INV1'       ), suffix_anat = 'inv-1'; to_remove   = length(del_('_INV1'      )); % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_INV2'       ), suffix_anat = 'inv-2'; to_remove   = length(del_('_INV2'      )); % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images' ), suffix_anat = 'T1w'  ; to_remove   = length(del_('_UNI_Images')); % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images'  ), suffix_anat = 'T1map'; to_remove   = length(del_('_T1_Images' )); % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1w'        ), suffix_anat = 'T1w'  ; to_remove   = 0                          ; % mprage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T2w'        ), suffix_anat = 'T2w'  ; to_remove   = 0                          ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR'      ), suffix_anat = 'FLAIR'; to_remove   = 0                          ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_mag'  ), suffix_anat = 'FLASH'; to_remove   = 0                          ; part = 'mag'  ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_phase'), suffix_anat = 'FLASH'; to_remove   = length(del_('_phase'     )); part = 'phase';
                 elseif strfind(ANAT_IN__serie(A).tag,'_TSE'        ), continue % skip
                 elseif strfind(ANAT_IN__serie(A).tag,'_ep2d_se'    ), continue % skip
                     
@@ -254,10 +254,7 @@ for e = 1:nrExam
                         
                         % Volume ------------------------------------------
                         
-                        anat_OUT__name     = remove_serie_prefix(ANAT_IN___vol.serie.name);
-                        anat_OUT__name     = anat_OUT__name(1:end-to_remove);
-                        anat_OUT__name     = del_(anat_OUT__name);
-                        
+                        anat_OUT__name     = anat_run_name{A}(1:end-to_remove);
                         anat_OUT__name     = sprintf('acq-%s_run-%d_%s', anat_OUT__name, anat_run_number(A), suffix_anat);
                         anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
                         anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
@@ -288,10 +285,7 @@ for e = 1:nrExam
                             
                             % Volume ------------------------------------------
                             
-                            anat_OUT__name     = remove_serie_prefix(ANAT_IN___vol.serie.name);
-                            anat_OUT__name     = anat_OUT__name(1:end-to_remove);
-                            anat_OUT__name     = del_(anat_OUT__name);
-                            
+                            anat_OUT__name     = anat_run_name{A}(1:end-to_remove);
                             anat_OUT__name     = sprintf('acq-%s_run-%d_echo-%0.2d_part-%s_%s', anat_OUT__name, anat_run_number(A), echo, part, suffix_anat);
                             anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
                             anat_IN___vol_ext  = file_ext( deblank(ANAT_IN___vol.path(orderTE(echo),:)) );
@@ -345,7 +339,7 @@ for e = 1:nrExam
             func_OUT__dir = fullfile( ses_path, 'func' );
             
             % Compute the run number of each acquisition
-            fun_run_number = interprete_run_number({FUNC_IN__serie.name}');
+            [ func_run_number, func_run_name ]= interprete_run_number({FUNC_IN__serie.name}');
             
             for F = 1 : numel(FUNC_IN__serie)
                 
@@ -375,9 +369,8 @@ for e = 1:nrExam
                         
                         func_IN___vol_path = deblank  (FUNC_IN___vol.path);
                         func_IN___vol_ext  = file_ext (func_IN___vol_path);
-                        func_OUT__vol_name = remove_serie_prefix(FUNC_IN___vol.serie.name);
-                        func_OUT__vol_name = del_(func_OUT__vol_name);
-                        func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d_%s', sub_name, ses_name, func_OUT__vol_name, fun_run_number(F), suffix_func) );
+                        func_OUT__vol_name = func_run_name{F};
+                        func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d_%s', sub_name, ses_name, func_OUT__vol_name, func_run_number(F), suffix_func) );
                         func_OUT__vol_path = [ func_OUT__vol_base func_IN___vol_ext ];
                         subjob_func{F}     = link_or_copy(subjob_func{F}, FUNC_IN___vol.path, func_OUT__vol_path, par.copytype);
                         
@@ -399,9 +392,8 @@ for e = 1:nrExam
                         
                         % Volume ------------------------------------------
                         
-                        func_OUT__vol_name = remove_serie_prefix(FUNC_IN___vol.serie.name);
-                        func_OUT__vol_name = del_(func_OUT__vol_name);
-                        func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d', sub_name, ses_name, func_OUT__vol_name, fun_run_number(F)) );
+                        func_OUT__vol_name = func_run_name{F};
+                        func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d', sub_name, ses_name, func_OUT__vol_name, func_run_number(F)) );
                         
                         % Fetch volume corrsponding to the echo
                         for echo = 1 : length(orderTE)
@@ -467,7 +459,7 @@ for e = 1:nrExam
             
             
             % Compute the run number of each acquisition
-            dwi_run_number = interprete_run_number({DWI_IN__serie.name}');
+            [ dwi_run_number, dwi_run_name ] = interprete_run_number({DWI_IN__serie.name}');
             
             for D = 1 : numel(DWI_IN__serie)
                 
@@ -484,14 +476,13 @@ for e = 1:nrExam
                     
                     dwi_IN___vol_path = deblank  (DWI_IN___vol.path);
                     dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
-                    dwi_OUT__vol_name = remove_serie_prefix(DWI_IN___vol.serie.name);
-                    dwi_OUT__vol_name = del_(dwi_OUT__vol_name);
+                    dwi_OUT__vol_name = dwi_run_name{D};
                     dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D)) );
                     dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
                     subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
                     
                 end
-                dwi_OUT__vol_base
+                
                 % Json ----------------------------------------------------
                 
                 [ DWI_IN__json , error_flag_dwi ] = CHECK( DWI_IN__serie(D), 'json', par.regextag_dwi_json );
@@ -507,8 +498,8 @@ for e = 1:nrExam
                     dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
                     dwi_IN___bval_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvals');
                     if ~(exist(dwi_IN___bval_path,'file')==2)
-                        if isfield(DWI_IN__serie(D).other,'SequenceData') && isfield(DWI_IN__serie(D).other.SequenceData,'B_value') && ~isempty(DWI_IN__serie(D).other.SequenceData.B_value)
-                            B_value = DWI_IN__serie(D).other.SequenceData.B_value;
+                        if isfield(DWI_IN__serie(D).sequence,'B_value') && ~isempty(DWI_IN__serie(D).sequence.B_value)
+                            B_value = DWI_IN__serie(D).sequence.B_value;
                             B_value = num2str(B_value);
                             subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_value, dwi_OUT__bval_path) ];
                         else
@@ -524,8 +515,8 @@ for e = 1:nrExam
                     dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
                     dwi_IN___bvec_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvecs');
                     if ~(exist(dwi_IN___bvec_path,'file')==2)
-                        if isfield(DWI_IN__serie(D).other,'SequenceData') && isfield(DWI_IN__serie(D).other.SequenceData,'B_vect') && ~isempty(DWI_IN__serie(D).other.SequenceData.B_vect)
-                            B_vect = DWI_IN__serie(D).other.SequenceData.B_vect;
+                        if isfield(DWI_IN__serie(D).sequence,'B_vect') && ~isempty(DWI_IN__serie(D).sequence.B_vect)
+                            B_vect = DWI_IN__serie(D).sequence.B_vect;
                             B_vect = num2str(B_vect);
                             B_vect_str = '';
                             for line = 1 : 3
@@ -579,7 +570,7 @@ for e = 1:nrExam
             
             fmap_OUT__dir_path = fullfile( ses_path, 'fmap' );
             
-            fmap_run_number = interprete_run_number( {FMAP_IN__serie.name}' );
+            [ fmap_run_number, fmap_run_name ]= interprete_run_number( {FMAP_IN__serie.name}' );
             
             for FM = 1 : numel(FMAP_IN__serie)
                 
@@ -605,8 +596,7 @@ for e = 1:nrExam
                             
                             % Volume --------------------------------------
                             
-                            fmap_OUT__name     = remove_serie_prefix(FMAP_IN___vol.serie.name);
-                            fmap_OUT__name     = del_(fmap_OUT__name);
+                            fmap_OUT__name     = fmap_run_name{FM};
                             fmap_OUT__name     = sprintf('acq-%s_run-%d_%s%d', fmap_OUT__name, fmap_run_number(FM), suffix_fmap, echo);
                             fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
                             fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path(echo,:)) );
@@ -636,8 +626,7 @@ for e = 1:nrExam
                         
                         % Volume ------------------------------------------
                         
-                        fmap_OUT__name     = remove_serie_prefix(FMAP_IN___vol.serie.name);
-                        fmap_OUT__name     = del_(fmap_OUT__name(1:end-length('_phase')));
+                        fmap_OUT__name     = fmap_run_name{FM};
                         fmap_OUT__name     = sprintf('acq-%s_run-%d_%s', fmap_OUT__name, fmap_run_number(FM), suffix_fmap);
                         fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
                         fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path) );
@@ -698,7 +687,7 @@ for e = 1:nrExam
             
             swi_OUT__dir_path = fullfile( ses_path, 'swi' );
             
-            swi_run_number = interprete_run_number( {SWI_IN__serie.name}' );
+            swi_run_number = interprete_run_number( {SWI_IN__serie.name}' ); % here I don't fetch the run name, because of Siemens weird auto-generation of SWI names
             
             for S = 1 : numel(SWI_IN__serie)
                 
@@ -738,8 +727,8 @@ for e = 1:nrExam
                         
                         % Volume ------------------------------------------
                         
-                        if isfield(SWI_IN__serie(S).other,'SequenceData') && isfield(SWI_IN__serie(S).other.SequenceData,'B_vect') && ~isempty(SWI_IN__serie(S).other.SequenceData.ProtocolName)
-                            swi_OUT__name = SWI_IN__serie(S).other.SequenceData.ProtocolName;
+                        if isfield(SWI_IN__serie(S).sequence,'ProtocolName') && ~isempty(SWI_IN__serie(S).sequence.ProtocolName)
+                            swi_OUT__name = SWI_IN__serie(S).sequence.ProtocolName;
                         else
                             swi_OUT__name = remove_serie_prefix(SWI_IN___vol.serie.name);
                         end
@@ -781,8 +770,8 @@ for e = 1:nrExam
                             
                             % The name of the serie, as we enter it in the machine is "ProtocolName"
                             % This is an exeption for SWI, compared to all other sequences
-                            if isfield(SWI_IN__serie(S).other,'SequenceData') && isfield(SWI_IN__serie(S).other.SequenceData,'B_vect') && ~isempty(SWI_IN__serie(S).other.SequenceData.ProtocolName)
-                                swi_OUT__name = SWI_IN__serie(S).other.SequenceData.ProtocolName;
+                            if isfield(SWI_IN__serie(S).sequence(orderTE(echo)),'ProtocolName') && ~isempty(SWI_IN__serie(S).sequence(orderTE(echo)).ProtocolName)
+                                swi_OUT__name = SWI_IN__serie(S).sequence(orderTE(echo)).ProtocolName;
                             else
                                 swi_OUT__name = remove_serie_prefix(SWI_IN___vol.serie.name);
                             end
@@ -898,16 +887,31 @@ error_flag = logical(sum(error_flag));
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function run_number = interprete_run_number( names )
+function [run_number1, names3] = interprete_run_number( names )
 % Compute the run number of each acquisition
 
-names = regexprep(names,'^S\d{2}_',''); % Remove S01_ S02_ ...
-[~,~,IC] = unique(names,'stable');
-run_number = nan(size(IC));
-for idx = 1 : numel(IC)
-    run_number(idx) = sum( IC(idx)==IC(1:idx) );
+names1 = regexprep(names,'^S\d{2}_',''); % Remove S01_ S02_ ...
+[C1,IA1,IC1] = unique(names1,'stable'); %#ok<ASGLU>
+run_number1 = nan(size(IC1));
+for idx = 1 : numel(IC1)
+    run_number1(idx) = sum( IC1(idx)==IC1(1:idx) );
 end
 
+names2 = del_(names1);
+[C2,IA2,IC2] = unique(names2,'stable'); %#ok<ASGLU>
+run_number2 = nan(size(IC2));
+for idx = 1 : numel(IC2)
+    run_number2(idx) = sum( IC2(idx)==IC2(1:idx) );
+end
+
+n = IC1-IC2;
+
+if any(n)
+    names3 = strcat(names2, regexprep(cellstr(num2str(n)),'0','') );
+else
+    names3 = names2;
+end
+    
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
