@@ -153,6 +153,16 @@ job_header = jobcmd_write_json_bids( job_header, json_dataset_description, fullf
 
 %% Main loop
 
+% If there is identical exam name after delete "_", change the name
+exam_name = del_({examArray.name}');
+[C,IA,IC] = unique(exam_name); %#ok<ASGLU>
+name_number = nan(size(IC));
+for idx = 1 : numel(IC)
+    name_number(idx) = sum( IC(idx)==IC(1:idx) );
+end
+exam_name = strcat(exam_name, regexprep(cellstr(num2str(name_number-1)),'0','') );
+
+
 for e = 1:nrExam
     %% ####################################################################
     % Initialization
@@ -175,7 +185,7 @@ for e = 1:nrExam
     %% ####################################################################
     % sub DIR
     
-    sub_name = sprintf('sub-%s',del_(EXAM.name));
+    sub_name = sprintf('sub-%s',exam_name{e});
     sub_path = fullfile( bidsDir, sub_name );
     job_subj = [ job_subj sprintf('mkdir -p %s \n\n', sub_path) ];
     
