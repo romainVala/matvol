@@ -62,6 +62,11 @@ defpar.swi_regex_volume = '^s.*nii';
 defpar.swi_tag_volume   = 's';
 defpar.swi_tag_json     = 'j';
 
+% asl
+defpar.asl_regex_volume  = '^(f|s).*nii'; % f : multiple volumes (99% of cases) // s : only one volume (1% of cases, but it may happen)
+defpar.asl_tag_volume    = 'f';
+defpar.asl_tag_json      = 'j';
+
 %--------------------------------------------------------------------------
 
 defpar.sge      = 0;
@@ -95,6 +100,7 @@ SequenceCategory = {
     '^gre$'              'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % gre FLASH
     '^tse$'              'anat'  par.anat_regex_volume  par.anat_tag_volume  par.anat_tag_json % tse, usually AX_2DT1 or AX_2DT2
     'ep2d_se'            'anat'  par.func_regex_volume  par.anat_tag_volume  par.anat_tag_json % SpinEcho EPI
+    'pcasl'              'asl'   par. asl_regex_volume  par. asl_tag_volume  par. asl_tag_json % pCASL
     };
 
 
@@ -197,9 +203,9 @@ for idx = 1 : size(SequenceCategory, 1)
     % Special cases %
     %%%%%%%%%%%%%%%%%
     
-    %------------------------------------------------------------------
+    %----------------------------------------------------------------------
     % func
-    %------------------------------------------------------------------
+    %----------------------------------------------------------------------
     if strcmp(SequenceCategory{idx,2},'func')
         
         type = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
@@ -216,9 +222,47 @@ for idx = 1 : size(SequenceCategory, 1)
         if any(type_M)    , EXAM.addSerie(upper_dir_name(type_M    ), 'func_mag'  ), exam_SequenceData(where(type_M    ),end) = {'func_mag'  }; flag_add = 1; end
         if any(type_P)    , EXAM.addSerie(upper_dir_name(type_P    ), 'func_phase'), exam_SequenceData(where(type_P    ),end) = {'func_phase'}; flag_add = 1; end
         
-        %--------------------------------------------------------------
+        %----------------------------------------------------------------------
+        % func
+        %----------------------------------------------------------------------
+    elseif strcmp(SequenceCategory{idx,2},'asl')
+        
+        subcategory = {'pcasl','casl','asl'}; % mp2rage
+        for sc = 1 : length(subcategory)
+            
+            where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
+            if any(where_sc) % yes
+                EXAM.addSerie(upper_dir_name(where_sc), subcategory{sc})% add them
+                flag_add = 1;
+                exam_SequenceData(where(where_sc),end) = subcategory(sc);
+                upper_dir_name(where_sc) = []; % remove them from the list
+                where(where_sc) = [];
+            end
+            
+        end
+        
+        if ~isempty(upper_dir_name) % if the list is not empty, it means some non-mp2rage sereies remains, such as classic mprage, or else...
+            
+            
+            type = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
+            name = exam_SequenceData(where,hdr.SeriesDescription); % serie name
+            
+            type_SBRef = ~cellfun(@isempty,regexp(name,'SBRef$'));
+            
+            type_M = strcmp(type,'M');
+            type_P = strcmp(type,'P');
+            
+            type_M = logical( type_M - type_SBRef );
+            
+            if any(type_SBRef), EXAM.addSerie(upper_dir_name(type_SBRef), 'asl_sbref'), exam_SequenceData(where(type_SBRef),end) = {'asl_sbref'}; flag_add = 1; end
+            if any(type_M)    , EXAM.addSerie(upper_dir_name(type_M    ), 'asl_mag'  ), exam_SequenceData(where(type_M    ),end) = {'asl_mag'  }; flag_add = 1; end
+            if any(type_P)    , EXAM.addSerie(upper_dir_name(type_P    ), 'asl_phase'), exam_SequenceData(where(type_P    ),end) = {'asl_phase'}; flag_add = 1; end
+            
+        end
+        
+        %------------------------------------------------------------------
         % anat
-        %--------------------------------------------------------------
+        %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'anat')
         
         subcategory = {'_INV1','_INV2','_UNI_Images','_T1_Images'}; % mp2rage
@@ -279,9 +323,9 @@ for idx = 1 : size(SequenceCategory, 1)
             
         end
         
-        %--------------------------------------------------------------
+        %------------------------------------------------------------------
         % fmap
-        %--------------------------------------------------------------
+        %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'fmap')
         
         type = exam_SequenceData(where,hdr.ImageType); % mag or phase
@@ -293,9 +337,9 @@ for idx = 1 : size(SequenceCategory, 1)
         if any(type_P), EXAM.addSerie(upper_dir_name(type_P), 'fmap_phase'), exam_SequenceData(where(type_P),end) = {'fmap_phase'}; flag_add = 1; end
         
         
-        %--------------------------------------------------------------
+        %------------------------------------------------------------------
         % swi
-        %--------------------------------------------------------------
+        %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'swi')
         
         subcategory = {'Mag_Images','Pha_Images','mIP_Images','SWI_Images'}; % swi
@@ -331,10 +375,16 @@ for idx = 1 : size(SequenceCategory, 1)
             
         end
         
-        % discard -----------------------------------------------------
+        %------------------------------------------------------------------
+        % DISCARD
+        %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'discard')
         exam_SequenceData(where,end) = SequenceCategory(idx,2);
         continue
+        
+        %------------------------------------------------------------------
+        % other ? like dwi
+        %------------------------------------------------------------------
     else
         EXAM.addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
         flag_add = 1;
@@ -410,6 +460,6 @@ if print
     fprintf('%s',str)
 end
 
-    error_log = [error_log str sprintf('\n')];
+error_log = [error_log str sprintf('\n')];
 
 end % function
