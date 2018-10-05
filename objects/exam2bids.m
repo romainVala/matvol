@@ -463,9 +463,10 @@ for e = 1:nrExam
             
             for D = 1 : numel(DWI_IN__serie)
                 
-                % Volume --------------------------------------------------
+                [ DWI_IN___vol , error_flag_dwi_vol  ] = CHECK( DWI_IN__serie(D), 'volume', par.regextag_dwi_volume );
+                [ DWI_IN__json , error_flag_dwi_json ] = CHECK( DWI_IN__serie(D), 'json', par.regextag_dwi_json );
                 
-                [ DWI_IN___vol , error_flag_dwi ] = CHECK( DWI_IN__serie(D), 'volume', par.regextag_dwi_volume );
+                error_flag_dwi = error_flag_dwi_vol && error_flag_dwi_json;
                 
                 if ~error_flag_dwi
                     
@@ -474,6 +475,8 @@ for e = 1:nrExam
                         fprintf('[%s]: Preparing DWI : %s \n', mfilename, DWI_IN___vol.path );
                     end
                     
+                    % Volume --------------------------------------------------
+                    
                     dwi_IN___vol_path = deblank  (DWI_IN___vol.path);
                     dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
                     dwi_OUT__vol_name = dwi_run_name{D};
@@ -481,13 +484,7 @@ for e = 1:nrExam
                     dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
                     subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
                     
-                end
-                
-                % Json ----------------------------------------------------
-                
-                [ DWI_IN__json , error_flag_dwi ] = CHECK( DWI_IN__serie(D), 'json', par.regextag_dwi_json );
-                
-                if ~error_flag_dwi
+                    % Json ----------------------------------------------------
                     
                     dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
                     json_dwi_struct    = getJSON_params_EPI( DWI_IN__json, dwi_OUT__vol_name, par.pct ); % Get data from the Json that we will append on the to, to match BIDS architecture
