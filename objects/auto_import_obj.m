@@ -161,8 +161,6 @@ end
 % Fetch all json files
 json = gfile(subdir,'json$',struct('verbose',0));
 if isempty(json)
-    %         exam_SequenceData = cell(0);
-    %         hdr = cell(0);
     EXAM.is_incomplete = 1;
     return
 end
@@ -230,7 +228,7 @@ for idx = 1 : size(SequenceCategory, 1)
         subcategory = {'pcasl','casl','asl'}; % mp2rage
         for sc = 1 : length(subcategory)
             
-            where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
+            where_sc = ~cellfun(@isempty, regexp(exam_SequenceData(where,hdr.SequenceFileName),subcategory{sc})); % do we find this subcategory ?
             if any(where_sc) % yes
                 EXAM.addSerie(upper_dir_name(where_sc), subcategory{sc})% add them
                 flag_add = 1;
