@@ -19,6 +19,7 @@ defpar.sge      = 0;
 defpar.run      = 0;
 defpar.display  = 0;
 defpar.pct      = 0; % Parallel Computing Toolbox
+defpar.concat = 1;
 
 par = complet_struct(par,defpar);
 
@@ -41,17 +42,22 @@ if par.sge
     defpar.cmd_prepend = '';
     par = complet_struct(par,defpar);
     
-    cmd=cell(size(jobs));
+    cmd=cell(length(jobs)/par.concat,1);
     tic
-    for k=1:length(jobs)
-        j=jobs{k};
-        jstr = gencode(j);
-        if isfield(par,'cmd_prepend')
-            jstr{end+1} = sprintf('%s\n spm_jobman(''run'',{j});\nclear j;\n',par.cmd_prepend);
-        else
-            jstr{end+1} = sprintf('spm_jobman(''run'',{j});\nclear j;\n');
+    nb_job=0;
+    for k=1:par.concat:length(jobs)
+        nb_job=nb_job+1;
+        jstr={};
+        for kk=1:par.concat
+            j=jobs{k+kk-1};
+            jstr = [jstr gencode(j)];
+            if isfield(par,'cmd_prepend')
+                jstr{end+1} = sprintf('%s\n spm_jobman(''run'',{j});\nclear j;\n',par.cmd_prepend);
+            else
+                jstr{end+1} = sprintf('spm_jobman(''run'',{j});\nclear j;\n');
+            end
         end
-        cmd{k}=jstr;
+        cmd{nb_job}=jstr;
     end
     toc
     %    varfile = do_cmd_matlab_sge(cmd,par)
