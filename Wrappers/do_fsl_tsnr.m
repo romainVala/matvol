@@ -18,12 +18,12 @@ for k=1:length(fin)
 
     [pp ffin] = get_parent_path(fin(k));
 
-    cmd = sprintf('cd %s\n',pp{1});
+    cmd = sprintf('cd %s',pp{1});
     
     cmd = sprintf('%s\n fslmaths %s -Tmean the_mean_for_tsnr',cmd,ffin{1});
     cmd = sprintf('%s\n fslmaths %s -Tstd  the_std_for_tsnr',cmd,ffin{1});
     cmd = sprintf('%s\n fslmaths the_mean_for_tsnr -div the_std_for_tsnr %s',cmd,fout{k});
-    cmd = sprintf('%s\n rm the_mean_for_tsnr.nii.gz the_std_for_tsnr.nii.gz\n',cmd);
+    cmd = sprintf('%s\n rm -f the_mean_for_tsnr.nii.gz the_std_for_tsnr.nii.gz\n',cmd);
     
     job{k} = cmd;
 end
