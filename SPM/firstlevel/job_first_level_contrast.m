@@ -23,7 +23,7 @@ defpar.sessrep         = 'none';
 defpar.file_reg        = '^s.*nii';
 defpar.report          = 1;
 
-defpar.jobname         ='spm_glm';
+defpar.jobname         ='spm_glm_con';
 defpar.walltime        = '04:00:00';
 
 defpar.sge             = 0;
@@ -79,7 +79,9 @@ end
 
 
 %% Other routines
-
+if (par.report)
+    par.concat=2;
+end
 [ jobs ] = job_ending_rountines( jobs, [], par );
 
 
