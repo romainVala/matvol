@@ -60,7 +60,7 @@ for k=1:length(f)
     b = str2num(b);
     
     if isempty(b)
-        b=ones(1,6)*NaN;
+        b=ones(1,7)*NaN;
     end
     vol(k,:) = b(1:2);
     
