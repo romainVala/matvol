@@ -118,8 +118,8 @@ for j = 1 : size(json_filename,1)
     end
     
     % Magnitude ? Phase ? ...
-    ImageType  = get_field_mul(content, 'ImageType'); MAGorPHASE = ImageType{3};
-    data(j).ImageType = MAGorPHASE; % M' / 'P' / ...
+    ImageType  = get_field_mul(content, 'ImageType');
+    data(j).ImageType = ImageType; % M' / 'P' / ...
     
     % Sequence number on the console
     % ex1 : mp2rage       will have paramput series but with identical SequenceID (INV1, INV2, UNI_Image)

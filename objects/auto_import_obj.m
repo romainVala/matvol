@@ -213,7 +213,12 @@ for idx = 1 : size(SequenceCategory, 1)
     %----------------------------------------------------------------------
     if strcmp(SequenceCategory{idx,2},'func')
         
-        type = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
+        type_ = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
+        type = {};
+        for t = 1 : length(type_)
+            type(1:length(type_{t}),t) = type_{t}; %#ok<AGROW>
+        end
+        type = type(3,:)';
         name = exam_SequenceData(where,hdr.SeriesDescription); % serie name
         
         type_SBRef = ~cellfun(@isempty,regexp(name,'SBRef$'));
@@ -248,8 +253,12 @@ for idx = 1 : size(SequenceCategory, 1)
         
         if ~isempty(upper_dir_name) % if the list is not empty, it means some non-mp2rage sereies remains, such as classic mprage, or else...
             
-            
-            type = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
+            type_ = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
+            type = {};
+            for t = 1 : length(type_)
+                type(1:length(type_{t}),t) = type_{t}; %#ok<AGROW>
+            end
+            type = type(3,:)';
             name = exam_SequenceData(where,hdr.SeriesDescription); % serie name
             
             type_SBRef = ~cellfun(@isempty,regexp(name,'SBRef$'));
@@ -310,7 +319,12 @@ for idx = 1 : size(SequenceCategory, 1)
                 if any( loca ), exam_SequenceData(where( loca ),end) = {'discard'}; end % don't add the serie, just discard it
                 fl                = logical(fl - loca);
                 
-                type   = exam_SequenceData(where,hdr.ImageType); % mag or phase
+                type_   = exam_SequenceData(where,hdr.ImageType); % mag or phase
+                type = {};
+                for t = 1 : length(type_)
+                    type(1:length(type_{t}),t) = type_{t}; %#ok<AGROW>
+                end
+                type = type(3,:)';
                 
                 type_M = strcmp(type,'M'); fl_mag = fl & type_M;
                 type_P = strcmp(type,'P'); fl_pha = fl & type_P;
@@ -333,7 +347,12 @@ for idx = 1 : size(SequenceCategory, 1)
         %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'fmap')
         
-        type = exam_SequenceData(where,hdr.ImageType); % mag or phase
+        type_ = exam_SequenceData(where,hdr.ImageType); % mag or phase
+        type = {};
+        for t = 1 : length(type_)
+            type(1:length(type_{t}),t) = type_{t}; %#ok<AGROW>
+        end
+        type = type(3,:)';
         
         type_M = strcmp(type,'M');
         type_P = strcmp(type,'P');
