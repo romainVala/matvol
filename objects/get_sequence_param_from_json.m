@@ -4,8 +4,8 @@ function [ param ] = get_sequence_param_from_json( json_filename, all_fields, pc
 % IMPORTANT : the parameters are BIDS compatible.
 % Mostly, it means using SI units, with BIDS json names
 %
-% Syntax :  [ param ] = get_sequence_param_from_json( json_filename              )
-% Syntax :  [ param ] = get_sequence_param_from_json( json_filename , all_fields )
+% Syntax :  [ param ] = get_sequence_param_from_json( json_filename                    )
+% Syntax :  [ param ] = get_sequence_param_from_json( json_filename , all_fields , pct )
 %
 % json_filename can be char, a cellstr, cellstr containing multi-line char
 %
@@ -31,7 +31,7 @@ if nargin < 2
 end
 
 if nargin < 3
-    pct = 0;
+    pct = 0; % Parallel Computing Toolbox
 end
 
 

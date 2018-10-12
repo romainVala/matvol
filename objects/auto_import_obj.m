@@ -77,7 +77,7 @@ defpar.medic_tag_json      = 'j';
 defpar.sge      = 0;
 defpar.jobname  = 'matvol_auto_import_obj';
 defpar.walltime = '00:30:00';
-defpar.pct      = 0;
+defpar.pct      = 0; % Parallel Computing Toolbox
 
 defpar.redo     = 0;
 defpar.run      = 1;

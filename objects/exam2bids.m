@@ -65,7 +65,7 @@ defpar.sge_verbose = 0;      % too much display in do_cmd_sge
 defpar.sge      = 0;
 defpar.jobname  = 'matvol_exam2bids';
 defpar.walltime = '00:30:00';
-defpar.pct      = 0;
+defpar.pct      = 0; % Parallel Computing Toolbox
 
 defpar.redo     = 0;
 defpar.run      = 1;
