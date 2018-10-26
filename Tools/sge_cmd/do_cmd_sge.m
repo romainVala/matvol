@@ -27,6 +27,7 @@ def_par.sbatch_args   = ' -m block:block ';
 def_par.jobappend     = '';
 def_par.parallel      = 0;
 def_par.parallel_pack = 1;
+def_par.random = 0;
 
 def_par.verbose       = 1;
 def_par.fake          = 0;
@@ -153,6 +154,10 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         kinit = length(dd);
     else
         kinit = 0;
+    end
+    
+    if par.random
+        job = job(randperm(length(job)));
     end
     
     for k=1:length(job)
