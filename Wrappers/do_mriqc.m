@@ -1,4 +1,4 @@
-function  do_mriqc(bids_dir)
+function  do_mriqc(bids_dir,par)
 
 if ~exist('par'),par ='';end
 
