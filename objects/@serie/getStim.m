@@ -1,4 +1,4 @@
-function [ stimArray ] = getStim( serieArray, regex, type )
+function [ stimArray ] = getStim( serieArray, regex, type, verbose )
 % Syntax  : fetch the stim corresponfing to the regex, scanning the defined property.
 % Example : run_stim  = serieArray.getStim('onset'                      );
 %           run1_stim = serieArray.getStim('onset1'                     );
@@ -15,6 +15,11 @@ end
 if nargin < 3
     type = 'tag';
 end
+
+if nargin < 4
+    verbose = 1;
+end
+
 
 AssertIsCharOrCellstr(regex)
 
@@ -52,7 +57,7 @@ end % exam
 
 %% Error if nothing found
 
-if isempty(stimArray)
+if verbose && isempty(stimArray)
     warning('No @stim.%s found for regex [ %s ]', type, regex )
 end
 

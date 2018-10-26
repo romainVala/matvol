@@ -1,4 +1,4 @@
-function [ modelArray ] = getModel( examArray, regex, type )
+function [ modelArray ] = getModel( examArray, regex, type, verbose )
 % Syntax  : fetch the models corresponfing to the regex, scanning the defined property.
 % Example :  localizer_models = examArray.getModel('localizer'                   );
 %           retinotopy_models = examArray.getModel('retinotopy'                  );
@@ -13,6 +13,11 @@ end
 if nargin < 3
     type = 'tag';
 end
+
+if nargin < 4
+    verbose = 1;
+end
+
 
 AssertIsCharOrCellstr(regex)
 assert(ischar(type) , 'type must be a char')
@@ -64,7 +69,7 @@ end
 
 %% Error if nothing found
 
-if isempty(modelArray)
+if verbose && isempty(modelArray)
     warning('No @model.%s found for regex [ %s ]', type, regex )
 end
 

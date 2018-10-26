@@ -1,14 +1,16 @@
 classdef mvObject < handle
-    % MVOBJECT is a 'virtual' class : all subclasses (exam/serie/volume) contain this virtual class methods and attributes
+    % MVOBJECT is a 'virtual' class : all subclasses (exam/serie/volume/...) contain this virtual class methods and attributes
     
     properties
         
-        name = ''     % name of the directory/file
-        path = ''     % path of the directory/file
+        name  = ''     % name of the directory/file
+        path  = ''     % path of the directory/file
         
-        tag  = ''     % tag of the subclass object (exam/serie/volume)
+        tag   = ''     % tag of the subclass object (exam/serie/volume)
         
-        cfg  = struct % configuration parameters
+        cfg   = struct % configuration parameters
+        
+        other = struct % user can use this structure however he wants
         
     end
     

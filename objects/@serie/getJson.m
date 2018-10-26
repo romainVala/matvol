@@ -1,4 +1,4 @@
-function [ jsonArray ] = getJson( serieArray, regex, type )
+function [ jsonArray ] = getJson( serieArray, regex, type, verbose )
 % Syntax  : fetch the json corresponfing to the regex, scanning the defined property.
 % Example : run_jsons     = serieArray.getJson('f'                );
 %           run1_rf_jsons = serieArray.getJson('^rf'              );
@@ -14,6 +14,11 @@ end
 if nargin < 3
     type = 'tag';
 end
+
+if nargin < 4
+    verbose = 1;
+end
+
 
 AssertIsCharOrCellstr(regex)
 assert(ischar(type ), 'type must be a char')
@@ -61,7 +66,7 @@ end % exam
 
 %% Error if nothing found
 
-if isempty(jsonArray)
+if verbose && isempty(jsonArray)
     warning('No @json.%s found for regex [ %s ]', type, regex )
 end
 

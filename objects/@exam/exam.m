@@ -3,6 +3,9 @@ classdef exam < mvObject
     %
     % Syntax  : examArray = exam(baseDirectory, reg_ex1, reg_ex2, reg_ex3, ...)
     % Example : examArray = exam('/dir/to/subjects/', 'SubjectNameREGEX')
+    %
+    % Note : if the 'reg_ex' is left empty, a popup will appear to select the directories graphically
+    %
     
     properties
         
@@ -22,6 +25,10 @@ classdef exam < mvObject
             % Input args ?
             if nargin > 0
                 
+                if nargin < 2
+                    reg_ex = 'graphically';
+                end
+                
                 AssertIsCharOrCellstr(indir )
                 AssertIsCharOrCellstr(reg_ex)
                 
@@ -37,6 +44,10 @@ classdef exam < mvObject
                 if numel(dirList) == 0
                     error('No dir found with regex [ %s ]\n in : %s', ...
                         reg_ex, indir )
+                elseif numel(dirList)==1 && isempty(dirList{1})
+                    warning('No dir selected graphically')
+                    examArray = exam.empty;
+                    return
                 end
                 
                 % Create an array of @exam objects, corresponding to each dir in the list

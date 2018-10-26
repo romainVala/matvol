@@ -1,4 +1,4 @@
-function [ serieArray ] = getSerie( examArray, regex, type )
+function [ serieArray ] = getSerie( examArray, regex, type, verbose )
 % Syntax  : fetch the series corresponfing to the regex, scanning the defined property.
 % Example : run_series  = examArray.getSerie('run'              );
 %           run1_series = examArray.getSerie('run1'             );
@@ -15,6 +15,11 @@ end
 if nargin < 3
     type = 'tag';
 end
+
+if nargin < 4
+    verbose = 1;
+end
+
 
 AssertIsCharOrCellstr(regex)
 assert(ischar(type) , 'type must be a char')
@@ -66,7 +71,7 @@ end
 
 %% Error if nothing found
 
-if isempty(serieArray)
+if verbose && isempty(serieArray)
     warning('No @serie.%s found for regex [ %s ]', type, regex )
 end
 

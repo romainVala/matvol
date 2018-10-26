@@ -1,4 +1,4 @@
-function [ volumeArray ] = getVolume( serieArray, regex, type )
+function [ volumeArray ] = getVolume( serieArray, regex, type, verbose )
 % Syntax  : fetch the volume corresponfing to the regex, scanning the defined property.
 % Example : run_volumes     = serieArray.getVolume('f'                );
 %           run1_rf_volumes = serieArray.getVolume('^rf'              );
@@ -14,6 +14,11 @@ end
 if nargin < 3
     type = 'tag';
 end
+
+if nargin < 4
+    verbose = 1;
+end
+
 
 AssertIsCharOrCellstr(regex)
 assert(ischar(type ), 'type must be a char')
@@ -61,7 +66,7 @@ end % exam
 
 %% Error if nothing found
 
-if isempty(volumeArray)
+if verbose && isempty(volumeArray)
     warning('No @volume.%s found for regex [ %s ]', type, regex )
 end
 

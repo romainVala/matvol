@@ -1,4 +1,4 @@
-function [ exams ] = getExam( examArray, regex )
+function [ exams ] = getExam( examArray, regex, verbose )
 % Syntax  : fetch the exams corresponfing to the regex.
 % Example : ex = examArray.getExam('2017');
 %           ex = examArray.getExam('Subject02');
@@ -10,6 +10,10 @@ function [ exams ] = getExam( examArray, regex )
 
 if nargin < 2
     regex = '.*';
+end
+
+if nargin < 3
+    verbose = 1;
 end
 
 AssertIsCharOrCellstr(regex)
@@ -38,7 +42,7 @@ end % exam
 
 %% Error if nothing found
 
-if isempty(exams)
+if verbose && isempty(exams)
     warning('No @exam found for regex [ %s ]', regex )
 end
 
