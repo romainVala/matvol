@@ -47,7 +47,7 @@ classdef exam < mvObject
                     dirList = get_subdir_regex(indir, reg_ex, varargin{:});
                     
                     if numel(dirList) == 0
-                        error('No dir found with regex [ %s ]\n in : %s', ...
+                        warning('No dir found with regex [ %s ]\n in : %s', ...
                             reg_ex, indir )
                     elseif numel(dirList)==1 && isempty(dirList{1})
                         warning('No dir selected graphically')
