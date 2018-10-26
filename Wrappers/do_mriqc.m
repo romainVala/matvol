@@ -2,12 +2,9 @@ function  do_mriqc(bids_dir,par)
 
 if ~exist('par'),par ='';end
 
-defpar.frac = 0.1 ;
-
 defpar.jobname = 'mriqc';
 defpar.outdir = '';
-
-defpar.sge=0;
+defpar.sge=1;
 
 par = complet_struct(par,defpar);
 
