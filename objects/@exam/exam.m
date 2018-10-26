@@ -19,7 +19,7 @@ classdef exam < mvObject
     methods
         
         % --- Constructor -------------------------------------------------
-        function examArray = exam(indir, reg_ex, varargin)
+        function examArray = exam(indirs, reg_ex, varargin)
             %
             
             % Input args ?
@@ -29,39 +29,45 @@ classdef exam < mvObject
                     reg_ex = 'graphically';
                 end
                 
-                AssertIsCharOrCellstr(indir )
+                AssertIsCharOrCellstr(indirs )
                 AssertIsCharOrCellstr(reg_ex)
                 
-                indir  = char(indir);
-                reg_ex = char(reg_ex);
+                if ischar(indirs), indirs = {indirs};end
                 
-                % Is indir a real dir ?
-                assert( exist(indir,'dir')==7, 'Dir does not exist : %s', indir )
+                idx_append = 0;
                 
-                % Fetch dir list recursibley with regex
-                dirList = get_subdir_regex(indir, reg_ex, varargin{:});
-                
-                if numel(dirList) == 0
-                    error('No dir found with regex [ %s ]\n in : %s', ...
-                        reg_ex, indir )
-                elseif numel(dirList)==1 && isempty(dirList{1})
-                    warning('No dir selected graphically')
-                    examArray = exam.empty;
-                    return
+                for nb_in = 1:length(indirs)
+                    indir  = indirs{nb_in};
+                    reg_ex = char(reg_ex);
+                    
+                    % Is indir a real dir ?
+                    assert( exist(indir,'dir')==7, 'Dir does not exist : %s', indir )
+                    
+                    % Fetch dir list recursibley with regex
+                    dirList = get_subdir_regex(indir, reg_ex, varargin{:});
+                    
+                    if numel(dirList) == 0
+                        error('No dir found with regex [ %s ]\n in : %s', ...
+                            reg_ex, indir )
+                    elseif numel(dirList)==1 && isempty(dirList{1})
+                        warning('No dir selected graphically')
+                        examArray = exam.empty;
+                        return
+                    end
+                    
+                    % Create an array of @exam objects, corresponding to each dir in the list
+                    for idx = 1 : length(dirList)
+                        
+                        [pathstr,name, ~] = get_parent_path(dirList{idx});
+                        examArray(idx+idx_append,1).name = name; %#ok<*AGROW>              % directory name
+                        examArray(idx+idx_append,1).tag  = name;                           % initialization of the tag
+                        examArray(idx+idx_append,1).path = fullfile(pathstr,name,filesep); % path of dirname
+                        
+                        % NB : series field is an empty @serie object at the creation of the exam
+                        
+                    end
+                    idx_append = length(examArray);
                 end
-                
-                % Create an array of @exam objects, corresponding to each dir in the list
-                for idx = 1 : length(dirList)
-                    
-                    [pathstr,name, ~] = get_parent_path(dirList{idx});
-                    examArray(idx,1).name = name; %#ok<*AGROW>              % directory name
-                    examArray(idx,1).tag  = name;                           % initialization of the tag
-                    examArray(idx,1).path = fullfile(pathstr,name,filesep); % path of dirname
-                    
-                    % NB : series field is an empty @serie object at the creation of the exam
-                    
-                end
-                
             end
             
         end % ctor
