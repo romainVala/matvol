@@ -7,6 +7,7 @@ defpar.outdir = '';
 defpar.sge=1;
 defpar.plabel='';
 % a mettre dans le do qsubcmd_prepend = sprintf(' module load mriqc\n source /network/lustre/iss01/cenir/software/irm/bin/python_path3.6\n '
+defpar.workdir='';
 
 par = complet_struct(par,defpar);
 
@@ -22,27 +23,24 @@ if isempty(par.outdir)
 end
 
 
-for nbbids=1:length(bids_dir)
+for nbbids=1:length(bids_dir) %wont work with multiple workdir or outdir
     
     bdir = bids_dir{nbbids};
     
-    if ~isempty(par.plabel)
-        for kk=1:length(par.plabel)
-            cmd{end+1} = sprintf('mriqc %s %s participant  --n_cpus 1  --ants-nthreads 1 ',bdir,par.outdir);
-            cmd{end} = sprintf('%s--ica --fft-spikes-detector --hmc-fsl --no-sub --verbose-reports --participant-label %s \n',...
-                cmd{end},par.plabel{kk}(5:end));
-        end
-        
-    else
-        
+    if isempty(par.plabel)
         suj = gdir(bdir,'^sub');
-        
         [pp sujname] = get_parent_path(suj);
-        
-        for kk=1:length(suj)
-            cmd{end+1} = sprintf('mriqc %s %s participant  --n_cpus 1  --ants-nthreads 1 ',bdir,par.outdir);
-            cmd{end} = sprintf('%s--ica --fft-spikes-detector --hmc-fsl --no-sub --verbose-reports --participant-label %s \n',...
-                cmd{end},sujname{kk}(5:end));
+    else
+        sujname = par.plabel;
+    end        
+    
+    for kk=1:length(sujname)
+        if length(par.outdir)>1, od = par.outdir{kk}; else od=par.outdir{1}; end
+        cmd{end+1} = sprintf('mriqc %s %s participant  --n_cpus 1  --ants-nthreads 1 ',bdir,od);
+        cmd{end} = sprintf('%s--ica --fft-spikes-detector --hmc-fsl --no-sub --verbose-reports --participant-label %s ',...
+            cmd{end},sujname{kk}(5:end));
+        if ~isempty(par.workdir)
+             cmd{end} = sprintf('%s --work-dir %s \n',cmd{end},par.workdir{kk});
         end
     end
 end
