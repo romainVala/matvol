@@ -12,6 +12,7 @@ function [ param ] = get_sequence_param_from_json( json_filename, all_fields, pc
 % all_fields is a flag, to add all fields in the structure, even if the paramter is not available
 % ex : 3DT1 sequence do not have SliceTiming, but EPI does
 % all_fields=1 is usefull if you want to convert the output structure into a cell
+% all_fields=2 also fetchs fields at first levels of the json (mostly for MRIQC output .json)
 %
 % pct is a flag to activate Parallel Computing Toolbox
 %
@@ -67,8 +68,7 @@ function data = parse_jsons(json_filename, all_fields)
 data = struct([]);
 
 for j = 1 : size(json_filename,1)
-    
-    % Open & read the file --------------------------------------------
+    %% Open & read the file
     
     content = get_file_content_as_char(json_filename(j,:));
     if isempty(content)
@@ -76,7 +76,8 @@ for j = 1 : size(json_filename,1)
         continue
     end
     
-    % Fetch all fields ------------------------------------------------
+    
+    %% Fetch all fields
     
     % Sequence name in Siemens console
     SequenceFileName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tSequenceFileName');
@@ -184,6 +185,19 @@ for j = 1 : size(json_filename,1)
         phase_dir = [phase_dir '-']; %#ok<AGROW>
     end
     data(j).PhaseEncodingDirection = phase_dir;
+    
+    
+    %% Fetch all normal fields at first level
+    
+    if all_fields > 1
+        
+        tokens = regexp(content,'\n  "(\w+)": ([0-9.-]+)','tokens');
+        for t = 1 : length(tokens)
+            data(j).(tokens{t}{1}) = str2double(tokens{t}{2});
+        end
+        
+    end
+    
     
 end % j
 
