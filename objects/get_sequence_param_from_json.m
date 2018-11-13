@@ -113,14 +113,16 @@ for j = 1 : size(json_filename,1)
     data(j).MagneticFieldStrength = MagneticFieldStrength;
     
     % Slice Timing
-    if all_fields || any(regexp(data(j).SequenceFileName, '(bold|pace)'))
+    if all_fields ~= 2 || any(regexp(data(j).SequenceFileName, '(bold|pace)'))
         SliceTiming = get_field_mul(content, 'CsaImage.MosaicRefAcqTimes'); SliceTiming = str2double(SliceTiming(2:end))' / 1000;
         data(j).SliceTiming = SliceTiming;
     end
     
     % Magnitude ? Phase ? ...
-    ImageType  = get_field_mul(content, 'ImageType');
-    data(j).ImageType = ImageType; % M' / 'P' / ...
+    if all_fields ~= 2
+        ImageType  = get_field_mul(content, 'ImageType');
+        data(j).ImageType = ImageType; % M' / 'P' / ...
+    end
     
     % Sequence number on the console
     % ex1 : mp2rage       will have paramput series but with identical SequenceID (INV1, INV2, UNI_Image)
@@ -137,7 +139,7 @@ for j = 1 : size(json_filename,1)
     data(j).ProtocolName = ProtocolName; % 'SWI_nigrosome'
     
     % bvals & bvecs
-    if  all_fields || any(regexp(data(j).SequenceFileName, 'diff'))
+    if  all_fields ~= 2 || any(regexp(data(j).SequenceFileName, 'diff'))
         
         B_value = get_field_mul(content, 'CsaImage.B_value'); B_value = str2double(B_value)';
         data(j).B_value = B_value;
