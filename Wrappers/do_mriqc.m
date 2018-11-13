@@ -19,7 +19,6 @@ cmd={};
 if isempty(par.outdir)
     [pp fff] = get_parent_path(bids_dir{1})
     par.outdir = r_mkdir(pp,'mriqc_out');
-    par.outdir=par.outdir{1}
 end
 
 
