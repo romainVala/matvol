@@ -73,7 +73,7 @@ data_structArray = reshape( data_structArray, [numel(data_structArray) 1]); % re
 Table = struct2table( data_structArray );
 
 % Remove beguining of the path when it's common to all
-examArray = [serieArray.exam];
+examArray = [jsonArray.exam];
 
 exam_name = {examArray.name}';
 if length(unique(exam_name)) == length(exam_name) % easy method, use exam.anem
