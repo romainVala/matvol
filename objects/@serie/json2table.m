@@ -69,11 +69,28 @@ end
 
 data_structArray = cell2mat(data_cellArray); % cell array of struct cannot be converted to table
 data_structArray = reshape( data_structArray, [numel(data_structArray) 1]); % reshape into single row structArray
- 
+
 Table = struct2table( data_structArray );
 
+% Remove beguining of the path when it's common to all
 examArray = [serieArray.exam];
-Table.Properties.RowNames = {examArray.name}; % RowNames
+
+exam_name = {examArray.name}';
+if length(unique(exam_name)) == length(exam_name) % easy method, use exam.anem
+    Table.Properties.RowNames = exam_name; % RowNames
+else % harder method, use exam.path but crop it
+    p = examArray.print;
+    c = 0;
+    while 1
+        c = c + 1;
+        line = p(:,c);
+        if length(unique(line))>1
+            break
+        end
+    end
+    p = cellstr(p(:,c:end));
+    Table.Properties.RowNames = p; % RowNames
+end
 
 
 end % function
