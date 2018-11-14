@@ -79,13 +79,12 @@ for j = 1 : size(json_filename,1)
     
     %% Fetch all fields
     % TR
-    RepetitionTime = get_field_one(content, 'RepetitionTime'); RepetitionTime = str2double(RepetitionTime)/1000;
-    data(j).RepetitionTime = RepetitionTime;
-    
-    if isnan(RepetitionTime)
-        data(j) = rmfield(data(j),'RepetitionTime');
-    else
+    RepetitionTime = get_field_one(content, 'RepetitionTime'); 
+    if ~isempty(RepetitionTime)
         
+        RepetitionTime = str2double(RepetitionTime)/1000;
+        data(j).RepetitionTime = RepetitionTime;
+    
         % Sequence name in Siemens console
         SequenceFileName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tSequenceFileName');
         if ~isempty(SequenceFileName)
