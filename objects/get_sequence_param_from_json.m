@@ -78,116 +78,120 @@ for j = 1 : size(json_filename,1)
     
     
     %% Fetch all fields
-    
-    % Sequence name in Siemens console
-    SequenceFileName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tSequenceFileName');
-    if ~isempty(SequenceFileName)
-        split = regexp(SequenceFileName,'\\\\','split'); % example : "%SiemensSeq%\\ep2d_bold"
-        data(j).SequenceFileName = split{end};
-    else
-        data(j).SequenceFileName = '';
-    end
-    
-    % Sequence binary name ?
-    SequenceName = get_field_one(content, 'SequenceName'); % '*tfl3d1_ns'
-    data(j).SequenceName = SequenceName;
-    
     % TR
     RepetitionTime = get_field_one(content, 'RepetitionTime'); RepetitionTime = str2double(RepetitionTime)/1000;
     data(j).RepetitionTime = RepetitionTime;
     
-    % TE
-    EchoTime = get_field_one(content, 'EchoTime'); EchoTime = str2double(EchoTime)/1000;
-    data(j).EchoTime = EchoTime;
-    
-    %FA
-    FlipAngle = get_field_one(content, 'FlipAngle'); FlipAngle = str2double(FlipAngle);
-    data(j).FlipAngle = FlipAngle;
-    
-    % 2D / 3D
-    MRAcquisitionType = get_field_one(content, 'MRAcquisitionType');
-    data(j).MRAcquisitionType = MRAcquisitionType;
-    
-    % Tesla
-    MagneticFieldStrength = get_field_one(content, 'MagneticFieldStrength'); MagneticFieldStrength = str2double(MagneticFieldStrength);
-    data(j).MagneticFieldStrength = MagneticFieldStrength;
-    
-    % Slice Timing
-    if all_fields ~= 2 || any(regexp(data(j).SequenceFileName, '(bold|pace)'))
-        SliceTiming = get_field_mul(content, 'CsaImage.MosaicRefAcqTimes'); SliceTiming = str2double(SliceTiming(2:end))' / 1000;
-        data(j).SliceTiming = SliceTiming;
-    end
-    
-    % Magnitude ? Phase ? ...
-    if all_fields ~= 2
-        ImageType  = get_field_mul(content, 'ImageType');
-        data(j).ImageType = ImageType; % M' / 'P' / ...
-    end
-    
-    % Sequence number on the console
-    % ex1 : mp2rage       will have paramput series but with identical SequenceID (INV1, INV2, UNI_Image)
-    % ex2 : gre_field_map will have paramput series but with identical SequenceID (magnitude, phase)
-    SequenceID  = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.lSequenceID'); SequenceID = str2double(SequenceID);
-    data(j).SequenceID = SequenceID;
-    
-    % Name of the serie on the console (95% of cases)
-    SeriesDescription = get_field_one(content, 'SeriesDescription');
-    data(j).SeriesDescription = SeriesDescription;
-    
-    % Name of the serie on the console : some sequences will have specific names, such as SWI
-    ProtocolName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tProtocolName');
-    data(j).ProtocolName = ProtocolName; % 'SWI_nigrosome'
-    
-    % bvals & bvecs
-    if  all_fields ~= 2 || any(regexp(data(j).SequenceFileName, 'diff'))
+    if isempty(RepetitionTime)
+        data(j) = rmfield(data(j),'RepetitionTime');
+    else
         
-        B_value = get_field_mul(content, 'CsaImage.B_value'); B_value = str2double(B_value)';
-        data(j).B_value = B_value;
+        % Sequence name in Siemens console
+        SequenceFileName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tSequenceFileName');
+        if ~isempty(SequenceFileName)
+            split = regexp(SequenceFileName,'\\\\','split'); % example : "%SiemensSeq%\\ep2d_bold"
+            data(j).SequenceFileName = split{end};
+        else
+            data(j).SequenceFileName = '';
+        end
         
-        B_vect  = get_field_mul_vect(content, 'CsaImage.DiffusionGradientDirection');
-        data(j).B_vect = B_vect;
+        % Sequence binary name ?
+        SequenceName = get_field_one(content, 'SequenceName'); % '*tfl3d1_ns'
+        data(j).SequenceName = SequenceName;
         
-    end
-    
-    % iPat
-    ParallelReductionFactorInPlane = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'); ParallelReductionFactorInPlane = str2double(ParallelReductionFactorInPlane);
-    data(j).ParallelReductionFactorInPlane = ParallelReductionFactorInPlane;
-    
-    if  all_fields || any(regexp(SequenceFileName,'ep2d'))
+        % TE
+        EchoTime = get_field_one(content, 'EchoTime'); EchoTime = str2double(EchoTime)/1000;
+        data(j).EchoTime = EchoTime;
         
-        % MB factor
-        MultibandAccelerationFactor = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.sWipMemBlock.alFree\[13\]'); MultibandAccelerationFactor = str2double(MultibandAccelerationFactor);
-        data(j).MultibandAccelerationFactor = MultibandAccelerationFactor;
+        %FA
+        FlipAngle = get_field_one(content, 'FlipAngle'); FlipAngle = str2double(FlipAngle);
+        data(j).FlipAngle = FlipAngle;
         
-        % EffectiveEchoSpacing & TotalReadoutTime
-        ReconMatrixPE = get_field_one(content, 'NumberOfPhaseEncodingSteps'); ReconMatrixPE = str2double(ReconMatrixPE);
-        data(j).NumberOfPhaseEncodingSteps = ReconMatrixPE;
-        BWPPPE = get_field_one(content, 'CsaImage.BandwidthPerPixelPhaseEncode'); BWPPPE = str2double(BWPPPE);
-        data(j).BandwidthPerPixelPhaseEncode = BWPPPE;
-        data(j).EffectiveEchoSpacing = 1 / (BWPPPE * ReconMatrixPE); % SIEMENS
-        data(j).TotalReadoutTime = data(j).EffectiveEchoSpacing * (ReconMatrixPE - 1); % FSL
+        % 2D / 3D
+        MRAcquisitionType = get_field_one(content, 'MRAcquisitionType');
+        data(j).MRAcquisitionType = MRAcquisitionType;
         
-    end
-    
-    % Phase : encoding direction
-    InPlanePhaseEncodingDirection = get_field_one(content, 'InPlanePhaseEncodingDirection');
-    data(j).InPlanePhaseEncodingDirection = InPlanePhaseEncodingDirection;
-    PhaseEncodingDirectionPositive = get_field_one(content, 'CsaImage.PhaseEncodingDirectionPositive');
-    data(j).PhaseEncodingDirectionPositive = PhaseEncodingDirectionPositive;
-    switch InPlanePhaseEncodingDirection % InPlanePhaseEncodingDirection
-        case 'COL'
-            phase_dir = 'j';
-        case 'ROW'
-            phase_dir = 'i';
-        otherwise
-            warning('wtf ? InPlanePhaseEncodingDirection')
-            phase_dir = '';
-    end
-    if PhaseEncodingDirectionPositive % PhaseEncodingDirectionPositive
-        phase_dir = [phase_dir '-']; %#ok<AGROW>
-    end
-    data(j).PhaseEncodingDirection = phase_dir;
-    
+        % Tesla
+        MagneticFieldStrength = get_field_one(content, 'MagneticFieldStrength'); MagneticFieldStrength = str2double(MagneticFieldStrength);
+        data(j).MagneticFieldStrength = MagneticFieldStrength;
+        
+        % Slice Timing
+        if all_fields ~= 2 || any(regexp(data(j).SequenceFileName, '(bold|pace)'))
+            SliceTiming = get_field_mul(content, 'CsaImage.MosaicRefAcqTimes'); SliceTiming = str2double(SliceTiming(2:end))' / 1000;
+            data(j).SliceTiming = SliceTiming;
+        end
+        
+        % Magnitude ? Phase ? ...
+        if all_fields ~= 2
+            ImageType  = get_field_mul(content, 'ImageType');
+            data(j).ImageType = ImageType; % M' / 'P' / ...
+        end
+        
+        % Sequence number on the console
+        % ex1 : mp2rage       will have paramput series but with identical SequenceID (INV1, INV2, UNI_Image)
+        % ex2 : gre_field_map will have paramput series but with identical SequenceID (magnitude, phase)
+        SequenceID  = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.lSequenceID'); SequenceID = str2double(SequenceID);
+        data(j).SequenceID = SequenceID;
+        
+        % Name of the serie on the console (95% of cases)
+        SeriesDescription = get_field_one(content, 'SeriesDescription');
+        data(j).SeriesDescription = SeriesDescription;
+        
+        % Name of the serie on the console : some sequences will have specific names, such as SWI
+        ProtocolName = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.tProtocolName');
+        data(j).ProtocolName = ProtocolName; % 'SWI_nigrosome'
+        
+        % bvals & bvecs
+        if  all_fields ~= 2 || any(regexp(data(j).SequenceFileName, 'diff'))
+            
+            B_value = get_field_mul(content, 'CsaImage.B_value'); B_value = str2double(B_value)';
+            data(j).B_value = B_value;
+            
+            B_vect  = get_field_mul_vect(content, 'CsaImage.DiffusionGradientDirection');
+            data(j).B_vect = B_vect;
+            
+        end
+        
+        % iPat
+        ParallelReductionFactorInPlane = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'); ParallelReductionFactorInPlane = str2double(ParallelReductionFactorInPlane);
+        data(j).ParallelReductionFactorInPlane = ParallelReductionFactorInPlane;
+        
+        if  all_fields || any(regexp(SequenceFileName,'ep2d'))
+            
+            % MB factor
+            MultibandAccelerationFactor = get_field_one(content, 'CsaSeries.MrPhoenixProtocol.sWipMemBlock.alFree\[13\]'); MultibandAccelerationFactor = str2double(MultibandAccelerationFactor);
+            data(j).MultibandAccelerationFactor = MultibandAccelerationFactor;
+            
+            % EffectiveEchoSpacing & TotalReadoutTime
+            ReconMatrixPE = get_field_one(content, 'NumberOfPhaseEncodingSteps'); ReconMatrixPE = str2double(ReconMatrixPE);
+            data(j).NumberOfPhaseEncodingSteps = ReconMatrixPE;
+            BWPPPE = get_field_one(content, 'CsaImage.BandwidthPerPixelPhaseEncode'); BWPPPE = str2double(BWPPPE);
+            data(j).BandwidthPerPixelPhaseEncode = BWPPPE;
+            data(j).EffectiveEchoSpacing = 1 / (BWPPPE * ReconMatrixPE); % SIEMENS
+            data(j).TotalReadoutTime = data(j).EffectiveEchoSpacing * (ReconMatrixPE - 1); % FSL
+            
+        end
+        
+        % Phase : encoding direction
+        InPlanePhaseEncodingDirection = get_field_one(content, 'InPlanePhaseEncodingDirection');
+        data(j).InPlanePhaseEncodingDirection = InPlanePhaseEncodingDirection;
+        PhaseEncodingDirectionPositive = get_field_one(content, 'CsaImage.PhaseEncodingDirectionPositive');
+        data(j).PhaseEncodingDirectionPositive = PhaseEncodingDirectionPositive;
+        switch InPlanePhaseEncodingDirection % InPlanePhaseEncodingDirection
+            case 'COL'
+                phase_dir = 'j';
+            case 'ROW'
+                phase_dir = 'i';
+            otherwise
+                warning('wtf ? InPlanePhaseEncodingDirection')
+                phase_dir = '';
+        end
+        if PhaseEncodingDirectionPositive % PhaseEncodingDirectionPositive
+            phase_dir = [phase_dir '-']; %#ok<AGROW>
+        end
+        data(j).PhaseEncodingDirection = phase_dir;
+        
+    end %if RepetitionTime not empty
     
     %% Fetch all normal fields at first level
     
