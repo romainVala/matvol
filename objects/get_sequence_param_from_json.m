@@ -82,7 +82,7 @@ for j = 1 : size(json_filename,1)
     RepetitionTime = get_field_one(content, 'RepetitionTime'); RepetitionTime = str2double(RepetitionTime)/1000;
     data(j).RepetitionTime = RepetitionTime;
     
-    if isempty(RepetitionTime)
+    if isnan(RepetitionTime)
         data(j) = rmfield(data(j),'RepetitionTime');
     else
         
