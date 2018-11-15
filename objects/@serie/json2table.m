@@ -21,8 +21,8 @@ defpar.regex      = 'j';
 defpar.type       = 'tag';
 
 % get_sequence_param_from_json
-defpar.pct        = 0;
-defpar.all_fields = 2;
+defpar.pct  = 0;
+defpar.redo = 0;
 
 par = complet_struct(par,defpar);
 
@@ -40,7 +40,7 @@ jsonArray = jsonArray(integrity==1);
 
 %% Read sequence parameters + first level fields
 
-data_cellArray = jsonArray.readSeqParam(par.all_fields,par.pct);
+data_cellArray = jsonArray.readSeqParam(par.redo, par.pct);
 
 
 %% Transform the cell of struct to array of struct, then into a table

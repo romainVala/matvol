@@ -1,18 +1,13 @@
-function [ param ] = get_sequence_param_from_json( json_filename, all_fields, pct )
+function [ param ] = get_sequence_param_from_json( json_filename, pct )
 %GET_SEQUENCE_PARAM_FROM_JSON read the content of the json file, and get the most useful parameters
 %
 % IMPORTANT : the parameters are BIDS compatible.
 % Mostly, it means using SI units, with BIDS json names
 %
-% Syntax :  [ param ] = get_sequence_param_from_json( json_filename                    )
-% Syntax :  [ param ] = get_sequence_param_from_json( json_filename , all_fields , pct )
+% Syntax :  [ param ] = get_sequence_param_from_json( json_filename       )
+% Syntax :  [ param ] = get_sequence_param_from_json( json_filename , pct )
 %
 % json_filename can be char, a cellstr, cellstr containing multi-line char
-%
-% all_fields is a flag, to add all fields in the structure, even if the paramter is not available
-% ex : 3DT1 sequence do not have SliceTiming, but EPI does
-% all_fields=1 is usefull if you want to convert the output structure into a cell
-% all_fields=2 also fetchs fields at first levels of the json (mostly for MRIQC output .json)
 %
 % pct is a flag to activate Parallel Computing Toolbox
 %
@@ -28,10 +23,6 @@ AssertIsCharOrCellstr( json_filename )
 json_filename = cellstr(json_filename);
 
 if nargin < 2
-    all_fields = 0;
-end
-
-if nargin < 3
     pct = 0; % Parallel Computing Toolbox
 end
 
@@ -43,13 +34,13 @@ param = cell(size(json_filename));
 if pct
     
     parfor idx = 1 : numel(json_filename)
-        param{idx} = parse_jsons(json_filename{idx}, all_fields);
+        param{idx} = parse_jsons(json_filename{idx});
     end
     
 else
     
     for idx = 1 : numel(json_filename)
-        param{idx} = parse_jsons(json_filename{idx}, all_fields);
+        param{idx} = parse_jsons(json_filename{idx});
     end
     
 end
@@ -63,7 +54,7 @@ end
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function data = parse_jsons(json_filename, all_fields)
+function data = parse_jsons(json_filename)
 
 data = struct([]);
 

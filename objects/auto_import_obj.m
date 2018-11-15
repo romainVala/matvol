@@ -173,7 +173,7 @@ if isempty(json)
 end
 
 % Extract all parameters
-param_struct = get_sequence_param_from_json( json, 1, par.pct );
+param_struct = get_sequence_param_from_json( json, par.pct );
 if isempty(param_struct), return, end
 if isstruct(param_struct), param_struct = {param_struct}; end % only happens when there is only 1 serie
 hdr_str = fieldnames(param_struct{1});

@@ -11,7 +11,7 @@ classdef serie < mvObject
         nick = '' % nick = tag *given by the user*, not the one with auto-increment (_001, _002, ...)
         inc  = 1  % when add* methods increments the tag number (_001, _002, ...), this fields is updated
         
-        sequence = struct % sequence parameters
+        sequence = struct([]) % sequence parameters
         
     end
     

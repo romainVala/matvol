@@ -1044,7 +1044,7 @@ function param = getJSON_params_EPI( TARGET, TaskName, pct )
 if isempty( fieldnames( TARGET.serie.sequence ) )
     
     % Fetch sequence parameters
-    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, 1, pct);
+    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, pct);
     
 end
 
@@ -1073,7 +1073,7 @@ function param = getJSON_params_GRE_FIELD_MAP( TARGET, pct )
 if isempty( fieldnames( TARGET.serie.sequence ) )
     
     % Fetch sequence parameters
-    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, 1, pct);
+    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, pct);
     
 end
 
