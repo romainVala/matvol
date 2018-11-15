@@ -7,7 +7,7 @@ path = jsonArray.getPath;
 % Skip if already done
 if ~redo
     for j = 1 : numel(jsonArray)
-        if ~isempty(jsonArray(j).serie.sequence)
+        if numel(fieldnames(jsonArray(j).serie.sequence))
             path{j} = '';
         end
     end

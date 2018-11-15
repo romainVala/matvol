@@ -32,7 +32,7 @@ par = complet_struct(par,defpar);
 jsonArray = serieArray.getJson(par.regex,par.type,par.verbose);
 
 % Skip empty jsons
-integrity = jsonArray.checkIntegrity;
+integrity = ~cellfun(@isempty,jsonArray.getPath);
 jsonArray = jsonArray(:);
 integrity = integrity(:);
 jsonArray = jsonArray(integrity==1);
@@ -41,6 +41,7 @@ jsonArray = jsonArray(integrity==1);
 %% Read sequence parameters + first level fields
 
 data_cellArray = jsonArray.readSeqParam(par.redo, par.pct);
+
 
 %% In case of multiple json (ex: multi-echo), combine the content as vector
 
@@ -61,6 +62,34 @@ for d = 1 : numel(data_cellArray)
             end
         end
         data_cellArray{d} = new_data;
+    end
+end
+
+
+%% In case of different fields, fill the empty ones with NaN
+
+N = numel(data_cellArray);
+
+% Print all fields name inside a cell, for comparaison
+names = cell( N, 0 );
+for i = 1 : N
+    fields = fieldnames(data_cellArray{i});
+    ncol = length(fields);
+    names(i,1:ncol) = fields;
+end
+
+% Fortmat the cell of fieldnames and only keep the unique ones
+names = names(:); % change from 2d to 1d
+names( cellfun(@isempty,names) ) = []; % remove empty
+list = unique(names,'stable');
+
+% Compare current structure fields with the definitive 'list' of fields
+for i = 1 : N
+    f = fieldnames(data_cellArray{i});
+    d = setxor(fields,f); % non-commin fields
+    for dm = 1 : length(d)
+        data_cellArray{i}.(d{dm}) = NaN; % create the missing field
+        data_cellArray{i} = orderfields(data_cellArray{i}, list); % fields need to be in the same order for conversion
     end
 end
 
