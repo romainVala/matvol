@@ -30,17 +30,39 @@ par = complet_struct(par,defpar);
 %% Fetch json objects
 
 jsonArray = serieArray.getJson(par.regex,par.type,par.verbose);
-integrity = jsonArray.checkIntegrity;
 
+% Skip empty jsons
+integrity = jsonArray.checkIntegrity;
 jsonArray = jsonArray(:);
 integrity = integrity(:);
-
 jsonArray = jsonArray(integrity==1);
 
 
 %% Read sequence parameters + first level fields
 
 data_cellArray = jsonArray.readSeqParam(par.redo, par.pct);
+
+%% In case of multiple json (ex: multi-echo), combine the content as vector
+
+for d = 1 : numel(data_cellArray)
+    if numel(data_cellArray{d}) > 1
+        fields = fieldnames(data_cellArray{d});
+        new_data = struct;
+        for f = 1 : numel(fields)
+            switch class(data_cellArray{d}(1).(fields{f}))
+                case 'double'
+                    new_data.(fields{f}) = [data_cellArray{d}.(fields{f})];
+                case 'char'
+                    new_data.(fields{f}) = char({data_cellArray{d}.(fields{f})});
+                case 'cell'
+                    new_data.(fields{f}) = {data_cellArray{d}.(fields{f})};
+                otherwise
+                    new_data.(fields{f}) = {data_cellArray{d}.(fields{f})};
+            end
+        end
+        data_cellArray{d} = new_data;
+    end
+end
 
 
 %% Transform the cell of struct to array of struct, then into a table
