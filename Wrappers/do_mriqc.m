@@ -39,7 +39,7 @@ for nbbids=1:length(bids_dir) %wont work with multiple workdir or outdir
         if length(par.outdir)>1, od = par.outdir{kk}; else od=par.outdir{1}; end
         
         if par.singularity
-            if ~isempty(par.singu_bind), sb = par.singu_bind; elese, sb=od;end
+            if ~isempty(par.singu_bind), sb = par.singu_bind; else, sb=od;end
             cmdini = sprintf('singularity run --bind %s:%s /network/lustre/iss01/apps/teams/cenir/singularity/mriqc  ',sb,sb);
         else
             cmdini = 'mriqc';
