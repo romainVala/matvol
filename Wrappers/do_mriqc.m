@@ -9,6 +9,7 @@ defpar.plabel='';
 % a mettre dans le do qsubcmd_prepend = sprintf(' module load mriqc\n source /network/lustre/iss01/cenir/software/irm/bin/python_path3.6\n '
 defpar.workdir='';
 defpar.singularity=1;
+defpar.singu_bind=''
 
 par = complet_struct(par,defpar);
 
@@ -38,7 +39,8 @@ for nbbids=1:length(bids_dir) %wont work with multiple workdir or outdir
         if length(par.outdir)>1, od = par.outdir{kk}; else od=par.outdir{1}; end
         
         if par.singularity
-            cmdini = sprintf('singularity run --bind %s:%s /network/lustre/iss01/apps/teams/cenir/singularity/mriqc  ',od,od);
+            if ~isempty(par.singu_bind), sb = par.singu_bind; elese, sb=od;end
+            cmdini = sprintf('singularity run --bind %s:%s /network/lustre/iss01/apps/teams/cenir/singularity/mriqc  ',sb,sb);
         else
             cmdini = 'mriqc';
         end        
