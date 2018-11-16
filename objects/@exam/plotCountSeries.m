@@ -37,9 +37,14 @@ for c = 1 : length(T.Properties.VariableNames)
     else
         balancedNrSerie = uniqueNrSerie;
     end
-      
-    colorRGB = parula(length(balancedNrSerie));
-
+    
+    if length(balancedNrSerie) == 1
+        colorRGB = parula(3);
+        colorRGB = colorRGB(2,:);
+    else
+        colorRGB = parula(length(balancedNrSerie));
+    end
+    
     for v = 1 : length(countOfSerie)
         vectHTML{v,c} = color2html( colorRGB(balancedNrSerie==countOfSerie(v),:), countOfSerie(v) );
     end
