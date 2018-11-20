@@ -42,13 +42,13 @@ param = cell(size(json_filename));
 if pct
     
     parfor idx = 1 : numel(json_filename)
-        param{idx} = parse_jsons(json_filename{idx});
+        param{idx} = parse_jsons(json_filename{idx},par);
     end
     
 else
     
     for idx = 1 : numel(json_filename)
-        param{idx} = parse_jsons(json_filename{idx});
+        param{idx} = parse_jsons(json_filename{idx},par);
     end
     
 end
@@ -62,7 +62,7 @@ end
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function data = parse_jsons(json_filename)
+function data = parse_jsons(json_filename,par)
 
 data = struct([]);
 
