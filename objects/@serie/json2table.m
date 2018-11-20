@@ -23,6 +23,7 @@ defpar.type       = 'tag';
 % get_sequence_param_from_json
 defpar.pct  = 0;
 defpar.redo = 0;
+defpar.add_empty_line=1;
 
 par = complet_struct(par,defpar);
 
@@ -101,33 +102,52 @@ data_structArray = reshape( data_structArray, [numel(data_structArray) 1]); % re
 
 Table = struct2table( data_structArray );
 
-% Remove beguining of the path when it's common to all
-examArray = [jsonArray.exam];
+if par.add_empty_line
+    index = 1:length(integrity);
+    indexok = index(integrity==1);
+    indexbad = index(integrity==0);
+    
+    Table.Properties.RowNames = cellstr(strsplit(num2str(indexok,' %.5d')));
+    
+    Table_missing = Table(1,:);
+    for nbcol=1:width(Table)
+        if iscell(Table(1,:).(Table.Properties.VariableNames{nbcol}))
+            Table_missing{1,nbcol}={''};
+        else
+            Table_missing{1,nbcol}=NaN;
+        end
+    end
+    Table_missing = repmat(Table_missing,[length(indexbad),1]);
+    Table_missing.Properties.RowNames = cellstr(strsplit(num2str(indexbad,' %.5d')));    
+    
+    Table = [Table;Table_missing]; %need to have the same datatype for each collumn
+    Table = sortrows(Table,'RowNames');
+    
+end
+
+if par.add_empty_line
+    examArray = [serieArray.exam]; %include empty series
+else
+    examArray = [jsonArray.exam];
+end
 
 exam_name1 = {examArray.name}';
 if length(unique(exam_name1)) == length(exam_name1) % easy method, use exam.anem
     Table.Properties.RowNames = exam_name1; % RowNames
     
 else % harder method, use exam.path but crop it
-    
-    newSerieArray = [jsonArray.serie];
-    exam_name2 = strcat({examArray.name}' , filesep ,  {newSerieArray.name}');
-    if length(unique(exam_name2)) == length(exam_name2)
-        Table.Properties.RowNames = exam_name2; % RowNames
-    else
-        
-        exam_name3 = examArray.print;
-        c = 0;
-        while 1
-            c = c + 1;
-            line = exam_name3(:,c);
-            if length(unique(line))>1
-                break
-            end
+    exam_name3 = examArray.print;
+    c = 0;
+    % Remove beguining of the path when it's common to all
+    while 1
+        c = c + 1;
+        line = exam_name3(:,c);
+        if length(unique(line))>1
+            break
         end
-        exam_name3 = cellstr(exam_name3(:,c:end));
-        Table.Properties.RowNames = exam_name3; % RowNames
     end
+    exam_name3 = cellstr(exam_name3(:,c:end));
+    Table.Properties.RowNames = exam_name3; % RowNames
     
 end
 
