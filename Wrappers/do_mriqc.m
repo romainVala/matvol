@@ -10,6 +10,7 @@ defpar.plabel='';
 defpar.workdir='';
 defpar.singularity=1;
 defpar.singu_bind='';
+defpar.singu_image = '/network/lustre/iss01/cenir/software/irm/singularity/mriqc_singu.simg';
 
 par = complet_struct(par,defpar);
 
@@ -40,7 +41,7 @@ for nbbids=1:length(bids_dir) %wont work with multiple workdir or outdir
         
         if par.singularity
             if ~isempty(par.singu_bind), sb = par.singu_bind; else, sb=od;end
-            cmdini = sprintf('singularity run --bind %s:%s /network/lustre/iss01/apps/teams/cenir/singularity/mriqc  ',sb,sb);
+            cmdini = sprintf('singularity run --bind %s:%s %s',sb,sb,par.singu_image);
         else
             cmdini = 'mriqc';
         end        
