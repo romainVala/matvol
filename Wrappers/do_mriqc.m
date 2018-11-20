@@ -9,7 +9,7 @@ defpar.plabel='';
 % a mettre dans le do qsubcmd_prepend = sprintf(' module load mriqc\n source /network/lustre/iss01/cenir/software/irm/bin/python_path3.6\n '
 defpar.workdir='';
 defpar.singularity=1;
-defpar.singu_bind=''
+defpar.singu_bind='';
 
 par = complet_struct(par,defpar);
 
