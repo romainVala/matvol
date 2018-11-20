@@ -80,7 +80,7 @@ for j = 1 : size(json_filename,1)
     
     % TR
     RepetitionTime = get_field_one(content, 'RepetitionTime');
-    if ~isempty(RepetitionTime)
+    if ~isempty(RepetitionTime) && par.read_sequence_param
         
         %------------------------------------------------------------------
         % Sequence
