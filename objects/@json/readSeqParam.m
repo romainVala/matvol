@@ -1,6 +1,15 @@
-function data = readSeqParam( jsonArray, redo, pct )
+function data = readSeqParam( jsonArray, redo, par )
 %READSEQPARAM
 % Important : for more details about the parameters, see also get_sequence_param_from_json
+
+if ~exist('par','var')
+    par = ''; % for defpar
+end
+
+defpar.pct = 0;% Parallel Computing Toolbox
+
+par = complet_struct(par,defpar);
+
 
 path = jsonArray.getPath;
 
@@ -13,7 +22,7 @@ if ~redo
     end
 end
 
-data = get_sequence_param_from_json(path,pct);
+data = get_sequence_param_from_json(path,par);
 
 % Store or load the seq param in the serie
 for j = 1 : numel(path)

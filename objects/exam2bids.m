@@ -387,7 +387,7 @@ for e = 1:nrExam
                         % Json --------------------------------------------
                         
                         func_OUT__json_path = [ func_OUT__vol_base '.json' ];
-                        json_func_struct    = getJSON_params_EPI( FUNC_IN__json, func_OUT__vol_name, par.pct ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                        json_func_struct    = getJSON_params_EPI( FUNC_IN__json, func_OUT__vol_name, par ); % Get data from the Json that we will append on the to, to match BIDS architecture
                         json_func_str       = struct2jsonSTR( json_func_struct );
                         subjob_func{F}      = jobcmd_write_json_bids( subjob_func{F}, json_func_str, func_OUT__json_path, FUNC_IN__json.path );
                         
@@ -422,7 +422,7 @@ for e = 1:nrExam
                             
                             % Json --------------------------------------------
                             
-                            json_func_struct = getJSON_params_EPI( FUNC_IN__json, func_OUT__vol_name, par.pct ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                            json_func_struct = getJSON_params_EPI( FUNC_IN__json, func_OUT__vol_name, par ); % Get data from the Json that we will append on the to, to match BIDS architecture
                             json_func_str    = struct2jsonSTR( json_func_struct );
                             subjob_func{F}   = jobcmd_write_json_bids( subjob_func{F}, json_func_str, func_OUT__json_path, FUNC_IN__json.path(orderTE(echo),:) );
                             
@@ -497,7 +497,7 @@ for e = 1:nrExam
                     % Json ----------------------------------------------------
                     
                     dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
-                    json_dwi_struct    = getJSON_params_EPI( DWI_IN__json, dwi_OUT__vol_name, par.pct ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                    json_dwi_struct    = getJSON_params_EPI( DWI_IN__json, dwi_OUT__vol_name, par ); % Get data from the Json that we will append on the to, to match BIDS architecture
                     json_dwi_str       = struct2jsonSTR( json_dwi_struct );
                     subjob_dwi{D}      = jobcmd_write_json_bids( subjob_dwi{D}, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path );
                     
@@ -649,7 +649,7 @@ for e = 1:nrExam
                             error_flag_fmap = 1;
                         else
                             fmap_OUT__json_path = [fmap_OUT__base '.json'];
-                            json_fmap_struct    = getJSON_params_GRE_FIELD_MAP( FMAP_IN__json, par.pct ); % Get data from the Json that we will append on the to, to match BIDS architecture
+                            json_fmap_struct    = getJSON_params_GRE_FIELD_MAP( FMAP_IN__json, par ); % Get data from the Json that we will append on the to, to match BIDS architecture
                             json_fmap_str       = struct2jsonSTR( json_fmap_struct );
                             subjob_fmap{FM}     = jobcmd_write_json_bids( subjob_fmap{FM}, json_fmap_str, fmap_OUT__json_path, FMAP_IN__json.path );
                         end
@@ -1039,12 +1039,12 @@ json_str = [ json_str(1:end-2) sprintf('\n}') ]; % delete the last ',\n" and clo
 end % end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function param = getJSON_params_EPI( TARGET, TaskName, pct )
+function param = getJSON_params_EPI( TARGET, TaskName, par )
 
 if isempty( fieldnames( TARGET.serie.sequence ) )
     
     % Fetch sequence parameters
-    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, pct);
+    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, par);
     
 end
 
@@ -1068,12 +1068,12 @@ param.PhaseEncodingDirection         = seq.PhaseEncodingDirection;
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function param = getJSON_params_GRE_FIELD_MAP( TARGET, pct )
+function param = getJSON_params_GRE_FIELD_MAP( TARGET, par )
 
 if isempty( fieldnames( TARGET.serie.sequence ) )
     
     % Fetch sequence parameters
-    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, pct);
+    TARGET.serie.sequence = get_sequence_param_from_json(TARGET.path, par);
     
 end
 

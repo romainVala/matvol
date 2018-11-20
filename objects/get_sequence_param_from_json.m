@@ -1,15 +1,17 @@
-function [ param ] = get_sequence_param_from_json( json_filename, pct )
+function [ param ] = get_sequence_param_from_json( json_filename, par )
 %GET_SEQUENCE_PARAM_FROM_JSON read the content of the json file, and get the most useful parameters
 %
 % IMPORTANT : the parameters are BIDS compatible.
 % Mostly, it means using SI units, with BIDS json names
 %
 % Syntax :  [ param ] = get_sequence_param_from_json( json_filename       )
-% Syntax :  [ param ] = get_sequence_param_from_json( json_filename , pct )
+% Syntax :  [ param ] = get_sequence_param_from_json( json_filename , par )
 %
 % json_filename can be char, a cellstr, cellstr containing multi-line char
 %
-% pct is a flag to activate Parallel Computing Toolbox
+% par is a structure of parameter
+%   par.pct is a flag to activate Parallel Computing Toolbox
+%   par.read_sequence_param =1  flag to activate reading of all sequence parameter 
 %
 % see also gfile gdir parpool
 %
@@ -22,10 +24,16 @@ end
 AssertIsCharOrCellstr( json_filename )
 json_filename = cellstr(json_filename);
 
-if nargin < 2
-    pct = 0; % Parallel Computing Toolbox
+if ~exist('par','var')
+    par = ''; % for defpar
 end
 
+defpar.pct = 0;% Parallel Computing Toolbox
+defpar.read_sequence_param = 1;% if 1 read all sequence parameter assuming dcmstack json style
+
+par = complet_struct(par,defpar);
+
+pct = par.pct; 
 
 %% Main loop
 

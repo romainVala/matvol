@@ -41,7 +41,7 @@ jsonArray = jsonArray(integrity==1);
 
 %% Read sequence parameters + first level fields
 
-data_cellArray = jsonArray.readSeqParam(par.redo, par.pct);
+data_cellArray = jsonArray.readSeqParam(par.redo, par);
 
 
 %% In case of multiple json (ex: multi-echo), combine the content as vector
