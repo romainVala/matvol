@@ -106,23 +106,23 @@ if par.add_empty_line
     index = 1:length(integrity);
     indexok = index(integrity==1);
     indexbad = index(integrity==0);
-    
-    Table.Properties.RowNames = cellstr(strsplit(num2str(indexok,' %.5d')));
-    
-    Table_missing = Table(1,:);
-    for nbcol=1:width(Table)
-        if iscell(Table(1,:).(Table.Properties.VariableNames{nbcol}))
-            Table_missing{1,nbcol}={''};
-        else
-            Table_missing{1,nbcol}=NaN;
+    if ~isempty(indexbad)
+        Table.Properties.RowNames = cellstr(strsplit(num2str(indexok,' %.5d')));
+        
+        Table_missing = Table(1,:);
+        for nbcol=1:width(Table)
+            if iscell(Table(1,:).(Table.Properties.VariableNames{nbcol}))
+                Table_missing{1,nbcol}={''};
+            else
+                Table_missing{1,nbcol}=NaN;
+            end
         end
+        Table_missing = repmat(Table_missing,[length(indexbad),1]);
+        Table_missing.Properties.RowNames = cellstr(strsplit(num2str(indexbad,' %.5d')));
+        
+        Table = [Table;Table_missing]; %need to have the same datatype for each collumn
+        Table = sortrows(Table,'RowNames');
     end
-    Table_missing = repmat(Table_missing,[length(indexbad),1]);
-    Table_missing.Properties.RowNames = cellstr(strsplit(num2str(indexbad,' %.5d')));    
-    
-    Table = [Table;Table_missing]; %need to have the same datatype for each collumn
-    Table = sortrows(Table,'RowNames');
-    
 end
 
 if par.add_empty_line
