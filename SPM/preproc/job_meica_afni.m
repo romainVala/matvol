@@ -15,23 +15,24 @@ end
 % meica.py arguments : image processing
 defpar.slice_timing  = 1;  % can be (1) (recommended, will fetch automaticaly the pattern in the dic_.*json), (0) or a (char) such as 'alt+z', check 3dTshift -help
 defpar.MNI           = 0;  % Warp to MNI space using high-resolution template
+defpar.space         = ''; % Path to specific standard space template for affine anatomical normalization
 defpar.qwarp         = 0;  % Nonlinear anatomical normalization to MNI (or --space template) using 3dQWarp, after affine
 defpar.no_skullstrip = 0;  % WARNING : Anatomical is already intensity-normalized and skull-stripped
 defpar.no_despike    = 0;  % Do not de-spike functional data. Default is to de-spike, recommended.
-defpar.smooth        = ''; % Data FWHM smoothing (3dBlurInMask). Default off. ex: par.smooth='3mm'
+defpar.smooth        = ''; % !!! Not recommended !!! Data FWHM smoothing (3dBlurInMask). Default off. ex: par.smooth='3mm'
 
 % meica.py arguments : script options
 defpar.script_only   = 0;  % Generate script only, then exit
 defpar.pp_only       = 0;  % Preprocess only, then exit. It means no echo optimized comination, no ICA, just AFNI preprocessing
-defpar.keep_int      = 0;  % Keep preprocessing intermediates.
+defpar.keep_int      = 0;  % Keep preprocessing intermediates. I don't see the use of it.
 defpar.OVERWRITE     = 0;  % If subjdir/meica/meica.xyz directory exists, overwrite.
-defpar.nrCPU         = 0;  % 0 means OpenMP will use all available CPU
+defpar.nrCPU         = 0;  % 0 means OpenMP will use all available CPU. If you want to parallelize jobs, use nrCPU=1 for each job.
 defpar.cmd_arg       = ''; % Allows you to use all addition arguments not scripted in this job_meica_afni.m file
 
 % matvol classic options
 defpar.anat_file_reg = '^s.*nii'; % regex to fetch anat volume
 defpar.subdir        = 'meica';   % name of the working dir
-defpar.pct           = 0; % Parallel Computing Toolbox, will execute in parallel all the subjects 
+defpar.pct           = 0; % Parallel Computing Toolbox, will execute in parallel all the subjects
 defpar.sge           = 0; % for ICM cluster, run the jobs in paralle
 defpar.redo          = 0; % overwrite previous files
 defpar.fake          = 0; % do everything exept running
@@ -244,15 +245,16 @@ for subj = 1 : nrSubject
             cmd = sprintf('%s --tpattern %s', cmd, tpattern);
         end
         
-        if par.MNI,           cmd = sprintf('%s --MNI'          , cmd); end
-        if par.qwarp,         cmd = sprintf('%s --qwarp'        , cmd); end
-        if par.no_skullstrip, cmd = sprintf('%s --no_skullstrip', cmd); end
-        if par.no_despike,    cmd = sprintf('%s --no_despike'   , cmd); end
-        if par.smooth,        cmd = sprintf('%s --smooth %s'    , cmd, par.smooth); end
-        if par.script_only,   cmd = sprintf('%s --script_only'  , cmd); end
-        if par.pp_only,       cmd = sprintf('%s --pp_only'      , cmd); end
-        if par.keep_int,      cmd = sprintf('%s --keep_int'     , cmd); end
-        if par.OVERWRITE,     cmd = sprintf('%s --OVERWRITE'    , cmd); end
+        if par.MNI,             cmd = sprintf('%s --MNI'          , cmd); end
+        if ~isempty(par.space), cmd = sprintf('%s --space %s'     , cmd, par.space ); end
+        if par.qwarp,           cmd = sprintf('%s --qwarp'        , cmd); end
+        if par.no_skullstrip,   cmd = sprintf('%s --no_skullstrip', cmd); end
+        if par.no_despike,      cmd = sprintf('%s --no_despike'   , cmd); end
+        if par.smooth,          cmd = sprintf('%s --smooth %s'    , cmd, par.smooth); end
+        if par.script_only,     cmd = sprintf('%s --script_only'  , cmd); end
+        if par.pp_only,         cmd = sprintf('%s --pp_only'      , cmd); end
+        if par.keep_int,        cmd = sprintf('%s --keep_int'     , cmd); end
+        if par.OVERWRITE,       cmd = sprintf('%s --OVERWRITE'    , cmd); end
         
         % Other args ?
         if ~isempty(par.cmd_arg)
@@ -261,7 +263,7 @@ for subj = 1 : nrSubject
         
         % Finish preparing meica job
         cmd = sprintf('%s \n',cmd);
-        if ~( exist(fullfile(working_dir,[prefix '_medn' ext_echo]),'file') == 2 ) || par.redo
+        if ~( exist(fullfile(working_dir,[prefix '_ctab.txt']),'file') == 2 ) || par.redo
             job_subj = [job_subj cmd];
         end
         
@@ -269,22 +271,47 @@ for subj = 1 : nrSubject
         %==================================================================
         
         list_volume_base = {
-            '_medn'
-            '_mefc'
-            '_mefl'
-            '_tsoc'
+            '_hikts_'
+            '_medn_'
+            '_mefc_'
+            '_mefcz_'
+            '_mefl_'
+            '_T1c_medn_'
+            '_tsoc_'
             };
         
+        if par.MNI == 0 && isempty(par.space) % native space
+            warp = 'nat';
+        elseif par.MNI == 1 && isempty(par.space) % mni
+            if par.qwarp % affine + non-linear
+                warp = 'nlw';
+            else % affine
+                warp = 'afw';
+            end
+        elseif par.MNI == 0 && ~isempty(par.space) % specific tempalte (non the defalut MNI for AFNI)
+            if par.qwarp % affine + non-linear
+                warp = 'nlw';
+            else % affine
+                warp = 'afw';
+            end
+        elseif par.MNI == 1 && ~isempty(par.space)
+            error('Cannot do --MNI + --space')
+        else
+            warp = '';
+        end
+        
         list_volume_src = addprefixtofilenames(list_volume_base, prefix);      % add prefix
+        list_volume_src = addsuffixtofilenames(list_volume_src,warp);          % add suffix for space
         list_volume_src = addsuffixtofilenames(list_volume_src,ext_echo);      % add file extension
-        list_volume_src{end+1} = sprintf('%s_%s',prefix,'ctab.txt');           % coregistration paramters ?
+        list_volume_src{end+1} = sprintf('%s_%s',prefix,'ctab.txt');           % components table
         list_volume_src{end+1} = sprintf('meica.%s_e001',prefix);              % for motion paramters path (1/2)
         list_volume_src = addprefixtofilenames(list_volume_src,working_dir);
         list_volume_src{end} = fullfile( list_volume_src{end} , 'motion.1D' ); % for motion paramters path (2/2)
         
         list_volume_dst = addprefixtofilenames(list_volume_base,prefix);       % add prefix
+        list_volume_dst = addsuffixtofilenames(list_volume_dst,warp);          % add suffix for space
         list_volume_dst = addsuffixtofilenames(list_volume_dst,ext_echo);      % add file extension
-        list_volume_dst{end+1} = sprintf('%s_%s',prefix,'ctab.txt');           % coregistration paramters ?
+        list_volume_dst{end+1} = sprintf('%s_%s',prefix,'ctab.txt');           % components table
         list_volume_dst{end+1} = sprintf('rp_%s.txt',prefix);                  % motion paramters
         list_volume_dst = addprefixtofilenames(list_volume_dst,dir_func{subj}{run}); % path of the serie dir
         
@@ -304,14 +331,19 @@ for subj = 1 : nrSubject
         'anat_ns' % skullstrip
         };
     
-    if par.MNI, list_anat_base = [ list_anat_base ; 'anat_ns_at' ]; end
+    if strcmp(warp,'afw') || strcmp(warp,'nlw')
+        list_anat_base = [ list_anat_base ; 'anat_ns_at' ];
+    end
+    if strcmp(warp,'nlw')
+        list_anat_base = [ list_anat_base ; 'anat_ns_atnl' ; 'anat_ns_atnl_WARP' ; 'anat_ns_atnl_WARPINV' ];
+    end
     
     list_anat_src = addsuffixtofilenames(list_anat_base,ext_anat);
-    if par.MNI, list_anat_src{end+1} = 'anat_ns2at.aff12.1D';  end % coregistration paramters ?
+    if strcmp(warp,'afw') || strcmp(warp,'nlw'), list_anat_src{end+1} = 'anat_xns2at.aff12.1D'; end % coregistration paramters ?
     list_anat_src = addprefixtofilenames(list_anat_src,working_dir);
     
     list_anat_dst = addsuffixtofilenames(list_anat_base,ext_anat);
-    if par.MNI, list_anat_dst{end+1} = 'anat_ns2at.aff12.1D';   end % coregistration paramters ?
+    if strcmp(warp,'afw') || strcmp(warp,'nlw'), list_anat_dst{end+1} = 'anat_xns2at.aff12.1D'; end % coregistration paramters ?
     list_anat_dst = addprefixtofilenames(list_anat_dst,dir_anat{subj});
     
     [ ~ , job_tmp ] = r_movefile(list_anat_src, list_anat_dst, 'linkn', par);
