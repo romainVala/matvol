@@ -263,7 +263,7 @@ for subj = 1 : nrSubject
         
         % Finish preparing meica job
         cmd = sprintf('%s \n',cmd);
-        if ~( exist(fullfile(working_dir,[prefix '_medn_nat' ext_echo]),'file') == 2 ) || par.redo
+        if ~( exist(fullfile(working_dir,[prefix '_ctab.txt']),'file') == 2 ) || par.redo
             job_subj = [job_subj cmd];
         end
         
