@@ -44,7 +44,11 @@ classdef exam < mvObject
                     assert( exist(indir,'dir')==7, 'Dir does not exist : %s', indir )
                     
                     % Fetch dir list recursibley with regex
-                    dirList = get_subdir_regex(indir, reg_ex, varargin{:});
+                    if strcmp(reg_ex,'root')
+                        dirList={indir};
+                    else
+                        dirList = get_subdir_regex(indir, reg_ex, varargin{:});
+                    end
                     
                     if numel(dirList) == 0
                         warning('No dir found with regex [ %s ]\n in : %s', ...
