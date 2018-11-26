@@ -15,7 +15,8 @@ defpar.skip_if_exist = 1;
 defpar.make_even_number_of_slice=1;
 defpar.include_all = 0;
 defpar.force_eddy=1;
-defpar.eddy_add_cmd=' --data_is_shelled';
+defpar.eddy_add_cmd=' --data_is_shelled --repol';
+defpar.do_denoise = 1;
 
 par = complet_struct(par,defpar);
 choose_sge=par.sge;
@@ -169,6 +170,12 @@ end
 
 do_fsl_merge(dti_files,fodti,struct('checkorient',1));
 
+if par.do_denoise
+    par.sge=-1;
+    [job, fodti] = do_mr_noise_remove(fodti,par);
+    fodti=fodti{1};
+    par.sge = choose_sge;
+end
 
 if ~isempty(par.swap)
     fff = get_subdir_regex_files(outdir,'.*gz$');
@@ -220,7 +227,7 @@ if size(B,1) == 1
         fclose(fid);    fclose(fid3);
 
         par.sge=-1;
-        [job par.mask] = do_fsl_bet({fodti},par);
+        [job par.mask] = do_fsl_bet({fodti},par,job);
         par.sge=choose_sge; par.topup='';
         do_fsl_eddy({fodti},par,job)
 
@@ -251,11 +258,18 @@ else
         error('WARNING you need to change the number of slice should not happend !!! romain !!!\n')        
     end
     
+    if par.do_denoise
+        
+        fo = addprefixtofilenames(fo,'dn_');
+        job{1} =  sprintf('%s \n dwiextract %s -fslgrad bvecs bvals %s %s.nii.gz\n',job{1},fodti,fo)
+    end
+    
+    
     if do_eddy
         %then perform topup on raw B0 file (because it does the realignment and distortion correction at the same time
         
         par.sge=-1;
-        job = do_fsl_topup({fo},par);
+        job = do_fsl_topup({fo},par,job);
         
         par.topup_dir = topup;
         par.topup = '4D_B0_topup';
@@ -277,6 +291,9 @@ else
         fclose(fid);    fclose(fid2);
         [job par.mask] = do_fsl_bet({fodti},par,job);
         par.sge=choose_sge;
+
+        if par.do_denoise,        par.topup = 'dn_4D_B0_topup'; end
+
         do_fsl_eddy({fodti},par,job)
         
     else %only topup so
