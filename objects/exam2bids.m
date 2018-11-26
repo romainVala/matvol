@@ -148,8 +148,9 @@ dataset_description.DatasetDOI = '';
 
 json_dataset_description = struct2jsonSTR( dataset_description );
 job_header = sprintf('## dataset_description.json ## \n');
-job_header = jobcmd_write_json_bids( job_header, json_dataset_description, fullfile(bidsDir,'dataset_description.json') );
-
+if ~exist(fullfile(bidsDir,'dataset_description.json'),'file')
+    job_header = jobcmd_write_json_bids( job_header, json_dataset_description, fullfile(bidsDir,'dataset_description.json') );
+end
 
 %% Main loop
 
