@@ -1,10 +1,12 @@
-function fo = do_mr_noise_remove(f,par)
+function [job, fo] = do_mr_noise_remove(f,par,jobappend)
 %function fo = do_fsl_bin(f,prefix,seuil)
 %if seuil is a vector [min max] min<f<max
 %if seuil is a number f>seuil
 
 
 if ~exist('par'),par ='';end
+if ~exist('jobappend','var'), jobappend ='';end
+
 
 defpar.prefix = 'dn_';
 defpar.gibbs_prefix = 'dg_';
@@ -46,5 +48,5 @@ for k=1:length(f)
     
 end
 
-do_cmd_sge(job,par)
+do_cmd_sge(job,par,jobappend)
 
