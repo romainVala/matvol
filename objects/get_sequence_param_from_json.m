@@ -116,11 +116,11 @@ for j = 1 : size(json_filename,1)
         data_file.ScanOptions      = get_field_mul(content, 'ScanOptions'     );
         
         % Slice Timing
-        SliceTiming = get_field_mul(content, 'CsaImage.MosaicRefAcqTimes'); SliceTiming = str2double(SliceTiming(2:end))' / 1000;
+        SliceTiming = get_field_mul(content, 'CsaImage.MosaicRefAcqTimes',0); SliceTiming = str2double(SliceTiming(2:end))' / 1000;
         data_file.SliceTiming = SliceTiming;
         
         % bvals & bvecs
-        B_value = get_field_mul(content, 'CsaImage.B_value'); B_value = str2double(B_value)';
+        B_value = get_field_mul(content, 'CsaImage.B_value', 0); B_value = str2double(B_value)';
         data_file.B_value = B_value;
         B_vect  = get_field_mul_vect(content, 'CsaImage.DiffusionGradientDirection');
         data_file.B_vect = B_vect;
@@ -148,7 +148,7 @@ for j = 1 : size(json_filename,1)
         data_file.AcquisitionDate = str2double( get_field_one( content, 'AcquisitionDate' ) ) ;
         data_file.StudyDate       = str2double( get_field_one( content, 'StudyDate'       ) ) ;
         data_file.StudyTime       = str2double( get_field_one( content, 'StudyTime'       ) ) ;
-        data_file.AcquisitionTime = cellfun( @str2double, get_field_mul(content, 'AcquisitionTime') ); % AcquisitionTime is special, it depends on 3D vs 4D
+        data_file.AcquisitionTime = cellfun( @str2double, get_field_mul(content, 'AcquisitionTime',0) ); % AcquisitionTime is special, it depends on 3D vs 4D
         
         
         %------------------------------------------------------------------
@@ -167,11 +167,11 @@ for j = 1 : size(json_filename,1)
         %------------------------------------------------------------------
         % Image
         %------------------------------------------------------------------
-        data_file.ImageType                    =                       get_field_mul     ( content, 'ImageType'                  )  ; % M' / 'P' / ... % Magnitude ? Phase ? ...
-        data_file.ImageOrientationPatient      = cellfun( @str2double, get_field_mul     ( content, 'ImageOrientationPatient'    ) );
+        data_file.ImageType                    =                       get_field_mul     ( content, '"ImageType'                  )  ; % M' / 'P' / ... % Magnitude ? Phase ? ...
+        data_file.ImageOrientationPatient      = cellfun( @str2double, get_field_mul     ( content, 'ImageOrientationPatient' ,0 ) );
         switch data_file.MRAcquisitionType
             case '2D'
-                data_file.ImagePositionPatient = cellfun( @str2double, get_field_mul     ( content, 'ImagePositionPatient'       ) );
+                data_file.ImagePositionPatient = cellfun( @str2double, get_field_mul     ( content, 'ImagePositionPatient'    ,0 ) );
             case '3D'
                 data_file.ImagePositionPatient =                       get_field_mul_vect( content, 'ImagePositionPatient'       )  ;
         end
@@ -186,7 +186,7 @@ for j = 1 : size(json_filename,1)
         data_file.ProtocolSliceNumber  = str2double( get_field_one( content, 'CsaImage.ProtocolSliceNumber'                           ) ) ; % ?
         data_file.Rows                 = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sKSpace.lBaseResolution'    ) ) ;
         data_file.Columns              = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sKSpace.lPhaseEncodingLines') ) ;
-        data_file.PixelSpacing         = cellfun( @str2double, get_field_mul( content, 'PixelSpacing') );
+        data_file.PixelSpacing         = cellfun( @str2double, get_field_mul( content, 'PixelSpacing',0) );
         switch data_file.MRAcquisitionType
             case '2D'
                 data_file.Slices       = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sSliceArray.lSize'          ) ) ;
@@ -310,7 +310,9 @@ end
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function result = get_field_mul(content, regex)
+function result = get_field_mul(content, regex,concatenate)
+
+if ~exist('concatenate','var'),    concatenate=1; end
 
 % Fetch the line content
 start = regexp(content           , regex, 'once');
@@ -331,6 +333,7 @@ end
 token = regexp(line, ': (.*),','tokens'); % extract the value from the line
 if isempty(token)
     result = [];
+    return 
 else
     res    = token{1}{1};
     VECT_cell_raw = strsplit(res,'\n')';
@@ -342,6 +345,14 @@ else
     VECT_cell = strrep(VECT_cell,',','');
     VECT_cell = strrep(VECT_cell,' ','');
     result    = strrep(VECT_cell,'"','');
+end
+
+if concatenate
+    if ischar(result{1}) % instead of a cell vector of string just concatenate with _
+        rr=result{1};
+        for kk=2:length(result); rr=[rr '_' result{kk}];end
+        result = rr;
+    end
 end
 
 end % function
