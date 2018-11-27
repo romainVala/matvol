@@ -148,8 +148,7 @@ for j = 1 : size(json_filename,1)
         data_file.AcquisitionDate = str2double( get_field_one( content, 'AcquisitionDate' ) ) ;
         data_file.StudyDate       = str2double( get_field_one( content, 'StudyDate'       ) ) ;
         data_file.StudyTime       = str2double( get_field_one( content, 'StudyTime'       ) ) ;
-        data_file.AcquisitionTime = cellfun( @str2double, get_field_mul(content, 'AcquisitionTime',0) ); % AcquisitionTime is special, it depends on 3D vs 4D
-        
+        data_file.AcquisitionTime = min(cellfun( @str2double, get_field_mul(content, 'AcquisitionTime',0) )); % AcquisitionTime is special, it depends on 3D vs 4D
         
         %------------------------------------------------------------------
         % Study / Serie
