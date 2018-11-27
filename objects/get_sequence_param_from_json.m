@@ -388,6 +388,9 @@ VECT_cell = strrep(VECT_cell,']','');
 VECT_cell = VECT_cell(~cellfun(@isempty,VECT_cell));
 
 v = str2double(VECT_cell);
-result = reshape(v,[3 numel(v)/3]);
-
+if isempty(v)
+    result=v;
+else
+    result = reshape(v,[3 numel(v)/3]);
+end
 end % function
