@@ -136,8 +136,9 @@ for j = 1 : size(json_filename,1)
         %------------------------------------------------------------------
         % Subject
         %------------------------------------------------------------------
-        data_file.PatientName      =             get_field_one( content, 'PatientName'      )   ;
-        data_file.PatientAge       =             get_field_one( content, 'PatientAge'       )   ;
+        data_file.PatientName      =clean_string(get_field_one( content, 'PatientName'      ) ) ;
+                  PatientAge       =             get_field_one( content, 'PatientAge'       )   ;
+        data_file.PatientAge       = str2double( PatientAge(1:3) )   ;
         data_file.PatientBirthDate = str2double( get_field_one( content, 'PatientBirthDate' ) ) ;
         data_file.PatientWeight    = str2double( get_field_one( content, 'PatientWeight'    ) ) ;
         data_file.PatientSex       =             get_field_one( content, 'PatientSex'       )   ;
@@ -149,6 +150,8 @@ for j = 1 : size(json_filename,1)
         data_file.StudyDate       = str2double( get_field_one( content, 'StudyDate'       ) ) ;
         data_file.StudyTime       = str2double( get_field_one( content, 'StudyTime'       ) ) ;
         data_file.AcquisitionTime = min(cellfun( @str2double, get_field_mul(content, 'AcquisitionTime',0) )); % AcquisitionTime is special, it depends on 3D vs 4D
+        tt=num2str(data_file.AcquisitionDate) ;
+        data_file.AcqDateStr = [tt(1:4), '_', tt(5:6), '_' tt(7:8)];
         
         %------------------------------------------------------------------
         % Study / Serie
@@ -156,9 +159,9 @@ for j = 1 : size(json_filename,1)
         data_file.StudyID           = str2double( get_field_one( content, 'StudyID'           ) ) ;
         data_file.StudyInstanceUID  =             get_field_one( content, 'StudyInstanceUID'  )   ;
         data_file.SeriesInstanceUID =             get_field_one( content, 'SeriesInstanceUID' )   ;
-        data_file.StudyDescription  =             get_field_one( content, 'StudyDescription'  )   ;
+        data_file.StudyDescription  =clean_string(get_field_one( content, 'StudyDescription'  ) ) ;
         data_file.SeriesDescription =             get_field_one( content, 'SeriesDescription' )   ;
-        data_file.ProtocolName      =             get_field_one( content, 'ProtocolName'      )   ;
+        data_file.ProtocolName      =clean_string(get_field_one( content, 'ProtocolName'      ) ) ;
         data_file.SeriesNumber      = str2double( get_field_one( content, 'SeriesNumber'      ) ) ;
         data_file.TotalScanTimeSec  = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.lTotalScanTimeSec') );
         
@@ -395,5 +398,35 @@ if isempty(v)
     result=v;
 else
     result = reshape(v,[3 numel(v)/3]);
+end
+end % function
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function dirname = clean_string(dirname)
+
+
+% cherche s'il y a des caracteres non alphanumeriques dans la chaine
+str = isstrprop(dirname,'alphanum');
+spec = find(~str);
+% remplace les caracteres non alphanumeriques par des '_'
+dirname(spec) = '_';
+
+ii =strfind(dirname,'µ');
+dirname(ii) = 'm';
+
+%trouve le é
+dirname(double(dirname)==233) = 'e';
+%trouve le è
+dirname(double(dirname)==232) = 'e';
+%trouve le ^o
+dirname(double(dirname)==244) = 'o';
+
+% pour fignoler, on supprime un '_' s'il y en a 2 qui se suivent
+while ~isempty(strfind(dirname,'__'));
+    dirname = strrep(dirname,'__','_');
+end
+% toujours pour fignoler, si le nom se termine par un '_', on l'elimine
+if(dirname(length(dirname)) == '_')
+    dirname(length(dirname)) = '';
 end
 end % function
