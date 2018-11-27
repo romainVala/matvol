@@ -173,7 +173,10 @@ for j = 1 : size(json_filename,1)
             case '2D'
                 data_file.ImagePositionPatient = cellfun( @str2double, get_field_mul     ( content, 'ImagePositionPatient'    ,0 ) );
             case '3D'
-                data_file.ImagePositionPatient =                       get_field_mul_vect( content, 'ImagePositionPatient'       )  ;
+                ImagePositionPatient                    =              get_field_mul_vect( content, 'ImagePositionPatient'       )  ;
+                data_file.ImagePositionPatient          = ImagePositionPatient(:,1);
+                data_file.ImagePositionPatient2         = ImagePositionPatient(:,2);
+                data_file.ImagePositionPatient_nbslice = size(ImagePositionPatient,2);
         end
         data_file.AbsTablePosition             = str2double(           get_field_one     ( content, 'CsaSeries.AbsTablePosition' ) );
         
@@ -248,7 +251,6 @@ for j = 1 : size(json_filename,1)
         data_file.CoilStringForConversion  =             get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sCoilSelectMeas.sCoilStringForConversion'                          );
         data_file.nRxCoilSelected          = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sCoilSelectMeas.aRxCoilSelectData\[0\].asList.__attribute__.size') );
         
-        
     end % if RepetitionTime not empty
     
     
@@ -298,6 +300,7 @@ line = content(start:start+stop);
 token = regexp(line, ': (.*),','tokens'); % extract the value from the line
 if isempty(token)
     result = [];
+    return
 else
     res = token{1}{1};
     if strcmp(res(1),'"')
@@ -306,6 +309,7 @@ else
         result = res;
     end
 end
+result = strrep(result,';','_');
 
 end % function
 
