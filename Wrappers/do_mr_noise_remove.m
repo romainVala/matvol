@@ -54,7 +54,7 @@ for k=1:length(f)
             foB0 = par.foB0{k};
         end
         [dd ff] = get_parent_path(ffout);
-        cmd = sprintf('%s cd %s\n dwiextract %s -fslgrad bvecs bvals %s \n',...
+        cmd = sprintf('%s cd %s\n dwiextract -bzero %s -fslgrad bvecs bvals %s \n',...
             cmd,dd,ff,foB0);
         
     end
