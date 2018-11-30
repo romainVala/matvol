@@ -15,7 +15,7 @@ defpar.include_all = 0;
 defpar.force_eddy=1;
 defpar.eddy_add_cmd=' --data_is_shelled --repol';
 defpar.do_denoise = 1;
-defpar.do_degibbs = 1;
+defpar.remove_gibs = 1;
 
 par = complet_struct(par,defpar);
 choose_sge=par.sge;
@@ -258,6 +258,7 @@ else
     if par.do_denoise
         
         fo = addprefixtofilenames(fo,'dn_');
+        if par.remove_gibs, fo = addprefixtofilenames(fo,'dg_'); end
         [ppp fff] = get_parent_path(fodti);
         job{1} =  sprintf('%s \n cd %s\n dwiextract -bzero %s -fslgrad bvecs bvals %s %s.nii.gz\n',job{1},ppp,fff,fo)
     end
@@ -290,7 +291,7 @@ else
         [job par.mask] = do_fsl_bet({fodti},par,job);
         par.sge=choose_sge;
 
-        if par.do_denoise,        par.topup = 'dn_4D_B0_topup'; end
+        if par.do_denoise,        par.topup = 'dn_4D_B0_topup';   if par.remove_gibs, par.topup = 'dn_dg_4D_B0_topup';  ; end; end
 
         do_fsl_eddy({fodti},par,job)
         
