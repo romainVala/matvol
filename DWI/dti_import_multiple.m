@@ -259,7 +259,7 @@ else
         
         fo = addprefixtofilenames(fo,'dn_');
         [ppp fff] = get_parent_path(fodti);
-        job{1} =  sprintf('%s \n cd %s\n dwiextract %s -fslgrad bvecs bvals %s %s.nii.gz\n',job{1},ppp,fff,fo)
+        job{1} =  sprintf('%s \n cd %s\n dwiextract -bzero %s -fslgrad bvecs bvals %s %s.nii.gz\n',job{1},ppp,fff,fo)
     end
     
     
