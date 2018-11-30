@@ -1,7 +1,5 @@
 function dti_import_multiple(dti_spm_dir,outdir,par)
 
-
-
 if ~exist('par')
     par='';
 end
@@ -17,6 +15,7 @@ defpar.include_all = 0;
 defpar.force_eddy=1;
 defpar.eddy_add_cmd=' --data_is_shelled --repol';
 defpar.do_denoise = 1;
+defpar.do_degibbs = 1;
 
 par = complet_struct(par,defpar);
 choose_sge=par.sge;
@@ -36,8 +35,6 @@ if iscell(outdir)
     end
     return
 end
-
-
 
 if exist(fullfile(outdir,'bvecs'),'file') & par.skip_if_exist
     fprintf('\nsiking import because file %s  exist\n',fullfile(outdir,'bvecs'))
@@ -172,7 +169,7 @@ do_fsl_merge(dti_files,fodti,struct('checkorient',1));
 
 if par.do_denoise
     par.sge=-1;
-    [job, fodti] = do_mr_noise_remove(fodti,par);
+    [job, fodti] = do_mr_noise_remove([fodti '.nii.gz'],par);
     fodti=fodti{1};
     par.sge = choose_sge;
 end
@@ -261,7 +258,8 @@ else
     if par.do_denoise
         
         fo = addprefixtofilenames(fo,'dn_');
-        job{1} =  sprintf('%s \n dwiextract %s -fslgrad bvecs bvals %s %s.nii.gz\n',job{1},fodti,fo)
+        [ppp fff] = get_parent_path(fodti);
+        job{1} =  sprintf('%s \n cd %s\n dwiextract %s -fslgrad bvecs bvals %s %s.nii.gz\n',job{1},ppp,fff,fo)
     end
     
     
