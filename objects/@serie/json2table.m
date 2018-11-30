@@ -90,8 +90,8 @@ for i = 1 : N
     d = setxor(fields,f); % non-commin fields
     for dm = 1 : length(d)
         data_cellArray{i}.(d{dm}) = NaN; % create the missing field
-        data_cellArray{i} = orderfields(data_cellArray{i}, list); % fields need to be in the same order for conversion
     end
+    data_cellArray{i} = orderfields(data_cellArray{i}, list); % fields need to be in the same order for conversion
 end
 
 
