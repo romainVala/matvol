@@ -1,5 +1,14 @@
 function output = get_subdir_regex_one(indir,reg_ex,varargin)
 
+wanted_nbdir =1;
+
+if ~isempty(varargin)
+    if isnumeric(varargin{end})
+        wanted_nbdir = varargin{end};
+        varargin(end)='';
+    end
+end
+
 if length(varargin)>0
     output = get_subdir_regex_one(indir,reg_ex);
     for ka=1:length(varargin)
@@ -47,14 +56,14 @@ for nb_dir=1:length(indir)
         end
         
     end
-
-    if found>1
-    
-        fprintf('warning suj %s has %d  subdir for %s \n',indir{nb_dir},found,reg_ex{nb_dir})
-    end
-    
     if isempty(output{nb_dir})
         fprintf('warning suj %d %s has no %s subdir\n',nb_dir,indir{nb_dir},reg_ex{nb_dir})
+    
+    elseif found~=wanted_nbdir
+    
+        fprintf('warning suj %d %s has %d  subdir for %s \n',nb_dir,indir{nb_dir},found,reg_ex{nb_dir})
     end
+    
+   end
     
 end
