@@ -110,12 +110,12 @@ data_structArray = reshape( data_structArray, [numel(data_structArray) 1]); % re
 Table = struct2table( data_structArray, 'AsArray', 1 );
 
 if par.add_empty_line
-    index = 1:length(integrity);
-    indexok = index(integrity==1);
+    index    = 1:length(integrity);
+    indexok  = index(integrity==1);
     indexbad = index(integrity==0);
+    padding  = num2str(length(num2str(length(index))));
+    Table.Properties.RowNames = cellstr(strsplit(num2str(indexok,[' %.' padding 'd'])));
     if ~isempty(indexbad)
-        Table.Properties.RowNames = cellstr(strsplit(num2str(indexok,' %.5d')));
-        
         Table_missing = Table(1,:);
         for nbcol=1:width(Table)
             if iscell(Table(1,:).(Table.Properties.VariableNames{nbcol}))
@@ -125,7 +125,7 @@ if par.add_empty_line
             end
         end
         Table_missing = repmat(Table_missing,[length(indexbad),1]);
-        Table_missing.Properties.RowNames = cellstr(strsplit(num2str(indexbad,' %.5d')));
+        Table_missing.Properties.RowNames = cellstr(strsplit(num2str(indexbad,[' %.' padding 'd'])));
         
         Table = [Table;Table_missing]; %need to have the same datatype for each collumn
         Table = sortrows(Table,'RowNames');
@@ -165,7 +165,7 @@ for c = 1 : size(split_final,2)
     end
 end
 
-Table.Properties.RowNames = id_str; % RowNames
+Table = [id_str Table];
 
 
 end % function
