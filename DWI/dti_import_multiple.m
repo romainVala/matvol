@@ -16,14 +16,21 @@ defpar.force_eddy=1;
 defpar.eddy_add_cmd=' --data_is_shelled --repol';
 defpar.do_denoise = 1;
 defpar.remove_gibs = 1;
+defpar.pct = 1;
 
 par = complet_struct(par,defpar);
 choose_sge=par.sge;
 
 %multiple dti subdir to import
 if iscell(dti_spm_dir{1})
-    for k=1:length(dti_spm_dir)
-        dti_import_multiple(dti_spm_dir{k},outdir{k},par);
+    if par.pct        
+        parfor k=1:length(dti_spm_dir)
+            dti_import_multiple(dti_spm_dir{k},outdir{k},par);
+        end        
+    else
+        for k=1:length(dti_spm_dir)
+            dti_import_multiple(dti_spm_dir{k},outdir{k},par);
+        end
     end
     return
 end
