@@ -62,5 +62,10 @@ for k=1:length(f)
     job{k} = cmd;
 end
 
-do_cmd_sge(job,par,jobappend)
+do_cmd_sge(job,par,jobappend);
+
+if par.remove_gibs
+    fo = fog; %finale output name but degibbs prefix
+end
+
 
