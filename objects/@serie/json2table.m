@@ -30,6 +30,13 @@ par = complet_struct(par,defpar);
 
 %% Fetch json objects
 
+% Skip empty serie
+serieArray    = shiftdim(serieArray,1); % meaningful after the (:)
+integrity_ser = ~cellfun(@isempty,serieArray.getPath);
+serieArray    = serieArray(:);
+integrity_ser = integrity_ser(:);
+serieArray    = serieArray(integrity_ser==1);
+
 jsonArray = serieArray.getJson(par.regex,par.type,par.verbose);
 
 % Skip empty jsons
@@ -100,7 +107,7 @@ end
 data_structArray = cell2mat(data_cellArray); % cell array of struct cannot be converted to table
 data_structArray = reshape( data_structArray, [numel(data_structArray) 1]); % reshape into single row structArray
 
-Table = struct2table( data_structArray );
+Table = struct2table( data_structArray, 'AsArray', 1 );
 
 if par.add_empty_line
     index = 1:length(integrity);
@@ -125,31 +132,40 @@ if par.add_empty_line
     end
 end
 
-if par.add_empty_line
-    examArray = [serieArray.exam]; %include empty series
-else
-    examArray = [jsonArray.exam];
+
+%% Use the serie.path as RowNames for the Table
+
+id_str = serieArray.getPath;
+id_str = id_str(:); % in column
+
+split_raw = regexp(id_str,filesep,'split'); % split the path around '/'
+for e = 1 : length(split_raw)
+    split_nice(e,1:length(split_raw{e})) = split_raw{e}; %#ok<AGROW>
 end
 
-exam_name1 = {examArray.name}';
-if length(unique(exam_name1)) == length(exam_name1) % easy method, use exam.anem
-    Table.Properties.RowNames = exam_name1; % RowNames
-    
-else % harder method, use exam.path but crop it
-    exam_name3 = examArray.print;
-    c = 0;
-    % Remove beguining of the path when it's common to all
-    while 1
-        c = c + 1;
-        line = exam_name3(:,c);
-        if length(unique(line))>1
-            break
-        end
+% First and last one are always empty
+split_nice(:,1)   = [];
+split_nice(:,end) = [];
+
+% Which part of the path is not common ?
+for col = 1 : size(split_nice,2)
+    if length(unique(split_nice(:,col))) > 1
+        break
     end
-    exam_name3 = cellstr(exam_name3(:,c:end));
-    Table.Properties.RowNames = exam_name3; % RowNames
-    
 end
+
+% Concatenate the non-common parts of the path
+split_final = fullfile(split_nice(:,col:end)); % only the non-common part of the path
+id_str = repmat({''},[ size(split_final,1) 1 ]);
+for c = 1 : size(split_final,2)
+    if c == 1
+        id_str = strcat(id_str,split_final(:,c));
+    else
+        id_str = strcat(id_str,filesep,split_final(:,c));
+    end
+end
+
+Table.Properties.RowNames = id_str; % RowNames
 
 
 end % function
