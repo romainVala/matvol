@@ -16,14 +16,14 @@ defpar.force_eddy=1;
 defpar.eddy_add_cmd=' --data_is_shelled --repol';
 defpar.do_denoise = 1;
 defpar.remove_gibs = 1;
-defpar.pct = 1;
+defpar.pct = 0;
 
 par = complet_struct(par,defpar);
 choose_sge=par.sge;
 
 %multiple dti subdir to import
 if iscell(dti_spm_dir{1})
-    if par.pct        
+    if par.pct        %do not know why it does not work (hard to debug)
         parfor k=1:length(dti_spm_dir)
             dti_import_multiple(dti_spm_dir{k},outdir{k},par);
         end        
@@ -267,7 +267,7 @@ else
         fo = addprefixtofilenames(fo,'dn_');
         if par.remove_gibs, fo = addprefixtofilenames(fo,'dg_'); end
         [ppp fff] = get_parent_path(fodti);
-        job{1} =  sprintf('%s \n cd %s\n dwiextract -bzero %s -fslgrad bvecs bvals %s %s.nii.gz\n',job{1},ppp,fff,fo)
+        job{1} =  sprintf('%s \n cd %s\n dwiextract -bzero %s -fslgrad bvecs bvals %s.nii.gz\n',job{1},ppp,fff,fo)
     end
     
     
