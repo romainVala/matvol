@@ -298,7 +298,7 @@ else
         [job par.mask] = do_fsl_bet({fodti},par,job);
         par.sge=choose_sge;
 
-        if par.do_denoise,        par.topup = 'dn_4D_B0_topup';   if par.remove_gibs, par.topup = 'dn_dg_4D_B0_topup';  ; end; end
+        if par.do_denoise,        par.topup = 'dn_4D_B0_topup';   if par.remove_gibs, par.topup = 'dg_dn_4D_B0_topup';  ; end; end
 
         do_fsl_eddy({fodti},par,job)
         
