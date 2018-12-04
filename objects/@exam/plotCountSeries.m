@@ -71,7 +71,7 @@ end % function
 
 function str = color2html( rgb, value )
 % Transform [R G B] = [0-1 0-1 0-1] into hexadecimal #rrggbb ,
-% then add it int an html code, with the corresponding value
+% then add it into an html code, with the corresponding value
 
 s = cellstr(dec2hex(round(rgb*255)))';
 

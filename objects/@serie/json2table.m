@@ -48,7 +48,7 @@ jsonArray = jsonArray(integrity==1);
 
 %% Read sequence parameters + first level fields
 
-data_cellArray = jsonArray.readSeqParam(par.redo, par);
+data_cellArray = jsonArray.readSeqParam(par);
 
 
 %% In case of multiple json (ex: multi-echo), combine the content as vector
@@ -166,6 +166,7 @@ for c = 1 : size(split_final,2)
 end
 
 Table = [id_str Table];
+Table.Properties.VariableNames{1} = 'path'; % column name
 
 
 end % function
