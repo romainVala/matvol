@@ -177,7 +177,7 @@ jobappend = do_fsl_merge(dti_files,fodti,par,jobappend);
 %extract B0 (after reslice)
 par.do4D=1;
 [~, filename] = get_parent_path(dti_files); 
-par.fout = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(filename,'meanB0_'))
+par.fout = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(filename,'meanB0_'));
 fb0 = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(filename,'B0_4D')); par.fout4D=fb0;
 [~, jobs] = extract_B0_from_4D(dti_files,par);
 
