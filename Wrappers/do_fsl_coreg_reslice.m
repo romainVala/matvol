@@ -22,7 +22,8 @@ nbj=1;
 
 if iscell(prefix)
     for k=1:length(ref)
-        cmd = sprintf('export FSLOUTPUTTYPE=%s;flirt -in %s -ref %s -omat %s  -usesqform -interp %s ',par.fsl_output_format,src{k},ref{k},prefix{k},par.interp_fsl);
+        cmd = sprintf('export FSLOUTPUTTYPE=%s;flirt -in %s -ref %s -omat %s  -usesqform -interp %s ',...
+            par.fsl_output_format,src{k},ref{k},prefix{k},par.interp_fsl);
         job{nbj} = cmd;
         nbj=nbj+1;
     end
@@ -43,13 +44,17 @@ else
     for k=1:length(ref)
         ff = cellstr(src{k});
         ffo = cellstr(fo{k});
+        ffomat = change_file_extension(ffo,'.txt');
         
         for kk=1:length(ff)
             if isempty(par.trans_mat)
-                cmd = sprintf('export FSLOUTPUTTYPE=%s;flirt -in %s -ref %s -out %s  -usesqform  -interp %s ',par.fsl_output_format,ff{kk},ref{k},ffo{kk},par.interp_fsl);
+                cmd = sprintf('export FSLOUTPUTTYPE=%s;flirt -in %s -ref %s -omat %s  -usesqform  -interp %s ',...
+                    par.fsl_output_format,ff{kk},ref{k},ffomat{kk},par.interp_fsl);
             else
-                cmd = sprintf('export FSLOUTPUTTYPE=%s;flirt -in %s -ref %s -out %s  -init %s  -interp %s ',par.fsl_output_format,ff{kk},ref{k},ffo{kk},par.trans_mat{k},par.interp_fsl);
+                cmd = sprintf('export FSLOUTPUTTYPE=%s;flirt -in %s -ref %s -omat %s  -init %s  -interp %s ',...
+                    par.fsl_output_format,ff{kk},ref{k},ffomat{kk},par.trans_mat{k},par.interp_fsl);
             end
+            cmd = sprintf('%s\napplyxfm4D %s %s %s %s  -singlematrix\n',cmd,ff{kk},ref{k},ffo{k},ffomat{kk});
             %unix(cmd);
             job{nbj} = cmd;
             nbj=nbj+1;
