@@ -10,7 +10,7 @@ end
 %% Count the series
 
 % Initialize, with the firt exam
-nick = {examArray(1).getSerie(regex).nick};
+nick = {examArray(1).getSerie(regex,'tag',0).nick};
 nick = unique(nick);
 nick(cellfun(@isempty,nick)) = []; % remove empty tags
 NrSerie = zeros( numel(examArray), numel(nick));
