@@ -123,6 +123,8 @@ if ~isempty(token)
         fprintf('%s', line);
     end
     
+else
+    result = [];
 end
 
 if display
