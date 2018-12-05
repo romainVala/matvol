@@ -1,4 +1,4 @@
-function fo = do_fsl_add_one_slice(f,par)
+function [fo, job] = do_fsl_add_one_slice(f,par)
 %function fo = do_fsl_bin(f,prefix,seuil)
 %if seuil is a vector [min max] min<f<max
 %if seuil is a number f>seuil
@@ -17,6 +17,7 @@ f=cellstr(char(f));
 
 fo = addprefixtofilenames(f,par.prefix);
 
+job = cell(size(f));
 
 for k=1:length(f)
   [pp ff] = fileparts(f{k});
@@ -37,6 +38,8 @@ for k=1:length(f)
   
   cmd = sprintf('%s;\n rm -rf %s',cmd,tmpname);
    
-  unix(cmd);
+  job{k} = cmd;
 
 end
+
+job = do_cmd_sge(job,par);
