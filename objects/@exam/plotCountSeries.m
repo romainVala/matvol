@@ -57,9 +57,11 @@ end
 f=figure();
 
 t = uitable(f,...
+    'UserData',examArray,...
     'Units','normalized',...
     'Position',[0 0 1 1],...
-    'RowStriping','off');
+    'RowStriping','off',...
+    'CellSelectionCallback',@CellSelectionCallback);
 
 t.ColumnName = T.Properties.VariableNames;
 t.RowName    = T.Properties.RowNames;
@@ -69,6 +71,7 @@ t.Data = vectHTML;
 
 end % function
 
+%--------------------------------------------------------------------------
 function str = color2html( rgb, value )
 % Transform [R G B] = [0-1 0-1 0-1] into hexadecimal #rrggbb ,
 % then add it into an html code, with the corresponding value
@@ -78,5 +81,29 @@ s = cellstr(dec2hex(round(rgb*255)))';
 color = sprintf('#%s%s%s',s{:});
 
 str = ['<html>< <table bgcolor=',color,'>',num2str(value),'</table></html>'];
+
+end % function
+
+%--------------------------------------------------------------------------
+function CellSelectionCallback(src,event)
+
+examArray = src.UserData;
+
+x = event.Indices(1); % line
+y = event.Indices(2); % column
+
+if y > 1 % x==1 is 'NrExams'
+    
+    last_exam  = examArray.getExam(src.RowName{x});
+    last_serie = last_exam.getSerie(src.ColumnName{y});
+    
+    fprintf('Serie selected, sent to base workspace as ''last_serie'', and exam as ''last_exam'': \n')
+    disp(last_exam )
+    disp(last_serie)
+    assignin('base','last_exam' ,last_exam )
+    assignin('base','last_serie',last_serie)
+    fprintf('\n')
+    
+end
 
 end % function

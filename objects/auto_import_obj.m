@@ -5,7 +5,7 @@ function [ examArray, error_log ] = auto_import_obj( baseDir, par )
 % Syntax : [ examArray ] = auto_import_obj( baseDir, par )
 %
 % IMPORTANT note : this funcion assumes the the series alphabetical order
-% is the the same as the sequence order For exemple, if you have
+% is the the same as the sequence order. For exemple, if you have
 % S25_gre_field_map and S26_gre_field_map_phase , they come from the SAME
 % sequence even if the magnitude and phase diff arrive in different
 % directories.
@@ -212,7 +212,8 @@ for idx = 1 : size(SequenceCategory, 1)
     % func
     %----------------------------------------------------------------------
     if strcmp(SequenceCategory{idx,2},'func')
-        
+
+        % type of image (mag, phase, sbref)
         type_ = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
         type = split_(type_);
         type = type(:,3);
@@ -225,9 +226,29 @@ for idx = 1 : size(SequenceCategory, 1)
         
         type_M = logical( type_M - type_SBRef );
         
-        if any(type_SBRef), EXAM.addSerie(upper_dir_name(type_SBRef), 'func_sbref'), exam_SequenceData(where(type_SBRef),end) = {'func_sbref'}; flag_add = 1; end
-        if any(type_M)    , EXAM.addSerie(upper_dir_name(type_M    ), 'func_mag'  ), exam_SequenceData(where(type_M    ),end) = {'func_mag'  }; flag_add = 1; end
-        if any(type_P)    , EXAM.addSerie(upper_dir_name(type_P    ), 'func_phase'), exam_SequenceData(where(type_P    ),end) = {'func_phase'}; flag_add = 1; end
+        type_name = cell(size(type));
+        type_name(type_SBRef) = {'func_sbref'};
+        type_name(type_M    ) = {'func_mag'};
+        type_name(type_P    ) = {'func_phase'};
+        
+        % phase dir
+        bids_dir = exam_SequenceData(where,hdr.PhaseEncodingDirection);
+        bids_dir(strcmp(bids_dir, 'j' )) = {'PA'};
+        bids_dir(strcmp(bids_dir, 'j-')) = {'AP'};
+        bids_dir(strcmp(bids_dir, 'i' )) = {'LR'};
+        bids_dir(strcmp(bids_dir, 'i-')) = {'RL'};
+        
+        % contatenate the type and the phase dir
+        name = strcat( type_name, '_', bids_dir );
+        
+        % add series in the exam object smartly, so there is an auto-increment when multiple series
+        [unique_name,~,table_name] = unique(name,'stable');
+        for n = 1 : length(unique_name)
+            EXAM.addSerie(upper_dir_name(table_name == n),unique_name{n}) % add the @serie, with BIDS tag
+            flag_add = 1;
+            exam_SequenceData(where(table_name == n),end) = unique_name(n);
+        end
+        
         
         %----------------------------------------------------------------------
         % asl
@@ -267,6 +288,7 @@ for idx = 1 : size(SequenceCategory, 1)
             if any(type_P)    , EXAM.addSerie(upper_dir_name(type_P    ), 'asl_phase'), exam_SequenceData(where(type_P    ),end) = {'asl_phase'}; flag_add = 1; end
             
         end
+        
         
         %------------------------------------------------------------------
         % anat
@@ -332,6 +354,7 @@ for idx = 1 : size(SequenceCategory, 1)
             
         end
         
+        
         %------------------------------------------------------------------
         % fmap
         %------------------------------------------------------------------
@@ -385,6 +408,7 @@ for idx = 1 : size(SequenceCategory, 1)
             
         end
         
+        
         %------------------------------------------------------------------
         % DISCARD
         %------------------------------------------------------------------
@@ -392,8 +416,43 @@ for idx = 1 : size(SequenceCategory, 1)
         exam_SequenceData(where,end) = SequenceCategory(idx,2);
         continue
         
+        
         %------------------------------------------------------------------
-        % other ? like dwi
+        % dwi
+        %------------------------------------------------------------------
+    elseif strcmp(SequenceCategory{idx,2},'dwi')
+
+        % bvals
+        B_value = exam_SequenceData(where,hdr.B_value);
+        bvals   = cellfun(@max,B_value);
+        
+        % bvects
+        B_vect = exam_SequenceData(where,hdr.B_vect);
+        bvects = zeros(size(B_vect));
+        for b = 1 : length(B_vect)
+            bvects(b) = sum( sum(abs(B_vect{b}),1) > 0 );
+        end
+        
+        % phase dir
+        bids_dir = exam_SequenceData(where,hdr.PhaseEncodingDirection);
+        bids_dir(strcmp(bids_dir, 'j' )) = {'PA'};
+        bids_dir(strcmp(bids_dir, 'j-')) = {'AP'};
+        bids_dir(strcmp(bids_dir, 'i' )) = {'LR'};
+        bids_dir(strcmp(bids_dir, 'i-')) = {'RL'};
+        
+        % concat dwi + bvals + bvects + phase dir
+        name = regexprep( strcat('dwi_b', cellstr(num2str(bvals)), '_d', cellstr(num2str(bvects)), '_', bids_dir) , ' ', '' );
+        
+        % add series in the exam object smartly, so there is an auto-increment when multiple series
+        [unique_name,~,table_name] = unique(name,'stable');
+        for n = 1 : length(unique_name)
+            EXAM.addSerie(upper_dir_name(table_name == n),unique_name{n}) % add the @serie, with BIDS tag
+            flag_add = 1;
+            exam_SequenceData(where(table_name == n),end) = unique_name(n);
+        end
+        
+        %------------------------------------------------------------------
+        % other ?
         %------------------------------------------------------------------
     else
         EXAM.addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
