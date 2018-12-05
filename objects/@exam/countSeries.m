@@ -45,6 +45,12 @@ for ex = 1 : numel(examArray)
 end
 
 
+%% Reorder : alphabetical
+
+[nick,nick_order] = sort(nick);
+NrSerie = NrSerie(:,nick_order);
+
+
 %% Sort NrSerie matrix
 
 ExamName = {examArray.name}';
@@ -70,7 +76,7 @@ OrederdExamName = cat(1,Group.name);
 
 Table                          = array2table(OrderedNrSerie);
 Table.Properties.RowNames      = OrederdExamName;
-Table.Properties.VariableNames = [ {'NrExam'} nick];
+Table.Properties.VariableNames = [ {'NrExam'} nick ];
 
 
 %% Output
