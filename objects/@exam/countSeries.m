@@ -1,18 +1,28 @@
-function varargout = countSeries( examArray )
+function varargout = countSeries( examArray, regex )
 % COUNTSERIES more compact than explore, but only display the number of series
+% regex : allow you to select series with regexp
 
-% Initialization
-nick = {examArray(1).serie.nick};
+if nargin < 2
+    regex = '.*';
+end
+
+
+%% Count the series
+
+% Initialize, with the firt exam
+nick = {examArray(1).getSerie(regex).nick};
 nick = unique(nick);
 nick(cellfun(@isempty,nick)) = []; % remove empty tags
 NrSerie = zeros( numel(examArray), numel(nick));
 
+% Count the series, using the 'nick' (initial tag, no increment)
 for ex = 1 : numel(examArray)
     
+    serieArray = examArray(ex).getSerie(regex,'tag',0);
     
-    exam_tags  = {examArray(ex).serie.tag};
-    exam_nicks = unique({examArray(ex).serie.nick});
-    exam_path  = {examArray(ex).serie.path};
+    exam_tags  = {serieArray.tag};
+    exam_nicks = unique({serieArray.nick});
+    exam_path  = {serieArray.path};
     valid_path = ~cellfun( @isempty, exam_path );
     
     % addSerie, when tags are not found, adds an empty serie (for diagnostic purpose)
