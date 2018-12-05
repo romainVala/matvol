@@ -28,14 +28,14 @@ if ~iscell(par.mask)
 end
 par.bvecs = get_subdir_regex_files(dtidir,par.bvecs,1);
 par.bvals = get_subdir_regex_files(dtidir,par.bvals,1);
-outfile = addsuffixtofilenames(f4D,par.outsuffix)
+outfile = addsuffixtofilenames(f4D,par.outsuffix);
 
 if isempty(par.topup)
     for k=1:length(f4D)
         acqp = get_subdir_regex_files(dtidir(k),'acqp',1);
         
         cmd = sprintf('eddy %s --imain=%s  --mask=%s  --index=%s  --bvecs=%s  --bvals=%s  --acqp=%s   --out=%s --resamp=%s\n',...
-            par.eddy_add_cmd,f4D{k},par.mask{k},par.index{k},par.bvecs{k},par.bvals{k},acqp{1},outfile{k},par.resamp)
+            par.eddy_add_cmd,f4D{k},par.mask{k},par.index{k},par.bvecs{k},par.bvals{k},acqp{1},outfile{k},par.resamp);
         
         job{k} = cmd;
     end
@@ -52,7 +52,7 @@ else
     
     for k=1:length(f4D)        
         cmd = sprintf('eddy %s --imain=%s  --mask=%s  --index=%s  --bvecs=%s  --bvals=%s  --acqp=%s  --topup=%s  --out=%s --resamp=%s\n',...
-            par.eddy_add_cmd,f4D{k},par.mask{k},par.index{k},par.bvecs{k},par.bvals{k},par.topup_acqp{k},par.topup{k},outfile{k},par.resamp)
+            par.eddy_add_cmd,f4D{k},par.mask{k},par.index{k},par.bvecs{k},par.bvals{k},par.topup_acqp{k},par.topup{k},outfile{k},par.resamp);
         
         job{k} = cmd;
     end
