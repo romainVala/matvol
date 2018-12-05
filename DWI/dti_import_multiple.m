@@ -67,13 +67,14 @@ for k=1:length(dti_spm_dir)
     end
 end
 
-bval=[];bvec=[];
+bval=[];bvec=[];bvalzeros=[];bvalalls=[];
 for k=1:length(bval_f)
     aa = load(deblank(bval_f{k}));    bb = load(deblank(bvec_f{k}));
     if par.skip_vol
         aa(par.skip_vol) = []; bb(:,par.skip_vol)=[];
     end
     bval = [bval aa];    bvec = [bvec,bb];
+    bvalzeros(k) = length(find(aa<50)); bvalalls(k) = length(aa);
 end
 %make B0 real B0
 bval(bval<50) = 0;
@@ -102,7 +103,7 @@ dicjson = r_movefile(dicjson,outdir,'copy');
 
 %check if eddy may be apply after topup
 %acqp=topup_param_from_nifti_cenir(dti_files);
-[acqp,session]=topup_param_from_json_cenir(dti_files,'',dicjson,1);
+[acqp,session]=topup_param_from_json_cenir(dti_files,'',dicjson,bvalalls);
 [B bi bj ]=unique(acqp,'rows');
 
 if par.force_eddy, do_eddy=1; else do_eddy=0; end
@@ -147,7 +148,8 @@ end
 par.B0_name = fffo;
 par.bval = bval_f;par.bvec = bvec_f;
 
-fb0 = transform_4D_to_oneB0(dti_files,par);
+
+%fb0 = transform_4D_to_oneB0(dti_files,par);
 
 %remove the BO in oposite phase
 ind_series_toremove= unique(session(opo_ind));
@@ -157,29 +159,41 @@ bvec(:,opo_ind)=[];  bval(:,opo_ind)=[];
 
 
 %DO MERGE
+par.sge=-1; jobappend ='';
+
 fodti=fullfile(outdir,par.data4D);
-aa=1;
 for kk=2:length(dti_files) 
     aa=compare_orientation(dti_files(1),dti_files(kk));
-    if aa==0, break ;end
-end
-if aa==0
-    fprintf('WARNING reslicing diffusion images image because DIFFERENT ORIENTATION \n');
-    for kk=2:length(dti_files)
-        parr.outfilename={tempname};
-        bb=do_fsl_coreg_reslice(dti_files(kk),dti_files(1),parr);
+    if aa==0
+        fprintf('WARNING reslicing diffusion images %s image because DIFFERENT ORIENTATION \n',dti_files{kk});
+        parr.outfilename={tempname};parr.sge=-1;
+        [bb, jobappend] = do_fsl_coreg_reslice(dti_files(kk),dti_files(1),parr,jobappend);
         dti_files(kk)=bb;
     end
 end
 
-do_fsl_merge(dti_files,fodti,struct('checkorient',1));
+jobappend = do_fsl_merge(dti_files,fodti,par,jobappend);
+
+%extract B0 (after reslice)
+par.do4D=1;
+[~, filename] = get_parent_path(dti_files); 
+par.fout = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(filename,'meanB0_'))
+fb0 = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(filename,'B0_4D')); par.fout4D=fb0;
+[~, jobs] = extract_B0_from_4D(dti_files,par);
+
+%make it one job if several B0 to extracts
+for kkk=1:length(jobs), jobappend{1} = sprintf('%s\n%s',jobappend{1},jobs{kkk});end
+
 
 if par.do_denoise
     par.sge=-1;
-    [job, fodti] = do_mr_noise_remove([fodti '.nii.gz'],par);
+    [fodti, job] = do_mr_noise_remove([fodti '.nii.gz'],par,jobappend);
     fodti=fodti{1};
     par.sge = choose_sge;
+else
+    job = jobappend;
 end
+    
 
 if ~isempty(par.swap)
     fff = get_subdir_regex_files(outdir,'.*gz$');
@@ -211,8 +225,7 @@ end
 fclose(fid);
 
 if par.make_even_number_of_slice
-    ff=get_subdir_regex_files(outdir,'mean');
-    v = nifti_spm_vol(ff{1}(1,:));
+    v = nifti_spm_vol(dti_files{1}(1,:));
     if mod(v(1).dim(3),2)>0 %then add a slice
         ff=get_subdir_regex_files(outdir,'gz$')
         pppar.fsl_output_format ='NIFTI_GZ';    pppar.prefix = '';
@@ -238,25 +251,26 @@ if size(B,1) == 1
         
     else        
         fprintf('Sorry but there is a unique phase direction for all acquisitions, I can not do topup\n');
-        topup_param_from_json_cenir(fb0,{outdir},dicjson,1); %just to write acqp.txt
-        [job foDTIeddycor] = do_fsl_dtieddycor({fodti})
+        topup_param_from_json_cenir(fb0,{outdir},dicjson,bvalzeros); %just to write acqp.txt
+        [job foDTIeddycor] = do_fsl_dtieddycor({fodti},'',job)
     end
 else
     
     topup=r_mkdir({outdir},'topup');
-    topup_param_from_json_cenir(fb0,topup,dicjson,1);
+    topup_param_from_json_cenir(fb0,topup,dicjson,bvalzeros);
     fo=fullfile(topup{1},'4D_B0');
     
     fme=cellstr(char(fb0));
-    for nbb=2:length(fme)
-        if compare_orientation(fme(1),fme(nbb)) == 0
-            fprintf('WARNING reslicing mean image because DIFFERENT ORIENTATION \n');
-            bb= do_fsl_coreg_reslice( fme(nbb),fme(1));
-            fme(nbb) = bb;
-        end
-    end
-    do_fsl_merge(fme,fo,struct('checkorient',1));
+%     for nbb=2:length(fme)
+%         if compare_orientation(fme(1),fme(nbb)) == 0
+%             fprintf('WARNING reslicing mean image because DIFFERENT ORIENTATION \n');
+%             bb= do_fsl_coreg_reslice( fme(nbb),fme(1));
+%             fme(nbb) = bb;
+%         end
+%     end
     
+    job = do_fsl_merge(fme,fo,struct('sge',-1),job);
+
     ffname = fullfile(topup{1},'remove_one_slice');
     if exist(ffname,'file') %then remove the last slice
         error('WARNING you need to change the number of slice should not happend !!! romain !!!\n')        
