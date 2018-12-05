@@ -39,11 +39,15 @@ end
 
 totfile=1;
 for k = 1:length(finii)
-    if line_for_each_volume
-        v1=nifti_spm_vol(finii{k});
-        nbline = length(v1);
+    if length(line_for_each_volume)==length(finii)
+        nbline = line_for_each_volume(k);
     else
-        nbline = size(finii{k},1); %put 1 line if 4D data
+        if line_for_each_volume
+            v1=nifti_spm_vol(finii{k});
+            nbline = length(v1);
+        else
+            nbline = size(finii{k},1); %put 1 line if 4D data
+        end
     end
     
     new_method = 1;
@@ -143,37 +147,37 @@ if do_print
     fcnf = r_movefile(fcnf,{outdir},'copy');
     
     %dim = read_dim_from_mosaic(h);
-    vol = nifti_spm_vol(finii{1});
-    dim=vol.dim;
-    if dim(3)==1
-        h=dicom_info(1); if iscell(h),        h = h{1};    end %problem pour les sequence B0_PAR non mosaic
-        dim = read_dim_from_mosaic(h);
-        if dim(3)==1
-            error('pbr reading dim')
-        end
-    end
-    
-    if mod(dim(3),2)==0 %even number of slice
-        %         fprintf('even number of slice keeping --subsamp=2,2,2,2,2,1,1,1,1\n');
-        %     elseif mod(dim(3),3)==0
-        %         fprintf('number of slice /3 so changing --subsamp=2,2,2,2,2,1,1,1,1  to --subsamp=3,3,3,3,3,1,1,1,1 \n');
-        %         cmd = sprintf('sed -i -e ''4s/.*/--subsamp=3,3,3,3,3,1,1,1,1/'' %s',fcnf{1});
-        %         unix(cmd);
-        
-    else
-        %         fprintf('Please remove one slice to get an even number of slices\n\n')
-        %         ffname = fullfile(outdir,'remove_one_slice');
-        %         fid=fopen(ffname,'w');
-        %         fprintf(fid,'%d %d %d',dim(1),dim(2),dim(3)-1); fclose(fid);
-        
-        warning('To remove one slice : do_fsl_remove_one_slice')
-        warning('To add    one slice : do_fsl_add_one_slice   ')
-        warning('You should add/remove onse slice on the RAW data')
-        
-        error(['There is an odd number of slices and TOPUP cannot deal with it. Please remove/add one slice to the volume : \n'...
-            '%s\n'],finii{1})
-        
-    end
+%     vol = nifti_spm_vol(finii{1});
+%     dim=vol.dim;
+%     if dim(3)==1
+%         h=dicom_info(1); if iscell(h),        h = h{1};    end %problem pour les sequence B0_PAR non mosaic
+%         dim = read_dim_from_mosaic(h);
+%         if dim(3)==1
+%             error('pbr reading dim')
+%         end
+%     end
+%     
+%     if mod(dim(3),2)==0 %even number of slice
+%         %         fprintf('even number of slice keeping --subsamp=2,2,2,2,2,1,1,1,1\n');
+%         %     elseif mod(dim(3),3)==0
+%         %         fprintf('number of slice /3 so changing --subsamp=2,2,2,2,2,1,1,1,1  to --subsamp=3,3,3,3,3,1,1,1,1 \n');
+%         %         cmd = sprintf('sed -i -e ''4s/.*/--subsamp=3,3,3,3,3,1,1,1,1/'' %s',fcnf{1});
+%         %         unix(cmd);
+%         
+%     else
+%         %         fprintf('Please remove one slice to get an even number of slices\n\n')
+%         %         ffname = fullfile(outdir,'remove_one_slice');
+%         %         fid=fopen(ffname,'w');
+%         %         fprintf(fid,'%d %d %d',dim(1),dim(2),dim(3)-1); fclose(fid);
+%         
+%         warning('To remove one slice : do_fsl_remove_one_slice')
+%         warning('To add    one slice : do_fsl_add_one_slice   ')
+%         warning('You should add/remove onse slice on the RAW data')
+%         
+%         error(['There is an odd number of slices and TOPUP cannot deal with it. Please remove/add one slice to the volume : \n'...
+%             '%s\n'],finii{1})
+%         
+%     end
     
     B = unique(ACQP,'rows');
     if size(B,1) == 1
