@@ -1,4 +1,4 @@
-function [job, fo] = do_mr_noise_remove(f,par,jobappend)
+function [ fo, job] = do_mr_noise_remove(f,par,jobappend)
 %function fo = do_fsl_bin(f,prefix,seuil)
 %if seuil is a vector [min max] min<f<max
 %if seuil is a number f>seuil
@@ -62,7 +62,7 @@ for k=1:length(f)
     job{k} = cmd;
 end
 
-do_cmd_sge(job,par,jobappend);
+job = do_cmd_sge(job,par,jobappend);
 
 if par.remove_gibs
     fo = fog; %finale output name but degibbs prefix
