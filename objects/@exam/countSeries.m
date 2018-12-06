@@ -1,6 +1,12 @@
 function varargout = countSeries( examArray, serie_regex )
 % COUNTSERIES more compact than explore, but only display the number of series
 % regex : allow you to select series with regexp
+%
+% Syntax : [Table, Group] = examArray.countSeries('regex_of_serie')
+%          [Table, Group] = examArray.countSeries
+%                           examArray.countSeries('regex_of_serie')
+%                           examArray.countSeries
+%
 
 if nargin < 2
     serie_regex = '.*';

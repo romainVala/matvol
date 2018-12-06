@@ -24,24 +24,31 @@ for c = 1 : length(T.Properties.VariableNames)
     % Get their unique
     uniqueNrSerie = unique(countOfSerie); % [0 1 2 6]
     
-    histNrSerie = hist(countOfSerie,uniqueNrSerie); % [ 2(x0) 14(x1) 3(x2) 6(x1) ]
-    
-    [~,maxNrSerie] = max(histNrSerie); % where is max in [2 14 3 6] ? in slot #2
-    
-    n = length(uniqueNrSerie);
-    
-    nrDown = maxNrSerie - 1; % 1 slot bellow from 14
-    nrUp   = n - maxNrSerie; % 2 slots upper from 14
-    nrMax  = max(nrUp,nrDown);
-    
-    % Fill a balanced count of series
-    balancedNrSerie = nan(nrMax*2+1,1); % [Nan 0 1 2 6] => the maxCount is in the middle
-    if nrDown < nrUp
-        balancedNrSerie(end-n+1:end) = uniqueNrSerie;
-    elseif nrUp < nrDown
-        balancedNrSerie(1:n) = uniqueNrSerie;
+    if length(uniqueNrSerie) > 1
+        
+        histNrSerie = hist(countOfSerie,uniqueNrSerie); % [ 2(x0) 14(x1) 3(x2) 6(x1) ]
+        
+        [~,maxNrSerie] = max(histNrSerie); % where is max in [2 14 3 6] ? in slot #2
+        
+        n = length(uniqueNrSerie);
+        
+        nrDown = maxNrSerie - 1; % 1 slot bellow from 14
+        nrUp   = n - maxNrSerie; % 2 slots upper from 14
+        nrMax  = max(nrUp,nrDown);
+        
+        % Fill a balanced count of series
+        balancedNrSerie = nan(nrMax*2+1,1); % [Nan 0 1 2 6] => the maxCount is in the middle
+        if nrDown < nrUp
+            balancedNrSerie(end-n+1:end) = uniqueNrSerie;
+        elseif nrUp < nrDown
+            balancedNrSerie(1:n) = uniqueNrSerie;
+        else
+            balancedNrSerie = uniqueNrSerie;
+        end
+        
     else
         balancedNrSerie = uniqueNrSerie;
+        
     end
     
     if length(balancedNrSerie) == 1
