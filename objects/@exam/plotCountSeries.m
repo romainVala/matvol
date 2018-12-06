@@ -1,15 +1,15 @@
-function plotCountSeries( examArray, regex )
+function plotCountSeries( examArray, serie_regex )
 %PLOTCOUNTSERIES shows graphically the output of examArray.countSeries
 % regex : allow you to select series with regexp
 
 if nargin < 2
-    regex = '.*';
+    serie_regex = '.*';
 end
 
 
 %% Count the series
 
-T = examArray.countSeries( regex );
+T = examArray.countSeries( serie_regex );
 
 
 %% Prepare the color for each count
