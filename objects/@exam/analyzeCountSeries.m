@@ -50,7 +50,7 @@ cprintf('comment','%s\n',list_exam_best{:})
 fprintf('\n')
 
 list_sequence_best = fieldnames(summary_best);
-list_exam_name     = {examArray.name}';
+list_exam_name     = TableSer.Properties.RowNames;
 
 
 %% Exams with MORE than expected series (such as 2 T1w instead of 1)
