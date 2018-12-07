@@ -46,6 +46,10 @@ for subj = 1:nrSubject
         else
             assert( length(dirFonc) == length(jsons) , 'dic.*json were no found in all volumes' )
         end
+        % Multiple json files ? Like multi-echo ?
+        for j = 1 : length(jsons)
+            jsons{j} = jsons{j}(1,:); % only keep the first echo
+        end
         [ TRs ] = get_string_from_json( jsons , 'RepetitionTime' , 'numeric' );
         allTR = nan(size(TRs));
         for idx = 1 : length(allTR)
