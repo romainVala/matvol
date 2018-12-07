@@ -114,7 +114,7 @@ for nb_dir=1:length(indir)
                 fprintf('BAD number of file found')
                 char(to)
             end
-            fprintf('found %d file(s)\n',size(to,1));
+            fprintf('found %d file(s) for %s \n',size(to,1),cur_dir);
             for kkk=1:size(to,1),  fprintf('files : %s\n',to(kkk,:));end
             
             error('Change the regular expression : %s to get only %d files',char(reg_ex),p.wanted_number_of_file)
