@@ -252,7 +252,7 @@ for j = 1 : size(json_filename,1)
         %same data_file.CoilString               =             get_field_one( content, 'CsaSeries.CoilString'                                                                          );
         data_file.CoilStringForConversion  =             get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sCoilSelectMeas.sCoilStringForConversion'                          );
         data_file.nRxCoilSelected          = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sCoilSelectMeas.aRxCoilSelectData\[0\].asList.__attribute__.size') );
-        data_file.CoilString               =  get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sCoilSelectMeas.aRxCoilSelectData[0].asList[0].sCoilElementID.tCoilID');
+        data_file.CoilString               =  get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sCoilSelectMeas.aRxCoilSelectData\[0\].asList\[0\].sCoilElementID.tCoilID');
     end % if RepetitionTime not empty
     
     
