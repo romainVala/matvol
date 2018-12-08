@@ -51,7 +51,8 @@ opt0 = opt;
 
 for k=1:length(f)
     if ~isempty(par.mask)
-        opt = sprintf(' -k %s %s ',par.mask{k},opt0);
+        if iscell(par.mask), mm=par.mask{k};else mm=par.mask;end
+        opt = sprintf(' -k %s %s ',mm,opt0);
     end
 
     cmd = sprintf('fslstats %s %s',f{k},opt);

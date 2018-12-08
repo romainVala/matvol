@@ -12,8 +12,10 @@ defpar.job_pack=10;
 defpar.jobname = 'vbm_results';
 defpar.walltime = '01:00:00';
 defpar.resfilename = 'seg_results.csv'; %'seg_rrres.csv';
-defpar.segreg='c'; %p for vbm8
+defpar.segreg='[cp]'; %p for vbm8
 defpar.volreg='s'; %p for vbm8
+defpar.brainmask = 'mask_brain_erode_dilate.nii.gz';
+
 par = complet_struct(par,defpar);
 
 if ischar(dir_vbm)
@@ -73,7 +75,7 @@ for k=1:length(dir_vbm)
                 cout.gray_std = std(1);   cout.white_std = std(2); cout.csf_std = std(3);
                 cout.gray_E = E(1);       cout.white_E = E(2);     cout.csf_E = E(3);
                 
-                fo=fullfile(cur_dir,'mask_prob.nii.gz');
+                fo=fullfile(cur_dir,par.brainmask);
                 if ~exist(fo,'file')
                     do_fsl_add(fp,fo);
                 end
@@ -96,17 +98,18 @@ for k=1:length(dir_vbm)
             
             %fp = get_subdir_regex_files(cur_dir,'^m0wrp[123].*nii');
             fp = get_subdir_regex_files(cur_dir,'^wc[123].*nii');
+            if ~isempty(fp)
             if size(fp{1},1)==3
                 [v m ] = do_fsl_getvol(fp); vv=(v(:,2).*m/1000);
                 cout.m0wrp1_vol = vv(1);   cout.m0wrp2_vol = vv(2);     cout.m0wrp3_vol = vv(3);
                 
-                fo=fullfile(cur_dir,'wmask_prob.nii.gz');
+                fo=fullfile(cur_dir,par.brainmask);
                 if ~exist(fo,'file')
                     do_fsl_add(fp,fo);
                 end
                 v=do_fsl_getvol(fo);
                 cout.wmask_vol = v(2)/1000;
-                
+            end
             end
         end
                 
@@ -116,7 +119,7 @@ for k=1:length(dir_vbm)
                 fo = addprefixtofilenames(fms,'lap_');
                 if ~exist(fo{1},'file')
                     %cmd = sprintf('cd %s\n c3d %s mask_prob.nii.gz  -multiply -smooth 1.2vox -laplacian %s',cur_dir,fms{1},fo{1});
-                    cmd = sprintf('cd %s\n c3d %s -laplacian -as L -push L -push L -multiply  mask_prob.nii.gz  -multiply  %s',cur_dir,fms{1},fo{1});
+                    cmd = sprintf('cd %s\n c3d %s -laplacian -as L -push L -push L -multiply  %s  -multiply  %s',cur_dir,fms{1},par.brainmask,fo{1});
                     unix(cmd)
                 end
                 par.abs=1;
@@ -174,7 +177,7 @@ for k=1:length(dir_vbm)
             try
                 fm=get_subdir_regex_files(cur_dir,['^m',par.volreg '.*nii'],1);
                 v=nifti_spm_vol(fm{1});
-                frm=get_subdir_regex_files(cur_dir,['^rm',par.volreg '.*nii']);
+                frm=get_subdir_regex_files(cur_dir,['^rm',par.volreg '.*nii'])
                 if isempty(frm)
                     fm=unzip_volume(fm);
                     fmat = get_subdir_regex_files(cur_dir,['^' par.volreg '.*seg8.mat'],1);
@@ -198,6 +201,7 @@ for k=1:length(dir_vbm)
 
         end
         if ~isfield(cout,'RicianNoise')
+            addpath(genpath('/network/lustre/iss01/cenir/software/irm/matlab_toolbox/noise_estimation'));
             try
                 fm=get_subdir_regex_files(cur_dir,['^m',par.volreg '.*nii'],1);
                 [h A] = nifti_spm_vol(fm{1});
