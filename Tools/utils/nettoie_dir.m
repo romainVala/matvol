@@ -31,4 +31,8 @@ end
 if(dirname(length(dirname)) == '_')
     dirname(length(dirname)) = '';
 end
+if(dirname(1) == '_')
+    dirname(1) = '';
+end
+
 
