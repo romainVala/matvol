@@ -85,10 +85,7 @@ for subj = 1:nrSubject
             clear allVolumes
             
             if length(currentRun) == 1 % 4D file (*.nii)
-                nrVolumes = spm_vol(currentRun{1});
-                for vol = 1:length(nrVolumes)
-                    allVolumes{vol,1} = sprintf('%s,%d',currentRun{1},vol);
-                end
+                allVolumes = spm_select('expand',currentRun);
             else
                 allVolumes = currentRun;
             end
@@ -98,7 +95,7 @@ for subj = 1:nrSubject
         end
         
     end
-
+    
     jobs{subj}.spm.spatial.realign.estwrite.eoptions.quality = 1; %#ok<*AGROW>
     jobs{subj}.spm.spatial.realign.estwrite.eoptions.sep = 4;
     jobs{subj}.spm.spatial.realign.estwrite.eoptions.fwhm = 5;

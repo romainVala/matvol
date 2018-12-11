@@ -1,6 +1,11 @@
 function [ newArray ] = removeTag( mvArray, tag )
 %REMOVETAG removes all objects from the array according to the tag (regex)
 
+if isempty(mvArray)
+    newArray = mvArray;
+    return
+end
+
 % Fetch all tags into a signle cellstr
 allTags = cellstr(char(mvArray.tag));
 

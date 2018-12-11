@@ -1,18 +1,34 @@
-function varargout = countSeries( examArray )
+function varargout = countSeries( examArray, serie_regex )
 % COUNTSERIES more compact than explore, but only display the number of series
+% regex : allow you to select series with regexp
+%
+% Syntax : [Table, Group] = examArray.countSeries('regex_of_serie')
+%          [Table, Group] = examArray.countSeries
+%                           examArray.countSeries('regex_of_serie')
+%                           examArray.countSeries
+%
 
-% Initialization
-nick = {examArray(1).serie.nick};
+if nargin < 2
+    serie_regex = '.*';
+end
+
+
+%% Count the series
+
+% Initialize, with the firt exam
+nick = {examArray(1).getSerie(serie_regex,'tag',0).nick};
 nick = unique(nick);
 nick(cellfun(@isempty,nick)) = []; % remove empty tags
 NrSerie = zeros( numel(examArray), numel(nick));
 
+% Count the series, using the 'nick' (initial tag, no increment)
 for ex = 1 : numel(examArray)
     
+    serieArray = examArray(ex).getSerie(serie_regex,'tag',0);
     
-    exam_tags  = {examArray(ex).serie.tag};
-    exam_nicks = unique({examArray(ex).serie.nick});
-    exam_path  = {examArray(ex).serie.path};
+    exam_tags  = {serieArray.tag};
+    exam_nicks = unique({serieArray.nick});
+    exam_path  = {serieArray.path};
     valid_path = ~cellfun( @isempty, exam_path );
     
     % addSerie, when tags are not found, adds an empty serie (for diagnostic purpose)
@@ -33,6 +49,12 @@ for ex = 1 : numel(examArray)
     end
     
 end
+
+
+%% Reorder : alphabetical
+
+[nick,nick_order] = sort(nick);
+NrSerie = NrSerie(:,nick_order);
 
 
 %% Sort NrSerie matrix
@@ -60,7 +82,7 @@ OrederdExamName = cat(1,Group.name);
 
 Table                          = array2table(OrderedNrSerie);
 Table.Properties.RowNames      = OrederdExamName;
-Table.Properties.VariableNames = [ {'NrExam'} nick];
+Table.Properties.VariableNames = [ {'NrExam'} nick ];
 
 
 %% Output

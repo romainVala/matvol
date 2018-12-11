@@ -46,6 +46,10 @@ for subj = 1:nrSubject
         else
             assert( length(dirFonc) == length(jsons) , 'dic.*json were no found in all volumes' )
         end
+        % Multiple json files ? Like multi-echo ?
+        for j = 1 : length(jsons)
+            jsons{j} = jsons{j}(1,:); % only keep the first echo
+        end
         [ TRs ] = get_string_from_json( jsons , 'RepetitionTime' , 'numeric' );
         allTR = nan(size(TRs));
         for idx = 1 : length(allTR)
@@ -83,10 +87,7 @@ for subj = 1:nrSubject
         clear allVolumes
         
         if length(currentRun) == 1 %4D file
-            nrVoumes = spm_vol(currentRun{1});
-            for vol=1:length(nrVoumes)
-                allVolumes{vol,1} = sprintf('%s,%d',currentRun{1},vol);
-            end
+            allVolumes = spm_select('expand',currentRun);
         else
             allVolumes = currentRun;
         end

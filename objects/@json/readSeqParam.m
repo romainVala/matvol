@@ -1,36 +1,50 @@
-function data = readSeqParam( jsonArray, redo, par )
+function data = readSeqParam( jsonArray, par )
 %READSEQPARAM
 % Important : for more details about the parameters, see also get_sequence_param_from_json
+
+
+%% Check input arguments
 
 if ~exist('par','var')
     par = ''; % for defpar
 end
 
-defpar.pct = 0;% Parallel Computing Toolbox
+defpar.pct  = 0; % Parallel Computing Toolbox
+defpar.redo = 0;
 
 par = complet_struct(par,defpar);
 
 
+%% Go
+
 path = jsonArray.getPath;
 
 % Skip if already done
-if ~redo
-    for j = 1 : numel(jsonArray)
-        if numel(fieldnames(jsonArray(j).serie.sequence))
+for j = 1 : numel(jsonArray)
+    
+    if ~isempty(jsonArray(j).path) % json.path exists
+        if ~par.redo   &&   numel(fieldnames(jsonArray(j).serie.sequence)) % already done ?
             path{j} = '';
         end
+    else
+        path{j} = ''; % no path ? then skip
     end
+    
 end
+
 
 data = get_sequence_param_from_json(path,par);
 
 % Store or load the seq param in the serie
-for j = 1 : numel(path)
-    if isempty(path{j})
-        data{j} = jsonArray(j).serie.sequence;
-    else
-        jsonArray(j).serie.sequence = data{j};
+for j = 1 : numel(jsonArray)
+    if ~isempty(jsonArray(j).path) % json.path exists
+        if isempty(path{j}) % Use seq param already parsd, or empty struct
+            data{j} = jsonArray(j).serie.sequence;
+        else
+            jsonArray(j).serie.sequence = data{j}; % save freshly parsed seq param
+        end
     end
 end
+
 
 end % function
