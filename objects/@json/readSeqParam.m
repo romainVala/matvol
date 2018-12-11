@@ -32,8 +32,12 @@ for j = 1 : numel(jsonArray)
     
 end
 
-
-data = get_sequence_param_from_json(path,par);
+[pp ff ex] = fileparts(path{1});
+if strcmp(ex,'.json')
+    data = get_sequence_param_from_json(path,par);
+elseif strcmp(ex,'.csv')
+    data = read_res(path);
+end
 
 % Store or load the seq param in the serie
 for j = 1 : numel(jsonArray)
