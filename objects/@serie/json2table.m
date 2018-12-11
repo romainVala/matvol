@@ -1,4 +1,4 @@
-function Table = json2table( serieArray, par )
+function MyTable = json2table( serieArray, par )
 % Syntax  : uses serie/readSeqParam then tansform into table
 % Example : table = serieArray.json2table('json$');
 %
@@ -107,18 +107,18 @@ end
 data_structArray = cell2mat(data_cellArray); % cell array of struct cannot be converted to table
 data_structArray = reshape( data_structArray, [numel(data_structArray) 1]); % reshape into single row structArray
 
-Table = struct2table( data_structArray, 'AsArray', 1 );
+MyTable = struct2table( data_structArray, 'AsArray', 1 );
 
 if par.add_empty_line
     index    = 1:length(integrity);
     indexok  = index(integrity==1);
     indexbad = index(integrity==0);
     padding  = num2str(length(num2str(length(index))));
-    Table.Properties.RowNames = cellstr(strsplit(num2str(indexok,[' %.' padding 'd'])));
+    MyTable.Properties.RowNames = cellstr(strsplit(num2str(indexok,[' %.' padding 'd'])));
     if ~isempty(indexbad)
-        Table_missing = Table(1,:);
-        for nbcol=1:width(Table)
-            if iscell(Table(1,:).(Table.Properties.VariableNames{nbcol}))
+        Table_missing = MyTable(1,:);
+        for nbcol=1:width(MyTable)
+            if iscell(MyTable(1,:).(MyTable.Properties.VariableNames{nbcol}))
                 Table_missing{1,nbcol}={''};
             else
                 Table_missing{1,nbcol}=NaN;
@@ -127,8 +127,8 @@ if par.add_empty_line
         Table_missing = repmat(Table_missing,[length(indexbad),1]);
         Table_missing.Properties.RowNames = cellstr(strsplit(num2str(indexbad,[' %.' padding 'd'])));
         
-        Table = [Table;Table_missing]; %need to have the same datatype for each collumn
-        Table = sortrows(Table,'RowNames');
+        MyTable = [MyTable;Table_missing]; %need to have the same datatype for each collumn
+        MyTable = sortrows(MyTable,'RowNames');
     end
 end
 
@@ -165,8 +165,8 @@ for c = 1 : size(split_final,2)
     end
 end
 
-Table = [id_str Table];
-Table.Properties.VariableNames{1} = 'path'; % column name
+MyTable = [id_str MyTable];
+MyTable.Properties.VariableNames{1} = 'path'; % column name
 
 
 end % function
