@@ -36,7 +36,7 @@ end
 if strcmp(ex,'.json')
     data = get_sequence_param_from_json(path,par);
 elseif strcmp(ex,'.csv')
-    data = read_res(path);
+    data = read_res(path,par);
 end
 
 % Store or load the seq param in the serie
