@@ -35,7 +35,8 @@ assert( isprop(obj,type) && ischar(obj.(type) ), 'type must refer to a char prop
 
 %% getJson from @serie
 
-jsonArray = json.empty;
+%jsonArray = json.empty(size(serieArray));
+jsonArray =  repmat(json,size(serieArray));
 
 for ex = 1 : size(serieArray,1)
     
