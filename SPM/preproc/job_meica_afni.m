@@ -1,7 +1,8 @@
 function [ job ] = job_meica_afni( dir_func, dir_anat, par )
 %JOB_MEICA_AFNI
 % This scipt is well discribeded with the comments, just read it
-
+%
+% See also meica_report
 
 %% Check input arguments
 
@@ -39,6 +40,8 @@ defpar.fake          = 0; % do everything exept running
 defpar.verbose       = 2; % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
 defpar.jobname       = 'job_meica';
 
+% report
+defpar.report        = 1; % uses meica_report
 
 par = complet_struct(par,defpar);
 
@@ -365,6 +368,13 @@ par.verbose = parverbose;
 
 % Run CPU, run !
 job = do_cmd_sge(job, par);
+
+
+%% Report
+
+if par.report
+    meica_report( fileparts(fileparts(fileparts(run_path))), par )
+end
 
 
 end % function
