@@ -1,4 +1,37 @@
-function [varargout] = read_res(fin)
+function [param] = read_res(fin,par)
+
+if ~exist('par','var')
+    par = ''; % for defpar
+end
+defpar.pct  = 0; % Parallel Computing Toolbox
+defpar.redo = 0;
+
+par = complet_struct(par,defpar);
+
+pct = par.pct; 
+
+%% Main loop
+
+param = cell(size(fin));
+
+if pct
+    
+    parfor idx = 1 : numel(fin)
+        param{idx} = parse_csv(fin{idx},par);
+    end
+    
+else
+    
+    for idx = 1 : numel(fin)
+        param{idx} = parse_csv(fin{idx},par);
+    end
+    
+end
+
+end% function
+
+%% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function [varargout] = parse_csv(fin,par)
 
 ind_to_remove=[];
 if ischar(fin)
@@ -64,4 +97,5 @@ if nargout==1
 elseif nargout==2
     varargout{1} = hdrref;
     varargout{2} = vals;
+end
 end
