@@ -423,8 +423,10 @@ for idx = 1 : size(SequenceCategory, 1)
     elseif strcmp(SequenceCategory{idx,2},'dwi')
 
         % bvals
-        B_value = exam_SequenceData(where,hdr.B_value);
-        bvals   = cellfun(@max,B_value);
+        % B_value = exam_SequenceData(where,hdr.B_value);
+        % bvals   = cellfun(@max,B_value);
+        BValues = exam_SequenceData(where,hdr.BValue);
+        bvals   = cellfun(@max,BValues);
         
         % bvects
         B_vect = exam_SequenceData(where,hdr.B_vect);
