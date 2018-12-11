@@ -94,7 +94,7 @@ list = unique(names,'stable');
 % Compare current structure fields with the definitive 'list' of fields
 for i = 1 : N
     f = fieldnames(data_cellArray{i});
-    d = setxor(fields,f); % non-commin fields
+    d = setxor(list,f); % non-commin fields
     for dm = 1 : length(d)
         data_cellArray{i}.(d{dm}) = NaN; % create the missing field
     end
