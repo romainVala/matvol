@@ -31,7 +31,7 @@ end
 end% function
 
 %% %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function [varargout] = parse_csv(fin,par)
+function [cout] = parse_csv(fin,par)
 
 
 
@@ -41,18 +41,20 @@ function [varargout] = parse_csv(fin,par)
 %    val = cell2mat(r(h.numberMask))';
 %    hdr = r(h.stringMask)';
 % so assume first line is hdr second is val and first collum only is a string
-if ischar(r{2,1})
+%if ischar(r{2,1})
     if size(r,1)> size(r,2) %collumn
-        val = cell2mat(r(2:end,2))' ;
+        %val = cell2mat(r(2:end,2))' ;
+        val = (r(2:end,2))' ;
         hdr = r(2:end,1)';
     else %line
-        val = cell2mat(r(2,2:end))' ;
+        %val = cell2mat(r(2,2:end))' ;
+        val = (r(2,2:end))' ;
         hdr = r(1,2:end)';
     end
-else
-    val = cell2mat(r(h.numberMask))';
-    hdr = r(h.stringMask)';
-end
+%else
+%    val = cell2mat(r(h.numberMask))';
+%    hdr = r(h.stringMask)';
+%end
 
 hdr = nettoie_dir(hdr);
 
@@ -62,14 +64,8 @@ val = val(indh);
 cout.suj = get_parent_path(fin);
 
 for k=1:length(hdr)
-    cout.(hdr{k}) = val(k); %vals(:,k);    
+    cout.(hdr{k}) = val{k}; %vals(:,k);    
 end
 
-if nargout==1
-    varargout{1} = cout;
-elseif nargout==2
-    varargout{1} = hdrref;
-    varargout{2} = val;
-end
 
 end
