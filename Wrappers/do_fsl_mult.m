@@ -62,7 +62,8 @@ end
 % Skip the empty jobs
 job(skip) = [];
 
-job = do_cmd_sge(job,par);
-
+if ~isempty(job)
+    job = do_cmd_sge(job,par);
+end
 
 end % function
