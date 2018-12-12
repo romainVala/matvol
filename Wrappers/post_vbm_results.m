@@ -207,8 +207,7 @@ for k=1:length(dir_vbm)
                 cout.RicianNoise = RicianSTD(A); 
                 
             catch
-                fprintf('ERROR BAD ms nifti %s\n',fm{1});
-                keyboard
+                fprintf('ERROR BAD Rician nifti %s\n',fm{1});
                 %continue
                 
             end
