@@ -35,7 +35,8 @@ assert( isprop(obj,type) && ischar(obj.(type) ), 'type must refer to a char prop
 
 %% getVolume from @serie
 
-volumeArray = volume.empty;
+% "empty" array but with the right dimension
+volumeArray =  volume.empty([size(serieArray) 0]);
 
 for ex = 1 : size(serieArray,1)
     

@@ -36,8 +36,8 @@ assert( isprop(obj,type) && ischar(obj.(type) ), 'type must refer to a char prop
 
 %% getSerie from @exam
 
-% Create 0x0 @serie object
-serieArray = serie.empty;
+% "empty" array but with the right dimension
+serieArray =  serie.empty([size(examArray,1) 0]);
 
 for ex = 1 : numel(examArray)
     
@@ -60,9 +60,9 @@ end % exam
 
 % I fill the empty series with some pointers and references, only useful for diagnostic and future warnings
 % I cannot do this filling during the previous loop, because at that point, we don't know the size (columns) of serieArray
-for ex_ = 1 : size(serieArray,1)
+for ex_ = 1 : numel(examArray)
     for ser_ = 1 : size(serieArray,2)
-        if isempty(serieArray(ex_,ser_).(type))
+        if isempty(serieArray(ex_,ser_).path)
             serieArray(ex_,ser_).exam = examArray(ex_);
         end
     end
