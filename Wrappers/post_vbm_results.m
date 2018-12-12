@@ -46,7 +46,7 @@ for k=1:length(dir_vbm)
                 do_delete(fres,0);
             else
                 try
-                    cout = read_res(fres);
+                    cout = read_res({fres}); cout=cout{1};
                 catch                    
                     fprintf('ERROR BAD results csv  %s\n',fres);
                     do_delete(fres,0);
@@ -77,39 +77,37 @@ for k=1:length(dir_vbm)
                 
                 fo=fullfile(cur_dir,par.brainmask);
                 if ~exist(fo,'file')
-                    do_fsl_add(fp,fo);
+                    fms = get_subdir_regex_files(cur_dir,['^m',par.volreg],1);
+                    do_fsl_mask_from_spm_segment(fms);
                 end
                 v=do_fsl_getvol(fo);            cout.mask_vol = v(2)/1000;
-                
+                                
             end
         end
         
         if ~isfield(cout,'wmask_vol')
             
             fp = get_subdir_regex_files(cur_dir,['^r',par.segreg,'[123].*nii']);
-            if isempty(fp)
-                continue
+            if ~isempty(fp)
+                if size(fp{1},1)==3
+                    [v m ] = do_fsl_getvol(fp);         vv=(v(:,2).*m/1000);
+                    cout.vbm_rp1_vol = vv(1);   cout.vbm_rp2_vol = vv(2);  cout.vbm_rp3_vol = vv(3);
+                end
             end
-
-            if size(fp{1},1)==3
-                [v m ] = do_fsl_getvol(fp);         vv=(v(:,2).*m/1000);
-                cout.vbm_rp1_vol = vv(1);   cout.vbm_rp2_vol = vv(2);  cout.vbm_rp3_vol = vv(3);
-            end
-            
             %fp = get_subdir_regex_files(cur_dir,'^m0wrp[123].*nii');
             fp = get_subdir_regex_files(cur_dir,'^wc[123].*nii');
             if ~isempty(fp)
-            if size(fp{1},1)==3
-                [v m ] = do_fsl_getvol(fp); vv=(v(:,2).*m/1000);
-                cout.m0wrp1_vol = vv(1);   cout.m0wrp2_vol = vv(2);     cout.m0wrp3_vol = vv(3);
-                
-                fo=fullfile(cur_dir,par.brainmask);
-                if ~exist(fo,'file')
-                    do_fsl_add(fp,fo);
+                if size(fp{1},1)==3
+                    [v m ] = do_fsl_getvol(fp); vv=(v(:,2).*m/1000);
+                    cout.m0wrp1_vol = vv(1);   cout.m0wrp2_vol = vv(2);     cout.m0wrp3_vol = vv(3);
+                    
+                    fo=fullfile(cur_dir,par.brainmask);
+                    if ~exist(fo,'file')
+                        do_fsl_add(fp,fo);
+                    end
+                    v=do_fsl_getvol(fo);
+                    cout.wmask_vol = v(2)/1000;
                 end
-                v=do_fsl_getvol(fo);
-                cout.wmask_vol = v(2)/1000;
-            end
             end
         end
                 
@@ -128,7 +126,7 @@ for k=1:length(dir_vbm)
                 
             catch
                 fprintf('ERROR BAD ms nifti %s\n',cur_dir);
-                continue
+                %continue
             end
         end
         
@@ -150,27 +148,27 @@ for k=1:length(dir_vbm)
                     fp = get_subdir_regex_files(cur_dir,'^bin_[cgw].*nii',3);
                 catch
                     fprintf('ERROR no bin gray  %s\n',fres);
-                    continue
+                    %continue
                 end
             end
             
             [v] = do_fsl_getvol(fp);
-            if isnan(v)
-                continue
+            if ~isnan(v)
+                
+                cout.bingray_vol = v(2,2)/1000;cout.binwhite_vol = v(3,2)/1000;cout.bincsf_vol = v(1,2)/1000;
+                
+                fm = get_subdir_regex_files(cur_dir,['^m',par.volreg '.*nii']);
+                ppp.mask = fullfile(cur_dir,'bin_gray.nii.gz');
+                [v m std] = do_fsl_getvol(fm,ppp);
+                cout.bgray_msT1_mean = m; cout.bgray_msT1_std = std;
+                ppp.mask = fullfile(cur_dir,'bin_white.nii.gz');
+                [v m std] = do_fsl_getvol(fm,ppp);
+                cout.bwhite_msT1_mean = m; cout.bwhite_msT1_std = std;
+                ppp.mask = fullfile(cur_dir,'bin_csf.nii.gz');
+                [v m std] = do_fsl_getvol(fm,ppp);
+                cout.bcsf_msT1_mean = m; cout.bcsf_msT1_std = std;
+                
             end
-            
-            cout.bingray_vol = v(2,2)/1000;cout.binwhite_vol = v(3,2)/1000;cout.bincsf_vol = v(1,2)/1000;
-            
-            fm = get_subdir_regex_files(cur_dir,['^m',par.volreg '.*nii']);
-            ppp.mask = fullfile(cur_dir,'bin_gray.nii.gz');
-            [v m std] = do_fsl_getvol(fm,ppp);
-            cout.bgray_msT1_mean = m; cout.bgray_msT1_std = std;
-            ppp.mask = fullfile(cur_dir,'bin_white.nii.gz');
-            [v m std] = do_fsl_getvol(fm,ppp);
-            cout.bwhite_msT1_mean = m; cout.bwhite_msT1_std = std;
-            ppp.mask = fullfile(cur_dir,'bin_csf.nii.gz');
-            [v m std] = do_fsl_getvol(fm,ppp);
-            cout.bcsf_msT1_mean = m; cout.bcsf_msT1_std = std;
         end
         if ~isfield(cout,'volume_contraction')
             
@@ -181,7 +179,8 @@ for k=1:length(dir_vbm)
                 if isempty(frm)
                     fm=unzip_volume(fm);
                     fmat = get_subdir_regex_files(cur_dir,['^' par.volreg '.*seg8.mat'],1);
-                    j=job_apply_affine(fm,fmat,{'/export/dataCENIR/dicom/nifti_proc/mni/MNI152_T1_1mm_brain.nii'});
+                    %j=job_apply_affine(fm,fmat,{'/scratch/CENIR/users/romain.valabregue/dicom/mni/MNI152_T1_1mm.nii'});
+                    j=job_apply_affine(fm,fmat);
                     spm_jobman('run',j);
                     frm=get_subdir_regex_files(cur_dir,['^rm',par.volreg '.*nii'])
                 end
@@ -195,8 +194,8 @@ for k=1:length(dir_vbm)
                 fm = gzip_volume(fm);frm = gzip_volume(frm);
                 
             catch
-                fprintf('ERROR BAD ms nifti %s\n',fm{1});
-                continue
+                fprintf('ERROR BAD volume_con nifti %s\n',fm{1});
+                %continue
             end
 
         end
@@ -210,7 +209,7 @@ for k=1:length(dir_vbm)
             catch
                 fprintf('ERROR BAD ms nifti %s\n',fm{1});
                 keyboard
-                continue
+                %continue
                 
             end
         end
