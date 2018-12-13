@@ -30,8 +30,8 @@ if par.sge
     for k=1:length(dir_vbm)
         cmd{k} = sprintf('dir_vbm=''%s'';\npar.redo=%d; par.segreg=''%s'';par.volreg=''%s'';\n',...
             dir_vbm{k},par.redo,par.segreg,par.volreg);
-        if iscell(par.fms), cmd{k} = sprintf('%s par.fsm={''%s''}',par.fms{k});end
-        if iscell(par.niftireg_warp), cmd{k} = sprintf('%s par.niftireg_warp={''%s''}',par.niftireg_warp{k});end
+        if iscell(par.fms), cmd{k} = sprintf('%s par.fms={''%s''};\n', cmd{k},par.fms{k});end
+        if iscell(par.niftireg_warp), cmd{k} = sprintf('%s par.niftireg_warp={''%s''};\n', cmd{k},par.niftireg_warp{k});end
         cmd{k} = sprintf('%s\npost_vbm_results(dir_vbm,par);\n',cmd{k});
             
     end
