@@ -146,7 +146,7 @@ for k=1:length(dir_vbm)
                     if ~isempty(fpm), fp = concat_cell(fp,fpm); end
                     
                     voltpm={'_gray','_white','_csf','_mask'}; vol_meas = {'ncc','lncc'};
-                    for kk=1:length(fp)                        
+                    for kk=1: size(fp{1},1)                       
                         cmdi = sprintf('FREF=%s%s.nii.gz\n FIN=%s\n',par.spmTPM,voltpm{kk},fp{1}(kk,:));
                         
                         cmdc3 = sprintf('%s reg_measure -ref $FREF -flo $FIN -ncc -lncc  | awk ''{print $2}''  ',cmdi);
