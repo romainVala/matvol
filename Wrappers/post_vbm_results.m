@@ -15,6 +15,10 @@ defpar.resfilename = 'seg_results.csv'; %'seg_rrres.csv';
 defpar.segreg='[cp]'; %p for vbm8
 defpar.volreg='s'; %p for vbm8
 defpar.brainmask = 'mask_brain_erode_dilate.nii.gz';
+defpar.fms='';
+defpar.niftireg_warp = '';
+defpar.spmTPM = '/network/lustre/iss01/cenir/analyse/irm/users/romain.valabregue/dicom/mni/TPM';
+defpar.nrTPM = '/network/lustre/iss01/cenir/analyse/irm/users/romain.valabregue/dicom/mni/mean_nr1000/Mean_S50_all.nii';
 
 par = complet_struct(par,defpar);
 
@@ -24,8 +28,12 @@ end
 
 if par.sge
     for k=1:length(dir_vbm)
-        cmd{k} = sprintf('dir_vbm=''%s'';\npar.redo=%d; par.segreg=''%s'';par.volreg=''%s'';\npost_vbm_results(dir_vbm,par);\n',...
+        cmd{k} = sprintf('dir_vbm=''%s'';\npar.redo=%d; par.segreg=''%s'';par.volreg=''%s'';\n',...
             dir_vbm{k},par.redo,par.segreg,par.volreg);
+        if iscell(par.fms), cmd{k} = sprintf('%s par.fsm={''%s''}',par.fms{k});end
+        if iscell(par.niftireg_warp), cmd{k} = sprintf('%s par.niftireg_warp={''%s''}',par.niftireg_warp{k});end
+        cmd{k} = sprintf('%s\npost_vbm_results(dir_vbm,par);\n',cmd{k});
+            
     end
     
     do_cmd_matlab_sge(cmd,par)
@@ -60,33 +68,36 @@ for k=1:length(dir_vbm)
         doit=1;
     end
     cin=cout;
+    
     if doit
+        if iscell(par.fms)
+            fms = par.fms(k);
+        else
+            fms = get_subdir_regex_files(cur_dir,['^m',par.volreg],1);
+        end
         
         if ~isfield(cout,'mask_vol')
             fp = get_subdir_regex_files(cur_dir,['^',par.segreg,'[123].*nii']);
-            if isempty(fp)
-                continue
-            end
-            
-            if size(fp{1},1)==3
-                [v m std E ] = do_fsl_getvol(fp);            vv=(v(:,2).*m/1000);
-                
-                cout.gray_vol = vv(1);    cout.white_vol = vv(2);  cout.csf_vol = vv(3);
-                cout.gray_std = std(1);   cout.white_std = std(2); cout.csf_std = std(3);
-                cout.gray_E = E(1);       cout.white_E = E(2);     cout.csf_E = E(3);
-                
-                fo=fullfile(cur_dir,par.brainmask);
-                if ~exist(fo,'file')
-                    fms = get_subdir_regex_files(cur_dir,['^m',par.volreg],1);
-                    do_fsl_mask_from_spm_segment(fms);
+            if ~isempty(fp)
+                if size(fp{1},1)==3
+                    [v m std E ] = do_fsl_getvol(fp);            vv=(v(:,2).*m/1000);
+                    
+                    cout.gray_vol = vv(1);    cout.white_vol = vv(2);  cout.csf_vol = vv(3);
+                    cout.gray_std = std(1);   cout.white_std = std(2); cout.csf_std = std(3);
+                    cout.gray_E = E(1);       cout.white_E = E(2);     cout.csf_E = E(3);
+                    
+                    fo=fullfile(cur_dir,par.brainmask);
+                    if ~exist(fo,'file')
+                        %fms = get_subdir_regex_files(cur_dir,['^m',par.volreg],1);
+                        do_fsl_mask_from_spm_segment(fms);
+                    end
+                    v=do_fsl_getvol(fo);            cout.mask_vol = v(2)/1000;
+                    
                 end
-                v=do_fsl_getvol(fo);            cout.mask_vol = v(2)/1000;
-                                
             end
         end
         
-        if ~isfield(cout,'wmask_vol')
-            
+        if ~isfield(cout,'vbm_rp1_vol')            
             fp = get_subdir_regex_files(cur_dir,['^r',par.segreg,'[123].*nii']);
             if ~isempty(fp)
                 if size(fp{1},1)==3
@@ -94,26 +105,109 @@ for k=1:length(dir_vbm)
                     cout.vbm_rp1_vol = vv(1);   cout.vbm_rp2_vol = vv(2);  cout.vbm_rp3_vol = vv(3);
                 end
             end
-            %fp = get_subdir_regex_files(cur_dir,'^m0wrp[123].*nii');
-            fp = get_subdir_regex_files(cur_dir,'^wc[123].*nii');
+        end
+        
+        if ~isfield(cout,'stpm_nmi_csf')
+            fp = get_subdir_regex_files(cur_dir,'^w[pc][123].*nii');
+            fpm = get_subdir_regex_files(cur_dir,['^w' par.brainmask]);
+
+            if isempty(fp) || isempty(fpm)
+                try
+                fpr = get_subdir_regex_files(cur_dir,'^[pc][123].*nii',3);
+                fprm =  get_subdir_regex_files(cur_dir,['^' par.brainmask]);
+
+                fy = get_subdir_regex_files(cur_dir,['^y_',par.volreg,'.*nii'],1);
+                fy = unzip_volume(fy); 
+                
+                if isempty(fp) 
+                    unzip_volume(fpr);fpr = get_subdir_regex_files(cur_dir,'^[pc][123].*nii',3);
+                    job_apply_normalize(fy,fpr,struct('run',1)); 
+                    fp = get_subdir_regex_files(cur_dir,'^w[pc][123].*nii');
+                    gzip_volume(fp); gzip_volume(fpr); 
+                    fp = get_subdir_regex_files(cur_dir,'^w[pc][123].*nii');
+                end
+                if isempty(fpm)
+                    fprm = unzip_volume(fprm);
+                    job_apply_normalize(fy,fprm,struct('run',1)); 
+                    fpm = get_subdir_regex_files(cur_dir,['^w' change_file_extension(par.brainmask,'')]);
+                    fprm=gzip_volume(fprm); fpm = gzip_volume(fpm);
+                end                
+                
+                gzip_volume(fy); 
+                catch
+                    fprintf('ERROR apply normalize in  %s\n',cur_dir);
+                end
+            end
+            
             if ~isempty(fp)
                 if size(fp{1},1)==3
                     [v m ] = do_fsl_getvol(fp); vv=(v(:,2).*m/1000);
-                    cout.m0wrp1_vol = vv(1);   cout.m0wrp2_vol = vv(2);     cout.m0wrp3_vol = vv(3);
+                    cout.wrp1_vol = vv(1);   cout.wrp2_vol = vv(2);     cout.wrp3_vol = vv(3);
+                    if ~isempty(fpm), fp = concat_cell(fp,fpm); end
                     
-                    fo=fullfile(cur_dir,par.brainmask);
-                    if ~exist(fo,'file')
-                        do_fsl_add(fp,fo);
-                    end
-                    v=do_fsl_getvol(fo);
-                    cout.wmask_vol = v(2)/1000;
+                    voltpm={'_gray','_white','_csf','_mask'}; vol_meas = {'ncc','lncc'};
+                    for kk=1:length(fp)                        
+                        cmdi = sprintf('FREF=%s%s.nii.gz\n FIN=%s\n',par.spmTPM,voltpm{kk},fp{1}(kk,:));
+                        
+                        cmdc3 = sprintf('%s reg_measure -ref $FREF -flo $FIN -ncc -lncc  | awk ''{print $2}''  ',cmdi);
+                        [a b] = unix(cmdc3); b=str2num(b);                        
+                        for kkk=1:2
+                            fname = sprintf('stpm_%s%s',vol_meas{kkk},voltpm{kk});
+                            cout.(fname) = b(kkk);
+                        end
+                        cmdc3 = sprintf('%s c3d $FREF $FIN -ncor |awk ''{print $3}'' ',cmdi);
+                        [a b] = unix(cmdc3); b=str2num(b);
+                        fname = sprintf('stpm_ncor%s',voltpm{kk});cout.(fname) = b;
+                    end                    
                 end
             end
         end
+        
+        if ~isfield(cout,'ntpm_nmi_csf')
+            if iscell(par.niftireg_warp)
                 
+            fp = get_subdir_regex_files(cur_dir,'^nw_[pc][123].*nii');
+            if isempty(fp)
+                fpr = get_subdir_regex_files(cur_dir,'^[pc][123].*nii',3);
+                mypar.folder ='mov'; mypar.sge=0; 
+                fref = {par.nrTPM};
+                nifti_reg_applywarp(fpr,par.niftireg_warp(k),fref,mypar);
+                fp = get_subdir_regex_files(cur_dir,'^nw_[pc][123].*nii');
+                
+                fpm = get_subdir_regex_files(cur_dir,['^nr_' par.brainmask]);
+                if isempty(fpm)
+                    fprm =  get_subdir_regex_files(cur_dir,['^' par.brainmask]); mypar.prefix='nr_';
+                    nifti_reg_applywarp(fprm,par.niftireg_warp(k),fref,mypar);
+                end
+            end
+            fpm = get_subdir_regex_files(cur_dir,['^nr_' par.brainmask]);
+
+            if ~isempty(fp)
+                if size(fp{1},1)==3
+                    fp = concat_cell(fp,fpm);
+                    voltpm={'_gray','_white','_csf','_mask'}; vol_meas = {'ncc','lncc'};
+                    for kk=1:4
+                        frefc = addprefixtofilenames({par.nrTPM},sprintf('c%d',kk));
+                        if kk==4, frefc = {[ get_parent_path(par.nrTPM) ,'/Mean_brain_mask5k.nii']}; end
+                        cmdi = sprintf('FREF=%s\n FIN=%s\n',frefc{1},fp{1}(kk,:));
+                        cmdc3 = sprintf('%s reg_measure -ref $FREF -flo $FIN -ncc -lncc  | awk ''{print $2}''  ',cmdi);
+                        [a b] = unix(cmdc3); b=str2num(b);                        
+                        for kkk=1:2
+                            fname = sprintf('ntpm_%s%s',vol_meas{kkk},voltpm{kk});
+                            cout.(fname) = b(kkk);
+                        end
+                        cmdc3 = sprintf('%s c3d $FREF $FIN -ncor |awk ''{print $3}'' ',cmdi);
+                        [a b] = unix(cmdc3); b=str2num(b);
+                        fname = sprintf('ntpm_ncor%s',voltpm{kk});cout.(fname) = b;
+                    end              
+                    
+                end
+            end
+            end
+        end
         if ~isfield(cout,'lap_mean2')
             try
-                fms = get_subdir_regex_files(cur_dir,['^m',par.volreg],1);
+                %fms = get_subdir_regex_files(cur_dir,['^m',par.volreg],1);
                 fo = addprefixtofilenames(fms,'lap_');
                 if ~exist(fo{1},'file')
                     %cmd = sprintf('cd %s\n c3d %s mask_prob.nii.gz  -multiply -smooth 1.2vox -laplacian %s',cur_dir,fms{1},fo{1});
@@ -157,15 +251,14 @@ for k=1:length(dir_vbm)
                 
                 cout.bingray_vol = v(2,2)/1000;cout.binwhite_vol = v(3,2)/1000;cout.bincsf_vol = v(1,2)/1000;
                 
-                fm = get_subdir_regex_files(cur_dir,['^m',par.volreg '.*nii']);
                 ppp.mask = fullfile(cur_dir,'bin_gray.nii.gz');
-                [v m std] = do_fsl_getvol(fm,ppp);
+                [v m std] = do_fsl_getvol(fms,ppp);
                 cout.bgray_msT1_mean = m; cout.bgray_msT1_std = std;
                 ppp.mask = fullfile(cur_dir,'bin_white.nii.gz');
-                [v m std] = do_fsl_getvol(fm,ppp);
+                [v m std] = do_fsl_getvol(fms,ppp);
                 cout.bwhite_msT1_mean = m; cout.bwhite_msT1_std = std;
                 ppp.mask = fullfile(cur_dir,'bin_csf.nii.gz');
-                [v m std] = do_fsl_getvol(fm,ppp);
+                [v m std] = do_fsl_getvol(fms,ppp);
                 cout.bcsf_msT1_mean = m; cout.bcsf_msT1_std = std;
                 
             end
@@ -173,14 +266,14 @@ for k=1:length(dir_vbm)
         if ~isfield(cout,'volume_contraction')
             
             try
-                fm=get_subdir_regex_files(cur_dir,['^m',par.volreg '.*nii'],1);
-                v=nifti_spm_vol(fm{1});
-                frm=get_subdir_regex_files(cur_dir,['^rm',par.volreg '.*nii'])
+                %fms=get_subdir_regex_files(cur_dir,['^m',par.volreg '.*nii'],1);
+                v=nifti_spm_vol(fms{1});
+                frm=get_subdir_regex_files(cur_dir,['^rm',par.volreg '.*nii']);
                 if isempty(frm)
-                    fm=unzip_volume(fm);
+                    fms=unzip_volume(fms);
                     fmat = get_subdir_regex_files(cur_dir,['^' par.volreg '.*seg8.mat'],1);
                     %j=job_apply_affine(fm,fmat,{'/scratch/CENIR/users/romain.valabregue/dicom/mni/MNI152_T1_1mm.nii'});
-                    j=job_apply_affine(fm,fmat);
+                    j=job_apply_affine(fms,fmat);
                     spm_jobman('run',j);
                     frm=get_subdir_regex_files(cur_dir,['^rm',par.volreg '.*nii'])
                 end
@@ -191,10 +284,10 @@ for k=1:length(dir_vbm)
                 vr.vox = sqrt(sum(vr.mat(1:3,1:3).^2));
                 cout.volume_contraction = prod(v.vox)./prod(vr.vox);
                 
-                fm = gzip_volume(fm);frm = gzip_volume(frm);
+                fms = gzip_volume(fms);frm = gzip_volume(frm);
                 
             catch
-                fprintf('ERROR BAD volume_con nifti %s\n',fm{1});
+                fprintf('ERROR BAD volume_con nifti %s\n',fms{1});
                 %continue
             end
 
