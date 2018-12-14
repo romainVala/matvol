@@ -23,27 +23,28 @@ defpar.slice_to_realign = 'middle'; % 'first' / 'middle' / 'last' / sliceNumber 
 % Slice to which regressors are temporally aligned. Typically the slice where your most important activation is expected.
 
 % Physio regressors types
+defpar.usePhysio = 1;
 defpar.RETROICOR = 1;
 defpar.RVT       = 1;
 defpar.HRV       = 1;
 
 % Noise ROI regressors
 defpar.noiseROI = 1;
-defpar.noiseROI_files_regex  = '^w.*nii';     % usually use normalied files, NOT the smoothed data
-defpar.noiseROI_mask_regex   = '^wc[23].*nii'; % 2 = WM, 3 = CSF
-defpar.noiseROI_thresholds   = 0.99;          % keep voxels with tissu probabilty >= 99%
-defpar.noiseROI_n_voxel_crop = 2;             % crop n voxels in each direction, to avoid partial volume
-defpar.noiseROI_n_components = 12;            % keep n PCA componenets
+defpar.noiseROI_files_regex  = '^w.*nii';       % usually use normalied files, NOT the smoothed data
+defpar.noiseROI_mask_regex   = '^rwc[23].*nii'; % 2 = WM, 3 = CSF
+defpar.noiseROI_thresholds   = [0.95 0.95];     % keep voxels with tissu probabilty >= 95%
+defpar.noiseROI_n_voxel_crop = [2 1];           % crop n voxels in each direction, to avoid partial volume
+defpar.noiseROI_n_components = 10;              % keep n PCA componenets
 
 % Movement regressors
-defpar.rp       = 1;
-defpar.rp_regex = '^rp.*txt';
-defpar.rp_order = 24; % can be 6, 12, 24
+defpar.rp           = 1;
+defpar.rp_regex     = '^rp.*txt';
+defpar.rp_order     = 24; % can be 6, 12, 24
 % 6 = just add rp, 12 = also adds first order derivatives, 24 = also adds first + second order derivatives
-defpar.rp_outlier_translation_mm = Inf; % Threshold, above which a stick regressor is created for corresponding volume of exceeding shift
-defpar.rp_outlier_rotation_deg   = Inf; % Threshold, above which a stick regressor is created for corresponding volume of exceeding rotational movement
+defpar.rp_method    = 'FD'; % 'MAXVAL' / 'FD' / 'DVARS'
+defpar.rp_threshold = 0.5;  % Threshold above which a stick regressor is created for corresponding volume of exceeding value
 
-par.other_regressor_regex = '';
+par.other_regressor_regex = ''; % if you want to add other ones...
 
 defpar.print_figures = 1; % 0 , 1 , 2 , 3
 
@@ -68,6 +69,12 @@ p.verbose = 0;
 
 skip = [];
 
+if ~par.usePhysio
+    par.RETROICOR = 0;
+    par.RVT       = 0;
+    par.HRV       = 0;
+end
+
 for subj = 1:nrSubject
     
     nrRun = length(dirFunc{subj});
@@ -87,32 +94,42 @@ for subj = 1:nrSubject
             continue
         end
         
-        % Physio files ----------------------------------------------------
-        
-        if ~strcmp(par.logfiles_vendor,'Siemens_Tics')
-            error('[%s] only "%s" is coded yet', mfilename, 'Siemens_Tics' )
+        if par.usePhysio
+            
+            % Physio files ----------------------------------------------------
+            
+            if ~strcmp(par.logfiles_vendor,'Siemens_Tics')
+                error('[%s] only "%s" is coded yet', mfilename, 'Siemens_Tics' )
+            end
+            
+            rawphysio = get_subdir_regex_files( dirPhysio{subj}{run} , 'UNKNOWN.dic$' , 1 );
+            
+            Info      = get_subdir_regex_files( dirPhysio{subj}{run} , '_Info.log$' , p );
+            PULSE     = get_subdir_regex_files( dirPhysio{subj}{run} , '_PULS.log$' , p );
+            RESP      = get_subdir_regex_files( dirPhysio{subj}{run} , '_RESP.log$' , p );
+            
+            if isempty(Info) || isempty(PULSE) || isempty(RESP)
+                extractCMRRPhysio( char(rawphysio) )
+                Info  = get_subdir_regex_files( dirPhysio{subj}{run} , '_Info.log$' , 1 );
+                PULSE = get_subdir_regex_files( dirPhysio{subj}{run} , '_PULS.log$' , 1 );
+                RESP  = get_subdir_regex_files( dirPhysio{subj}{run} , '_RESP.log$' , 1 );
+            end
+            
+            jobs{j}.spm.tools.physio.log_files.vendor = par.logfiles_vendor;
+            jobs{j}.spm.tools.physio.log_files.cardiac = PULSE;
+            jobs{j}.spm.tools.physio.log_files.respiration = RESP;
+            jobs{j}.spm.tools.physio.log_files.scan_timing = Info;
+            jobs{j}.spm.tools.physio.log_files.sampling_interval = [];
+            jobs{j}.spm.tools.physio.log_files.relative_start_acquisition = 0;
+            jobs{j}.spm.tools.physio.log_files.align_scan = 'last';
+            
+        else
+            
+            jobs{j}.spm.tools.physio.log_files.cardiac     = {''};
+            jobs{j}.spm.tools.physio.log_files.respiration = {''};
+            jobs{j}.spm.tools.physio.log_files.scan_timing = {''};
+            
         end
-        
-        rawphysio = get_subdir_regex_files( dirPhysio{subj}{run} , 'UNKNOWN.dic$' , 1 );
-        
-        Info      = get_subdir_regex_files( dirPhysio{subj}{run} , '_Info.log$' , p );
-        PULSE     = get_subdir_regex_files( dirPhysio{subj}{run} , '_PULS.log$' , p );
-        RESP      = get_subdir_regex_files( dirPhysio{subj}{run} , '_RESP.log$' , p );
-        
-        if isempty(Info) || isempty(PULSE) || isempty(RESP)
-            extractCMRRPhysio( char(rawphysio) )
-            Info  = get_subdir_regex_files( dirPhysio{subj}{run} , '_Info.log$' , 1 );
-            PULSE = get_subdir_regex_files( dirPhysio{subj}{run} , '_PULS.log$' , 1 );
-            RESP  = get_subdir_regex_files( dirPhysio{subj}{run} , '_RESP.log$' , 1 );
-        end
-        
-        jobs{j}.spm.tools.physio.log_files.vendor = par.logfiles_vendor;
-        jobs{j}.spm.tools.physio.log_files.cardiac = PULSE;
-        jobs{j}.spm.tools.physio.log_files.respiration = RESP;
-        jobs{j}.spm.tools.physio.log_files.scan_timing = Info;
-        jobs{j}.spm.tools.physio.log_files.sampling_interval = [];
-        jobs{j}.spm.tools.physio.log_files.relative_start_acquisition = 0;
-        jobs{j}.spm.tools.physio.log_files.align_scan = 'last';
         
         % Volume info -----------------------------------------------------
         
@@ -178,24 +195,25 @@ for subj = 1:nrSubject
             jobs{j}.spm.tools.physio.model.hrv.no = struct([]);
         end
         
-         % Noise ROI model (PCA) ------------------------------------------
+        % Noise ROI model (PCA) ------------------------------------------
         
-         if par.noiseROI
-             
-             fmri_files     = get_subdir_regex_files( dirFunc{subj}(run) , par.noiseROI_files_regex, p );
-             noiseROI_files = get_subdir_regex_files( dirNoiseROI{subj}  , par.noiseROI_mask_regex, p );
-             
-             jobs{j}.spm.tools.physio.model.noise_rois.yes.fmri_files   = fmri_files; % requires 4D volume
-             jobs{j}.spm.tools.physio.model.noise_rois.yes.roi_files    = cellstr(char(noiseROI_files));
-             jobs{j}.spm.tools.physio.model.noise_rois.yes.thresholds   = par.noiseROI_thresholds;
-             jobs{j}.spm.tools.physio.model.noise_rois.yes.n_voxel_crop = par.noiseROI_n_voxel_crop;
-             jobs{j}.spm.tools.physio.model.noise_rois.yes.n_components = par.noiseROI_n_components;
-             
-         else
-             
-             jobs{j}.spm.tools.physio.model.noise_rois.no = struct([]);
-             
-         end
+        if par.noiseROI
+            
+            fmri_files     = get_subdir_regex_files( dirFunc{subj}(run) , par.noiseROI_files_regex, p );
+            noiseROI_files = get_subdir_regex_files( dirNoiseROI{subj}  , par.noiseROI_mask_regex, p );
+            
+            jobs{j}.spm.tools.physio.model.noise_rois.yes.fmri_files       = fmri_files; % requires 4D volume
+            jobs{j}.spm.tools.physio.model.noise_rois.yes.roi_files        = cellstr(char(noiseROI_files));
+            jobs{j}.spm.tools.physio.model.noise_rois.yes.force_coregister = 'No';
+            jobs{j}.spm.tools.physio.model.noise_rois.yes.thresholds       = par.noiseROI_thresholds;
+            jobs{j}.spm.tools.physio.model.noise_rois.yes.n_voxel_crop     = par.noiseROI_n_voxel_crop;
+            jobs{j}.spm.tools.physio.model.noise_rois.yes.n_components     = par.noiseROI_n_components;
+            
+        else
+            
+            jobs{j}.spm.tools.physio.model.noise_rois.no = struct([]);
+            
+        end
         
         % Realignment parameters ------------------------------------------
         
@@ -204,9 +222,9 @@ for subj = 1:nrSubject
             rp = get_subdir_regex_files( dirFunc{subj}(run) , par.rp_regex , 1 );
             
             jobs{j}.spm.tools.physio.model.movement.yes.file_realignment_parameters = rp;
-            jobs{j}.spm.tools.physio.model.movement.yes.order                  = par.rp_order;
-            jobs{j}.spm.tools.physio.model.movement.yes.outlier_translation_mm = par.rp_outlier_translation_mm;
-            jobs{j}.spm.tools.physio.model.movement.yes.outlier_rotation_deg   = par.rp_outlier_rotation_deg;
+            jobs{j}.spm.tools.physio.model.movement.yes.order                       = par.rp_order;
+            jobs{j}.spm.tools.physio.model.movement.yes.censoring_method            = par.rp_method;
+            jobs{j}.spm.tools.physio.model.movement.yes.censoring_threshold         = par.rp_threshold;
             
         end
         
@@ -232,4 +250,3 @@ end
 
 
 end % function
-
