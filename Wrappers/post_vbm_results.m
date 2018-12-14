@@ -17,6 +17,7 @@ defpar.volreg='s'; %p for vbm8
 defpar.brainmask = 'mask_brain_erode_dilate.nii.gz';
 defpar.fms='';
 defpar.niftireg_warp = '';
+defpar.spm_warp = '';
 defpar.spmTPM = '/network/lustre/iss01/cenir/analyse/irm/users/romain.valabregue/dicom/mni/TPM';
 defpar.nrTPM = '/network/lustre/iss01/cenir/analyse/irm/users/romain.valabregue/dicom/mni/mean_nr1000/Mean_S50_all.nii';
 
@@ -28,10 +29,11 @@ end
 
 if par.sge
     for k=1:length(dir_vbm)
-        cmd{k} = sprintf('dir_vbm=''%s'';\npar.redo=%d; par.segreg=''%s'';par.volreg=''%s'';\n',...
-            dir_vbm{k},par.redo,par.segreg,par.volreg);
+        cmd{k} = sprintf('dir_vbm=''%s'';\npar.redo=%d; par.segreg=''%s'';par.volreg=''%s'';\npar.brainmask=''%s'';\n',...
+            dir_vbm{k},par.redo,par.segreg,par.volreg,par.brainmask);
         if iscell(par.fms), cmd{k} = sprintf('%s par.fms={''%s''};\n', cmd{k},par.fms{k});end
         if iscell(par.niftireg_warp), cmd{k} = sprintf('%s par.niftireg_warp={''%s''};\n', cmd{k},par.niftireg_warp{k});end
+        if iscell(par.spm_warp), cmd{k} = sprintf('%s par.spm_warp={''%s''};\n', cmd{k},par.spm_warp{k});end
         cmd{k} = sprintf('%s\npost_vbm_results(dir_vbm,par);\n',cmd{k});
             
     end
@@ -75,6 +77,13 @@ for k=1:length(dir_vbm)
         else
             fms = get_subdir_regex_files(cur_dir,['^m',par.volreg],1);
         end
+        fp = get_subdir_regex_files(cur_dir,['^',par.segreg,'[123].*nii']);
+        if isempty(fp)
+            fp = get_subdir_regex_files(cur_dir,['^pve.*nii']);
+            cmd = sprintf('cd %s\n mrcalc pve.nii.gz 2 -eq  p1s_S.nii.gz \n  mrcalc pve.nii.gz 3 -eq  p2s_S.nii.gz\n mrcalc pve.nii.gz 1 -eq  p3s_S.nii.gz',cur_dir);
+            unix(cmd);
+        end
+
         
         if ~isfield(cout,'mask_vol')
             fp = get_subdir_regex_files(cur_dir,['^',par.segreg,'[123].*nii']);
@@ -115,8 +124,9 @@ for k=1:length(dir_vbm)
                 try
                 fpr = get_subdir_regex_files(cur_dir,'^[pc][123].*nii',3);
                 fprm =  get_subdir_regex_files(cur_dir,['^' par.brainmask]);
-
-                fy = get_subdir_regex_files(cur_dir,['^y_',par.volreg,'.*nii'],1);
+                if iscell(par.spm_warp), fy = par.spm_warp(k);
+                else, fy = get_subdir_regex_files(cur_dir,['^y_',par.volreg,'.*nii'],1);end
+                
                 fy = unzip_volume(fy); 
                 
                 if isempty(fp) 
@@ -300,7 +310,7 @@ for k=1:length(dir_vbm)
                 cout.RicianNoise = RicianSTD(A); 
                 
             catch
-                fprintf('ERROR BAD Rician nifti %s\n',fm{1});
+                fprintf('ERROR BAD Rician nifti %s\n',cur_dir);
                 %continue
                 
             end
