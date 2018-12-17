@@ -12,7 +12,7 @@ default_NumWorkers = 16;
 
 %% Get cluster info
 
-cluster = parcluster('ICM_cluster');
+cluster= ICM_get_cluster(); % cluster info
 
 
 %% Start parpool
