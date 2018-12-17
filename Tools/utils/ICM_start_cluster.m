@@ -18,18 +18,19 @@ cluster = parcluster('ICM_cluster');
 %% Start parpool
 
 if nargin < 1
-    pool = ICM_set_pool(default_NumWorkers); % just use some workers, not all
+    NumWorkers = default_NumWorkers; % just use some workers, not all
 else
     if NumWorkers == Inf % use all
         NumWorkers = cluster.NumWorkers;
     end
-    pool = ICM_set_pool(NumWorkers);
 end
 
+pool = ICM_set_pool(NumWorkers);
 
-%% Set PATH env for the workers
 
-ICM_set_path();
+%% Sub routines ?
+
+% pass
 
 fprintf('[%s]: done \n', mfilename)
 
