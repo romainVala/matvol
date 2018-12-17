@@ -32,10 +32,10 @@ par = complet_struct(par,defpar);
 
 % Skip empty serie
 serieArray    = shiftdim(serieArray,1); % meaningful after the (:)
-integrity_ser = ~cellfun(@isempty,serieArray.getPath);
+%integrity_ser = ~cellfun(@isempty,serieArray.getPath);
 serieArray    = serieArray(:);
-integrity_ser = integrity_ser(:);
-serieArray    = serieArray(integrity_ser==1);
+%integrity_ser = integrity_ser(:);
+%serieArray    = serieArray(integrity_ser==1);
 
 jsonArray = serieArray.getJson(par.regex,par.type,par.verbose);
 
@@ -138,6 +138,11 @@ end
 id_str = serieArray.getPath;
 id_str = id_str(:); % in column
 
+integrity_ser = cellfun(@isempty,id_str);integrity_ser=find(integrity_ser);
+for ii =1:length(integrity_ser)
+    id_str{integrity_ser(ii)} =  serieArray(integrity_ser(ii)).exam.path; end
+
+
 split_raw = regexp(id_str,filesep,'split'); % split the path around '/'
 for e = 1 : length(split_raw)
     split_nice(e,1:length(split_raw{e})) = split_raw{e}; %#ok<AGROW>
@@ -155,7 +160,9 @@ for col = 1 : size(split_nice,2)
 end
 
 % Concatenate the non-common parts of the path
-split_final = fullfile(split_nice(:,col:end)); % only the non-common part of the path
+aa=split_nice(:,col:end);
+iaa=cellfun(@isempty,aa); aa(iaa)={'None'}; %because empty series are getting exam path or serie path of different level
+split_final = fullfile(aa); % only the non-common part of the path
 id_str = repmat({''},[ size(split_final,1) 1 ]);
 for c = 1 : size(split_final,2)
     if c == 1
