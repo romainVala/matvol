@@ -15,6 +15,7 @@ defpar.file_reg = '^s.*nii';
 defpar.rp       = 0;
 defpar.rp_regex = '^rp.*txt';
 defpar.mask_thr = 0.8;
+defpar.cvi      = 'AR(1)'; % 'AR(1)' / 'FAST' / 'none'
 
 defpar.jobname  = 'spm_glm';
 defpar.walltime = '04:00:00';
@@ -125,7 +126,7 @@ for subj = 1:nrSubject
     jobs{subj}.spm.stats.fmri_spec.global = 'None';
     jobs{subj}.spm.stats.fmri_spec.mthresh = par.mask_thr;
     jobs{subj}.spm.stats.fmri_spec.mask = {''};
-    jobs{subj}.spm.stats.fmri_spec.cvi = 'AR(1)';
+    jobs{subj}.spm.stats.fmri_spec.cvi = par.cvi;
     
     
 end
