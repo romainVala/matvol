@@ -4,6 +4,7 @@ if ~exist('par'),par ='';end
 if ~exist('jobappend','var'), jobappend ='';end
 
 defpar.sge=0;
+defpar.fsl_output_format = 'NIFTI_GZ'; %ANALYZE, NIFTI, NIFTI_PAIR, NIFTI_GZ
 defpar.software = 'fsl'; %to set the path
 defpar.software_version = 5; % 4 or 5 : fsl version
 defpar.jobname = 'fslmerge';
@@ -21,7 +22,7 @@ end
 
 fo = cellstr(char(fo));
 
-cmd = sprintf('fslmerge -t %s ',outname);
+cmd = sprintf('export FSLOUTPUTTYPE=%s;\n fslmerge -t %s ', par.fsl_output_format, outname);
 
 %check vol info
 if par.checkorient
