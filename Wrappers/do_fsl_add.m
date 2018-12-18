@@ -90,7 +90,7 @@ end
 % Skip the empty jobs
 job(skip) = [];
 
-do_cmd_sge(job,par);
+job = do_cmd_sge(job,par);
 
 if ~isempty(delete_tmp)
     do_delete(fo(delete_tmp),0)
