@@ -124,6 +124,7 @@ for j = 1 : size(json_filename,1)
         data_file.B_value = B_value;
         B_vect  = get_field_mul_vect(content, 'CsaImage.DiffusionGradientDirection');
         data_file.B_vect = B_vect;
+        data_file.BValue = str2double( get_field_one( content, '"CsaSeries.MrPhoenixProtocol.sDiffusion.alBValue\[1\]"' ) );
         
         %------------------------------------------------------------------
         % Machine
@@ -258,6 +259,8 @@ for j = 1 : size(json_filename,1)
             CoilString           =  get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sCoilSelectMeas.aRxCoilSelectData\[0\].asList\[0\].sCoilElementID.tCoilID');
         end
         data_file.CoilString = CoilString;
+        
+        
     end % if RepetitionTime not empty
     
     

@@ -34,21 +34,21 @@ assert( isprop(obj,type) && ischar(obj.(type) ), 'type must refer to a char prop
 
 %% getModel from @exam
 
-% Create 0x0 @model object
-modelArray = model.empty;
+% "empty" array but with the right dimension
+modelArray =  model.empty([size(examArray,1) 0]);
 
 for ex = 1 : numel(examArray)
     
     counter = 0;
     
-    for ser = 1 : numel(examArray(ex).model)
+    for mod = 1 : numel(examArray(ex).model)
         
         if ...
-                ~isempty(examArray(ex).model(ser).(type)) && ...                 % (type) is present in the @model ?
-                ~isempty(regexp(examArray(ex).model(ser).(type), regex, 'once')) % found a corresponding model.(type) to the regex ?
+                ~isempty(examArray(ex).model(mod).(type)) && ...                 % (type) is present in the @model ?
+                ~isempty(regexp(examArray(ex).model(mod).(type), regex, 'once')) % found a corresponding model.(type) to the regex ?
             
             counter = counter + 1;
-            modelArray(ex,counter) = examArray(ex).model(ser);
+            modelArray(ex,counter) = examArray(ex).model(mod);
             
         end
         
@@ -58,9 +58,9 @@ end % exam
 
 % I fill the empty models with some pointers and references, only useful for diagnostic and future warnings
 % I cannot do this filling during the previous loop, because at that point, we don't know the size (columns) of modelArray
-for ex_ = 1 : size(modelArray,1)
+for ex_ = 1 : numel(examArray)
     for ser_ = 1 : size(modelArray,2)
-        if isempty(modelArray(ex_,ser_).(type))
+        if isempty(modelArray(ex_,ser_).path)
             modelArray(ex_,ser_).exam = examArray(ex_);
         end
     end

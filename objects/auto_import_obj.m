@@ -424,7 +424,11 @@ for idx = 1 : size(SequenceCategory, 1)
 
         % bvals
         B_value = exam_SequenceData(where,hdr.B_value);
-        bvals   = cellfun(@max,B_value);
+        bvals1  = cellfun(@max,B_value);
+        BValues = exam_SequenceData(where,hdr.BValue);
+        bvals2  = cell2mat(BValues);
+        bvals = bvals2;
+        bvals(isnan(bvals)) = bvals1(isnan(bvals));
         
         % bvects
         B_vect = exam_SequenceData(where,hdr.B_vect);
@@ -450,6 +454,7 @@ for idx = 1 : size(SequenceCategory, 1)
             flag_add = 1;
             exam_SequenceData(where(table_name == n),end) = unique_name(n);
         end
+        
         
         %------------------------------------------------------------------
         % other ?

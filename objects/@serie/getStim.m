@@ -29,7 +29,8 @@ regex = cellstr2regex(regex);
 
 %% getStim from @serie
 
-stimArray = stim.empty;
+% "empty" array but with the right dimension
+stimArray =  stim.empty([size(serieArray) 0]);
 
 for ex = 1 : size(serieArray,1)
     

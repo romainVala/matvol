@@ -118,6 +118,8 @@ for j = 1:length(jobs)
         jobcoreg = jobs{j}.spm.spatial.coreg.estimate;
     elseif isfield(jobs{j}.spm.spatial.coreg,'estwrite')
         jobcoreg = jobs{j}.spm.spatial.coreg.estwrite;
+    elseif isfield(jobs{j}.spm.spatial.coreg,'write')
+        jobcoreg = jobs{j}.spm.spatial.coreg.write;
     end
 
     % Source : Where to write the file ?
