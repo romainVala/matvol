@@ -7,6 +7,7 @@ function varargout = analyzeCountSeries( examArray, par )
 %                                    analyzeCountSeries(examArray)
 % All outputs are @exam arrays
 %
+% See also compareOrientation
 
 %% Check input arguments
 
@@ -51,7 +52,7 @@ summary_best = table2struct(TableSer_best(end,2:end));
 if par.verbose > 0
     
     fprintf('\n')
-    cprintf('*comment','Largest '), cprintf('comment','group is '), cprintf('*comment','N = %d/%d (%d %%)\n', bestGroup.N, length(examArray), round(100*bestGroup.N/length(examArray)))
+    cprintf('*comment','Largest group is N = %d/%d (%d %%)\n', bestGroup.N, length(examArray), round(100*bestGroup.N/length(examArray)))
     disp(summary_best)
     fprintf('\n')
     
@@ -122,10 +123,11 @@ end
 %% Output
 
 if nargout > 0
-    varargout{1} = examArray_best; % best group
-    varargout{2} = examArray_more; % MORE than expected
-    varargout{3} = examArray_less; % LESS than expected
-    varargout{4} = examArray_out ; % ?
+    varargout = {};
+    varargout{end+1} = examArray_best; % best group
+    varargout{end+1} = examArray_more; % MORE than expected
+    varargout{end+1} = examArray_less; % LESS than expected
+    varargout{end+1} = examArray_out ; % ?
 end
 
 
