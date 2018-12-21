@@ -37,7 +37,7 @@ par.redo = 0; % don't need anymore for he next json2table
 
 bestGroup = Group(end);
 
-bestGroup_name_pattern = cellstr2regex(bestGroup.name);
+bestGroup_name_pattern = cellstr2regex(bestGroup.name,1);
 examArray_best = examArray.getExam(bestGroup_name_pattern);
 
 %TableParam_best = examArray_best.getSerie(par.serie_regex).json2table(par);
@@ -78,7 +78,7 @@ for seq = 1 : length(list_sequence_best)
         fprintf('\n')
     end
     if ~isempty(list_more)
-        examArray_more = examArray_more.removeTag(cellstr2regex(list_more)) + examArray.getExam(cellstr2regex(list_more));
+        examArray_more = examArray_more.removeTag(cellstr2regex(list_more,1)) + examArray.getExam(cellstr2regex(list_more,1));
     end
 end
 
@@ -95,7 +95,7 @@ for seq = 1 : length(list_sequence_best)
         fprintf('\n')
     end
     if ~isempty(list_less)
-        examArray_less = examArray_less.removeTag(cellstr2regex(list_less)) + examArray.getExam(cellstr2regex(list_less));
+        examArray_less = examArray_less.removeTag(cellstr2regex(list_less,1)) + examArray.getExam(cellstr2regex(list_less,1));
     end
 end
 
@@ -115,7 +115,7 @@ for seq = 1 : length(list_out_sequence)
         fprintf('\n')
     end
     if ~isempty(list_out)
-        examArray_out = examArray_out.removeTag(cellstr2regex(list_out)) + examArray.getExam(cellstr2regex(list_out));
+        examArray_out = examArray_out.removeTag(cellstr2regex(list_out,1)) + examArray.getExam(cellstr2regex(list_out,1));
     end
 end
 
