@@ -52,7 +52,7 @@ for ex = 1 : size(serieArray,1)
     orient_differs = any( any( abs( orientation - orientation(:,1) ) > 1e-6 ) );
     if orient_differs
         if par.verbose
-            fprintf('Orientation differs in %s\n', serieArray(ex,ser).exam.path)
+            fprintf('Orientation differs in \n%s\n', serieArray(ex,ser).exam.path)
             disp(orientation)
         end
         bad_orient(end+1) = examArray(ex); %#ok<AGROW>
@@ -61,7 +61,7 @@ for ex = 1 : size(serieArray,1)
     dim_differs = any( any( abs( dim - dim(:,1) ) > 1e-3 ) );
     if dim_differs
         if par.verbose
-            fprintf('Dimension differs in %s\n', serieArray(ex,ser).exam.path)
+            fprintf('Dimension differs in \n%s\n', serieArray(ex,ser).exam.path)
             disp(dim)
         end
         bad_dim(end+1) = examArray(ex); %#ok<AGROW>
