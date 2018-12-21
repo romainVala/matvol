@@ -16,5 +16,5 @@ for k=1:length(fin)
 end
 
 
-do_cmd_sge(cmd,par)
+do_cmd_sge(cmd,par);
 
