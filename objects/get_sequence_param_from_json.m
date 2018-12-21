@@ -181,6 +181,10 @@ for j = 1 : size(json_filename,1)
                 %data_file.ImagePositionPatient2         = ImagePositionPatient(:,2); %need of the same field in 2D
                 %data_file.ImagePositionPatient_nbslice = size(ImagePositionPatient,2);
         end
+        data_file.dInPlaneRot   = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0\].dInPlaneRot'   ) ) ;
+        data_file.sPositiondCor = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0\].sPosition.dCor') ) ;
+        data_file.sPositiondTra = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0]\.sPosition.dTra') ) ;
+        data_file.sNormaldTra   = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0\].sNormal.dTra'  ) ) ;
         data_file.AbsTablePosition             = str2double(           get_field_one     ( content, 'CsaSeries.AbsTablePosition' ) );
         
         %------------------------------------------------------------------

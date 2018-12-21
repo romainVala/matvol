@@ -7,6 +7,7 @@ function varargout = analyzeCountSeries( examArray, par )
 %                                    analyzeCountSeries(examArray)
 % All outputs are @exam arrays
 %
+% See also compareOrientation
 
 %% Check input arguments
 
@@ -36,7 +37,7 @@ par.redo = 0; % don't need anymore for he next json2table
 
 bestGroup = Group(end);
 
-bestGroup_name_pattern = cellstr2regex(bestGroup.name);
+bestGroup_name_pattern = cellstr2regex(bestGroup.name,1);
 examArray_best = examArray.getExam(bestGroup_name_pattern);
 
 %TableParam_best = examArray_best.getSerie(par.serie_regex).json2table(par);
@@ -51,7 +52,7 @@ summary_best = table2struct(TableSer_best(end,2:end));
 if par.verbose > 0
     
     fprintf('\n')
-    cprintf('*comment','Largest '), cprintf('comment','group is '), cprintf('*comment','N = %d/%d (%d %%)\n', bestGroup.N, length(examArray), round(100*bestGroup.N/length(examArray)))
+    cprintf('*comment','Largest group is N = %d/%d (%d %%)\n', bestGroup.N, length(examArray), round(100*bestGroup.N/length(examArray)))
     disp(summary_best)
     fprintf('\n')
     
@@ -77,7 +78,7 @@ for seq = 1 : length(list_sequence_best)
         fprintf('\n')
     end
     if ~isempty(list_more)
-        examArray_more = examArray_more.removeTag(cellstr2regex(list_more)) + examArray.getExam(cellstr2regex(list_more));
+        examArray_more = examArray_more.removeTag(cellstr2regex(list_more,1)) + examArray.getExam(cellstr2regex(list_more,1));
     end
 end
 
@@ -94,7 +95,7 @@ for seq = 1 : length(list_sequence_best)
         fprintf('\n')
     end
     if ~isempty(list_less)
-        examArray_less = examArray_less.removeTag(cellstr2regex(list_less)) + examArray.getExam(cellstr2regex(list_less));
+        examArray_less = examArray_less.removeTag(cellstr2regex(list_less,1)) + examArray.getExam(cellstr2regex(list_less,1));
     end
 end
 
@@ -114,7 +115,7 @@ for seq = 1 : length(list_out_sequence)
         fprintf('\n')
     end
     if ~isempty(list_out)
-        examArray_out = examArray_out.removeTag(cellstr2regex(list_out)) + examArray.getExam(cellstr2regex(list_out));
+        examArray_out = examArray_out.removeTag(cellstr2regex(list_out,1)) + examArray.getExam(cellstr2regex(list_out,1));
     end
 end
 
@@ -122,10 +123,11 @@ end
 %% Output
 
 if nargout > 0
-    varargout{1} = examArray_best; % best group
-    varargout{2} = examArray_more; % MORE than expected
-    varargout{3} = examArray_less; % LESS than expected
-    varargout{4} = examArray_out ; % ?
+    varargout = {};
+    varargout{end+1} = examArray_best; % best group
+    varargout{end+1} = examArray_more; % MORE than expected
+    varargout{end+1} = examArray_less; % LESS than expected
+    varargout{end+1} = examArray_out ; % ?
 end
 
 
