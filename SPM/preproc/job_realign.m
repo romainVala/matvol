@@ -1,5 +1,7 @@
-function jobs = job_realign(dirFonc,par)
+function jobs = job_realign(in,par)
 % JOB_REALIGN - SPM:Spatial:Realign:Estimate & Reslice
+%
+% in - can be multilevel-cell or @volume array
 %
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
 %
@@ -10,6 +12,13 @@ function jobs = job_realign(dirFonc,par)
 
 if ~exist('par','var')
     par = ''; % for defpar
+end
+
+obj = 0;
+if isa(in,'volume')
+    obj = 1;
+    in_obj  = in;
+    in = in_obj.toJob(1);
 end
 
 
@@ -23,13 +32,14 @@ defpar.which_write = [2 1]; %all + mean
 defpar.jobname  = 'spm_realign';
 defpar.walltime = '04:00:00';
 
+defpar.auto_add_obj = 1;
+
 defpar.sge     = 0;
 defpar.run     = 0;
 defpar.display = 0;
 defpar.redo    = 0;
 
 par = complet_struct(par,defpar);
-
 
 
 %%  SPM:Spatial:Realign:Estimate & Reslice
@@ -44,8 +54,8 @@ switch par.type
 end
 
 % nrSubject ?
-if iscell(dirFonc{1})
-    nrSubject = length(dirFonc);
+if iscell(in{1})
+    nrSubject = length(in);
 else
     nrSubject = 1;
 end
@@ -54,13 +64,20 @@ skip = [];
 
 for subj = 1:nrSubject
     
-    if iscell(dirFonc{1}) %
-        subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
-        unzip_volume(subjectRuns);
-        subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
-        
+    if obj
+        if iscell(in{subj})
+            subjectRuns = unzip_volume(in{subj});
+        else
+            subjectRuns = in;
+        end
     else
-        subjectRuns = dirFonc;
+        if iscell(in{1})
+            subjectRuns = get_subdir_regex_files(in{subj},par.file_reg);
+            unzip_volume(subjectRuns);
+            subjectRuns = get_subdir_regex_files(in{subj},par.file_reg);
+        else
+            subjectRuns = in;
+        end
     end
     
     %skip if mean exist
@@ -115,6 +132,20 @@ end
 %% Other routines
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj
+    
+    serieArray      = [in_obj     .serie];
+    serieArray_run1 = [in_obj(:,1).serie]; % the mean is only written in the run1
+    tag             =  in_obj(1).tag;
+    
+    serieArray.     addVolume([ '^' par.prefix tag],[ par.prefix tag])
+    serieArray_run1.addVolume([ '^mean'        tag],[ 'mean'     tag])
+    
+end
 
 
 end % function

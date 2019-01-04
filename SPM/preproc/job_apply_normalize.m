@@ -102,9 +102,9 @@ end
 if obj && par.auto_add_obj
     
     serieArray = [in_obj.serie];
-    prefix = in_obj(1).tag;
+    tag        =  in_obj(1).tag;
     
-    serieArray.addVolume([ '^w' prefix],[ 'w' prefix])
+    serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
     
 end
 

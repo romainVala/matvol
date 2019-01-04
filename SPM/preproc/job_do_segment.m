@@ -159,33 +159,33 @@ end
 if obj && par.auto_add_obj
     
     serieArray = [in_obj.serie];
-    prefix = in_obj(1).tag;
+    tag        =  in_obj(1).tag;
     
     % Warp field
-    if par.warp(2), serieArray.addVolume([ '^y_' prefix],[ 'y_' prefix] ,1), end % Forward
-    if par.warp(1), serieArray.addVolume(['^iy_' prefix],['iy_' prefix],1), end % Inverse
+    if par.warp(2), serieArray.addVolume([ '^y_' tag],[ 'y_' tag] ,1), end % Forward
+    if par.warp(1), serieArray.addVolume(['^iy_' tag],['iy_' tag],1), end % Inverse
     
     % Bias field
-    if par.bias(2), serieArray.addVolume(['^m'          prefix],['m'          prefix],1), end % Corrected
-    if par.bias(1), serieArray.addVolume(['^BiasField_' prefix],['BiasField_' prefix],1), end % Field
+    if par.bias(2), serieArray.addVolume(['^m'          tag],['m'          tag],1), end % Corrected
+    if par.bias(1), serieArray.addVolume(['^BiasField_' tag],['BiasField_' tag],1), end % Field
     
     % GM
-    if par.GM (3), serieArray.addVolume([  '^c1' prefix],[  'c1' prefix]), end % native_space(c*)
-    if par.GM (4), serieArray.addVolume([ '^rc1' prefix],[ 'rc1' prefix]), end % native_space_dartel_import(rc*)
-    if par.GM (1), serieArray.addVolume([ '^wc1' prefix],[ 'wc1' prefix]), end % warped_space_Unmodulated(wc*)
-    if par.GM (2), serieArray.addVolume(['^mwc1' prefix],['mwc1' prefix]), end % warped_space_modulated(mwc*)
+    if par.GM (3), serieArray.addVolume([  '^c1' tag],[  'c1' tag]), end % native_space(c*)
+    if par.GM (4), serieArray.addVolume([ '^rc1' tag],[ 'rc1' tag]), end % native_space_dartel_import(rc*)
+    if par.GM (1), serieArray.addVolume([ '^wc1' tag],[ 'wc1' tag]), end % warped_space_Unmodulated(wc*)
+    if par.GM (2), serieArray.addVolume(['^mwc1' tag],['mwc1' tag]), end % warped_space_modulated(mwc*)
     
     % WM
-    if par.WM (3), serieArray.addVolume([  '^c2' prefix],[  'c2' prefix]), end % native_space(c*)
-    if par.WM (4), serieArray.addVolume([ '^rc2' prefix],[ 'rc2' prefix]), end % native_space_dartel_import(rc*)
-    if par.WM (1), serieArray.addVolume([ '^wc2' prefix],[ 'wc2' prefix]), end % warped_space_Unmodulated(wc*)
-    if par.WM (2), serieArray.addVolume(['^mwc2' prefix],['mwc2' prefix]), end % warped_space_modulated(mwc*)
+    if par.WM (3), serieArray.addVolume([  '^c2' tag],[  'c2' tag]), end % native_space(c*)
+    if par.WM (4), serieArray.addVolume([ '^rc2' tag],[ 'rc2' tag]), end % native_space_dartel_import(rc*)
+    if par.WM (1), serieArray.addVolume([ '^wc2' tag],[ 'wc2' tag]), end % warped_space_Unmodulated(wc*)
+    if par.WM (2), serieArray.addVolume(['^mwc2' tag],['mwc2' tag]), end % warped_space_modulated(mwc*)
     
     % CSF
-    if par.CSF(3), serieArray.addVolume([  '^c3' prefix],[  'c3' prefix]), end % native_space(c*)
-    if par.CSF(4), serieArray.addVolume([ '^rc3' prefix],[ 'rc3' prefix]), end % native_space_dartel_import(rc*)
-    if par.CSF(1), serieArray.addVolume([ '^wc3' prefix],[ 'wc3' prefix]), end % warped_space_Unmodulated(wc*)
-    if par.CSF(2), serieArray.addVolume(['^mwc3' prefix],['mwc3' prefix]), end % warped_space_modulated(mwc*)
+    if par.CSF(3), serieArray.addVolume([  '^c3' tag],[  'c3' tag]), end % native_space(c*)
+    if par.CSF(4), serieArray.addVolume([ '^rc3' tag],[ 'rc3' tag]), end % native_space_dartel_import(rc*)
+    if par.CSF(1), serieArray.addVolume([ '^wc3' tag],[ 'wc3' tag]), end % warped_space_Unmodulated(wc*)
+    if par.CSF(2), serieArray.addVolume(['^mwc3' tag],['mwc3' tag]), end % warped_space_modulated(mwc*)
     
 end
 
