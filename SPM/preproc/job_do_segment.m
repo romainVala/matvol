@@ -24,14 +24,23 @@ if nargin < 1
     error('[%s]: not enough input arguments - image list is required',mfilename)
 end
 
-% Ensure the inputs are cellstrings, to avoid dimensions problems
-img = cellstr(img);
+obj = 0;
+if isa(img,'volume')
+    obj = 1;
+    in_obj  = img;
+    img = in_obj.toJob;
+elseif ischar(img) || iscellstr(img)
+    % Ensure the inputs are cellstrings, to avoid dimensions problems
+    img = cellstr(img)';
+else
+    error('[%s]: wrong input format (cellstr, char, @volume)', mfilename)
+end
 
 
 %% defpar
 
 % SPM:Spatial:Segment options
-defpar.GM   = [0 0 1 0]; % Unmodulated / modulated / native_space / dartel import
+defpar.GM   = [0 0 1 0]; % warped_space_Unmodulated(wc*) / warped_space_modulated(mwc*) / native_space(c*) / native_space_dartel_import(rc*)
 defpar.WM   = [0 0 1 0];
 defpar.CSF  = [0 0 1 0];
 defpar.bias = [0 1]; % bias field / bias corrected image
@@ -41,6 +50,8 @@ defpar.run     = 0;
 defpar.display = 0;
 defpar.redo    = 0;
 defpar.sge     = 0;
+
+defpar.auto_add_obj = 1;
 
 defpar.jobname  = 'spm_segment';
 defpar.walltime = '01:00:00';
@@ -141,6 +152,42 @@ end
 %% Other routines
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj
+    
+    serieArray = [in_obj.serie];
+    prefix = in_obj(1).tag;
+    
+    % Warp field
+    if par.warp(2), serieArray.addVolume([ '^y_' prefix],[ 'y_' prefix] ,1), end % Forward
+    if par.warp(1), serieArray.addVolume(['^iy_' prefix],['iy_' prefix],1), end % Inverse
+    
+    % Bias field
+    if par.bias(2), serieArray.addVolume(['^m'          prefix],['m'          prefix],1), end % Corrected
+    if par.bias(1), serieArray.addVolume(['^BiasField_' prefix],['BiasField_' prefix],1), end % Field
+    
+    % GM
+    if par.GM (3), serieArray.addVolume([  '^c1' prefix],[  'c1' prefix]), end % native_space(c*)
+    if par.GM (4), serieArray.addVolume([ '^rc1' prefix],[ 'rc1' prefix]), end % native_space_dartel_import(rc*)
+    if par.GM (1), serieArray.addVolume([ '^wc1' prefix],[ 'wc1' prefix]), end % warped_space_Unmodulated(wc*)
+    if par.GM (2), serieArray.addVolume(['^mwc1' prefix],['mwc1' prefix]), end % warped_space_modulated(mwc*)
+    
+    % WM
+    if par.WM (3), serieArray.addVolume([  '^c2' prefix],[  'c2' prefix]), end % native_space(c*)
+    if par.WM (4), serieArray.addVolume([ '^rc2' prefix],[ 'rc2' prefix]), end % native_space_dartel_import(rc*)
+    if par.WM (1), serieArray.addVolume([ '^wc2' prefix],[ 'wc2' prefix]), end % warped_space_Unmodulated(wc*)
+    if par.WM (2), serieArray.addVolume(['^mwc2' prefix],['mwc2' prefix]), end % warped_space_modulated(mwc*)
+    
+    % CSF
+    if par.CSF(3), serieArray.addVolume([  '^c3' prefix],[  'c3' prefix]), end % native_space(c*)
+    if par.CSF(4), serieArray.addVolume([ '^rc3' prefix],[ 'rc3' prefix]), end % native_space_dartel_import(rc*)
+    if par.CSF(1), serieArray.addVolume([ '^wc3' prefix],[ 'wc3' prefix]), end % warped_space_Unmodulated(wc*)
+    if par.CSF(2), serieArray.addVolume(['^mwc3' prefix],['mwc3' prefix]), end % warped_space_modulated(mwc*)
+    
+end
 
 
 end % function

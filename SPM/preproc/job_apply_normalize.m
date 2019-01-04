@@ -18,6 +18,18 @@ if nargin < 2
     error('[%s]: not enough input arguments - warp_filed & imagelist are required',mfilename)
 end
 
+obj = 0;
+if isa(img,'volume')
+    obj = 1;
+    in_obj  = img;
+    img = in_obj.toJob;
+elseif ischar(img) || iscellstr(img)
+    % Ensure the inputs are cellstrings, to avoid dimensions problems
+    img = cellstr(img)';
+else
+    error('[%s]: wrong input format (cellstr, char, @volume)', mfilename)
+end
+
 
 %% defpar
 
@@ -34,6 +46,8 @@ defpar.sge     = 0;
 defpar.run     = 0;
 defpar.display = 0;
 defpar.jobname = 'spm_apply_norm';
+
+defpar.auto_add_obj = 1;
 
 par = complet_struct(par,defpar);
 
@@ -81,6 +95,18 @@ end
 %% Other routines
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj
+    
+    serieArray = [in_obj.serie];
+    prefix = in_obj(1).tag;
+    
+    serieArray.addVolume([ '^w' prefix],[ 'w' prefix])
+    
+end
 
 
 end % function

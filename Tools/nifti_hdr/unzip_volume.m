@@ -30,10 +30,10 @@ for i=1:length(in)
     
     if ~isempty(in{i}) && strcmp(in{i}(end-1:end),'gz')
         cmd{i} = sprintf('gunzip -f %s',in{i});
-        out{i} = in{i}(1:end-3); %#ok<*AGROW>
+        out{i,1} = in{i}(1:end-3); %#ok<*AGROW>
         
     else
-        out{i} = in{i};
+        out{i,1} = in{i};
         ind_to_remove(end+1)=i;
     end
     
