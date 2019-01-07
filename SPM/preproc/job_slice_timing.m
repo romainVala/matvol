@@ -10,6 +10,16 @@ if ~exist('par','var')
     par = ''; % for defpar
 end
 
+obj = 0;
+if isa(fin,'volume')
+    obj = 1;
+    fin_obj  = fin;
+    fin = fin_obj.toJob(1);
+end
+
+
+%% defpar
+
 defpar.TR     = 0;
 defpar.prefix = 'a';
 
@@ -25,6 +35,8 @@ defpar.slice_order     = 'interleaved_ascending'; % only usefull when par.use_JS
 defpar.sge      = 0;
 defpar.jobname  ='spm_sliceTime';
 defpar.walltime = '04:00:00';
+
+defpar.auto_add_obj = 1;
 
 defpar.run     = 1;
 defpar.display = 0;
@@ -45,12 +57,20 @@ skip = [];
 
 for subj=1:nSubj
     
-    if iscell(fin{1})
-        subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
-        unzip_volume(subjFiles);
-        subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
+    if obj
+        if iscell(fin{subj})
+            subjFiles = unzip_volume(fin{subj});
+        else
+            subjFiles = fin;
+        end
     else
-        subjFiles = fin;
+        if iscell(fin{1})
+            subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
+            unzip_volume(subjFiles);
+            subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
+        else
+            subjFiles = fin;
+        end
     end
     
     for n=1:length(subjFiles)
@@ -67,10 +87,7 @@ for subj=1:nSubj
         end
         
         if length(currentFiles) == 1 % 4D file
-            V = spm_vol(currentFiles{1});
-            for k=1:length(V)
-                filesReady{k} = sprintf('%s,%d',currentFiles{1},k);
-            end
+            filesReady = spm_select('expand',currentFiles)';
         else
             filesReady = currentFiles;
         end
@@ -80,7 +97,11 @@ for subj=1:nSubj
     
     if par.use_JSON
         
-        json = get_subdir_regex_files( fin{subj}, par.use_JSON_regex );
+        if obj
+            json = get_subdir_regex_files( get_parent_path(fin{subj}), par.use_JSON_regex, struct('verbose',0) );
+        else
+            json = get_subdir_regex_files( fin{subj}, par.use_JSON_regex, struct('verbose',0) );
+        end
         if isempty(json)
             error('no JSON found with regex [ %s ] in dir : %s', par.use_JSON_regex, fin{subj})
         else
@@ -93,7 +114,7 @@ for subj=1:nSubj
         
         assert( max(sliceonsets)/1000 <= TR , ' slice onset > TR ! pb with the JSON ? pb unit conversion ?' )
         
-        unique_sliceonsets = unique(sliceonsets);
+        unique_sliceonsets = unique(sliceonsets); % in case of MB sequence
         
         % Refslice is milliseconds
         switch par.reference_slice
@@ -117,11 +138,11 @@ for subj=1:nSubj
         V        = spm_vol( subjFiles{1}(1,:) );
         nrSlices = V(1).dim(3);
         if par.TR > 0
-	   TR = par.TR;
+            TR = par.TR;
         else
-           TR = V(1).private.timing.tspace;
+            TR = V(1).private.timing.tspace;
         end
-	
+        
         parameters.slicetiming.slice_order = par.slice_order;
         parameters.slicetiming.reference_slice = par.reference_slice;
         
@@ -145,6 +166,18 @@ end
 %% Other routines
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj
+    
+    serieArray = [fin_obj.serie];
+    tag        =  fin_obj(1).tag;
+    
+    serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+    
+end
 
 
 end % function
