@@ -13,6 +13,14 @@ if ~exist('par','var')
 end
 
 
+obj = 0;
+if isa(img,'volume')
+    obj = 1;
+    img_obj  = img;
+    img = img_obj.toJob(0);
+end
+
+
 %% defpar
 
 defpar.smooth   = [8 8 8];
@@ -21,6 +29,8 @@ defpar.prefix   = 's';
 defpar.sge      = 0;
 defpar.jobname  = 'spm_smooth';
 defpar.walltime = '00:30:00';
+
+defpar.auto_add_obj = 1;
 
 defpar.redo     = 0;
 defpar.run      = 0;
@@ -50,6 +60,18 @@ end
 %% Other routines
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj
+    
+    serieArray = [img_obj.serie];
+    tag        =  img_obj(1).tag;
+    
+    serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+    
+end
 
 
 end % function

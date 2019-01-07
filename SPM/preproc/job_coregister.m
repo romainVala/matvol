@@ -9,13 +9,31 @@ function jobs = job_coregister(src,ref,other,par)
 %% Check input arguments
 
 if ~exist('other','var'), other = {}             ; end
-if isempty(other)       , other = {}             ; end
-if ~iscell(other)       , other = cellstr(other)'; end
-if ~iscell(src)         , src   = cellstr(src)   ; end
-if ~iscell(ref)         , ref   = cellstr(ref)'  ; end
+
 
 if ~exist('par','var')
     par = ''; % for defpar
+end
+
+
+obj = 0;
+if isa(src,'volume')
+    obj = 1;
+    src_obj   = src;
+    src       = src_obj.toJob(0);
+    ref_obj   = ref;
+    ref       = ref_obj.toJob(0);
+    if size(other)>0
+        other_obj = other;
+        other     = other_obj.toJob(1);
+    else
+        other = volume.empty;
+    end
+else
+    if isempty(other)       , other = {}             ; end
+    if ~iscell(other)       , other = cellstr(other)'; end
+    if ~iscell(src)         , src   = cellstr(src)   ; end
+    if ~iscell(ref)         , ref   = cellstr(ref)'  ; end
 end
 
 
@@ -28,6 +46,8 @@ defpar.sge    = 0;
 defpar.redo   = 0;
 defpar.run    = 0;
 defpar.display= 0;
+
+defpar.auto_add_obj = 1;
 
 defpar.jobname  = 'spm_coreg';
 defpar.walltime = '00:30:00';
@@ -121,7 +141,7 @@ for j = 1:length(jobs)
     elseif isfield(jobs{j}.spm.spatial.coreg,'write')
         jobcoreg = jobs{j}.spm.spatial.coreg.write;
     end
-
+    
     % Source : Where to write the file ?
     upper_dir_path_source = get_parent_path(char(jobcoreg.source));
     coreg_file_source     = fullfile(upper_dir_path_source,'matvol_coregistration_info.txt');
@@ -134,6 +154,41 @@ for j = 1:length(jobs)
             coreg_file_other     = fullfile(upper_dir_path_other,'matvol_coregistration_info.txt');
             write_in_text_file(coreg_file_other, str)
         end
+    end
+    
+end
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj
+    
+    serieArray = [src_obj.serie];
+    tag        =  src_obj(1).tag;
+    
+    switch par.type
+        case 'estimate'
+            % pass, no volume created
+        case 'estimate_and_write'
+            serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+        case 'write'
+            serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+    end
+    
+    if ~isempty(other)
+        
+        serieArray = [other_obj.serie];
+        tag        =  other_obj(1).tag;
+        
+        switch par.type
+            case 'estimate'
+                % pass, no volume created
+            case 'estimate_and_write'
+                serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+            case 'write'
+                serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+        end
+        
     end
     
 end

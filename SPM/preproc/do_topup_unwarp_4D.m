@@ -1,4 +1,4 @@
-function job = do_topup_unwarp_4D(dirFonc,par)
+function job = do_topup_unwarp_4D(in,par)
 % DO_TOPUP_UNWARP_4D - FSL:topup - FSL:unwarp
 % img is multilevel directory (see get_subdir_regex).
 % The function will generate a mean for each runs (necessary to do topup on
@@ -14,6 +14,14 @@ if ~exist('par','var')
 end
 
 
+obj = 0;
+if isa(in,'volume')
+    obj = 1;
+    in_obj  = in;
+    in = in_obj.toJob(1);
+end
+
+
 %% defpar
 
 defpar.todo               = 0;
@@ -21,9 +29,12 @@ defpar.subdir             = 'topup';
 defpar.file_reg           = '^f.*nii';
 defpar.fsl_output_format  = 'NIFTI';
 defpar.do_apply           = [];
+
 defpar.redo               = 0;
 defpar.pct                = 0;
 defpar.verbose            = 1;
+
+defpar.auto_add_obj = 1;
 
 par = complet_struct(par,defpar);
 
@@ -37,8 +48,8 @@ par.verbose = 0; % don't print anything yet
 
 %%  FSL:topup - FSL:unwarp
 
-if iscell(dirFonc{1})
-    nrSubject = length(dirFonc);
+if iscell(in{1})
+    nrSubject = length(in);
 else
     nrSubject = 1;
 end
@@ -50,14 +61,20 @@ fprintf('\n')
 for subj=1:nrSubject
     
     % Extract subject name, and print it
-    subjectName = get_parent_path(dirFonc{subj}(1));
+    subjectName = get_parent_path(in{subj}(1));
     
     % Echo in terminal & initialize job_subj
     fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, subj, nrSubject, subjectName{1});
     job_subj = {sprintf('#################### JOB %d/%d for %s #################### \n', subj, nrSubject, subjectName{1})}; % initialize
     
-    % Fetch current subject images files
-    runList = get_subdir_regex_files(dirFonc{subj},par.file_reg,1);
+    if obj
+        % Fetch current subject images files
+        runList = in_obj(subj,:).getPath';
+    else
+        % Fetch current subject images files
+        runList = get_subdir_regex_files(in{subj},par.file_reg,1);
+    end
+    
     
     % Create inside the subject dir runName "topup" dire, which will be our
     % working directory
@@ -141,10 +158,39 @@ for subj=1:nrSubject
     
 end % for - subject
 
+
+%% Executes th prepared commands
+
 par.sge     = parsge;
 par.verbose = parverbose;
 
 job = do_cmd_sge(job,par);
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj
+    
+    serieArray      = [in_obj.serie];
+    tag             =  in_obj(1).tag;
+    
+    switch defpar.fsl_output_format
+        case 'NIFTI'
+            ext = '.*.nii';
+        case 'NIFTI_GZ'
+            ext = '.*.nii.gz';
+    end
+    
+    serieArray.addVolume([ '^ut'     tag ext],[ 'ut'     tag])
+    
+    if strcmp(tag(1),'r')
+        tag = tag(2:end);
+    end
+    
+    serieArray.addVolume([ '^mean'   tag ext],[ 'mean'   tag])
+    serieArray.addVolume([ '^utmean' tag ext],[ 'utmean' tag])
+    
+end
 
 
 end % function
