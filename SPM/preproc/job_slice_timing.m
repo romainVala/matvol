@@ -14,6 +14,8 @@ obj = 0;
 if isa(fin,'volume')
     obj = 1;
     fin_obj  = fin;
+    contains_gz = ~cellfun(@isempty,strfind(fin_obj.getPath,'.nii.gz'));
+    assert( ~any(contains_gz(:)), 'Volumes must be unzip first. Use examArray.unzipVolume(par) or volumeArray.unzip(par).')
     fin = fin_obj.toJob(1);
 end
 
@@ -59,7 +61,7 @@ for subj=1:nSubj
     
     if obj
         if iscell(fin{subj})
-            subjFiles = unzip_volume(fin{subj});
+            subjFiles = fin{subj};
         else
             subjFiles = fin;
         end
