@@ -168,7 +168,7 @@ if obj && par.auto_add_obj
     tag        =  in_obj(1).tag;
     
     % Warp field
-    if par.warp(2), serieArray.addVolume([ '^y_' tag],[ 'y_' tag] ,1), end % Forward
+    if par.warp(2), serieArray.addVolume([ '^y_' tag],[ 'y_' tag],1), end % Forward
     if par.warp(1), serieArray.addVolume(['^iy_' tag],['iy_' tag],1), end % Inverse
     
     % Bias field
