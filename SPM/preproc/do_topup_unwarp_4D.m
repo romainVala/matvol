@@ -61,7 +61,11 @@ fprintf('\n')
 for subj=1:nrSubject
     
     % Extract subject name, and print it
-    subjectName = get_parent_path(in{subj}(1));
+    if obj
+        subjectName = get_parent_path(get_parent_path(in{subj}(1)));
+    else
+        subjectName = get_parent_path(in{subj}(1));
+    end
     
     % Echo in terminal & initialize job_subj
     fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, subj, nrSubject, subjectName{1});

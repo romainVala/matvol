@@ -129,31 +129,35 @@ end
 %% Special routine for coregistration with matvol
 % Write a matvol_coregistration_info.txt file to remember it has been done, and allow sckipping the next tine
 
-for j = 1:length(jobs)
+if par.run % not for display
     
-    % Content of the file
-    str = gencode(jobs{j}); % generate matlabbatch code
-    %field job coreg can either be in estimate or estwrite
-    if isfield(jobs{j}.spm.spatial.coreg,'estimate')
-        jobcoreg = jobs{j}.spm.spatial.coreg.estimate;
-    elseif isfield(jobs{j}.spm.spatial.coreg,'estwrite')
-        jobcoreg = jobs{j}.spm.spatial.coreg.estwrite;
-    elseif isfield(jobs{j}.spm.spatial.coreg,'write')
-        jobcoreg = jobs{j}.spm.spatial.coreg.write;
-    end
-    
-    % Source : Where to write the file ?
-    upper_dir_path_source = get_parent_path(char(jobcoreg.source));
-    coreg_file_source     = fullfile(upper_dir_path_source,'matvol_coregistration_info.txt');
-    write_in_text_file(coreg_file_source, str)
-    
-    % Other : Where to write the file ?
-    if isfield(jobcoreg,'other')
-        for o = 1:length(jobcoreg.other)
-            upper_dir_path_other = get_parent_path(char(jobcoreg.other{o}));
-            coreg_file_other     = fullfile(upper_dir_path_other,'matvol_coregistration_info.txt');
-            write_in_text_file(coreg_file_other, str)
+    for j = 1:length(jobs)
+        
+        % Content of the file
+        str = gencode(jobs{j}); % generate matlabbatch code
+        %field job coreg can either be in estimate or estwrite
+        if isfield(jobs{j}.spm.spatial.coreg,'estimate')
+            jobcoreg = jobs{j}.spm.spatial.coreg.estimate;
+        elseif isfield(jobs{j}.spm.spatial.coreg,'estwrite')
+            jobcoreg = jobs{j}.spm.spatial.coreg.estwrite;
+        elseif isfield(jobs{j}.spm.spatial.coreg,'write')
+            jobcoreg = jobs{j}.spm.spatial.coreg.write;
         end
+        
+        % Source : Where to write the file ?
+        upper_dir_path_source = get_parent_path(char(jobcoreg.source));
+        coreg_file_source     = fullfile(upper_dir_path_source,'matvol_coregistration_info.txt');
+        write_in_text_file(coreg_file_source, str)
+        
+        % Other : Where to write the file ?
+        if isfield(jobcoreg,'other')
+            for o = 1:length(jobcoreg.other)
+                upper_dir_path_other = get_parent_path(char(jobcoreg.other{o}));
+                coreg_file_other     = fullfile(upper_dir_path_other,'matvol_coregistration_info.txt');
+                write_in_text_file(coreg_file_other, str)
+            end
+        end
+        
     end
     
 end
