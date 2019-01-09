@@ -143,9 +143,10 @@ if obj && par.auto_add_obj
     serieArray      = [in_obj     .serie];
     serieArray_run1 = [in_obj(:,1).serie]; % the mean is only written in the run1
     tag             =  in_obj(1).tag;
+    ext             = '.*.nii$';
     
-    serieArray.     addVolume([ '^' par.prefix tag],[ par.prefix tag])
-    serieArray_run1.addVolume([ '^mean'        tag],[ 'mean'     tag])
+    serieArray.     addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
+    serieArray_run1.addVolume([ '^mean'        tag ext],[ 'mean'     tag])
     
 end
 

@@ -68,8 +68,9 @@ if obj && par.auto_add_obj
     
     serieArray = [img_obj.serie];
     tag        =  img_obj(1).tag;
+    ext        = '.*.nii$';
     
-    serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+    serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
     
 end
 

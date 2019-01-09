@@ -169,28 +169,26 @@ if obj && par.auto_add_obj
     
     serieArray = [src_obj.serie];
     tag        =  src_obj(1).tag;
+    ext        = '.*.nii$';
     
     switch par.type
         case 'estimate'
             % pass, no volume created
         case 'estimate_and_write'
-            serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+            serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
         case 'write'
-            serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+            serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
     end
     
     if ~isempty(other)
-        
-        serieArray = [other_obj.serie];
-        tag        =  other_obj(1).tag;
         
         switch par.type
             case 'estimate'
                 % pass, no volume created
             case 'estimate_and_write'
-                serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+                serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
             case 'write'
-                serieArray.addVolume([ '^' par.prefix tag],[ par.prefix tag])
+                serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
         end
         
     end

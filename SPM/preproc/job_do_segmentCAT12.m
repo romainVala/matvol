@@ -170,32 +170,33 @@ if obj && par.auto_add_obj
     
     serieArray = [in_obj.serie];
     tag        =  in_obj(1).tag;
+    ext        = '.*.nii$';
     
     % Warp field (def_field)
-    if par.def_field(2), serieArray.addVolume([ '^y_' tag],[ 'y_' tag],1), end % Forward
-    if par.def_field(1), serieArray.addVolume(['^iy_' tag],['iy_' tag],1), end % Inverse
+    if par.def_field(2), serieArray.addVolume([ '^y_' tag ext],[ 'y_' tag],1), end % Forward
+    if par.def_field(1), serieArray.addVolume(['^iy_' tag ext],['iy_' tag],1), end % Inverse
     
     % Bias field
-    if par.bias(1), serieArray.addVolume([ '^m' tag],[ 'm' tag],1), end % Corrected
-    if par.bias(2), serieArray.addVolume(['^wm' tag],['wm' tag],1), end % Field
+    if par.bias(1), serieArray.addVolume([ '^m' tag ext],[ 'm' tag],1), end % Corrected
+    if par.bias(2), serieArray.addVolume(['^wm' tag ext],['wm' tag],1), end % Field
     
     % GM
-    if par.GM (3), serieArray.addVolume([  '^p1' tag],[  'p1' tag]), end % native_space(p*)
-    if par.GM (4), serieArray.addVolume([ '^rp1' tag],[ 'rp1' tag]), end % native_space_dartel_import(rp*)
-    if par.GM (1), serieArray.addVolume([ '^wp1' tag],[ 'wp1' tag]), end % warped_space_Unmodulated(wp*)
-    if par.GM (2), serieArray.addVolume(['^mwp1' tag],['mwp1' tag]), end % warped_space_modulated(mwp*)
+    if par.GM (3), serieArray.addVolume([  '^p1' tag ext],[  'p1' tag]), end % native_space(p*)
+    if par.GM (4), serieArray.addVolume([ '^rp1' tag ext],[ 'rp1' tag]), end % native_space_dartel_import(rp*)
+    if par.GM (1), serieArray.addVolume([ '^wp1' tag ext],[ 'wp1' tag]), end % warped_space_Unmodulated(wp*)
+    if par.GM (2), serieArray.addVolume(['^mwp1' tag ext],['mwp1' tag]), end % warped_space_modulated(mwp*)
     
     % WM
-    if par.WM (3), serieArray.addVolume([  '^p2' tag],[  'p2' tag]), end % native_space(p*)
-    if par.WM (4), serieArray.addVolume([ '^rp2' tag],[ 'rp2' tag]), end % native_space_dartel_import(rp*)
-    if par.WM (1), serieArray.addVolume([ '^wp2' tag],[ 'wp2' tag]), end % warped_space_Unmodulated(wp*)
-    if par.WM (2), serieArray.addVolume(['^mwp2' tag],['mwp2' tag]), end % warped_space_modulated(mwp*)
+    if par.WM (3), serieArray.addVolume([  '^p2' tag ext],[  'p2' tag]), end % native_space(p*)
+    if par.WM (4), serieArray.addVolume([ '^rp2' tag ext],[ 'rp2' tag]), end % native_space_dartel_import(rp*)
+    if par.WM (1), serieArray.addVolume([ '^wp2' tag ext],[ 'wp2' tag]), end % warped_space_Unmodulated(wp*)
+    if par.WM (2), serieArray.addVolume(['^mwp2' tag ext],['mwp2' tag]), end % warped_space_modulated(mwp*)
     
     % CSF
-    if par.CSF(3), serieArray.addVolume([  '^p3' tag],[  'p3' tag]), end % native_space(p*)
-    if par.CSF(4), serieArray.addVolume([ '^rp3' tag],[ 'rp3' tag]), end % native_space_dartel_import(rp*)
-    if par.CSF(1), serieArray.addVolume([ '^wp3' tag],[ 'wp3' tag]), end % warped_space_Unmodulated(wp*)
-    if par.CSF(2), serieArray.addVolume(['^mwp3' tag],['mwp3' tag]), end % warped_space_modulated(mwp*)
+    if par.CSF(3), serieArray.addVolume([  '^p3' tag ext],[  'p3' tag]), end % native_space(p*)
+    if par.CSF(4), serieArray.addVolume([ '^rp3' tag ext],[ 'rp3' tag]), end % native_space_dartel_import(rp*)
+    if par.CSF(1), serieArray.addVolume([ '^wp3' tag ext],[ 'wp3' tag]), end % warped_space_Unmodulated(wp*)
+    if par.CSF(2), serieArray.addVolume(['^mwp3' tag ext],['mwp3' tag]), end % warped_space_modulated(mwp*)
     
 end
 
