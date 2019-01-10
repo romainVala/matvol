@@ -43,13 +43,20 @@ else
 end
     
 for k=1:length(fi_4D)
-    if par.do4D;
-        cmd{k} = sprintf('dwiextract %s -bzero -fslgrad %s %s %s ;\n mrmath %s mean %s -axis 3\n',...
-            fi_4D{k},fbvec{k},fbval{k},fo4D{k},fo4D{k},fo{k});
+    %test if only one b0
+    Bvals = load(fbval{k});
+    if length(Bvals) == 1 %dwiextract does not work so just copy
+        cmd{k} = sprintf('cp  %s %s \n',fi_4D{k},fo4D{k});
+    else
         
-    else        
-        cmd{k} = sprintf('LD_LIBRARY_PATH=;dwiextract %s - -fslgrad %s %s -bzero | mrmath - mean %s -axis 3\n',...
-            fi_4D{k},fbvec{k},fbval{k},fo{k});
+        if par.do4D;
+            cmd{k} = sprintf('dwiextract %s -bzero -fslgrad %s %s %s ;\n mrmath %s mean %s -axis 3\n',...
+                fi_4D{k},fbvec{k},fbval{k},fo4D{k},fo4D{k},fo{k});
+            
+        else
+            cmd{k} = sprintf('LD_LIBRARY_PATH=;dwiextract %s - -fslgrad %s %s -bzero | mrmath - mean %s -axis 3\n',...
+                fi_4D{k},fbvec{k},fbval{k},fo{k});
+        end
     end
 end
 
