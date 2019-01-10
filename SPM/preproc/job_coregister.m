@@ -65,16 +65,6 @@ for nbsuj = 1:length(ref)
     %         if is_hdr_realign(src(nbsuj)),  skip = [skip nbsuj];     fprintf('skiping suj %d becasue %s is realigned',nbsuj,src{nbsuj});       end
     %     end
     
-    % skip if .coregistered file exists
-    if ~par.redo
-        upper_dir_path_source = get_parent_path(char(src(nbsuj)));
-        coreg_file_source = fullfile(upper_dir_path_source,'matvol_coregistration_info.txt');
-        if exist(coreg_file_source,'file')
-            skip = [skip nbsuj];
-            fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,nbsuj,coreg_file_source);
-        end
-    end
-    
     switch par.type
         case 'estimate'
             jobs{nbsuj}.spm.spatial.coreg.estimate.ref = ref(nbsuj); %#ok<*AGROW>
@@ -118,6 +108,15 @@ for nbsuj = 1:length(ref)
             
     end
     
+    % skip if .coregistered file exists
+    if ~par.redo
+        coreg_file_source = coreg_filename(char(ref(nbsuj)),char(src(nbsuj)));
+        if exist(coreg_file_source,'file')
+            skip = [skip nbsuj];
+            fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,nbsuj,coreg_file_source);
+        end
+    end
+    
 end
 
 
@@ -145,15 +144,13 @@ if par.run % not for display
         end
         
         % Source : Where to write the file ?
-        upper_dir_path_source = get_parent_path(char(jobcoreg.source));
-        coreg_file_source     = fullfile(upper_dir_path_source,'matvol_coregistration_info.txt');
+        coreg_file_source = coreg_filename(char(jobcoreg.ref),char(jobcoreg.source));
         write_in_text_file(coreg_file_source, str)
         
         % Other : Where to write the file ?
         if isfield(jobcoreg,'other')
             for o = 1:length(jobcoreg.other)
-                upper_dir_path_other = get_parent_path(char(jobcoreg.other{o}));
-                coreg_file_other     = fullfile(upper_dir_path_other,'matvol_coregistration_info.txt');
+                coreg_file_other = coreg_filename(char(jobcoreg.ref),char(jobcoreg.other{o}));
                 write_in_text_file(coreg_file_other, str)
             end
         end
@@ -198,6 +195,16 @@ end
 
 end % function
 
+%--------------------------------------------------------------------------
+function filename = coreg_filename(ref,src)
+
+[~       , ref_name, ~] = fileparts(ref);
+[src_path, src_name, ~] = fileparts(src);
+filename = fullfile(src_path,sprintf('matvol_coreg_info___%s___%s.txt',ref_name,src_name));
+
+end % function
+
+%--------------------------------------------------------------------------
 function write_in_text_file(filename, content)
 
 assert(iscellstr(content) && isvector(content))
