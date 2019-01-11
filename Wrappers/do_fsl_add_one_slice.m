@@ -9,6 +9,7 @@ if ~exist('par'),par ='';end
 defpar.fsl_output_format = 'NIFTI_PAIR';
 defpar.prefix = 'ad';
 defpar.where = 'down';
+defpar.vol = '';
 
 par = complet_struct(par,defpar);
 
@@ -20,10 +21,14 @@ fo = addprefixtofilenames(f,par.prefix);
 job = cell(size(f));
 
 for k=1:length(f)
-  [pp ff] = fileparts(f{k});
+  [pp, ff] = fileparts(change_file_extension(f{k},''));
   tmpname = tempname;
-
-  vol = nifti_spm_vol(f{k});
+    
+  if isempty(par.vol)
+      vol = nifti_spm_vol(f{k});
+  else
+      vol = par.vol; %case of non existing files see dti_import_multiple
+  end
 
   switch par.where
       case 'down'
@@ -36,7 +41,7 @@ for k=1:length(f)
           
   end
   
-  cmd = sprintf('%s;\n rm -rf %s',cmd,tmpname);
+  cmd = sprintf('%s;\n rm -rf %s*',cmd,tmpname);
    
   job{k} = cmd;
 
