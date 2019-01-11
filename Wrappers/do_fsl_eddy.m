@@ -1,4 +1,4 @@
-function do_fsl_eddy(f4D,par,jobappend)
+function job = do_fsl_eddy(f4D,par,jobappend)
 
 if ~exist('par'),par ='';end
 if ~exist('jobappend','var'), jobappend ='';end
@@ -17,6 +17,7 @@ defpar.eddy_add_cmd='';
 defpar.sge=1;
 defpar.jobname='eddy';
 defpar.walltime='12:00:00';
+defpar.do_qc = 0;
 
 par = complet_struct(par,defpar);
 
@@ -29,6 +30,7 @@ end
 par.bvecs = get_subdir_regex_files(dtidir,par.bvecs,1);
 par.bvals = get_subdir_regex_files(dtidir,par.bvals,1);
 outfile = addsuffixtofilenames(f4D,par.outsuffix);
+outfile = change_file_extension(outfile,''); %only base name
 
 if isempty(par.topup)
     for k=1:length(f4D)
@@ -36,6 +38,11 @@ if isempty(par.topup)
         
         cmd = sprintf('eddy %s --imain=%s  --mask=%s  --index=%s  --bvecs=%s  --bvals=%s  --acqp=%s   --out=%s --resamp=%s\n',...
             par.eddy_add_cmd,f4D{k},par.mask{k},par.index{k},par.bvecs{k},par.bvals{k},acqp{1},outfile{k},par.resamp);
+
+        if par.do_qc
+            cmd = sprintf('%s eddy_quad %s -idx %s -par %s -m %s -b %s -g %s -v \n',...
+                cmd,outfile{k},par.index{k},acqp{k},par.mask{k},par.bvals{k},par.bvecs{k});
+        end
         
         job{k} = cmd;
     end
@@ -54,6 +61,10 @@ else
         cmd = sprintf('eddy %s --imain=%s  --mask=%s  --index=%s  --bvecs=%s  --bvals=%s  --acqp=%s  --topup=%s  --out=%s --resamp=%s\n',...
             par.eddy_add_cmd,f4D{k},par.mask{k},par.index{k},par.bvecs{k},par.bvals{k},par.topup_acqp{k},par.topup{k},outfile{k},par.resamp);
         
+        if par.do_qc
+            cmd = sprintf('%s eddy_quad %s -idx %s -par %s -m %s -b %s -g %s -v \n',...
+                cmd,outfile{k},par.index{k},par.topup_acqp{k},par.mask{k},par.bvals{k},par.bvecs{k});
+        end
         job{k} = cmd;
     end
 end
