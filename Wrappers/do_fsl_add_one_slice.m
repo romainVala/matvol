@@ -32,7 +32,7 @@ for k=1:length(f)
 
   switch par.where
       case 'down'
-          cmd = sprintf('cd %s;\n fslroi %s %s 0 %d 0 %d 0 1 0 %d',pp,ff,tmpname,vol(1).dim(1),vol(1).dim(2),length(vol));
+          cmd = sprintf('#ADDING one slice down\n cd %s;\n fslroi %s %s 0 %d 0 %d 0 1 0 %d',pp,ff,tmpname,vol(1).dim(1),vol(1).dim(2),length(vol));
           cmd = sprintf('%s;\nexport FSLOUTPUTTYPE=%s;\n fslmerge -z %s %s %s',cmd,par.fsl_output_format,fo{k},tmpname,ff);
           
       case 'up'
@@ -41,7 +41,7 @@ for k=1:length(f)
           
   end
   
-  cmd = sprintf('%s;\n rm -rf %s*',cmd,tmpname);
+  cmd = sprintf('%s;\n rm -rf %s*\n##',cmd,tmpname);
    
   job{k} = cmd;
 
