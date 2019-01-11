@@ -175,7 +175,7 @@ end
 jobappend = do_fsl_merge(dti_files,fodti,par,jobappend);
 
 %extract B0 (after reslice)
-par.do4D=1;
+par.do4D=0;
 [~, filename] = get_parent_path(dti_files); 
 par.fout = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(filename,'meanB0_'));
 fb0 = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(filename,'B0_4D')); par.fout4D=fb0;
@@ -227,7 +227,8 @@ fclose(fid);
 if par.make_even_number_of_slice
     v = nifti_spm_vol(dti_files{1}(1,:));
     if mod(v(1).dim(3),2)>0 %then add a slice
-        %ff=get_subdir_regex_files(outdir,'gz$')
+        %total number of dti out volume should be length(bval)
+        v(length(bval)).dim=0;
         pppar.fsl_output_format ='NIFTI_GZ';    pppar.prefix = '';
         pppar.sge=-1;pppar.jobappend = job; pppar.vol = v;
         [~, job] = do_fsl_add_one_slice(fodti,pppar);
@@ -262,15 +263,12 @@ else
     fo=fullfile(topup{1},'4D_B0');
     
     fme=cellstr(char(fb0));
-%     for nbb=2:length(fme)
-%         if compare_orientation(fme(1),fme(nbb)) == 0
-%             fprintf('WARNING reslicing mean image because DIFFERENT ORIENTATION \n');
-%             bb= do_fsl_coreg_reslice( fme(nbb),fme(1));
-%             fme(nbb) = bb;
-%         end
-%     end
+
+    clear pppar; pppar.sge=-1; pppar.jobappend=job;pppar.fout4D = {[fo '.nii.gz']}; pppar.do4D=1;
+    ff=change_file_extension({fodti},'.nii.gz');     
+    [~, job] = extract_B0_from_4D(ff,pppar);
     
-    job = do_fsl_merge(fme,fo,struct('sge',-1),job);
+    %job = do_fsl_merge(fme,fo,struct('sge',-1),job);
 
     ffname = fullfile(topup{1},'remove_one_slice');
     if exist(ffname,'file') %then remove the last slice
