@@ -227,9 +227,10 @@ fclose(fid);
 if par.make_even_number_of_slice
     v = nifti_spm_vol(dti_files{1}(1,:));
     if mod(v(1).dim(3),2)>0 %then add a slice
-        ff=get_subdir_regex_files(outdir,'gz$')
+        %ff=get_subdir_regex_files(outdir,'gz$')
         pppar.fsl_output_format ='NIFTI_GZ';    pppar.prefix = '';
-        do_fsl_add_one_slice(ff,pppar);
+        pppar.sge=-1;pppar.jobappend = job; pppar.vol = v;
+        [~, job] = do_fsl_add_one_slice(fodti,pppar);
     end
     
 end
