@@ -51,7 +51,7 @@ for ex = 1 : size(serieArray,1)
     
     orient_differs = any( any( abs( orientation - orientation(:,1) ) > 1e-6 ) );
     if orient_differs
-        if par.verbose
+        if par.verbose > 1
             fprintf('Orientation differs in \n%s\n', serieArray(ex,ser).exam.path)
             disp(orientation)
         end
@@ -60,7 +60,7 @@ for ex = 1 : size(serieArray,1)
     
     dim_differs = any( any( abs( dim - dim(:,1) ) > 1e-3 ) );
     if dim_differs
-        if par.verbose
+        if par.verbose > 1
             fprintf('Dimension differs in \n%s\n', serieArray(ex,ser).exam.path)
             disp(dim)
         end
@@ -68,7 +68,7 @@ for ex = 1 : size(serieArray,1)
     end
     
     if orient_differs || dim_differs
-        if par.verbose
+        if par.verbose > 1
             fprintf('\n')
         end
     else
@@ -82,7 +82,7 @@ N            = numel(examArray);
 N_good       = numel(good);
 N_bad_orient = numel(bad_orient);
 N_bad_dim    = numel(bad_dim);
-if par.verbose
+if par.verbose > 0
     fprintf('good       N = %d/%d (%d%%)\n', N_good      , N, round(100*N_good      /N))
     fprintf('bad_orient N = %d/%d (%d%%)\n', N_bad_orient, N, round(100*N_bad_orient/N))
     fprintf('bad_dim    N = %d/%d (%d%%)\n', N_bad_dim   , N, round(100*N_bad_dim   /N))

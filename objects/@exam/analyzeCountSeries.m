@@ -50,16 +50,16 @@ summary_best = table2struct(TableSer_best(end,2:end));
 %% Best group info
 
 if par.verbose > 0
-    
     fprintf('\n')
     cprintf('*comment','Largest group is N = %d/%d (%d %%)\n', bestGroup.N, length(examArray), round(100*bestGroup.N/length(examArray)))
     disp(summary_best)
     fprintf('\n')
-    
+end
+
+if par.verbose > 1
     cprintf('_comment','List for subjects\n')
     cprintf('comment','%s\n',list_exam_best{:})
     fprintf('\n')
-    
 end
 
 list_sequence_best = fieldnames(summary_best);
@@ -72,9 +72,11 @@ examArray_more = exam.empty;
 for seq = 1 : length(list_sequence_best)
     index = TableSer.(list_sequence_best{seq}) > summary_best.(list_sequence_best{seq});
     list_more = list_exam_name(index);
-    if par.verbose > 0
+    if par.verbose > 1
         cprintf('key','Exam with '), cprintf('_key','more '), cprintf('*key','%s ',list_sequence_best{seq}), cprintf('key',', N = %d (%d %%)\n',sum(index), round(100*sum(index)/length(examArray)))
-        fprintf('%s\n',list_more{:})
+        if par.verbose > 1
+            fprintf('%s\n',list_more{:})
+        end
         fprintf('\n')
     end
     if ~isempty(list_more)
@@ -89,9 +91,11 @@ examArray_less = exam.empty;
 for seq = 1 : length(list_sequence_best)
     index = TableSer.(list_sequence_best{seq}) < summary_best.(list_sequence_best{seq});
     list_less = list_exam_name(index);
-    if par.verbose > 0
+    if par.verbose > 1
         cprintf('err','Exam with '), cprintf('_err','less '), cprintf('*err','%s ',list_sequence_best{seq}), cprintf('err',', N = %d (%d %%)\n',sum(index), round(100*sum(index)/length(examArray)))
-        fprintf('%s\n',list_less{:})
+        if par.verbose > 1
+            fprintf('%s\n',list_less{:})
+        end
         fprintf('\n')
     end
     if ~isempty(list_less)
@@ -109,9 +113,11 @@ examArray_out = exam.empty;
 for seq = 1 : length(list_out_sequence)
     index = TableSer.(list_out_sequence{seq}); index = logical(index);
     list_out = list_exam_name(index);
-    if par.verbose > 0
+    if par.verbose > 1
         cprintf('magenta','Exam with '), cprintf('*magenta','%s ',list_out_sequence{seq}), cprintf('magenta',', N = %d (%d %%)\n',sum(index), round(100*sum(index)/length(examArray)))
-        fprintf('%s\n',list_out{:})
+        if par.verbose > 1
+            fprintf('%s\n',list_out{:})
+        end
         fprintf('\n')
     end
     if ~isempty(list_out)
