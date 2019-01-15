@@ -35,9 +35,19 @@ for i=1:length(fa)
         %fprintf('comput std\n')
         Ystd(i) = std(FAimg(Conimg>seuil(1)));
     end
+    if nargout>2
+        %fprintf('comput std\n')
+        aa = (Conimg>seuil(1));
+        Vol(i) = sum(aa(:));
+    end
 end
 
 if nargout>1
     varargout{1} = Ystd;
 end
+
+if nargout > 2
+    varargout{2} = Vol;
+end
+
 

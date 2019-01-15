@@ -69,13 +69,13 @@ for kfa=1:length(faregex)
     for kfp=1:length(roiregex)
         %ffroi = get_subdir_regex_files(roidir,['^' roiregex{kfp} '$'],1); %to do only if automaticaly define
         ffroi = get_subdir_regex_files(roidir,[ roiregex{kfp} ],1);
-        [y ystd] = get_wheited_mean(ffa,ffroi,par);
+        [y ystd vol] = get_wheited_mean(ffa,ffroi,par);
         %marche pas sur l'oblique ??? cr = do_roistat(fprob,ffa,sujn);        y = cr.Mean_1;
-        vol = do_fsl_getvol(ffroi)
+        %vol = do_fsl_getvol(ffroi);vol = vol(:,2)'
                 %if kfa>1; y = y*1000;end
         fi_name = nettoie_dir([change_file_extension(roiname{kfp},'') faname{kfa}]);
         fr_name = [ 'vol_' nettoie_dir([change_file_extension(roiname{kfp},'') ])];
-        cout = setfield(cout,fr_name,vol(:,2)')
+        cout = setfield(cout,fr_name,vol)
         cout = setfield(cout,fi_name,y');
         if ~par.skip_std
             cout = setfield(cout,[fi_name 'std'],ystd./y');
