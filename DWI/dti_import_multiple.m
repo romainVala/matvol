@@ -17,6 +17,7 @@ defpar.eddy_add_cmd=' --data_is_shelled --repol';
 defpar.do_denoise = 1;
 defpar.remove_gibs = 1;
 defpar.pct = 0;
+defpar.do_qc = 1;
 
 par = complet_struct(par,defpar);
 choose_sge=par.sge;
@@ -163,6 +164,7 @@ par.sge=-1; jobappend ='';
 
 fodti=fullfile(outdir,par.data4D);
 for kk=2:length(dti_files) 
+    %TODO change 
     aa=compare_orientation(dti_files(1),dti_files(kk));
     if aa==0
         fprintf('WARNING reslicing diffusion images %s image because DIFFERENT ORIENTATION \n',dti_files{kk});
@@ -225,6 +227,7 @@ end
 fclose(fid);
 
 if par.make_even_number_of_slice
+    %TODO CHANGE
     v = nifti_spm_vol(dti_files{1}(1,:));
     if mod(v(1).dim(3),2)>0 %then add a slice
         %total number of dti out volume should be length(bval)
@@ -264,9 +267,6 @@ else
     
     fme=cellstr(char(fb0));
 
-    clear pppar; pppar.sge=-1; pppar.jobappend=job;pppar.fout4D = {[fo '.nii.gz']}; pppar.do4D=1;
-    ff=change_file_extension({fodti},'.nii.gz');     
-    [~, job] = extract_B0_from_4D(ff,pppar);
     
     %job = do_fsl_merge(fme,fo,struct('sge',-1),job);
 
@@ -281,6 +281,12 @@ else
         if par.remove_gibs, fo = addprefixtofilenames(fo,'dg_'); end
         [ppp fff] = get_parent_path(fodti);
         job{1} =  sprintf('%s \n cd %s\n dwiextract -bzero %s -fslgrad bvecs bvals %s.nii.gz\n',job{1},ppp,fff,fo)
+    else
+        
+        clear pppar; pppar.sge=-1; pppar.jobappend=job;pppar.fout4D = {[fo '.nii.gz']}; pppar.do4D=1;
+        ff=change_file_extension({fodti},'.nii.gz');
+        [~, job] = extract_B0_from_4D(ff,pppar);
+
     end
     
     
