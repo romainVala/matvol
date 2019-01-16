@@ -86,6 +86,7 @@ if par.verbose > 0
     fprintf('good       N = %d/%d (%d%%)\n', N_good      , N, round(100*N_good      /N))
     fprintf('bad_orient N = %d/%d (%d%%)\n', N_bad_orient, N, round(100*N_bad_orient/N))
     fprintf('bad_dim    N = %d/%d (%d%%)\n', N_bad_dim   , N, round(100*N_bad_dim   /N))
+    fprintf('\n')
 end
 
 
