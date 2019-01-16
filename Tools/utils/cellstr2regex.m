@@ -16,7 +16,12 @@ if nargin < 2
 end
 
 if numel(inputCELLSTR)==1 % str
-    regex = inputCELLSTR{1};
+    
+    if exactly
+        regex = ['^' inputCELLSTR{1} '$'];
+    else
+        regex = inputCELLSTR{1};
+    end
     
 elseif numel(inputCELLSTR)>1 % cellstr
     
