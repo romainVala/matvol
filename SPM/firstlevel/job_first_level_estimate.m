@@ -23,18 +23,25 @@ par = complet_struct(par,defpar);
 
 %% SPM:Stats:model estimation
 
-for idx = 1:length(fspm)
+skip = [];
 
+for idx = 1:length(fspm)
+    
+    beta_file = fullfile(fileparts(fspm{idx}),'beta_0001.nii');
+    if ~par.redo   &&  exist(beta_file,'file')
+        skip = [skip idx];
+        fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,idx,beta_file);
+    end
+    
     jobs{idx}.spm.stats.fmri_est.spmmat = fspm(idx) ; %#ok<*AGROW>
     jobs{idx}.spm.stats.fmri_est.write_residuals = 0;
     jobs{idx}.spm.stats.fmri_est.method.Classical = 1;
-
-
+    
 end
 
 %% Other routines
 
-[ jobs ] = job_ending_rountines( jobs, [], par );
+[ jobs ] = job_ending_rountines( jobs, skip, par );
 
 
 end % function
