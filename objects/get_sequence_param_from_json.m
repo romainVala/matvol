@@ -120,12 +120,17 @@ for j = 1 : size(json_filename,1)
         data_file.SliceTiming = SliceTiming;
         
         % bvals & bvecs
-        B_value                  =             get_field_mul     (content, 'CsaImage.B_value', 0); B_value = str2double(B_value)';
+        B_value                  =             get_field_mul     (content, 'CsaImage.B_value', 0);
+        B_value                  = str2double(B_value)';
         data_file.B_value        = B_value;
         B_vect                   =             get_field_mul_vect(content, 'CsaImage.DiffusionGradientDirection');
         data_file.B_vect         = B_vect;
         data_file.BValue         = str2double( get_field_one     ( content, '"CsaSeries.MrPhoenixProtocol.sDiffusion.alBValue\[1\]"' ) );
         data_file.DiffDirections = str2double( get_field_one     ( content, 'CsaSeries.MrPhoenixProtocol.sDiffusion.lDiffDirections' ) );
+        if ~isempty( B_value ) && isscalar(B_value) && B_value == 0 && isempty(B_vect) %#ok<BDSCI> % only a b0, special case...
+            data_file.DiffDirections = -1;
+        end
+        
         %------------------------------------------------------------------
         % Machine
         %------------------------------------------------------------------
