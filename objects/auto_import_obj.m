@@ -99,7 +99,7 @@ SequenceCategory = {
     'mp2rage'                      'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json % some mp2rage WIP
     'tse_vfl'                      'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json % 3DT2 space & 3DFLAIR space_ir
     'diff'                         'dwi'   par.  dwi_regex_volume  par.  dwi_tag_volume  par.  dwi_tag_json % diffusion
-    'PtkSmsVB13ADwDualSpinEchoEpi' 'dwi'   par.  dwi_regex_volume  par.  dwi_tag_volume  par.  dwi_tag_json % diffusion from Trio 
+    'PtkSmsVB13ADwDualSpinEchoEpi' 'dwi'   par.  dwi_regex_volume  par.  dwi_tag_volume  par.  dwi_tag_json % diffusion from Trio
     '(bold)|(pace)'                'func'  par. func_regex_volume  par. func_tag_volume  par. func_tag_json % bold fmri
     'gre_field_mapping'            'fmap'  par. fmap_regex_volume  par. fmap_tag_volume  par. fmap_tag_json % gre_field_mapping
     '^gre$'                        'swi'   par.  swi_regex_volume  par.  swi_tag_volume  par.  swi_tag_json % gre SWI
@@ -198,7 +198,7 @@ for idx = 1 : size(SequenceCategory, 1)
     
     flag_add = 0;
     
-    where = find( ~cellfun( @isempty , regexp(exam_SequenceData(:,hdr.SequenceFileName),SequenceCategory{idx,1}) ) );
+    where = find( ~isemptyCELL( regexp(exam_SequenceData(:,hdr.SequenceFileName),SequenceCategory{idx,1}) ) );
     if isempty(where)
         continue
     end
@@ -213,14 +213,14 @@ for idx = 1 : size(SequenceCategory, 1)
     % func
     %----------------------------------------------------------------------
     if strcmp(SequenceCategory{idx,2},'func')
-
+        
         % type of image (mag, phase, sbref)
         type_ = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
         type = split_(type_);
         type = type(:,3);
         name = exam_SequenceData(where,hdr.SeriesDescription); % serie name
         
-        type_SBRef = ~cellfun(@isempty,regexp(name,'SBRef$'));
+        type_SBRef = ~isemptyCELL(regexp(name,'SBRef$'));
         
         type_M = strcmp(type,'M');
         type_P = strcmp(type,'P');
@@ -229,8 +229,11 @@ for idx = 1 : size(SequenceCategory, 1)
         
         type_name = cell(size(type));
         type_name(type_SBRef) = {'func_sbref'};
-        type_name(type_M    ) = {'func_mag'};
+        type_name(type_M    ) = {'func_mag'  };
         type_name(type_P    ) = {'func_phase'};
+        
+        type_empty = isemptyCELL(type_name); % error managment
+        type_name(type_empty) = {'func_UNKNOWN'};
         
         % phase dir
         bids_dir = exam_SequenceData(where,hdr.PhaseEncodingDirection);
@@ -259,7 +262,7 @@ for idx = 1 : size(SequenceCategory, 1)
         subcategory = {'pcasl','casl','asl'}; % mp2rage
         for sc = 1 : length(subcategory)
             
-            where_sc = ~cellfun(@isempty, regexp(exam_SequenceData(where,hdr.SequenceFileName),subcategory{sc})); % do we find this subcategory ?
+            where_sc = ~isemptyCELL( regexp(exam_SequenceData(where,hdr.SequenceFileName),subcategory{sc})); % do we find this subcategory ?
             if any(where_sc) % yes
                 EXAM.addSerie(upper_dir_name(where_sc), subcategory{sc})% add them
                 flag_add = 1;
@@ -277,7 +280,7 @@ for idx = 1 : size(SequenceCategory, 1)
             type = type(:,3);
             name = exam_SequenceData(where,hdr.SeriesDescription); % serie name
             
-            type_SBRef = ~cellfun(@isempty,regexp(name,'SBRef$'));
+            type_SBRef = ~isemptyCELL(regexp(name,'SBRef$'));
             
             type_M = strcmp(type,'M');
             type_P = strcmp(type,'P');
@@ -299,7 +302,7 @@ for idx = 1 : size(SequenceCategory, 1)
         subcategory = {'_INV1','_INV2','_UNI_Images','_T1_Images'}; % mp2rage
         for sc = 1 : length(subcategory)
             
-            where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
+            where_sc = ~isemptyCELL( regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
             if any(where_sc) % yes
                 EXAM.addSerie(upper_dir_name(where_sc), strcat('anat', subcategory{sc})  )% add them
                 flag_add = 1;
@@ -380,7 +383,7 @@ for idx = 1 : size(SequenceCategory, 1)
         
         for sc = 1 : length(subcategory)
             
-            where_sc = ~cellfun(@isempty, regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
+            where_sc = ~isemptyCELL( regexp(upper_dir_name,subcategory{sc})); % do we find this subcategory ?
             
             if any(where_sc) % yes
                 EXAM.addSerie(upper_dir_name(where_sc), strcat('swi', '_', subcategory{sc}(1:end-1)) )% add them
@@ -422,7 +425,12 @@ for idx = 1 : size(SequenceCategory, 1)
         % dwi
         %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'dwi')
-
+        
+        % DiffDirections
+        DiffDirections = exam_SequenceData(where,hdr.DiffDirections);
+        DiffDirections = cell2mat(DiffDirections);
+        DiffDirections = DiffDirections + 1; % Siemens adds one b0. Its mandatory
+        
         % bvals
         B_value = exam_SequenceData(where,hdr.B_value);
         bvals1  = cellfun(@max,B_value);
@@ -438,6 +446,21 @@ for idx = 1 : size(SequenceCategory, 1)
             bvects(b) = sum( sum(abs(B_vect{b}),1) > 0 );
         end
         
+        % INTERRUPT ?
+        INTERRUPT = cell(size(DiffDirections));
+        for b = 1 : length(B_vect)
+            nDir_theoric = DiffDirections(b);
+            nDir_real    = size(B_vect{b},2);
+            if nDir_theoric == nDir_real
+                INTERRUPT{b} = '';
+            elseif nDir_theoric > nDir_real
+                INTERRUPT{b} = 'INTERRUPT_';
+            else
+                % error('wtf ?') % I don't know what to do...
+                INTERRUPT{b} = '';
+            end
+        end
+        
         % phase dir
         bids_dir = exam_SequenceData(where,hdr.PhaseEncodingDirection);
         bids_dir(strcmp(bids_dir, 'j' )) = {'PA'};
@@ -446,7 +469,7 @@ for idx = 1 : size(SequenceCategory, 1)
         bids_dir(strcmp(bids_dir, 'i-')) = {'RL'};
         
         % concat dwi + bvals + bvects + phase dir
-        name = regexprep( strcat('dwi_b', cellstr(num2str(bvals)), '_d', cellstr(num2str(bvects)), '_', bids_dir) , ' ', '' );
+        name = regexprep( strcat('dwi_', INTERRUPT, 'b', cellstr(num2str(bvals)), '_d', cellstr(num2str(bvects)), '_', bids_dir) , ' ', '' );
         
         % add series in the exam object smartly, so there is an auto-increment when multiple series
         [unique_name,~,table_name] = unique(name,'stable');
@@ -486,12 +509,12 @@ for ser = 1 : size(exam_SequenceData,1)
             
             Serie_obj      = EXAM.getSerie(exam_SequenceData{ser,end});
             if ~isempty( Serie_obj )
-                SeqData_struct = param_struct( ~cellfun(@isempty, regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end}) ) );
+                SeqData_struct = param_struct( ~isemptyCELL( regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end}) ) );
                 for s = 1 : length(Serie_obj)
                     Serie_obj(s).sequence = SeqData_struct{s};
                 end
             else
-                str = warning('[%s] : we have a problem, I can''t find any serie for [ %s ]', mfilename, exam_SequenceData{ser,end});
+                str = warning('[%s] : we have a problem in %s, I can''t find any serie for [ %s ]', mfilename, EXAM.path, exam_SequenceData{ser,end});
                 error_log = log(error_log,str,0);
             end
             
