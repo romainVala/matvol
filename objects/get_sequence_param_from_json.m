@@ -185,8 +185,9 @@ for j = 1 : size(json_filename,1)
         data_file.sPositiondCor = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0\].sPosition.dCor') ) ;
         data_file.sPositiondTra = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0]\.sPosition.dTra') ) ;
         data_file.sNormaldTra   = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0\].sNormal.dTra'  ) ) ;
-        data_file.AbsTablePosition             = str2double(           get_field_one     ( content, 'CsaSeries.AbsTablePosition' ) );
-        
+        data_file.AbsTablePosition = str2double( get_field_one( content, 'CsaSeries.AbsTablePosition' ) );
+        data_file.PatientPosition  = str2double( get_field_one( content, 'PatientPosition'       ) ) ;
+
         %------------------------------------------------------------------
         % Matrix / Acq
         %------------------------------------------------------------------
