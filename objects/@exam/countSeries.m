@@ -60,6 +60,17 @@ NrSerie = NrSerie(:,nick_order);
 %% Sort NrSerie matrix
 
 ExamName = {examArray.name}';
+idxkeep = non_unique( ExamName ); % non unique ? then add random chars in the end
+while sum(idxkeep) > 0
+    random_chars      = regexprep(cellstr(num2str(randi(9,[sum(idxkeep) 8]))),' ',''); % generate random numbers, and convert them into char
+    ExamName(idxkeep) = strcat(ExamName(idxkeep),'_',random_chars);                    % concat name with random chars
+    idxkeep           = non_unique( ExamName );                                        % update the measure of non-unique
+end
+for ex = 1 : numel(examArray)
+    examArray(ex).name = ExamName{ex};
+end
+ExamName = {examArray.name}'; % now we have unique names
+
 [~,IA,IC] = unique(NrSerie,'rows');
 
 Group = struct;
@@ -96,3 +107,11 @@ end
 
 
 end % end
+
+function idxkeep = non_unique( in )
+
+[~,idxu,idxc] = unique(in);
+[count, ~, idxcount] = histcounts(idxc,numel(idxu));
+idxkeep = count(idxcount)>1;
+
+end
