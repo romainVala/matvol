@@ -308,13 +308,16 @@ for subj = 1 : nrSubject
         list_volume_src = addsuffixtofilenames(list_volume_src,ext_echo);      % add file extension
         list_volume_src{end+1} = sprintf('%s_%s',prefix,'ctab.txt');           % components table
         list_volume_src{end+1} = sprintf('meica.%s_e001',prefix);              % for motion paramters path (1/2)
+        list_volume_src{end+1} = sprintf('meica.%s_e001',prefix);              % for tsoc_nogs.nii (1/2)
         list_volume_src = addprefixtofilenames(list_volume_src,working_dir);
-        list_volume_src{end} = fullfile( list_volume_src{end} , 'motion.1D' ); % for motion paramters path (2/2)
+        list_volume_src{end-1} = fullfile( list_volume_src{end} , '/TED/tsoc_nogs.nii' ); % for motion paramters path (2/2)
+        list_volume_src{end  } = fullfile( list_volume_src{end} , 'motion.1D' ); % for motion paramters path (2/2)
         
         list_volume_dst = addprefixtofilenames(list_volume_base,prefix);       % add prefix
         list_volume_dst = addsuffixtofilenames(list_volume_dst,warp);          % add suffix for space
         list_volume_dst = addsuffixtofilenames(list_volume_dst,ext_echo);      % add file extension
         list_volume_dst{end+1} = sprintf('%s_%s',prefix,'ctab.txt');           % components table
+        list_volume_dst{end+1} = sprintf('%s_tsoc_nogs.nii',prefix);           % tsoc_nogs.nii : in case of TEDNA crach, we still have the TSoc
         list_volume_dst{end+1} = sprintf('rp_%s.txt',prefix);                  % motion paramters
         list_volume_dst = addprefixtofilenames(list_volume_dst,dir_func{subj}{run}); % path of the serie dir
         
