@@ -21,8 +21,7 @@ if remove_obj
 end
 
 % Convert to table
-Table = struct2table(s);
-% Table.Properties.RowNames
+Table = struct2table(s,'AsArray',1);
 
 % Output
 if nargout

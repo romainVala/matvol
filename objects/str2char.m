@@ -1,4 +1,4 @@
-function str = str2char( name, content )
+function str = str2char( content, name )
 %GEN_SERIE_NAME
 %
 % Exemple :
@@ -11,7 +11,7 @@ function str = str2char( name, content )
 % param.mxdim = [210 212 56];
 % param.numepty = [];
 %
-% gen_serie_name('dwi',param)
+% str2char(param,'dwi')
 %
 % ans =
 %     'dwi: TR=1520 TE=30 seqname=cmrr_mbep2d_bold mlchar=ffffgggg pxdim=1.7x1.7x2 mxdim=210x212x56 numepty=[]'
@@ -19,13 +19,26 @@ function str = str2char( name, content )
 
 %% Check input arguments
 
+if nargin < 1
+    help(mfilename)
+    return
+end
+
+if nargin < 2
+    name = '';
+end
+
 assert( ischar  (name   ) , 'name must be a char'      )
 assert( isstruct(content) , 'content must be a struct' )
 
 
 %% Concat name and content into a char
 
-str = [name ':'];
+if isempty(name)
+    str = '';
+else
+    str = [name ':'];
+end
 
 fields = fieldnames(content);
 
@@ -40,7 +53,7 @@ for i = 1  : length(fields)
         if nbr == 0
             str = sprintf('%s %s=[]',str,fname);
         elseif nbr == 1
-            str = sprintf('%s %s=%d',str,fname,current);
+            str = sprintf('%s %s=%g',str,fname,current);
         else
             rep      = repmat('%gx',[1 nbr]);
             rep(end) = [];
@@ -59,6 +72,10 @@ for i = 1  : length(fields)
         
     end
     
+end
+
+if isempty(name) && ~isempty(str)
+    str(1) = [];
 end
 
 

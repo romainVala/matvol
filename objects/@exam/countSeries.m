@@ -26,24 +26,24 @@ for ex = 1 : numel(examArray)
     
     serieArray = examArray(ex).getSerie(serie_regex,'tag',0);
     
-    exam_tags  = {serieArray.tag};
-    exam_nicks = unique({serieArray.nick});
-    exam_path  = {serieArray.path};
-    valid_path = ~cellfun( @isempty, exam_path );
+    serie_tags  = {serieArray.tag};
+    serie_nicks = unique({serieArray.nick});
+    serie_path  = {serieArray.path};
+    valid_path  = ~cellfun( @isempty, serie_path );
     
     % addSerie, when tags are not found, adds an empty serie (for diagnostic purpose)
     % empty serie means serie WITH tag, and WITHOUT nick
     % but in this partical countSeries function, we count the tags
     % so here we need an exeption to discard the exams with only empty series
-    if isempty(char(exam_nicks))
+    if isempty(char(serie_nicks))
         continue
     end
     
-    nick = unique([nick(:)' exam_nicks],'stable'); % concatenate previous nicks and new nicks, and keep only unique ones in the same order
+    nick = unique([nick(:)' serie_nicks],'stable'); % concatenate previous nicks and new nicks, and keep only unique ones in the same order
     nick(cellfun(@isempty,nick)) = [];             % remove empty tags
     
     for n = 1 : length(nick)
-        found_tags_idx = ~cellfun( @isempty, regexp(exam_tags,nick{n}) );
+        found_tags_idx = ~cellfun( @isempty, regexp(serie_tags,nick{n}) );
         N = sum ( found_tags_idx & valid_path );
         NrSerie(ex,n) = N;
     end
