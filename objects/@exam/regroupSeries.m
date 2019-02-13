@@ -90,7 +90,9 @@ for i = 1 : length(IA)
     Group(i).param_str = param_str(logical(Group(i).array(1,:)))';
     
     idx_array = find(Group(i).array(1,:));
-    if ~isempty(idx_array)
+    if isempty(idx_array)
+        Group(i).table = table; % empty table
+    else
         clear tmp_struct
         found_nick = cell(size(idx_array));
         for seq_idx = 1 : length(idx_array)
