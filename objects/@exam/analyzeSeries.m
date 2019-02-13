@@ -1,13 +1,14 @@
-function varargout = analyzeCountSeries( examArray, par )
+function varargout = analyzeSeries( examArray, par )
 % ANALYZECOUNTSERIES regroup exam by number of series.
 %
-% Syntax : [best, more, less, out] = analyzeCountSeries(examArray, par)
-%                                    analyzeCountSeries(examArray, par)
-%          [best, more, less, out] = analyzeCountSeries(examArray)
-%                                    analyzeCountSeries(examArray)
+% Syntax : [best, more, less, out] = analyzeSeries(examArray, par)
+%                                    analyzeSeries(examArray, par)
+%          [best, more, less, out] = analyzeSeries(examArray)
+%                                    analyzeSeries(examArray)
 % All outputs are @exam arrays
 %
-% See also compareOrientation
+% See also seq2str compareOrientation
+
 
 %% Check input arguments
 
@@ -16,12 +17,13 @@ if ~exist('par','var')
 end
 
 defpar.serie_regex = '.*';
-defpar.N           = 1; % keep N best groups
-defpar.only_best   = 0; % perform the analysis only on the best group : usefull if you have very large examArray
+defpar.param_list  = '';   % use default list from seq2str
+defpar.N           = 1;    % keep N best groups
+defpar.only_best   = 0;    % perform the analysis only on the best group : usefull if you have very large examArray
 
 defpar.verbose     = 1;
-defpar.pct         = 0; % Parallel Computing Toolbox
-defpar.redo        = 0; % read again the json files & update @serie.sequence
+defpar.pct         = 0;    % Parallel Computing Toolbox
+defpar.redo        = 0;    % read again the json files & update @serie.sequence
 
 par = complet_struct(par,defpar);
 
@@ -31,12 +33,12 @@ par = complet_struct(par,defpar);
 %TableParam = examArray.getSerie(par.serie_regex).json2table(par);
 par.redo = 0; % don't need anymore for he next json2table
 
-[TableSer, Group] = examArray.countSeries(par.serie_regex);
+[TableSer, Group] = examArray.regroupSeries(par);
 
 
 %% Pickup the best group
 
-% OLD Hypothesis : the largest group in 'countSeries' is the "right" group, the one with the good number of sequences
+% OLD Hypothesis : the largest group in 'regroupSeries' is the "right" group, the one with the good number of sequences
 % New hypothesis : keep N best groups
 
 nGroups = length(Group);
@@ -48,16 +50,10 @@ for iGroup = nGroups : -1 : nGroups-N+1
     
     counter = counter + 1;
     
-    bestGroup = Group(iGroup);
-    
-    bestGroup_name = [bestGroup.name];
-    examArray_best{counter} = examArray.getExam(bestGroup_name);
-    
-    %TableParam_best = examArray_best{counter}.getSerie(par.serie_regex).json2table(par);
-    TableSer_best   = examArray_best{counter}.countSeries(par.serie_regex);
-    
-    list_exam_best = {examArray_best{counter}.name}';
-    summary_best{counter} = table2struct(TableSer_best(end,2:end));
+    bestGroup               = Group(iGroup);
+    examArray_best{counter} = examArray(bestGroup.idx);
+    list_exam_best          = bestGroup.name;
+    summary_best{counter}   = bestGroup.table;
     
     
     %% Best group info
@@ -75,7 +71,7 @@ for iGroup = nGroups : -1 : nGroups-N+1
         fprintf('\n')
     end
     
-    list_sequence_best = fieldnames(summary_best{counter});
+    list_sequence_best = summary_best{counter}.Row;
     list_exam_name     = TableSer.Properties.RowNames;
     
     if ~par.only_best
@@ -85,7 +81,7 @@ for iGroup = nGroups : -1 : nGroups-N+1
         
         examArray_more{counter} = exam.empty;
         for seq = 1 : length(list_sequence_best)
-            index = TableSer.(list_sequence_best{seq}) > summary_best{counter}.(list_sequence_best{seq});
+            index = TableSer.(list_sequence_best{seq}) > summary_best{counter}.N(seq);
             list_more = list_exam_name(index);
             if par.verbose > 1
                 cprintf('key','Exam with '), cprintf('_key','more '), cprintf('*key','%s ',list_sequence_best{seq}), cprintf('key',', N = %d (%d %%)\n',sum(index), round(100*sum(index)/length(examArray)))
@@ -95,7 +91,8 @@ for iGroup = nGroups : -1 : nGroups-N+1
                 fprintf('\n')
             end
             if ~isempty(list_more)
-                examArray_more{counter} = examArray_more{counter}.removeTag(cellstr2regex(list_more,1)) + examArray.getExam([list_more;{''}]);
+                examArray_more{counter} = examArray_more{counter} + examArray.getExam(list_more); % add exam in the array, even if non-unique
+                examArray_more{counter} = unique(examArray_more{counter}); % now only keep the unique ones
             end
         end
         
@@ -104,7 +101,7 @@ for iGroup = nGroups : -1 : nGroups-N+1
         
         examArray_less{counter} = exam.empty;
         for seq = 1 : length(list_sequence_best)
-            index = TableSer.(list_sequence_best{seq}) < summary_best{counter}.(list_sequence_best{seq});
+            index = TableSer.(list_sequence_best{seq}) < summary_best{counter}.N(seq);
             list_less = list_exam_name(index);
             if par.verbose > 1
                 cprintf('err','Exam with '), cprintf('_err','less '), cprintf('*err','%s ',list_sequence_best{seq}), cprintf('err',', N = %d (%d %%)\n',sum(index), round(100*sum(index)/length(examArray)))
@@ -114,7 +111,8 @@ for iGroup = nGroups : -1 : nGroups-N+1
                 fprintf('\n')
             end
             if ~isempty(list_less)
-                examArray_less{counter} = examArray_less{counter}.removeTag(cellstr2regex(list_less,1)) + examArray.getExam([list_less;{''}]);
+                examArray_less{counter} = examArray_less{counter} + examArray.getExam(list_less); % add exam in the array, even if non-unique
+                examArray_less{counter} = unique(examArray_less{counter}); % now only keep the unique ones
             end
         end
         
@@ -136,9 +134,11 @@ for iGroup = nGroups : -1 : nGroups-N+1
                 fprintf('\n')
             end
             if ~isempty(list_out)
-                examArray_out{counter} = examArray_out{counter}.removeTag(cellstr2regex(list_out,1)) + examArray.getExam([list_out;{''}]);
+                examArray_out{counter} = examArray_out{counter} + examArray.getExam(list_out); % add exam in the array, even if non-unique
+                examArray_out{counter} = unique(examArray_out{counter}); % now only keep the unique ones
             end
         end
+        
         
     end % par.only_best
     
@@ -159,7 +159,7 @@ if nargout > 0
             varargout{end+1} = examArray_less{1}; % LESS than expected
             varargout{end+1} = examArray_out {1}; % ?
         end
-        varargout{end+1} = summary_best  {1}; % info
+        varargout{end+1} = summary_best{1}; % info
         
     else
         varargout{end+1} = examArray_best; % best group
@@ -168,7 +168,7 @@ if nargout > 0
             varargout{end+1} = examArray_less; % LESS than expected
             varargout{end+1} = examArray_out ; % ?
         end
-        varargout{end+1} = summary_best  ; % info
+        varargout{end+1} = summary_best; % info
         
     end
     
