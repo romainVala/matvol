@@ -1,9 +1,11 @@
 function  jobs = job_smooth(img,par)
 % JOB_SMOOTH - SPM:Spatial:Smooth
 %
+% INPUT : img can be 'char' of volume(file), multi-level 'cellstr' of volume(file), '@volume' array
+%
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
 %
-% See also get_subdir_regex get_subdir_regex_files
+% See also get_subdir_regex get_subdir_regex_files exam exam.AddSerie exam.addVolume
 
 
 %% Check input arguments
@@ -12,6 +14,10 @@ if ~exist('par','var')
     par = ''; % for defpar
 end
 
+if nargin < 1
+    help(mfilename)
+    error('[%s]: not enough input arguments - img is required',mfilename)
+end
 
 obj = 0;
 if isa(img,'volume')
@@ -70,7 +76,7 @@ if obj && par.auto_add_obj
     tag        =  img_obj(1).tag;
     ext        = '.*.nii$';
     
-    serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
+    serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
     
 end
 

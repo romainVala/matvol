@@ -1,5 +1,7 @@
 function  jobs = job_do_segmentCAT12(img,par)
-%%  jobs = job_do_segmentCAT12(img,par)
+%
+% INPUT : img can be 'char' of volume(file), single-level 'cellstr' of volume(file), '@volume' array
+%
 % for spm12 segment, if img{1} has several line then it is a multichannel
 %
 % 'par' allow you to specify which output to save  defaults are
@@ -9,7 +11,7 @@ function  jobs = job_do_segmentCAT12(img,par)
 %   par.bias = [0 1]; % bias field / bias corrected image
 %   par.warp = [1 1]; % warp field native->template / warp field native<-template
 %
-% See also get_subdir_regex get_subdir_regex_files
+% See also get_subdir_regex get_subdir_regex_files exam exam.AddSerie exam.addVolume
 
 
 
@@ -24,8 +26,8 @@ if ~exist('par', 'var')
     par='';
 end
 
-
 if nargin < 1
+    help(mfilename)
     error('[%s]: not enough input arguments - image list is required',mfilename)
 end
 
@@ -176,7 +178,7 @@ if obj && par.auto_add_obj
     tag        =  in_obj(1).tag;
     ext        = '.*.nii$';
     
-    % Warp field (warp)
+    % Warp field
     if par.warp(2), serieArray.addVolume([ '^y_' tag ext],[ 'y_' tag],1), end % Forward
     if par.warp(1), serieArray.addVolume(['^iy_' tag ext],['iy_' tag],1), end % Inverse
     

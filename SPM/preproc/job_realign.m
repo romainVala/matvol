@@ -1,17 +1,22 @@
 function jobs = job_realign(in,par)
 % JOB_REALIGN - SPM:Spatial:Realign:Estimate & Reslice
 %
-% in - can be multilevel-cell or @volume array
+% INPUT : fin can be 'char' of dir, multi-level 'cellstr' of dir, '@volume' array
 %
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
 %
-% See also get_subdir_regex get_subdir_regex_files
+% See also get_subdir_regex get_subdir_regex_files exam exam.AddSerie exam.addVolume
 
 
 %% Check input arguments
 
 if ~exist('par','var')
     par = ''; % for defpar
+end
+
+if nargin < 1
+    help(mfilename)
+    error('[%s]: not enough input arguments - in is required',mfilename)
 end
 
 obj = 0;
@@ -145,8 +150,8 @@ if obj && par.auto_add_obj
     tag             =  in_obj(1).tag;
     ext             = '.*.nii$';
     
-    serieArray.     addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
-    serieArray_run1.addVolume([ '^mean'        tag ext],[ 'mean'     tag])
+    serieArray.     addVolume(['^' par.prefix tag ext],[par.prefix tag])
+    serieArray_run1.addVolume(['^mean'        tag ext],['mean'     tag])
     
 end
 

@@ -1,6 +1,8 @@
 function  jobs = job_do_segment(img,par)
 % JOB_DO_SEGMENT - SPM:Spatial:Segment
 %
+% INPUT : img can be 'char' of volume(file), single-level 'cellstr' of volume(file), '@volume' array
+%
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
 %
 % for spm12 segment, if img{1} has several line then it is a multichannel
@@ -12,7 +14,7 @@ function  jobs = job_do_segment(img,par)
 %   par.bias = [0 1]; % bias field / bias corrected image
 %   par.warp = [1 1]; % warp field native->template / warp field native<-template
 %
-% See also get_subdir_regex get_subdir_regex_files
+% See also get_subdir_regex get_subdir_regex_files exam exam.AddSerie exam.addVolume
 
 
 %% Check input arguments
@@ -22,6 +24,7 @@ if ~exist('par','var')
 end
 
 if nargin < 1
+    help(mfilename)
     error('[%s]: not enough input arguments - image list is required',mfilename)
 end
 

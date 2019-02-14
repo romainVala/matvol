@@ -1,9 +1,16 @@
 function jobs = job_coregister(src,ref,other,par)
 % JOB_COREGISTER - SPM:Spatial:Coregister
 %
+% INPUT : src - ref can be 'char' of volume(file), single-level 'cellstr' of volume(file), '@volume' array
+%             other can be 'char' of volume(file),  multi-level 'cellstr' of volume(file), '@volume' array
+%
+% ref   -> remains static, it's the target
+% src   -> will be moved to match the 'ref', this transformation will be used on 'other'
+% other -> the transformation "src->ref" will be applied on 'other' images
+%
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
 %
-% See also get_subdir_regex get_subdir_regex_files
+% See also get_subdir_regex get_subdir_regex_files exam exam.AddSerie exam.addVolume
 
 
 %% Check input arguments
@@ -15,6 +22,10 @@ if ~exist('par','var')
     par = ''; % for defpar
 end
 
+if nargin < 1
+    help(mfilename)
+    error('[%s]: not enough input arguments - at least src & ref are required',mfilename)
+end
 
 obj = 0;
 if isa(src,'volume')
@@ -172,9 +183,9 @@ if obj && par.auto_add_obj
         case 'estimate'
             % pass, no volume created
         case 'estimate_and_write'
-            serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
+            serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
         case 'write'
-            serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
+            serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
     end
     
     if ~isempty(other)
@@ -183,9 +194,9 @@ if obj && par.auto_add_obj
             case 'estimate'
                 % pass, no volume created
             case 'estimate_and_write'
-                serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
+                serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
             case 'write'
-                serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
+                serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
         end
         
     end

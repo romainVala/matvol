@@ -1,11 +1,15 @@
 function job = do_topup_unwarp_4D(in,par)
 % DO_TOPUP_UNWARP_4D - FSL:topup - FSL:unwarp
+%
+% INPUT : in can be 'char' of dir, multi-level 'cellstr' of dir, '@volume' array
+%
 % img is multilevel directory (see get_subdir_regex).
 % The function will generate a mean for each runs (necessary to do topup on
 % each run), then compute the warpfield, and finaly apply the warpfield to
 % each run files (volumes + mean, normal scans + reversed phase scans).
 
-% See also get_subdir_regex job_realign
+% See also get_subdir_regex job_realign exam exam.AddSerie exam.addVolume
+
 
 %% Check input arguments
 
@@ -13,6 +17,10 @@ if ~exist('par','var')
     par = ''; % for defpar
 end
 
+if nargin < 1
+    help(mfilename)
+    error('[%s]: not enough input arguments - in is required',mfilename)
+end
 
 obj = 0;
 if isa(in,'volume')
@@ -185,14 +193,14 @@ if obj && par.auto_add_obj
             ext = '.*.nii.gz';
     end
     
-    serieArray.addVolume([ '^ut'     tag ext],[ 'ut'     tag])
+    serieArray.addVolume(['^ut'     tag ext],['ut'     tag])
     
     if strcmp(tag(1),'r')
         tag = tag(2:end);
     end
     
-    serieArray.addVolume([ '^mean'   tag ext],[ 'mean'   tag])
-    serieArray.addVolume([ '^utmean' tag ext],[ 'utmean' tag])
+    serieArray.addVolume(['^mean'   tag ext],['mean'   tag])
+    serieArray.addVolume(['^utmean' tag ext],['utmean' tag])
     
 end
 

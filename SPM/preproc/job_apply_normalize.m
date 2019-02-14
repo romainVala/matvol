@@ -1,11 +1,13 @@
 function jobs = job_apply_normalize(warp_field,img, par)
 % JOB_APPLY_NORMALIZE - SPM:Spatial:Normalise:Write
 %
+% INPUT : warp_field & img can be 'char' of volume(file), single-level 'cellstr' of volume(file), '@volume' array
+%
 % for spm12 warp_field, is indeed the flow field y_*.nii or iy_*.nii
 %
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
 %
-% See also job_do_segment get_subdir_regex get_subdir_regex_files
+% See also job_do_segment get_subdir_regex get_subdir_regex_files exam exam.AddSerie exam.addVolume
 
 
 %% Check input arguments
@@ -14,7 +16,8 @@ if ~exist('par','var')
     par = ''; % for defpar
 end
 
-if nargin < 2
+if nargin < 1
+    help(mfilename)
     error('[%s]: not enough input arguments - warp_filed & imagelist are required',mfilename)
 end
 
@@ -106,7 +109,7 @@ if obj && par.auto_add_obj
     tag        =  in_obj(1).tag;
     ext        = '.*.nii$';
     
-    serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
+    serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
     
 end
 

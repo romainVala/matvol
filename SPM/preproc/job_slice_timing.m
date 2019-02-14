@@ -1,13 +1,22 @@
 function jobs = job_slice_timing(fin,par)
 % JOB_SLICE_TIMING - SPM:Temporal:SliceTiming
 %
+% INPUT : fin can be 'char' of dir, multi-level 'cellstr' of dir, '@volume' array
+%
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
 %
+% See also get_subdir_regex exam exam.AddSerie exam.addVolume
+
 
 %% Check input arguments
 
 if ~exist('par','var')
     par = ''; % for defpar
+end
+
+if nargin < 1
+    help(mfilename)
+    error('[%s]: not enough input arguments - fin is required',mfilename)
 end
 
 obj = 0;
@@ -178,7 +187,7 @@ if obj && par.auto_add_obj
     tag        =  fin_obj(1).tag;
     ext        = '.*.nii$';
     
-    serieArray.addVolume([ '^' par.prefix tag ext],[ par.prefix tag])
+    serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
     
 end
 
