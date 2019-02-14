@@ -6,10 +6,11 @@ function  jobs = job_do_segment(img,par)
 % for spm12 segment, if img{1} has several line then it is a multichannel
 %
 % 'par' allow you to specify which output to save  defaults are
-%   par.GM   = [0 0 1 0]; % Unmodulated / modulated / native_space dartel / import
+%   par.GM   = [0 0 1 0]; % warped_space_Unmodulated(wc*) / warped_space_modulated(mwc*) / native_space(c*) / native_space_dartel_import(rc*)
 %   par.WM   = [0 0 1 0];
 %   par.CSF  = [0 0 1 0];
 %   par.bias = [0 1]; % bias field / bias corrected image
+%   par.warp = [1 1]; % warp field native->template / warp field native<-template
 %
 % See also get_subdir_regex get_subdir_regex_files
 

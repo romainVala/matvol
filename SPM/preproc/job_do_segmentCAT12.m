@@ -2,11 +2,15 @@ function  jobs = job_do_segmentCAT12(img,par)
 %%  jobs = job_do_segmentCAT12(img,par)
 % for spm12 segment, if img{1} has several line then it is a multichannel
 %
-% par allow you to specify which output to save  defaults are
-%   par.GM   = [0 0 1 0]; % Unmodulated / modulated / native_space dartel / import
+% 'par' allow you to specify which output to save  defaults are
+%   par.GM   = [0 0 1 0]; % warped_space_Unmodulated(wp*) / warped_space_modulated(mwp*) / native_space(p*) / native_space_dartel_import(rp*)
 %   par.WM   = [0 0 1 0];
 %   par.CSF  = [0 0 1 0];
 %   par.bias = [0 1]; % bias field / bias corrected image
+%   par.warp = [1 1]; % warp field native->template / warp field native<-template
+%
+% See also get_subdir_regex get_subdir_regex_files
+
 
 
 %% Check CAT12 toolbox install
@@ -42,14 +46,14 @@ end
 
 %% defpar
 
-defpar.GM        = [0 1 1 1]; % Unmodulated / modulated / native_space / dartel import
-% ??? first one not possible, but keep for compatibility with spm12 job_segment
-defpar.WM        = [0 1 1 1];
-defpar.CSF       = [0 1 1 1];
-defpar.bias      = [1 1 0] ;  % native normalize dartel     [0 1]; % bias field / bias corrected image
-defpar.def_field = [1 1];     % deformation field to write [y iy]
-defpar.jacobian  = 0;         % write jacobian determinant in normalize space
+% Retrocompatibility for SPM:Spatial:Segment options
+defpar.GM        = [0 0 1 0]; % warped_space_Unmodulated(wp*) / warped_space_modulated(mwp*) / native_space(p*) / native_space_dartel_import(rp*)
+defpar.WM        = [0 0 1 0];
+defpar.CSF       = [0 0 1 0];
+defpar.bias      = [0 1 0] ;  % native normalize dartel     [0 1]; % bias field / bias corrected image
+defpar.warp      = [1 1]; % warp field native->template / warp field native<-template
 
+defpar.jacobian  = 1;         % write jacobian determinant in normalize space
 defpar.doROI     = 1;
 defpar.doSurface = 1;
 defpar.subfolder = 0; % all results in the same subfolder
@@ -154,7 +158,7 @@ for nbsuj = 1:length(img)
     jobs{nbsuj}.spm.tools.cat.estwrite.output.jacobian.warped = par.jacobian;
     
     % Warp fields : y_ & iy_
-    jobs{nbsuj}.spm.tools.cat.estwrite.output.warps = par.def_field;
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.warps = par.warp;
     
 end % for : nsubj
 
@@ -172,9 +176,9 @@ if obj && par.auto_add_obj
     tag        =  in_obj(1).tag;
     ext        = '.*.nii$';
     
-    % Warp field (def_field)
-    if par.def_field(2), serieArray.addVolume([ '^y_' tag ext],[ 'y_' tag],1), end % Forward
-    if par.def_field(1), serieArray.addVolume(['^iy_' tag ext],['iy_' tag],1), end % Inverse
+    % Warp field (warp)
+    if par.warp(2), serieArray.addVolume([ '^y_' tag ext],[ 'y_' tag],1), end % Forward
+    if par.warp(1), serieArray.addVolume(['^iy_' tag ext],['iy_' tag],1), end % Inverse
     
     % Bias field
     if par.bias(1), serieArray.addVolume([ '^m' tag ext],[ 'm' tag],1), end % Corrected
