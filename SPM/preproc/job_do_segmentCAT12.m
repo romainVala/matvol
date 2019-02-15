@@ -52,7 +52,7 @@ end
 defpar.GM        = [0 0 1 0]; % warped_space_Unmodulated(wp*) / warped_space_modulated(mwp*) / native_space(p*) / native_space_dartel_import(rp*)
 defpar.WM        = [0 0 1 0];
 defpar.CSF       = [0 0 1 0];
-defpar.bias      = [0 1 0] ;  % native normalize dartel     [0 1]; % bias field / bias corrected image
+defpar.bias      = [1 1 0] ;  % native normalize dartel     [0 1]; % bias field / bias corrected image
 defpar.warp      = [1 1]; % warp field native->template / warp field native<-template
 
 defpar.jacobian  = 1;         % write jacobian determinant in normalize space
