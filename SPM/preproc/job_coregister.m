@@ -65,6 +65,11 @@ defpar.walltime = '00:30:00';
 
 par = complet_struct(par,defpar);
 
+% Security
+if par.sge
+    par.auto_add_obj = 0;
+end
+
 
 %% SPM:Spatial:Coregister
 

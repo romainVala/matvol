@@ -46,6 +46,10 @@ defpar.auto_add_obj = 1;
 
 par = complet_struct(par,defpar);
 
+% Security
+if par.sge
+    par.auto_add_obj = 0;
+end
 
 parsge  = par.sge;
 par.sge = -1; % only prepare commands

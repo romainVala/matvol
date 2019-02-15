@@ -44,6 +44,11 @@ defpar.display  = 0;
 
 par = complet_struct(par,defpar);
 
+% Security
+if par.sge
+    par.auto_add_obj = 0;
+end
+
 
 %% SPM:Spatial:Smooth
 

@@ -32,9 +32,6 @@ obj = 0;
 if isa(img,'volume')
     obj = 1;
     in_obj  = img;
-    contains_gz = ~cellfun(@isempty,strfind(in_obj.getPath,'.nii.gz'));
-    assert( ~any(contains_gz(:)), 'Volumes must be unzip first. Use examArray.unzipVolume(par) or volumeArray.unzip(par).')
-    img = in_obj.toJob;
 elseif ischar(img) || iscellstr(img)
     % Ensure the inputs are cellstrings, to avoid dimensions problems
     img = cellstr(img)';
@@ -64,11 +61,17 @@ defpar.walltime = '01:00:00';
 
 par = complet_struct(par,defpar);
 
+% Security
+if par.sge
+    par.auto_add_obj = 0;
+end
+
 
 %% Unzip : unzip volumes if required
 
 if obj
-    % pass
+    in_obj.unzip(par);
+    img = in_obj.toJob;
 else
     img = unzip_volume(img); % it makes the multi structure down ... arg <============ need to solve this
 end

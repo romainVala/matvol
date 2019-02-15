@@ -23,8 +23,6 @@ obj = 0;
 if isa(fin,'volume')
     obj = 1;
     fin_obj  = fin;
-    contains_gz = ~cellfun(@isempty,strfind(fin_obj.getPath,'.nii.gz'));
-    assert( ~any(contains_gz(:)), 'Volumes must be unzip first. Use examArray.unzipVolume(par) or volumeArray.unzip(par).')
     fin = fin_obj.toJob(1);
 end
 
@@ -55,8 +53,19 @@ defpar.redo    = 0;
 
 par = complet_struct(par,defpar);
 
+% Security
+if par.sge
+    par.auto_add_obj = 0;
+end
+
 
 %% SPM:Temporal:SliceTiming
+
+% obj : unzip if necessary
+if obj
+    fin_obj.unzip(par);
+    fin = fin_obj.toJob(1);
+end
 
 if iscell( fin{1} )
     nSubj = length(fin);
@@ -77,7 +86,7 @@ for subj=1:nSubj
     else
         if iscell(fin{1})
             subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
-            unzip_volume(subjFiles);
+            unzip_volume(subjFiles); % unzip if necessary
             subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
         else
             subjFiles = fin;

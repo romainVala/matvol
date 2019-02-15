@@ -23,9 +23,6 @@ obj = 0;
 if isa(in,'volume')
     obj = 1;
     in_obj  = in;
-    contains_gz = ~cellfun(@isempty,strfind(in_obj.getPath,'.nii.gz'));
-    assert( ~any(contains_gz(:)), 'Volumes must be unzip first. Use examArray.unzipVolume(par) or volumeArray.unzip(par).')
-    in = in_obj.toJob(1);
 end
 
 
@@ -48,6 +45,11 @@ defpar.redo    = 0;
 
 par = complet_struct(par,defpar);
 
+% Security
+if par.sge
+    par.auto_add_obj = 0;
+end
+
 
 %%  SPM:Spatial:Realign:Estimate & Reslice
 
@@ -58,6 +60,12 @@ switch par.type
         
     case 'estimate_and_reslice'
         par.which_write = [2 1];
+end
+
+% obj : unzip if necesary
+if obj
+    in_obj.unzip(par);
+    in = in_obj.toJob(1);
 end
 
 % nrSubject ?
@@ -80,7 +88,7 @@ for subj = 1:nrSubject
     else
         if iscell(in{1})
             subjectRuns = get_subdir_regex_files(in{subj},par.file_reg);
-            unzip_volume(subjectRuns);
+            unzip_volume(subjectRuns); % unzip if necesary
             subjectRuns = get_subdir_regex_files(in{subj},par.file_reg);
         else
             subjectRuns = in;
