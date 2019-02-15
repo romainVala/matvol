@@ -53,7 +53,7 @@ for ns=1:length(outname)
     
     %    fprintf('writing %s \n',outname)
     
-    out{ns} = [outname{ns} '.nii.gz']; %#ok<AGROW>
+    out{ns,1} = [outname{ns} '.nii.gz']; %#ok<AGROW>
     
     job(ns) = {cmd}; %#ok<AGROW>
     

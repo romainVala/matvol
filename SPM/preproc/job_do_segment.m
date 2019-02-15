@@ -1,17 +1,20 @@
 function  jobs = job_do_segment(img,par)
 % JOB_DO_SEGMENT - SPM:Spatial:Segment
 %
+% INPUT : img can be 'char' of volume(file), single-level 'cellstr' of volume(file), '@volume' array
+%
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
 %
 % for spm12 segment, if img{1} has several line then it is a multichannel
 %
 % 'par' allow you to specify which output to save  defaults are
-%   par.GM   = [0 0 1 0]; % Unmodulated / modulated / native_space dartel / import
+%   par.GM   = [0 0 1 0]; % warped_space_Unmodulated(wc*) / warped_space_modulated(mwc*) / native_space(c*) / native_space_dartel_import(rc*)
 %   par.WM   = [0 0 1 0];
 %   par.CSF  = [0 0 1 0];
 %   par.bias = [0 1]; % bias field / bias corrected image
+%   par.warp = [1 1]; % warp field native->template / warp field native<-template
 %
-% See also get_subdir_regex get_subdir_regex_files
+% See also get_subdir_regex get_subdir_regex_files exam exam.AddSerie exam.addVolume
 
 
 %% Check input arguments
@@ -21,17 +24,26 @@ if ~exist('par','var')
 end
 
 if nargin < 1
+    help(mfilename)
     error('[%s]: not enough input arguments - image list is required',mfilename)
 end
 
-% Ensure the inputs are cellstrings, to avoid dimensions problems
-img = cellstr(img);
+obj = 0;
+if isa(img,'volume')
+    obj = 1;
+    in_obj  = img;
+elseif ischar(img) || iscellstr(img)
+    % Ensure the inputs are cellstrings, to avoid dimensions problems
+    img = cellstr(img)';
+else
+    error('[%s]: wrong input format (cellstr, char, @volume)', mfilename)
+end
 
 
 %% defpar
 
 % SPM:Spatial:Segment options
-defpar.GM   = [0 0 1 0]; % Unmodulated / modulated / native_space / dartel import
+defpar.GM   = [0 0 1 0]; % warped_space_Unmodulated(wc*) / warped_space_modulated(mwc*) / native_space(c*) / native_space_dartel_import(rc*)
 defpar.WM   = [0 0 1 0];
 defpar.CSF  = [0 0 1 0];
 defpar.bias = [0 1]; % bias field / bias corrected image
@@ -42,15 +54,27 @@ defpar.display = 0;
 defpar.redo    = 0;
 defpar.sge     = 0;
 
+defpar.auto_add_obj = 1;
+
 defpar.jobname  = 'spm_segment';
 defpar.walltime = '01:00:00';
 
 par = complet_struct(par,defpar);
 
+% Security
+if par.sge
+    par.auto_add_obj = 0;
+end
+
 
 %% Unzip : unzip volumes if required
 
-img = unzip_volume(img); % it makes the multi structure down ... arg <============ need to solve this
+if obj
+    in_obj.unzip(par);
+    img = in_obj.toJob;
+else
+    img = unzip_volume(img); % it makes the multi structure down ... arg <============ need to solve this
+end
 
 
 %% SPM:Spatial:Segment
@@ -141,6 +165,43 @@ end
 %% Other routines
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj
+    
+    serieArray = [in_obj.serie];
+    tag        =  in_obj(1).tag;
+    ext        = '.*.nii$';
+    
+    % Warp field
+    if par.warp(2), serieArray.addVolume([ '^y_' tag ext],[ 'y_' tag],1), end % Forward
+    if par.warp(1), serieArray.addVolume(['^iy_' tag ext],['iy_' tag],1), end % Inverse
+    
+    % Bias field
+    if par.bias(2), serieArray.addVolume(['^m'          tag ext],['m'          tag],1), end % Corrected
+    if par.bias(1), serieArray.addVolume(['^BiasField_' tag ext],['BiasField_' tag],1), end % Field
+    
+    % GM
+    if par.GM (3), serieArray.addVolume([  '^c1' tag ext],[  'c1' tag]), end % native_space(c*)
+    if par.GM (4), serieArray.addVolume([ '^rc1' tag ext],[ 'rc1' tag]), end % native_space_dartel_import(rc*)
+    if par.GM (1), serieArray.addVolume([ '^wc1' tag ext],[ 'wc1' tag]), end % warped_space_Unmodulated(wc*)
+    if par.GM (2), serieArray.addVolume(['^mwc1' tag ext],['mwc1' tag]), end % warped_space_modulated(mwc*)
+    
+    % WM
+    if par.WM (3), serieArray.addVolume([  '^c2' tag ext],[  'c2' tag]), end % native_space(c*)
+    if par.WM (4), serieArray.addVolume([ '^rc2' tag ext],[ 'rc2' tag]), end % native_space_dartel_import(rc*)
+    if par.WM (1), serieArray.addVolume([ '^wc2' tag ext],[ 'wc2' tag]), end % warped_space_Unmodulated(wc*)
+    if par.WM (2), serieArray.addVolume(['^mwc2' tag ext],['mwc2' tag]), end % warped_space_modulated(mwc*)
+    
+    % CSF
+    if par.CSF(3), serieArray.addVolume([  '^c3' tag ext],[  'c3' tag]), end % native_space(c*)
+    if par.CSF(4), serieArray.addVolume([ '^rc3' tag ext],[ 'rc3' tag]), end % native_space_dartel_import(rc*)
+    if par.CSF(1), serieArray.addVolume([ '^wc3' tag ext],[ 'wc3' tag]), end % warped_space_Unmodulated(wc*)
+    if par.CSF(2), serieArray.addVolume(['^mwc3' tag ext],['mwc3' tag]), end % warped_space_modulated(mwc*)
+    
+end
 
 
 end % function

@@ -48,7 +48,7 @@ for ns=1:length(outnames)
     
     fo = cellstr(char(fos(ns)));
     outname = outnames{ns};
-    out{ns} = [outname ext]; %#ok<AGROW>
+    out{ns,1} = [outname ext]; %#ok<AGROW>
     
     % Skip outname already exists
     if ~par.redo   &&   exist(out{ns},'file')

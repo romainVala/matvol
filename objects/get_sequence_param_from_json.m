@@ -11,7 +11,7 @@ function [ param ] = get_sequence_param_from_json( json_filename, par )
 %
 % par is a structure of parameter
 %   par.pct is a flag to activate Parallel Computing Toolbox
-%   par.read_sequence_param =1  flag to activate reading of all sequence parameter 
+%   par.read_sequence_param =1  flag to activate reading of all sequence parameter
 %
 % see also gfile gdir parpool
 %
@@ -33,7 +33,7 @@ defpar.read_sequence_param = 1;% if 1 read all sequence parameter assuming dcmst
 
 par = complet_struct(par,defpar);
 
-pct = par.pct; 
+pct = par.pct;
 
 %% Main loop
 
@@ -120,11 +120,16 @@ for j = 1 : size(json_filename,1)
         data_file.SliceTiming = SliceTiming;
         
         % bvals & bvecs
-        B_value = get_field_mul(content, 'CsaImage.B_value', 0); B_value = str2double(B_value)';
-        data_file.B_value = B_value;
-        B_vect  = get_field_mul_vect(content, 'CsaImage.DiffusionGradientDirection');
-        data_file.B_vect = B_vect;
-        data_file.BValue = str2double( get_field_one( content, '"CsaSeries.MrPhoenixProtocol.sDiffusion.alBValue\[1\]"' ) );
+        B_value                  =             get_field_mul     (content, 'CsaImage.B_value', 0);
+        B_value                  = str2double(B_value)';
+        data_file.B_value        = B_value;
+        B_vect                   =             get_field_mul_vect(content, 'CsaImage.DiffusionGradientDirection');
+        data_file.B_vect         = B_vect;
+        data_file.BValue         = str2double( get_field_one     ( content, '"CsaSeries.MrPhoenixProtocol.sDiffusion.alBValue\[1\]"' ) );
+        data_file.DiffDirections = str2double( get_field_one     ( content, 'CsaSeries.MrPhoenixProtocol.sDiffusion.lDiffDirections' ) );
+        if ~isempty( B_value ) && isscalar(B_value) && B_value == 0 && isempty(B_vect) %#ok<BDSCI> % only a b0, special case...
+            data_file.DiffDirections = -1;
+        end
         
         %------------------------------------------------------------------
         % Machine
@@ -138,8 +143,9 @@ for j = 1 : size(json_filename,1)
         % Subject
         %------------------------------------------------------------------
         data_file.PatientName      =clean_string(get_field_one( content, 'PatientName'      ) ) ;
-                  PatientAge       =             get_field_one( content, 'PatientAge'       )   ;
-        data_file.PatientAge       = str2double( PatientAge(1:3) )   ;
+        PatientAge       =             get_field_one( content, 'PatientAge'       )   ;
+        if ~isempty(PatientAge), PatientAge(end) = []; end% remove Y from 053Y, (this if/)
+        data_file.PatientAge       = str2double( PatientAge )   ;
         data_file.PatientBirthDate = str2double( get_field_one( content, 'PatientBirthDate' ) ) ;
         data_file.PatientWeight    = str2double( get_field_one( content, 'PatientWeight'    ) ) ;
         data_file.PatientSex       =             get_field_one( content, 'PatientSex'       )   ;
@@ -152,7 +158,11 @@ for j = 1 : size(json_filename,1)
         data_file.StudyTime       = str2double( get_field_one( content, 'StudyTime'       ) ) ;
         data_file.AcquisitionTime = min(cellfun( @str2double, get_field_mul(content, 'AcquisitionTime',0) )); % AcquisitionTime is special, it depends on 3D vs 4D
         tt=num2str(data_file.AcquisitionDate) ;
-        data_file.AcqDateStr = [tt(1:4), '_', tt(5:6), '_' tt(7:8)];
+        if ~isempty(tt) && ~strcmp(tt,'NaN')
+            data_file.AcqDateStr = [tt(1:4), '_', tt(5:6), '_' tt(7:8)];
+        else
+            data_file.AcqDateStr = '';
+        end
         
         %------------------------------------------------------------------
         % Study / Serie
@@ -225,19 +235,23 @@ for j = 1 : size(json_filename,1)
         data_file.InPlanePhaseEncodingDirection = InPlanePhaseEncodingDirection;
         PhaseEncodingDirectionPositive = get_field_one(content, 'CsaImage.PhaseEncodingDirectionPositive'); PhaseEncodingDirectionPositive = str2double(PhaseEncodingDirectionPositive);
         data_file.PhaseEncodingDirectionPositive = PhaseEncodingDirectionPositive;
-        switch InPlanePhaseEncodingDirection % InPlanePhaseEncodingDirection
-            case 'COL'
-                phase_dir = 'j';
-            case 'ROW'
-                phase_dir = 'i';
-            otherwise
-                warning('wtf ? InPlanePhaseEncodingDirection')
-                phase_dir = '';
+        if ~isempty( InPlanePhaseEncodingDirection ) % f*cking bug...
+            switch InPlanePhaseEncodingDirection % InPlanePhaseEncodingDirection
+                case 'COL'
+                    phase_dir = 'j';
+                case 'ROW'
+                    phase_dir = 'i';
+                otherwise
+                    warning('wtf ? InPlanePhaseEncodingDirection')
+                    phase_dir = '';
+            end
+            if PhaseEncodingDirectionPositive
+                phase_dir = [phase_dir '-']; %#ok<AGROW>
+            end
+            data_file.PhaseEncodingDirection = phase_dir;
+        else
+            data_file.PhaseEncodingDirection = '';
         end
-        if PhaseEncodingDirectionPositive
-            phase_dir = [phase_dir '-']; %#ok<AGROW>
-        end
-        data_file.PhaseEncodingDirection = phase_dir;
         
         data_file.PATMode     = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sPat.ucPATMode'     ) ) ;
         data_file.AccelFactPE = str2double( get_field_one( content, 'CsaSeries.MrPhoenixProtocol.sPat.lAccelFactPE'  ) ) ;
@@ -352,7 +366,7 @@ end
 token = regexp(line, ': (.*),','tokens'); % extract the value from the line
 if isempty(token)
     result = [];
-    return 
+    return
 else
     res    = token{1}{1};
     VECT_cell_raw = strsplit(res,'\n')';

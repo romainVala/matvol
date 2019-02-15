@@ -1,14 +1,33 @@
 function jobs = job_slice_timing(fin,par)
 % JOB_SLICE_TIMING - SPM:Temporal:SliceTiming
 %
+% INPUT : fin can be 'char' of dir, multi-level 'cellstr' of dir, '@volume' array
+%
 % To build the image list easily, use get_subdir_regex & get_subdir_regex_files
 %
+% See also get_subdir_regex exam exam.AddSerie exam.addVolume
+
 
 %% Check input arguments
 
 if ~exist('par','var')
     par = ''; % for defpar
 end
+
+if nargin < 1
+    help(mfilename)
+    error('[%s]: not enough input arguments - fin is required',mfilename)
+end
+
+obj = 0;
+if isa(fin,'volume')
+    obj = 1;
+    fin_obj  = fin;
+    fin = fin_obj.toJob(1);
+end
+
+
+%% defpar
 
 defpar.TR     = 0;
 defpar.prefix = 'a';
@@ -26,14 +45,27 @@ defpar.sge      = 0;
 defpar.jobname  ='spm_sliceTime';
 defpar.walltime = '04:00:00';
 
+defpar.auto_add_obj = 1;
+
 defpar.run     = 1;
 defpar.display = 0;
 defpar.redo    = 0;
 
 par = complet_struct(par,defpar);
 
+% Security
+if par.sge
+    par.auto_add_obj = 0;
+end
+
 
 %% SPM:Temporal:SliceTiming
+
+% obj : unzip if necessary
+if obj
+    fin_obj.unzip(par);
+    fin = fin_obj.toJob(1);
+end
 
 if iscell( fin{1} )
     nSubj = length(fin);
@@ -45,12 +77,20 @@ skip = [];
 
 for subj=1:nSubj
     
-    if iscell(fin{1})
-        subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
-        unzip_volume(subjFiles);
-        subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
+    if obj
+        if iscell(fin{subj})
+            subjFiles = fin{subj};
+        else
+            subjFiles = fin;
+        end
     else
-        subjFiles = fin;
+        if iscell(fin{1})
+            subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
+            unzip_volume(subjFiles); % unzip if necessary
+            subjFiles = get_subdir_regex_files(fin{subj}, par.file_reg);
+        else
+            subjFiles = fin;
+        end
     end
     
     for n=1:length(subjFiles)
@@ -67,10 +107,7 @@ for subj=1:nSubj
         end
         
         if length(currentFiles) == 1 % 4D file
-            V = spm_vol(currentFiles{1});
-            for k=1:length(V)
-                filesReady{k} = sprintf('%s,%d',currentFiles{1},k);
-            end
+            filesReady = spm_select('expand',currentFiles)';
         else
             filesReady = currentFiles;
         end
@@ -80,7 +117,11 @@ for subj=1:nSubj
     
     if par.use_JSON
         
-        json = get_subdir_regex_files( fin{subj}, par.use_JSON_regex );
+        if obj
+            json = get_subdir_regex_files( get_parent_path(fin{subj}), par.use_JSON_regex, struct('verbose',0) );
+        else
+            json = get_subdir_regex_files( fin{subj}, par.use_JSON_regex, struct('verbose',0) );
+        end
         if isempty(json)
             error('no JSON found with regex [ %s ] in dir : %s', par.use_JSON_regex, fin{subj})
         else
@@ -93,7 +134,7 @@ for subj=1:nSubj
         
         assert( max(sliceonsets)/1000 <= TR , ' slice onset > TR ! pb with the JSON ? pb unit conversion ?' )
         
-        unique_sliceonsets = unique(sliceonsets);
+        unique_sliceonsets = unique(sliceonsets); % in case of MB sequence
         
         % Refslice is milliseconds
         switch par.reference_slice
@@ -117,11 +158,11 @@ for subj=1:nSubj
         V        = spm_vol( subjFiles{1}(1,:) );
         nrSlices = V(1).dim(3);
         if par.TR > 0
-	   TR = par.TR;
+            TR = par.TR;
         else
-           TR = V(1).private.timing.tspace;
+            TR = V(1).private.timing.tspace;
         end
-	
+        
         parameters.slicetiming.slice_order = par.slice_order;
         parameters.slicetiming.reference_slice = par.reference_slice;
         
@@ -145,6 +186,19 @@ end
 %% Other routines
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj
+    
+    serieArray = [fin_obj.serie];
+    tag        =  fin_obj(1).tag;
+    ext        = '.*.nii$';
+    
+    serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
+    
+end
 
 
 end % function
