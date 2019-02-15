@@ -60,7 +60,12 @@ if numel(serieArray) > 0
                     
                     % unknown parameter ?
                 otherwise
-                    error('[%s]: "%s" not coded yet', mfilename, param_list{p} )
+                    
+                    if isfield(seq,param_list{p})
+                        param.(param_list{p}) = seq.(param_list{p});
+                    else
+                        error('[%s]: "%s" not coded yet', mfilename, param_list{p} )
+                    end
             end
         end
         
