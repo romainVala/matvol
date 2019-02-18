@@ -75,6 +75,28 @@ if ischar(dir_func{1})
     end
 end
 
+%% Other checks
+
+if par.MNI == 0 && isempty(par.space) % native space
+    warp = 'nat';
+elseif par.MNI == 1 && isempty(par.space) % mni
+    if par.qwarp % affine + non-linear
+        warp = 'nlw';
+    else % affine
+        warp = 'afw';
+    end
+elseif par.MNI == 0 && ~isempty(par.space) % specific tempalte (non the defalut MNI for AFNI)
+    if par.qwarp % affine + non-linear
+        warp = 'nlw';
+    else % affine
+        warp = 'afw';
+    end
+elseif par.MNI == 1 && ~isempty(par.space)
+    error('Cannot do --MNI + --space')
+else
+    warp = '';
+end
+
 
 %% Main
 
@@ -140,6 +162,14 @@ for subj = 1 : nrSubject
         
         job_subj = [job_subj sprintf('### Run %d/%d @ %s \n', run, nrRun, dir_func{subj}{run}) ];
         
+        prefix = serie_name;
+        
+        if par.redo
+            % pass
+        elseif exist(fullfile(working_dir,[prefix '_ctab.txt']),'file') == 2
+            continue
+        end
+        
         % Fetch json dics
         jsons = get_subdir_regex_files(run_path,'^dic.*json',struct('verbose',0));
         assert(~isempty(jsons), 'no ^dic.*json file detected in : %s', run_path)
@@ -181,7 +211,7 @@ for subj = 1 : nrSubject
                 error('WTF ? supported files are .nii and .nii.gz')
             end
             
-            filename = sprintf('run%.3d_e%.3d%s',run,echo,ext_echo);
+            filename = sprintf('%s_e%.3d%s',prefix,echo,ext_echo);
             
             E_dst{echo} = fullfile(working_dir,filename);
             [ ~ , job_tmp ] = r_movefile(E_src{echo}, E_dst{echo}, 'linkn', par);
@@ -235,8 +265,6 @@ for subj = 1 : nrSubject
         echo_sprintf(end) = [];
         echo_arg = sprintf(echo_sprintf,sortedTE); % looks like : "TE1, TE2, TE3"
         
-        prefix = sprintf('run%.3d',run);
-        
         % Main command
         cmd = sprintf('cd %s;\n meica.py -d %s -e %s -a %s --prefix %s --cpus %d --TR=%g --daw=5',... % kdaw = 5 makes ICA converge much easier : https://bitbucket.org/prantikk/me-ica/issues/28/meice-ocnvergence-issue-mdpnodeexception
             working_dir, data_arg, echo_arg, anat_filename , prefix, par.nrCPU, TR );
@@ -266,9 +294,7 @@ for subj = 1 : nrSubject
         
         % Finish preparing meica job
         cmd = sprintf('%s \n',cmd);
-        if ~( exist(fullfile(working_dir,[prefix '_ctab.txt']),'file') == 2 ) || par.redo
-            job_subj = [job_subj cmd];
-        end
+        job_subj = [job_subj cmd];
         
         %-Move meica-processed volumes in run dirs, using symbolic links
         %==================================================================
@@ -282,26 +308,6 @@ for subj = 1 : nrSubject
             '_T1c_medn_'
             '_tsoc_'
             };
-        
-        if par.MNI == 0 && isempty(par.space) % native space
-            warp = 'nat';
-        elseif par.MNI == 1 && isempty(par.space) % mni
-            if par.qwarp % affine + non-linear
-                warp = 'nlw';
-            else % affine
-                warp = 'afw';
-            end
-        elseif par.MNI == 0 && ~isempty(par.space) % specific tempalte (non the defalut MNI for AFNI)
-            if par.qwarp % affine + non-linear
-                warp = 'nlw';
-            else % affine
-                warp = 'afw';
-            end
-        elseif par.MNI == 1 && ~isempty(par.space)
-            error('Cannot do --MNI + --space')
-        else
-            warp = '';
-        end
         
         list_volume_src = addprefixtofilenames(list_volume_base, prefix);      % add prefix
         list_volume_src = addsuffixtofilenames(list_volume_src,warp);          % add suffix for space
