@@ -281,8 +281,12 @@ switch par.verbose
 end
 
 
-cmd = job{nn};
-if par.split_cmd, cmd = strsplit(cmd, sprintf('\n\n'))'; end
+if par.split_cmd
+    cmd = job{nn};
+    cmd = strsplit(cmd, sprintf('\n\n'))';
+else
+    cmd = job(nn);
+end
 
 for c = 1 : length(cmd)
     
