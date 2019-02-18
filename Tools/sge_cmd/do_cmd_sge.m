@@ -28,6 +28,7 @@ def_par.jobappend     = '';
 def_par.parallel      = 0;
 def_par.parallel_pack = 1;
 def_par.random = 0;
+def_par.split_cmd = 0;
 
 def_par.verbose       = 1;
 def_par.fake          = 0;
@@ -281,7 +282,7 @@ end
 
 
 cmd = job{nn};
-cmd = strsplit(cmd, sprintf('\n\n'))';
+if par.split_cmd, cmd = strsplit(cmd, sprintf('\n\n'))'; end
 
 for c = 1 : length(cmd)
     
