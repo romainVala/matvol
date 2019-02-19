@@ -169,7 +169,7 @@ end
 
 %% Add outputs objects
 
-if obj && par.auto_add_obj
+if obj && par.auto_add_obj && par.run
     
     serieArray = [in_obj.serie];
     tag        =  in_obj(1).tag;

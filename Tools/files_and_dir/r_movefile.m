@@ -89,6 +89,15 @@ for idx = 1:length(source)
             dir_out{idx}(line,:) = dest{idx};
         end
         
+        src = deblank(source{idx}(line,:));
+        if exist(src,'file') || exist(src,'dir')
+            % pass
+        else
+            if par.verbose
+                warning('src does not exists : %s', src)
+            end
+        end
+        
         switch type
             case 'copyn'
                 if ~exist(dir_out{idx}(line,:),'file')
