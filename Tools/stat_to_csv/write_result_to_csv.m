@@ -26,8 +26,8 @@ for npool = 1:length(conc)
     if iscell(f1)
         nbsuj = length(f1);
     else
-        nbsuj=1;
-    end
+        nbsuj=length(f1);%no more 1
+    end 
     
     
     for nbs = 1:nbsuj
