@@ -45,7 +45,6 @@ end
 
 defpar.sge     = 0;
 defpar.pct     = 0;
-defpar.verbose = 0;
 
 par = complet_struct(par,defpar);
 
@@ -89,19 +88,10 @@ for idx = 1:length(source)
             dir_out{idx}(line,:) = dest{idx};
         end
         
-        src = deblank(source{idx}(line,:));
-        if exist(src,'file') || exist(src,'dir')
-            % pass
-        else
-            if par.verbose
-                warning('src does not exists : %s', src)
-            end
-        end
-        
         switch type
             case 'copyn'
                 if ~exist(dir_out{idx}(line,:),'file')
-                    cmd = sprintf('cp -fpr %s %s \n',source{idx}(line,:),dest{idx});
+                    cmd = sprintf('if [ -e %s ]; then cp -fpr %s %s; fi \n',source{idx}(line,:),source{idx}(line,:),dest{idx});
                 else
                     cmd = '';
                 end
@@ -111,7 +101,7 @@ for idx = 1:length(source)
                 
             case 'linkn'
                 if ~exist(dir_out{idx}(line,:),'file')
-                    cmd = sprintf('ln -sf %s %s \n',source{idx}(line,:),dest{idx});
+                    cmd = sprintf('if [ -e %s ]; then ln -sf %s %s; fi \n',source{idx}(line,:),source{idx}(line,:),dest{idx});
                 else
                     cmd = '';
                 end
