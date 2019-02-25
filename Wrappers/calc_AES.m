@@ -11,11 +11,12 @@ norme_type = {'Vol','Slice','None'};
 
 for n=1:length(fin)
     clear v
-
+    is_mask=0;
     [v, Vol]=nifti_spm_vol(fin{n});
     if ~isempty(par.mask)
         [vv, Volmask ] = nifti_spm_vol(par.mask{n});
         Vol(Volmask==0) = 0;
+        is_mask=1;
     end
     
     %normalize image intensity between the 5th and 95th percentile
@@ -31,7 +32,7 @@ for n=1:length(fin)
         aes_sl=zeros(size(Vol_norm,3),1);
         aes_edge_sl=zeros(size(Vol_norm,3),1);
         for z=1:size(Vol_norm,3)
-%             if z==210, keyboard;end
+            %if z==196, keyboard;end
             switch norme_type{nb_norm}
                 case 'None'
                     c = Vol(:,:,z);
@@ -55,6 +56,12 @@ for n=1:length(fin)
             %calculate a binary mask of edges using the Canny edge detector
             edges=edge(c,'canny');
             
+            if is_mask
+                c_mask = Volmask(:,:,z);
+                edges = edges.*c_mask; %with smooth edge go  beyong mask
+                
+            end
+            
             %AES computation according to Aksoy et al. MRM 2012:67:1237
             edgeval=edges.*gradmag;
             aes_nom=sum(edgeval(:));
@@ -64,6 +71,7 @@ for n=1:length(fin)
             if (denom~=0)
                 
                 aes_sl(z,1)=sqrt(aes_nom)/denom;
+                aes_sl(z,1)=(aes_nom)/denom;
             else
                 aes_sl(z,1)=0;
             end
