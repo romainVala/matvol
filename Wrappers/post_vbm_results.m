@@ -347,7 +347,7 @@ for k=1:length(dir_vbm)
                 try
                     coutAES = read_res({fresAES}); coutAES=coutAES{1};
                 catch                    
-                    fprintf('ERROR BAD results csv  %s\n',fresAES);
+                    fprintf('ERROR BAD AES results csv  %s\n',fresAES);
                     do_delete(fresAES,0);
                 end
             end
@@ -359,13 +359,20 @@ for k=1:length(dir_vbm)
         doit=1;
     end
     cin=coutAES;
+    
     coutAES = calc_AES(fms);
+    
     fprm =  get_subdir_regex_files(cur_dir,['^' par.brainmask]);
     pp.mask = fprm;
     coutAES_mask = calc_AES(fms,pp);
+    
     dd = fieldnames(coutAES_mask); ddout = addsuffixtofilenames(dd,'_mask');
     for rr=1:length(dd),        coutAES.(ddout{rr}) = coutAES_mask.(dd{rr}); end
-    
+
+    if exist(fresAES,'file')
+        do_delete(fresAES,0);
+    end
+
     write_result_to_csv(coutAES,fresAES)
     
 end
