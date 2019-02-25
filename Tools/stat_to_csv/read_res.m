@@ -42,10 +42,17 @@ function [cout] = parse_csv(fin,par)
 %    hdr = r(h.stringMask)';
 % so assume first line is hdr second is val and first collum only is a string
 %if ischar(r{2,1})
+is_vector = 0;
+
 if size(r,1)> size(r,2) %collumn
     %val = cell2mat(r(2:end,2))' ;
     val = (r(2:end,2))' ;
     hdr = r(2:end,1)';
+    if ~ischar(hdr{1}) %may be multiple values
+        hdr = r(1,1:end)';
+        val = r(2:end,1:end)';
+        is_vector=1;
+    end        
 else %line
     %val = cell2mat(r(2,2:end))' ;
     val = (r(2,1:end))' ;
@@ -59,12 +66,21 @@ end
 hdr = nettoie_dir(hdr);
 
 [hdr indh] = sort(hdr);
-val = val(indh);
+if is_vector
+    val = val(indh,:);
+else
+    val = val(indh);
+end
+
 
 cout.suj = get_parent_path(fin);
 
 for k=1:length(hdr)
-    cout.(hdr{k}) = val{k}; %vals(:,k);
+    if is_vector
+        cout.(hdr{k}) = cell2mat(val(k,:)); %val{k,:}; %vals(:,k);
+    else
+        cout.(hdr{k}) = val{k}; %vals(:,k);
+    end
 end
 
 
