@@ -12,6 +12,7 @@ defpar.job_pack=10;
 defpar.jobname = 'vbm_results';
 defpar.walltime = '01:00:00';
 defpar.resfilename = 'seg_results.csv'; %'seg_rrres.csv';
+defpar.resfilenameAES = 'AES_results.csv'; %'seg_rrres.csv';
 defpar.segreg='[cp]'; %p for vbm8
 defpar.volreg='s'; %p for vbm8
 defpar.brainmask = 'mask_brain_erode_dilate.nii.gz';
@@ -47,6 +48,7 @@ for k=1:length(dir_vbm)
     cur_dir = dir_vbm{k};
     
     fres = fullfile(cur_dir,par.resfilename);
+    fresAES = fullfile(cur_dir,par.resfilenameAES);
     cout = struct;
     
     if exist(fres,'file')
@@ -116,7 +118,7 @@ for k=1:length(dir_vbm)
             end
         end
         
-        if ~isfield(cout,'stpm_nmi_csf')
+        if ~isfield(cout,'stpm_ncor_csf')
             fp = get_subdir_regex_files(cur_dir,'^w[pc][123].*nii');
             fpm = get_subdir_regex_files(cur_dir,['^w' par.brainmask]);
 
@@ -156,7 +158,7 @@ for k=1:length(dir_vbm)
                     if ~isempty(fpm), fp = concat_cell(fp,fpm); end
                     
                     voltpm={'_gray','_white','_csf','_mask'}; vol_meas = {'ncc','lncc'};
-                    for kk=1: size(fp{1},1)                       
+                    for kk=1: size(fp{1},1)       % 3 ir 4 if mask exist                
                         cmdi = sprintf('FREF=%s%s.nii.gz\n FIN=%s\n',par.spmTPM,voltpm{kk},fp{1}(kk,:));
                         
                         cmdc3 = sprintf('%s reg_measure -ref $FREF -flo $FIN -ncc -lncc  | awk ''{print $2}''  ',cmdi);
@@ -173,7 +175,7 @@ for k=1:length(dir_vbm)
             end
         end
         
-        if ~isfield(cout,'ntpm_nmi_csf')
+        if ~isfield(cout,'ntpm_ncor_mask')
             if iscell(par.niftireg_warp)
                 
             fp = get_subdir_regex_files(cur_dir,'^nw_[pc][123].*nii');
@@ -194,9 +196,9 @@ for k=1:length(dir_vbm)
 
             if ~isempty(fp)
                 if size(fp{1},1)==3
-                    fp = concat_cell(fp,fpm);
+                    if ~isempty(fpm), fp = concat_cell(fp,fpm); end
                     voltpm={'_gray','_white','_csf','_mask'}; vol_meas = {'ncc','lncc'};
-                    for kk=1:4
+                    for kk=1:size(fp{1},1)       % 3 ir 4 if mask exist 
                         frefc = addprefixtofilenames({par.nrTPM},sprintf('c%d',kk));
                         if kk==4, frefc = {[ get_parent_path(par.nrTPM) ,'/Mean_brain_mask5k.nii']}; end
                         cmdi = sprintf('FREF=%s\n FIN=%s\n',frefc{1},fp{1}(kk,:));
@@ -331,5 +333,40 @@ for k=1:length(dir_vbm)
     end
     
     couts(k)=cout;
+    
+        cout = struct;
+    %% now AES part
+    coutAES = struct;
+    
+    if exist(fresAES,'file')
+        if par.redo > 0;
+            doit=1;
+            if par.redo>1
+                do_delete(fresAES,0);
+            else
+                try
+                    coutAES = read_res({fresAES}); coutAES=coutAES{1};
+                catch                    
+                    fprintf('ERROR BAD results csv  %s\n',fresAES);
+                    do_delete(fresAES,0);
+                end
+            end
+        else
+            doit=0;
+        end
+        
+    else
+        doit=1;
+    end
+    cin=coutAES;
+    coutAES = calc_AES(fms);
+    fprm =  get_subdir_regex_files(cur_dir,['^' par.brainmask]);
+    pp.mask = fprm;
+    coutAES_mask = calc_AES(fms,pp);
+    dd = fieldnames(coutAES_mask); ddout = addsuffixtofilenames(dd,'_mask');
+    for rr=1:length(dd),        coutAES.(ddout{rr}) = coutAES_mask.(dd{rr}); end
+    
+    write_result_to_csv(coutAES,fresAES)
+    
 end
 
