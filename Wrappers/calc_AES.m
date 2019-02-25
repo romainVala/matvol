@@ -71,7 +71,7 @@ for n=1:length(fin)
             if (denom~=0)
                 
                 aes_sl(z,1)=sqrt(aes_nom)/denom;
-                aes_sl(z,1)=(aes_nom)/denom;
+                %aes_sl(z,1)=(aes_nom)/denom;
             else
                 aes_sl(z,1)=0;
             end
