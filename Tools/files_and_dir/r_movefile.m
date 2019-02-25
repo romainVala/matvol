@@ -45,6 +45,7 @@ end
 
 defpar.sge     = 0;
 defpar.pct     = 0;
+defpar.verbose = 0;
 
 par = complet_struct(par,defpar);
 
