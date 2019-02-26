@@ -1,8 +1,9 @@
 function [ job ] = job_meica_afni( dir_func, dir_anat, par )
 %JOB_MEICA_AFNI
-% This scipt is well discribeded with the comments, just read it
+% This script is well discribeded with the comments, just read it
 %
 % See also meica_report
+
 
 %% Check input arguments
 
@@ -141,7 +142,9 @@ for subj = 1 : nrSubject
     else
         error('WTF ? supported files are .nii and .nii.gz')
     end
-    anat_filename = sprintf('anat%s',ext_anat);
+    
+    [~, anat_name, ~] = fileparts(A_src(1:end-length(ext_anat))); % remove extension to parse the file name
+    anat_filename = sprintf('%s%s',anat_name,ext_anat);
     
     A_dst = fullfile(working_dir,anat_filename);
     [ ~ , job_tmp ] = r_movefile(A_src, A_dst, 'linkn', par);
@@ -338,23 +341,25 @@ for subj = 1 : nrSubject
     job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ];
     
     list_anat_base = {
-        'anat_do' % deoblique
-        'anat_u'  % unifize
-        'anat_ns' % skullstrip
+        '_do' % deoblique
+        '_u'  % unifize
+        '_ns' % skullstrip
         };
     
     if strcmp(warp,'afw') || strcmp(warp,'nlw')
-        list_anat_base = [ list_anat_base ; 'anat_ns_at' ];
+        list_anat_base = [ list_anat_base ; '_ns_at' ];
     end
     if strcmp(warp,'nlw')
-        list_anat_base = [ list_anat_base ; 'anat_ns_atnl' ; 'anat_ns_atnl_WARP' ; 'anat_ns_atnl_WARPINV' ];
+        list_anat_base = [ list_anat_base ; '_ns_atnl' ; '_ns_atnl_WARP' ; '_ns_atnl_WARPINV' ];
     end
     
-    list_anat_src = addsuffixtofilenames(list_anat_base,ext_anat);
+    list_anat_src = addprefixtofilenames(list_anat_base,anat_name);
+    list_anat_src = addsuffixtofilenames(list_anat_src,ext_anat);
     if strcmp(warp,'afw') || strcmp(warp,'nlw'), list_anat_src{end+1} = 'anat_xns2at.aff12.1D'; end % coregistration paramters ?
     list_anat_src = addprefixtofilenames(list_anat_src,working_dir);
     
-    list_anat_dst = addsuffixtofilenames(list_anat_base,ext_anat);
+    list_anat_dst = addprefixtofilenames(list_anat_base,anat_name);
+    list_anat_dst = addsuffixtofilenames(list_anat_dst,ext_anat);
     if strcmp(warp,'afw') || strcmp(warp,'nlw'), list_anat_dst{end+1} = 'anat_xns2at.aff12.1D'; end % coregistration paramters ?
     list_anat_dst = addprefixtofilenames(list_anat_dst,dir_anat{subj});
     
