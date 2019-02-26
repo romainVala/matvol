@@ -27,6 +27,14 @@ study_path = fullfile([study_path filesep],filesep); % make sure the last char i
 subjdir  = gdir ( study_path, par.subj_regex );
 meicadir = gdir (    subjdir, par.subdir     );
 
+if isempty(meicadir)
+    warning( 'No [ %s ] dir found in %s[%s] \n', par.subdir, study_path, par.subj_regex )
+    if nargout > 0
+        varargout{1} = table;
+    end
+    return
+end
+
 
 %% Extract data
 
