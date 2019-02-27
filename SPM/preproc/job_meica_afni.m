@@ -158,7 +158,8 @@ for subj = 1 : nrSubject
     for run = 1 : nrRun
         
         % Check if dir exist
-        run_path = dir_func{subj}{run};
+        run_path = dir_func{subj}{run} ;
+        if isempty(run_path), continue, end % empty string
         assert( exist(run_path,'dir')==7 , 'not a dir : %s', run_path )
         fprintf('In run dir %s ', run_path);
         [~, serie_name] = get_parent_path(run_path);
