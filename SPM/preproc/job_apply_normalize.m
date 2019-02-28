@@ -27,7 +27,7 @@ if isa(img,'volume')
     in_obj = img;
     img    = in_obj.toJob(1);
     for i = 1 : length(img)
-        img{i} = img{i}(~cellfun(@isempty,img{i})); % remove empty lines
+        img{i} = char(img{i}(~cellfun(@isempty,img{i}))); % remove empty lines
     end
     warp_field = warp_field.toJob;
 elseif ischar(img) || iscellstr(img)
