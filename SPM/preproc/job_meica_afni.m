@@ -130,7 +130,7 @@ for subj = 1 : nrSubject
     
     % Make symbolic link of tha anat in the working directory
     assert( exist(dir_anat{subj},'dir')==7 , 'not a dir : %s', dir_anat{subj} )
-    A_src = cellstr(char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg)));
+    A_src = cellstr(char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, struct('verbose',0))));
     A_src = A_src{1}; % keep the first volume, with the shorter name
     
     job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ]; %#ok<*AGROW>
@@ -382,6 +382,16 @@ end % subj
 % Fetch origial parameters, because all jobs are prepared
 par.sge     = parsge;
 par.verbose = parverbose;
+
+% Prepare Cluster job optimization
+if par.sge
+    if par.nrCPU == 0
+        par.nrCPU = 7; % on the cluster, each node have 28 cores and 128Go of RAM
+    end
+    par.sge_nb_coeur = par.nrCPU;
+    par.mem          = 2000*(par.sge_nb_coeur+1) ;
+    par.walltime = sprintf('%0.1d',nrRun) % roughtly 1h per run, in case of slow convergeance
+end
 
 % Run CPU, run !
 job = do_cmd_sge(job, par);
