@@ -32,7 +32,7 @@ defpar.nrCPU         = 0;  % 0 means OpenMP will use all available CPU. If you w
 defpar.cmd_arg       = ''; % Allows you to use all addition arguments not scripted in this job_meica_afni.m file
 
 % matvol classic options
-defpar.anat_file_reg = '^s_S\d{2}.*.nii$'; % regex to fetch anat volume
+defpar.anat_file_reg = '^s_S\d{2}.*.nii'; % regex to fetch anat volume
 defpar.subdir        = 'meica';   % name of the working dir
 defpar.pct           = 0; % Parallel Computing Toolbox, will execute in parallel all the subjects
 defpar.sge           = 0; % for ICM cluster, run the jobs in paralle
