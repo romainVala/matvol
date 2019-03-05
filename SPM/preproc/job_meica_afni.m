@@ -171,6 +171,7 @@ for subj = 1 : nrSubject
         if par.redo
             % pass
         elseif exist(fullfile(working_dir,[prefix '_ctab.txt']),'file') == 2
+            fprintf('[%s]: skiping %s because %s exist \n',mfilename,run_path,'ctab.txt')
             continue
         end
         
