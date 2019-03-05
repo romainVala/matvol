@@ -130,7 +130,8 @@ for subj = 1 : nrSubject
     
     % Make symbolic link of tha anat in the working directory
     assert( exist(dir_anat{subj},'dir')==7 , 'not a dir : %s', dir_anat{subj} )
-    A_src = char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, 1));
+    A_src = cellstr(har(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg)));
+    A_src = A_src{1}; % keep the first volume, with the shorter name
     
     job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ]; %#ok<*AGROW>
     
