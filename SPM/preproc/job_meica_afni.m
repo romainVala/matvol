@@ -390,7 +390,7 @@ if par.sge
     end
     par.sge_nb_coeur = par.nrCPU;
     par.mem          = 2000*(par.sge_nb_coeur+1) ;
-    par.walltime = sprintf('%0.1d',nrRun) % roughtly 1h per run, in case of slow convergeance
+    par.walltime = sprintf('%0.2d',nrRun) % roughtly 1h per run, in case of slow convergeance
 end
 
 % Run CPU, run !
