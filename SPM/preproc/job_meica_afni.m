@@ -120,7 +120,7 @@ for subj = 1 : nrSubject
     
     nrRun = length(dir_func{subj});
     
-    nrEchoAllRuns = zeros(nrRun,1);
+    % nrEchoAllRuns = zeros(nrRun,1);
     
     % Create the working dir
     working_dir = char(r_mkdir(subjectName,par.subdir));
@@ -179,9 +179,9 @@ for subj = 1 : nrSubject
         jsons = get_subdir_regex_files(run_path,'^dic.*json',struct('verbose',0));
         assert(~isempty(jsons), 'no ^dic.*json file detected in : %s', run_path)
         
-        % Verify the number of echos
-        nrEchoAllRuns(run) = size(jsons{1},1);
-        assert( all( nrEchoAllRuns(1) == nrEchoAllRuns(run) ) , 'all dir_func does not have the same number of echos' )
+        % % Verify the number of echos
+        % nrEchoAllRuns(run) = size(jsons{1},1);
+        % assert( all( nrEchoAllRuns(1) == nrEchoAllRuns(run) ) , 'all dir_func does not have the same number of echos' )
         
         % Fetch all TE and reorder them
         res = get_string_from_json(cellstr(jsons{1}),'EchoTime','numeric');
