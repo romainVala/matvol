@@ -13,7 +13,7 @@ end
 
 
 defpar.subj_regex = '.*';        %
-defpar.subdir     = 'meica';     % name of the working dir
+defpar.subdir     = '^meica$';     % name of the working dir
 defpar.file_regex = 'ctab.txt$'; %
 defpar.verbose    = 1;           % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
 
@@ -26,6 +26,14 @@ study_path = fullfile([study_path filesep],filesep); % make sure the last char i
 
 subjdir  = gdir ( study_path, par.subj_regex );
 meicadir = gdir (    subjdir, par.subdir     );
+
+if isempty(meicadir)
+    warning( 'No [ %s ] dir found in %s[%s] \n', par.subdir, study_path, par.subj_regex )
+    if nargout > 0
+        varargout{1} = table;
+    end
+    return
+end
 
 
 %% Extract data

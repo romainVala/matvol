@@ -1,8 +1,9 @@
 function [ job ] = job_meica_afni( dir_func, dir_anat, par )
 %JOB_MEICA_AFNI
-% This scipt is well discribeded with the comments, just read it
+% This script is well discribeded with the comments, just read it
 %
 % See also meica_report
+
 
 %% Check input arguments
 
@@ -31,7 +32,7 @@ defpar.nrCPU         = 0;  % 0 means OpenMP will use all available CPU. If you w
 defpar.cmd_arg       = ''; % Allows you to use all addition arguments not scripted in this job_meica_afni.m file
 
 % matvol classic options
-defpar.anat_file_reg = '^s.*nii'; % regex to fetch anat volume
+defpar.anat_file_reg = '^s_S\d{2}.*.nii'; % regex to fetch anat volume
 defpar.subdir        = 'meica';   % name of the working dir
 defpar.pct           = 0; % Parallel Computing Toolbox, will execute in parallel all the subjects
 defpar.sge           = 0; % for ICM cluster, run the jobs in paralle
@@ -45,6 +46,15 @@ defpar.report        = 1; % uses meica_report
 
 par = complet_struct(par,defpar);
 
+% Prepare Cluster job optimization
+if par.sge
+    if par.nrCPU == 0
+        par.nrCPU = 7; % on the cluster, each node have 28 cores and 128Go of RAM
+    end
+    par.sge_nb_coeur = par.nrCPU;
+    par.mem          = 2000*(par.sge_nb_coeur+1) ;
+    par.walltime = sprintf('%0.2d',nrRun); % roughtly 1h per run, in case of slow convergeance
+end
 
 %% Setup that allows this scipt to prepare the commands only, no execution
 
@@ -119,7 +129,7 @@ for subj = 1 : nrSubject
     
     nrRun = length(dir_func{subj});
     
-    nrEchoAllRuns = zeros(nrRun,1);
+    % nrEchoAllRuns = zeros(nrRun,1);
     
     % Create the working dir
     working_dir = char(r_mkdir(subjectName,par.subdir));
@@ -129,7 +139,8 @@ for subj = 1 : nrSubject
     
     % Make symbolic link of tha anat in the working directory
     assert( exist(dir_anat{subj},'dir')==7 , 'not a dir : %s', dir_anat{subj} )
-    A_src = char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, 1));
+    A_src = cellstr(char(get_subdir_regex_files( dir_anat{subj}, par.anat_file_reg, struct('verbose',0))));
+    A_src = char(A_src{1}); % keep the first volume, with the shorter name
     
     job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ]; %#ok<*AGROW>
     
@@ -141,7 +152,9 @@ for subj = 1 : nrSubject
     else
         error('WTF ? supported files are .nii and .nii.gz')
     end
-    anat_filename = sprintf('anat%s',ext_anat);
+    
+    [~, anat_name, ~] = fileparts(A_src(1:end-length(ext_anat))); % remove extension to parse the file name
+    anat_filename = sprintf('%s%s',anat_name,ext_anat);
     
     A_dst = fullfile(working_dir,anat_filename);
     [ ~ , job_tmp ] = r_movefile(A_src, A_dst, 'linkn', par);
@@ -155,7 +168,8 @@ for subj = 1 : nrSubject
     for run = 1 : nrRun
         
         % Check if dir exist
-        run_path = dir_func{subj}{run};
+        run_path = dir_func{subj}{run} ;
+        if isempty(run_path), continue, end % empty string
         assert( exist(run_path,'dir')==7 , 'not a dir : %s', run_path )
         fprintf('In run dir %s ', run_path);
         [~, serie_name] = get_parent_path(run_path);
@@ -167,6 +181,7 @@ for subj = 1 : nrSubject
         if par.redo
             % pass
         elseif exist(fullfile(working_dir,[prefix '_ctab.txt']),'file') == 2
+            fprintf('[%s]: skiping %s because %s exist \n',mfilename,run_path,'ctab.txt')
             continue
         end
         
@@ -174,9 +189,9 @@ for subj = 1 : nrSubject
         jsons = get_subdir_regex_files(run_path,'^dic.*json',struct('verbose',0));
         assert(~isempty(jsons), 'no ^dic.*json file detected in : %s', run_path)
         
-        % Verify the number of echos
-        nrEchoAllRuns(run) = size(jsons{1},1);
-        assert( all( nrEchoAllRuns(1) == nrEchoAllRuns(run) ) , 'all dir_func does not have the same number of echos' )
+        % % Verify the number of echos
+        % nrEchoAllRuns(run) = size(jsons{1},1);
+        % assert( all( nrEchoAllRuns(1) == nrEchoAllRuns(run) ) , 'all dir_func does not have the same number of echos' )
         
         % Fetch all TE and reorder them
         res = get_string_from_json(cellstr(jsons{1}),'EchoTime','numeric');
@@ -338,23 +353,25 @@ for subj = 1 : nrSubject
     job_subj = [job_subj sprintf('### Anat @ %s \n', dir_anat{subj}) ];
     
     list_anat_base = {
-        'anat_do' % deoblique
-        'anat_u'  % unifize
-        'anat_ns' % skullstrip
+        '_do' % deoblique
+        '_u'  % unifize
+        '_ns' % skullstrip
         };
     
     if strcmp(warp,'afw') || strcmp(warp,'nlw')
-        list_anat_base = [ list_anat_base ; 'anat_ns_at' ];
+        list_anat_base = [ list_anat_base ; '_ns_at' ];
     end
     if strcmp(warp,'nlw')
-        list_anat_base = [ list_anat_base ; 'anat_ns_atnl' ; 'anat_ns_atnl_WARP' ; 'anat_ns_atnl_WARPINV' ];
+        list_anat_base = [ list_anat_base ; '_ns_atnl' ; '_ns_atnl_WARP' ; '_ns_atnl_WARPINV' ];
     end
     
-    list_anat_src = addsuffixtofilenames(list_anat_base,ext_anat);
+    list_anat_src = addprefixtofilenames(list_anat_base,anat_name);
+    list_anat_src = addsuffixtofilenames(list_anat_src,ext_anat);
     if strcmp(warp,'afw') || strcmp(warp,'nlw'), list_anat_src{end+1} = 'anat_xns2at.aff12.1D'; end % coregistration paramters ?
     list_anat_src = addprefixtofilenames(list_anat_src,working_dir);
     
-    list_anat_dst = addsuffixtofilenames(list_anat_base,ext_anat);
+    list_anat_dst = addprefixtofilenames(list_anat_base,anat_name);
+    list_anat_dst = addsuffixtofilenames(list_anat_dst,ext_anat);
     if strcmp(warp,'afw') || strcmp(warp,'nlw'), list_anat_dst{end+1} = 'anat_xns2at.aff12.1D'; end % coregistration paramters ?
     list_anat_dst = addprefixtofilenames(list_anat_dst,dir_anat{subj});
     

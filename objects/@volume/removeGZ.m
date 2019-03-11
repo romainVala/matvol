@@ -1,26 +1,15 @@
 function removeGZ( volumeArray )
 % REMOVEGZ removes .gz from each file name inside the volumeArray, if needed.
 
-
 for vol = 1 : numel(volumeArray)
     
-    for lineNAME = 1 : size(volumeArray(vol).name,1)
-        
-        idxNAME = strfind(volumeArray(vol).name(lineNAME,:),'.gz');
-        if ~isempty(idxNAME)
-            volumeArray(vol).name(:,idxNAME:end) = [];
-        end
-        
-    end % volume(i)
+    name = cellstr(volumeArray(vol).name);
+    name = regexprep(name,'\.gz$','');
+    volumeArray(vol).name = char(name);
     
-    for linePATH = 1 : size(volumeArray(vol).path,1)
-        
-        idxPATH = strfind(volumeArray(vol).path(linePATH,:),'.gz');
-        if ~isempty(idxPATH)
-            volumeArray(vol).path(:,idxPATH:end) = [];
-        end
-        
-    end % volume(i)
+    path = cellstr(volumeArray(vol).path);
+    path = regexprep(path,'\.gz$','');
+    volumeArray(vol).path = char(path);
     
 end % volume
 
