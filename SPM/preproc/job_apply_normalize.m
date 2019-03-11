@@ -41,6 +41,8 @@ end
 defpar.preserve = 0;
 defpar.bb       = [-78 -112 -70 ; 78 76 85];
 defpar.vox      = [2 2 2];
+defpar.bb       = [NaN NaN NaN ; NaN NaN NaN];
+defpar.vox      = [NaN NaN NaN];
 defpar.interp   = 4;
 defpar.wrap     = [0 0 0];
 defpar.prefix   = 'w';
