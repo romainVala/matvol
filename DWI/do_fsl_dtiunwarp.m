@@ -19,6 +19,7 @@ defpar.phase_file_regex = '^s';
 defpar.nocoregFM2dti = 0;
 defpar.dti_mask = 1;
 defpar.find_param_from_dicom=0;
+defpar.find_param_from_json=1;
 defpar.dicfile = '';
 %see also default params from do_cmd_sge
 par.sge=0;
@@ -42,7 +43,8 @@ for nbs = 1:length(f4D)
         
         warning('delta TE is supposed to be 2.46')
         par.tediff = 2.46;
-    else
+    end
+    if par.find_param_from_json
         [par.esp par.unwarpdir par.te totes] = get_EPI_param_from_json(f4D(nbs));
         if par.te>1000, par.te=par.te/1000;end
         par.tediff = 2.46;
