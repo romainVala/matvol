@@ -32,7 +32,7 @@ end
 
 %% defpar
 
-
+defpar.cat12 = 0 ; % if non 0 it will perform the cat12 longitudinal registration
 defpar.auto_add_obj = 1;
 
 defpar.run     = 0;
@@ -77,16 +77,21 @@ tot_number_suj = max(index_grouping);
 
 for nbsuj = 1:tot_number_suj
     ii = find(index_grouping == nbsuj);
-    
-    jobs{nbsuj}.spm.tools.longit{1}.series.vols = img(ii);
-    jobs{nbsuj}.spm.tools.longit{1}.series.times = timeline(ii);
-    jobs{nbsuj}.spm.tools.longit{1}.series.noise = NaN;
-    jobs{nbsuj}.spm.tools.longit{1}.series.wparam = [0 0 100 25 100];
-    jobs{nbsuj}.spm.tools.longit{1}.series.bparam = 1000000;
-    jobs{nbsuj}.spm.tools.longit{1}.series.write_avg = 1;
-    jobs{nbsuj}.spm.tools.longit{1}.series.write_jac = 0;
-    jobs{nbsuj}.spm.tools.longit{1}.series.write_div = 1;
-    jobs{nbsuj}.spm.tools.longit{1}.series.write_def = 0;
+    if par.cat12
+        jobs{nbsuj}.spm.tools.cat.tools.series.data = img(ii);
+        jobs{nbsuj}.spm.tools.cat.tools.series.bparam = 1000000;
+
+    else
+        jobs{nbsuj}.spm.tools.longit{1}.series.vols = img(ii);
+        jobs{nbsuj}.spm.tools.longit{1}.series.times = timeline(ii);
+        jobs{nbsuj}.spm.tools.longit{1}.series.noise = NaN;
+        jobs{nbsuj}.spm.tools.longit{1}.series.wparam = [0 0 100 25 100];
+        jobs{nbsuj}.spm.tools.longit{1}.series.bparam = 1000000;
+        jobs{nbsuj}.spm.tools.longit{1}.series.write_avg = 1;
+        jobs{nbsuj}.spm.tools.longit{1}.series.write_jac = 0;
+        jobs{nbsuj}.spm.tools.longit{1}.series.write_div = 1;
+        jobs{nbsuj}.spm.tools.longit{1}.series.write_def = 0;
+    end
 end
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
