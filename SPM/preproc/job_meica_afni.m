@@ -46,15 +46,6 @@ defpar.report        = 1; % uses meica_report
 
 par = complet_struct(par,defpar);
 
-% Prepare Cluster job optimization
-if par.sge
-    if par.nrCPU == 0
-        par.nrCPU = 7; % on the cluster, each node have 28 cores and 128Go of RAM
-    end
-    par.sge_nb_coeur = par.nrCPU;
-    par.mem          = 2000*(par.sge_nb_coeur+1) ;
-    par.walltime = sprintf('%0.2d',nrRun); % roughtly 1h per run, in case of slow convergeance
-end
 
 %% Setup that allows this scipt to prepare the commands only, no execution
 
@@ -391,6 +382,16 @@ end % subj
 % Fetch origial parameters, because all jobs are prepared
 par.sge     = parsge;
 par.verbose = parverbose;
+
+% Prepare Cluster job optimization
+if par.sge
+    if par.nrCPU == 0
+        par.nrCPU = 7; % on the cluster, each node have 28 cores and 128Go of RAM
+    end
+    par.sge_nb_coeur = par.nrCPU;
+    par.mem          = 2000*(par.sge_nb_coeur+1) ;
+    par.walltime     = sprintf('%0.2d',nrRun); % roughtly 1h per run, in case of slow convergeance
+end
 
 % Run CPU, run !
 job = do_cmd_sge(job, par);
