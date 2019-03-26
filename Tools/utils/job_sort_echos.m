@@ -26,26 +26,38 @@ if nargin < 1
 end
 
 % Make sure we have a multi-level cell
+obj = 0;
 if ischar(multilvl_funcdir)
     multilvl_funcdir = {cellstr(multilvl_funcdir)};
 elseif iscell(multilvl_funcdir)
     multilvl_funcdir = cellfun(@cellstr, multilvl_funcdir, 'UniformOutput', 0);
+elseif isa(multilvl_funcdir,'serie')
+    obj = 1;
+    in_obj  = multilvl_funcdir;
+    multilvl_funcdir = multilvl_funcdir.toJob;
 else
-    error('not supported input : char, cell, cellstr, multi-level cell')
+    error('not supported input : char, cell, cellstr, multi-level cell, @serie object array')
 end
 
 
 %% defpar
 
-defpar.sge      = 0;
-defpar.jobname  = 'job_sort_echos';
-defpar.walltime = '00:30:00';
-defpar.mem      = '1G';
+defpar.sge          = 0;
+defpar.jobname      = 'job_sort_echos';
+defpar.walltime     = '00:30:00';
+defpar.mem          = '1G';
 
-defpar.redo     = 0;
-defpar.run      = 0;
+defpar.auto_add_obj = 1;
+
+defpar.redo         = 0;
+defpar.run          = 0;
 
 par = complet_struct(par,defpar);
+
+% Security
+if par.sge
+    par.auto_add_obj = 0;
+end
 
 
 %% Setup that allows this scipt to prepare the commands only, no execution
@@ -60,10 +72,17 @@ par.verbose = 0; % don't print anything yet
 %% Check if already done
 
 fname = fullfile( get_parent_path(multilvl_funcdir{1}{1},2) , 'meinfo.mat' );
+
 if exist(fname,'file')  &&  ~par.redo
+    
     l      = load(fname);
     meinfo = l.meinfo;
     jobs   = l.jobs;
+    
+    if obj && par.auto_add_obj
+        add_obj(in_obj,meinfo)
+    end
+    
     return
 end
 
@@ -183,5 +202,21 @@ if ( par.run || par.sge ) && ~par.fake
     save(fname, 'meinfo', 'jobs')
 end
 
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj && par.run
+    add_obj(in_obj,meinfo)
+end
+
+
+end % function
+
+
+function add_obj(in_obj,meinfo)
+
+for iEcho = 1 : length(meinfo.full{1}{1})
+    in_obj.addVolume(sprintf('^e%d.nii',iEcho),sprintf('e%d',iEcho))
+end
 
 end % function

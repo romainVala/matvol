@@ -63,28 +63,29 @@ end
 % obj : unzip if necesary
 if obj
     in_obj.unzip(par);
-    in = in_obj.toJob(1);
+    in = in_obj.toJob(2);
 end
 
 % nrSubject ?
 if iscell(in{1})
-    nSubj = length(in);
+    if obj
+        nSubj = size(in,1);
+    else
+        nSubj = length(in);
+    end
 else
     nSubj = 1;
 end
 
-skip = [];
+skip         = [];
 jobs_all     = cell(1,nSubj);
 jobs_realign = cell(0);
 
 for iSubj = 1 : nSubj
     
     if obj
-        if iscell(in{iSubj})
-            subjectRuns = in{iSubj};
-        else
-            subjectRuns = in;
-        end
+        subjectRuns = in(iSubj,:);
+        subjectRuns = cellfun(@char,subjectRuns,'UniformOutput',0)';
     else
         if iscell(in{1})
             subjectRuns = get_subdir_regex_files(in{iSubj},par.file_reg);

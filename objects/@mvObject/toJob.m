@@ -24,7 +24,7 @@ if nargin < 2
     end
 end
 
-assert( isnumeric(flag) && (flag==0 || flag==1) , 'flag must be 0 or 1' )
+assert( isnumeric(flag) && (flag==0 || flag==1 || flag==2) , 'flag must be 0, 1, 2' )
 
 
 %% Print
@@ -33,7 +33,7 @@ pathArray = cell(size(mvArray,1),1);
 
 for idx = 1:size(mvArray,1)
     
-    if flag
+    if flag == 1
         
         pathArray{idx} = {mvArray(idx,:).path}';
         
@@ -42,7 +42,7 @@ for idx = 1:size(mvArray,1)
             pathArray{idx} = {};
         end
         
-    else
+    elseif flag == 0
         
         pathArray{idx} = char(mvArray(idx,:).path);
         
@@ -54,5 +54,18 @@ for idx = 1:size(mvArray,1)
     end
     
 end
+
+if flag == 2
+    
+    pathArray = cell(size(mvArray,1),size(mvArray,2));
+
+    for i = 1 : size(mvArray,1)
+        for j = 1 : size(mvArray,2)
+            pathArray{i,j} = {mvArray(i,j,:).path}';
+        end
+    end
+    
+end
+
 
 end % function
