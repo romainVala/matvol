@@ -31,7 +31,8 @@ defpar.file_reg    = '^ae.*nii'; % Slice Timing correction applied
 defpar.prefix      = 'r';
 
 defpar.jobname  = 'spm_realign_multi_echo';
-defpar.walltime = '04:00:00';
+defpar.walltime = '02:00:00'; % HH:MM:SS
+defpar.mem      = 4000;       % MB
 
 defpar.auto_add_obj = 1;
 
@@ -181,7 +182,6 @@ for iSubj = 1 : nSubj
 end % iSubj
 
 
-
 %% Other routines
 
 % Manage jobs to skip here, because we have to "concatenate" them.
@@ -202,13 +202,13 @@ end
 
 if obj && par.auto_add_obj && par.run
     
-    serieArray      = [in_obj     .serie];
     serieArray_run1 = [in_obj(:,1).serie]; % the mean is only written in the run1
-    tag             =  in_obj(1).tag;
+    tag             =  {in_obj.tag};
     ext             = '.*.nii$';
-    
-    serieArray.     addVolume(['^' par.prefix tag ext],[par.prefix tag])
-    serieArray_run1.addVolume(['^mean'        tag ext],['mean'     tag])
+    for iVol = 1 : numel(in_obj)
+        in_obj(iVol).serie.addVolume(['^' par.prefix tag{iVol} ext],[par.prefix tag{iVol}])
+    end
+    serieArray_run1.addVolume(['^mean' tag{1} ext],['mean' tag{1}])
     
 end
 
