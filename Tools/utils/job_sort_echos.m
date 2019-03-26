@@ -7,8 +7,7 @@ function [meinfo, jobs] = job_sort_echos( multilvl_funcdir , par )
 %   level 2 : run
 %
 % OUTPUT
-% - meinfo.full : multi-level cell containing structure
-%   the structure contains info about the sorted volumes (name, TE, ...)
+% - meinfo.full : multi-level cell containing structure the structure contains info about the sorted volumes (name, TE, ...)
 % - meinfo.path : multi-level cell containing echos paths as cellstr
 % - meinfo.TE   : multi-level cell containing TE as vecor
 %
@@ -56,6 +55,17 @@ par.sge = -1; % only prepare commands
 
 parverbose  = par.verbose;
 par.verbose = 0; % don't print anything yet
+
+
+%% Check if already done
+
+fname = fullfile( get_parent_path(multilvl_funcdir{1}{1},2) , 'meinfo.mat' );
+if exist(fname,'file')  &&  ~par.redo
+    l      = load(fname);
+    meinfo = l.meinfo;
+    jobs   = l.jobs;
+    return
+end
 
 
 %% Sort echos
@@ -165,6 +175,13 @@ par.sge     = parsge;
 par.verbose = parverbose;
 
 jobs = do_cmd_sge(jobs, par);
+
+
+%% Save info in file
+
+if ( par.run || par.sge ) && ~par.fake
+    save(fname, 'meinfo', 'jobs')
+end
 
 
 end % function
