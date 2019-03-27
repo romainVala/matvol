@@ -190,12 +190,25 @@ jobs_all(skip) = [];
 % Now expand all jobs
 jobs = cell(0);
 for iJob = 1 : length(jobs_all)
+    
+    % Concat for SGE : VERY IMPORTANT
+    concat = sum(cellfun(@length, jobs_all{iJob}));
+    if isfield(par,'concat') && (par.concat ~= concat)
+        warning('all subjs do not have the same number of echos, par.sge or par.pct will not be working correctly, DO NOT DO IT')
+    end
+    par.concat = concat;
+    
     for jJob = 1 : length(jobs_all{iJob})
         jobs = [ jobs jobs_all{iJob}{jJob} ]; %#ok<AGROW>
     end
+    
 end
 
 [ jobs ] = job_ending_rountines( jobs, [], par );
+
+if par.sge
+    fprintf('[%s]: Please check the concatenation of jobs \n', mfilename)
+end
 
 
 %% Add outputs objects

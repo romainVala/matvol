@@ -75,6 +75,8 @@ fname = fullfile( get_parent_path(multilvl_funcdir{1}{1},2) , 'meinfo.mat' );
 
 if exist(fname,'file')  &&  ~par.redo
     
+    fprintf('[%s]: Found meinfo file : %s \n', mfilename, fname)
+    
     l      = load(fname);
     meinfo = l.meinfo;
     jobs   = l.jobs;
