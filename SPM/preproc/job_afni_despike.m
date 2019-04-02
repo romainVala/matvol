@@ -1,5 +1,5 @@
-function job = job_despike( img , par )
-% JOB_DESPIKE - AFNI:3dDespike
+function job = job_afni_despike( img , par )
+% JOB_AFNI_DESPIKE - AFNI:3dDespike
 %
 % INPUT : img can be 'char' of volume(file), multi-level 'cellstr' of volume(file), '@volume' array
 %
@@ -33,7 +33,7 @@ defpar.prefix          = 'd';
 defpar.OMP_NUM_THREADS = 0; % number pf CPU threads : 0 means all CPUs available
 
 defpar.sge      = 0;
-defpar.jobname  = 'job_despike';
+defpar.jobname  = 'job_afni_despike';
 defpar.walltime = '00:30:00';
 
 defpar.auto_add_obj = 1;
@@ -42,6 +42,7 @@ defpar.pct      = 0;
 defpar.redo     = 0;
 defpar.run      = 0;
 defpar.display  = 0;
+defpar.verbose  = 1;
 
 par = complet_struct(par,defpar);
 
@@ -89,7 +90,8 @@ for iSubj = 1 : nSubj
                 if N.dat.dim(4) < 15
                     [ ~ , cmd ] = r_movefile(src, dst, 'linkn', par); % cannot do 3dDespike with less than 15 volumes
                 else
-                    cmd = sprintf('export OMP_NUM_THREADS=%d; 3dDespike -NEW -nomask -prefix %s %s;', par.OMP_NUM_THREADS, dst, src);
+                    cmd = '';
+                    cmd = sprintf('%s export OMP_NUM_THREADS=%d; 3dDespike -overwrite -NEW -prefix %s %s; \n', cmd, par.OMP_NUM_THREADS, dst, src);
                 end
             else
                 [ ~ , cmd ] = r_movefile(src, dst, 'linkn', par); % cannot do 3dDespike with less than 15 volumes
@@ -100,7 +102,6 @@ for iSubj = 1 : nSubj
         end
         
     end % vol
-    
     
 end % iSubj
 
