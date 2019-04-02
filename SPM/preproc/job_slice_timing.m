@@ -193,10 +193,12 @@ end
 if obj && par.auto_add_obj && par.run
     
     serieArray = [fin_obj.serie];
-    tag        =  fin_obj(1).tag;
+    tag        =  {fin_obj.tag};
     ext        = '.*.nii$';
     
-    serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
+    for vol = 1 : numel(fin_obj)
+        serieArray(vol).addVolume(['^' par.prefix tag{vol} ext],[par.prefix tag{vol}])
+    end
     
 end
 

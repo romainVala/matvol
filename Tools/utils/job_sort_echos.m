@@ -49,6 +49,7 @@ defpar.mem          = '1G';
 
 defpar.auto_add_obj = 1;
 
+defpar.verbose      = 1;
 defpar.redo         = 0;
 defpar.run          = 0;
 
