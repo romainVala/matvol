@@ -33,7 +33,7 @@ defpar.prefix          = 'n';
 defpar.OMP_NUM_THREADS = 0; % number pf CPU threads : 0 means all CPUs available
 
 defpar.sge      = 0;
-defpar.jobname  = 'job_despike';
+defpar.jobname  = 'job_afni_remove_nan';
 defpar.walltime = '00:30:00';
 
 defpar.auto_add_obj = 1;
@@ -76,7 +76,7 @@ for iSubj = 1 : nSubj
             cjob = cjob + 1;
             
             cmd = '';
-            cmd = sprintf('%s export OMP_NUM_THREADS=%d; 3dcalc -overwrite -a %s -expr ''a*ispositive(a)'' -prefix %s; \n', cmd, par.OMP_NUM_THREADS, dst, dst);
+            cmd = sprintf('%s export OMP_NUM_THREADS=%d; 3dcalc -overwrite -a %s -expr ''a*ispositive(a)'' -prefix %s; \n', cmd, par.OMP_NUM_THREADS, src, dst);
             
             job{cjob,1} = char(cmd);
             
