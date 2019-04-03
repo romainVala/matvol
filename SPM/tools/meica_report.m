@@ -2,7 +2,7 @@ function varargout = meica_report( study_path, par )
 % MEICA_REPORT will fetch subdir/meica/.*ctab.txt files
 % Click on the table in the figure to print in the terminal the ctab.txt file.
 %
-% Seel also job_meica_afni
+% See also job_meica_afni
 
 
 %% Check input arguments
