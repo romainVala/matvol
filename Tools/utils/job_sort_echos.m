@@ -128,7 +128,7 @@ for iSubj = 1 : nSubj
         job_subj = [job_subj sprintf('### Run %d/%d @ %s \n', iRun, nRun, run_path) ]; %#ok<*AGROW>
         
         % Fetch json dics
-        jsons = get_subdir_regex_files(run_path,'^dic.*json',struct('verbose',0));
+        jsons = get_subdir_regex_files(run_path,'^dic.*json$',struct('verbose',0));
         assert(~isempty(jsons), 'no ^dic.*json file detected in : %s', run_path)
         
         % Fetch all TE and reorder them
