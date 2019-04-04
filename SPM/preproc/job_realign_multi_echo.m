@@ -87,6 +87,7 @@ for iSubj = 1 : nSubj
     if obj
         subjectRuns = in(iSubj,:);
         subjectRuns = cellfun(@char,subjectRuns,'UniformOutput',0)';
+        subjectRuns = subjectRuns(~cellfun(@isempty, subjectRuns)); % remove empty lines
     else
         if iscell(in{1})
             subjectRuns = get_subdir_regex_files(in{iSubj},par.file_reg);
@@ -98,6 +99,7 @@ for iSubj = 1 : nSubj
     end
     
     nRun = length(subjectRuns);
+    fprintf('[%s]: %d runs for %s \n', mfilename, nRun, in_obj(iSubj,1,1).exam.path)
     
     %----------------------------------------------------------------------
     % Realign
@@ -194,7 +196,7 @@ for iJob = 1 : length(jobs_all)
     % Concat for SGE : VERY IMPORTANT
     concat = sum(cellfun(@length, jobs_all{iJob}));
     if isfield(par,'concat') && (par.concat ~= concat)
-        warning('all subjs do not have the same number of echos, par.sge or par.pct will not be working correctly, DO NOT DO IT')
+        error('all subjs do not have the same number of echos, par.sge or par.pct will not be working correctly, DO NOT DO IT')
     end
     par.concat = concat;
     
