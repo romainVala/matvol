@@ -83,7 +83,7 @@ for subj = 1 : length(comptable_file)
             
             fail    = fail    + 1;
             
-            ctable(count,:) = [NaN NaN NaN Nan];
+            ctable(count,:) = [NaN NaN NaN NaN];
             
         end
         
