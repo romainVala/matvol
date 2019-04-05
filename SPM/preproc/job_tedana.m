@@ -29,8 +29,8 @@ defpar.verbose  = 2; % 0 : print nothing, 1 : print 2 first and 2 last messages,
 % Cluster
 defpar.sge      = 0; % for ICM cluster, run the jobs in paralle
 defpar.jobname  = 'job_tedana';
-defpar.walltime = '02:00:00'; % HH:MM:SS
-defpar.mem      = 8000;       % MB
+defpar.walltime = '08:00:00'; % HH:MM:SS
+defpar.mem      = 16000;      % MB
 
 par = complet_struct(par,defpar);
 
@@ -66,31 +66,22 @@ job = cell(nJobs,1); % pre-allocation, this is the job containter
 
 fprintf('\n')
 
+skip  = [];
 for iJob = 1 : nJobs
     
     % Extract subject name, and print it
     run_path = get_parent_path( pth{iJob}{1} );
-    
-    % Echo in terminal & initialize job_subj
-    fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, iJob, nJobs, run_path);
-    jobchar = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, iJob, nJobs, run_path); % initialize
-    
-    %     % Create the working dir, if necessary
-    %     if ~isempty(par.subdir)
-    %         working_dir = char(r_mkdir(run_path,par.subdir));
-    %     else
     working_dir = run_path;
-    %     end
     
     % Already done processing ?
-    skip = 0;
-    if par.redo
-        % pass
-    elseif exist(fullfile(working_dir,'dn_ts_OC.nii'),'file') == 2
-        cmd = sprintf('[%s]: skiping %s because %s exist \n',mfilename,run_path,'dn_ts_OC.nii');
-        fprintf(cmd)
-        jobchar = [jobchar sprintf('#%s',cmd)];
-        skip = 1;
+    if ~par.redo  &&  exist(fullfile(working_dir,'dn_ts_OC.nii'),'file') == 2
+        fprintf('[%s]: skiping %d/%d @ %s because %s exist \n', mfilename, iJob, nJobs, run_path, 'dn_ts_OC.nii');
+        jobchar = '';
+        skip = [skip iJob];
+    else
+        % Echo in terminal & initialize job_subj
+        fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, iJob, nJobs, run_path);
+        jobchar = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, iJob, nJobs, run_path); % initialize
     end
     
     
@@ -106,7 +97,7 @@ for iJob = 1 : nJobs
     echo_arg = sprintf(echo_sprintf,TE{iJob}); % looks like : "TE1, TE2, TE3"
     
     % Main command
-    cmd = sprintf('cd %s;\n tedana -e %s -d %s ',...
+    cmd = sprintf('cd %s;\n tedana -e %s -d %s --maxit 5000',...
         working_dir, echo_arg, data_arg);
     
     % Other args ?
@@ -114,14 +105,10 @@ for iJob = 1 : nJobs
         cmd = sprintf('%s %s', cmd, par.cmd_arg);
     end
     
-    % Finish preparing meica job
+    % Finish preparing tedana job
     cmd = sprintf('%s \n',cmd);
     
-    if skip
-        % pass
-    else
-        jobchar = [jobchar cmd]; %#ok<*AGROW>
-    end
+    jobchar = [jobchar cmd]; %#ok<*AGROW>
     
     % Save job_subj
     job{iJob} = jobchar;
@@ -129,6 +116,7 @@ for iJob = 1 : nJobs
 end % subj
 
 % Now the jobs are prepared
+job(skip) = [];
 
 
 %% Run the jobs
