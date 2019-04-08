@@ -81,7 +81,8 @@ h.n_properties = 0; % no properties (yet)
 h.property_name =  char(zeros(10,20));
 h.vox_to_ras =  vox2mm ;         % the qform
 h.reserved =    char(zeros(444,1));
-h.voxel_order = ['LPS' char(0)]; % Always LPS?
+%h.voxel_order = ['LPS' char(0)]; % Always LPS?
+h.voxel_order = [ipad char(0)];
 % to change if oblique probably
 h.pad2 =        pad2; %'RAS ';       % LAS/RAS when flip x
 h.image_orientation_patient = iop; %-1 0 0 0 -1 0]; % 1(-1) 0 0 0 1(-1) 0 for flipped x
