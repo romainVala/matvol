@@ -16,7 +16,14 @@ end
 
 %% defpar
 
-% tedana.py arguments : script options
+% tedana.py main arguments
+defpar.maxrestart = []; % (tedana default = 10)
+defpar.maxit      = []; % (tedana default = 500)
+defpar.mask       = ''; % mask file of the brain. If not defined, tedana will compute one. (tedana default = none)
+defpar.png        = 1;  % tedana will make some PNG files of the components Beta map, for quality checks
+defpar.tedpca     = ''; % mle, kundu, kundu-stabilize (tedana default = mle)
+
+% tedana.py other arguments
 defpar.cmd_arg = ''; % Allows you to use all addition arguments not scripted in this job_tedana.m file
 % defpar.subdir  = ''; % name of the working dir, if empty, write files in same dir as the echos
 
@@ -97,8 +104,15 @@ for iJob = 1 : nJobs
     echo_arg = sprintf(echo_sprintf,TE{iJob}); % looks like : "TE1, TE2, TE3"
     
     % Main command
-    cmd = sprintf('cd %s;\n tedana -e %s -d %s --maxit 5000',...
+    cmd = sprintf('cd %s;\n tedana -e %s -d %s',...
         working_dir, echo_arg, data_arg);
+    
+    % Options
+    if par.png                 , cmd = sprintf('%s --png'          , cmd                ); end
+    if ~isempty(par.maxrestart), cmd = sprintf('%s --maxrestart %d', cmd, par.maxrestart); end
+    if ~isempty(par.maxit     ), cmd = sprintf('%s --maxit %d'     , cmd, par.maxit     ); end
+    if ~isempty(par.mask      ), cmd = sprintf('%s --mask %s'      , cmd, par.mask      ); end
+    if ~isempty(par.tedpca    ), cmd = sprintf('%s --tedpca %s'    , cmd, par.tedpca    ); end
     
     % Other args ?
     if ~isempty(par.cmd_arg)
@@ -106,7 +120,7 @@ for iJob = 1 : nJobs
     end
     
     % Finish preparing tedana job
-    cmd = sprintf('%s \n',cmd);
+    cmd = sprintf('%s 2>&1 | tee tedana.log \n',cmd); % print the terminal output into a log file
     
     jobchar = [jobchar cmd]; %#ok<*AGROW>
     
