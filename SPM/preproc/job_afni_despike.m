@@ -29,6 +29,12 @@ end
 
 %% defpar
 
+% 3dDespike options
+defpar.method  = ''; % NEW, NEW25, localedit (afni default is NEW)
+defpar.mask    = 0 ; % 0 / 1 (afni default is yes+dilate4)
+defpar.dilate  = []; % 1, 2, 3, 4, ... (afni default is yes+dilate4)
+defpar.cmd_arg = ''; % Allows you to use all addition arguments not scripted in this job_afni_despike.m file
+
 defpar.prefix          = 'd';
 defpar.OMP_NUM_THREADS = 0; % number pf CPU threads : 0 means all CPUs available
 
@@ -90,8 +96,29 @@ for iSubj = 1 : nSubj
                 if N.dat.dim(4) < 15
                     [ ~ , cmd ] = r_movefile(src, dst, 'linkn', par); % cannot do 3dDespike with less than 15 volumes
                 else
+                    % main command (1/2)
                     cmd = '';
-                    cmd = sprintf('%s export OMP_NUM_THREADS=%d; 3dDespike -overwrite -NEW -prefix %s %s; \n', cmd, par.OMP_NUM_THREADS, dst, src);
+                    cmd = sprintf('%s export OMP_NUM_THREADS=%d; 3dDespike -overwrite', cmd, par.OMP_NUM_THREADS);
+                    
+                    % options
+                    if ~isempty(par.method), cmd = sprintf('%s -%s', cmd, par.method); end
+                    if ~isempty(par.mask  )
+                        if par.mask == 1
+                            if ~isempty(par.dilate)
+                                cmd = sprintf('%s -dilate %d', cmd, par.dilate);
+                            else
+                                % pass, use default setting
+                            end
+                        elseif par.mask == 0
+                            cmd = sprintf('%s -nomask', cmd);
+                        end
+                    else
+                        if ~isempty(par.dilate), cmd = sprintf('%s -dilate %d', cmd, par.dilate); end
+                    end
+                    if ~isempty(par.cmd_arg), cmd = sprintf('%s %s', cmd, par.cmd_arg); end
+                    
+                    % main command (2/2)
+                    cmd = sprintf('%s -prefix %s %s; \n', cmd, dst, src);
                 end
             else
                 [ ~ , cmd ] = r_movefile(src, dst, 'linkn', par); % cannot do 3dDespike with less than 15 volumes
