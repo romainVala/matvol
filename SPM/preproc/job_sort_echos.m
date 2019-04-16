@@ -98,6 +98,8 @@ jobs = cell(nSubj,1);
 meinfo_full = jobs;
 meinfo_path = jobs;
 meinfo_TE   = jobs;
+meinfo_TR   = jobs;
+meinfo_so   = jobs;
 for iSubj = 1 : nSubj
     
     % Extract subject name, and print it
@@ -112,6 +114,8 @@ for iSubj = 1 : nSubj
     meinfo_full{iSubj} = cell(nRun,1);
     meinfo_path{iSubj} = cell(nRun,1);
     meinfo_TE  {iSubj} = cell(nRun,1);
+    meinfo_TR  {iSubj} = cell(nRun,1);
+    meinfo_so  {iSubj} = cell(nRun,1);
     for iRun = 1 : nRun
         
         meinfo_full{iSubj}{iRun} = struct;
@@ -132,8 +136,15 @@ for iSubj = 1 : nSubj
         assert(~isempty(jsons), 'no ^dic.*json file detected in : %s', run_path)
         
         % Fetch all TE and reorder them
-        res = get_string_from_json(cellstr(jsons{1}),'EchoTime','numeric');
-        allTE = cell2mat([res{:}]);
+        res = get_string_from_json(cellstr(jsons{1}),{'EchoTime', 'RepetitionTime', 'CsaImage.MosaicRefAcqTimes'},{'num', 'num', 'vect'});
+        allTE = zeros(size(jsons{1},1),1);
+        for e = 1 : size(jsons{1},1)
+            allTE(e) = res{e}{1};
+            if e == 1
+                TR = res{e}{2};
+                sliceonsets = res{e}{3};
+            end
+        end
         [sortedTE,order] = sort(allTE);
         fprintf(['TEs are : '   repmat('%g ',[1,length(allTE)   ])        ], allTE)
         fprintf(['sorted as : ' repmat('%g ',[1,length(sortedTE)]) 'ms \n'], sortedTE)
@@ -165,6 +176,8 @@ for iSubj = 1 : nSubj
             meinfo_full{iSubj}{iRun}(echo).outname = sprintf('e%d',echo);
             meinfo_full{iSubj}{iRun}(echo).TE      = sortedTE(echo);
             meinfo_full{iSubj}{iRun}(echo).fname   = fullfile( pth, sprintf('e%d%s',echo,ext) );
+            meinfo_full{iSubj}{iRun}(echo).TR      = TR;
+            meinfo_full{iSubj}{iRun}(echo).sliceonsets = sliceonsets;
             
             E_dst{echo} = fullfile(run_path,filename);
             [ ~ , job_tmp ] = r_movefile(E_src{echo}, E_dst{echo}, 'linkn', par);
@@ -176,7 +189,8 @@ for iSubj = 1 : nSubj
         
         meinfo_path{iSubj}{iRun} = {meinfo_full{iSubj}{iRun}.fname}';
         meinfo_TE  {iSubj}{iRun} = [meinfo_full{iSubj}{iRun}.TE];
-        
+        meinfo_TR  {iSubj}{iRun} =  meinfo_full{iSubj}{iRun}(1).TR;
+        meinfo_so  {iSubj}{iRun} =  meinfo_full{iSubj}{iRun}(1).sliceonsets;
     end % iRun
     
     % Save job_subj
@@ -188,6 +202,8 @@ meinfo      = struct;
 meinfo.full = meinfo_full;
 meinfo.path = meinfo_path;
 meinfo.TE   = meinfo_TE;
+meinfo.TR   = meinfo_TR;
+meinfo.sliceonsets = meinfo_so;
 
 
 %% Run the jobs
