@@ -45,6 +45,8 @@ comptable_file    = cell(size(meinfo.path));
 comptable_success = nan(size(meinfo.path));
 comptable_fail    = nan(size(meinfo.path));
 
+log_file          = cell(size(meinfo.path));
+
 count = 0;
 
 ctable = zeros(0);
@@ -56,6 +58,8 @@ for subj = 1 : length(comptable_file)
     fail    = 0;
     
     for run = 1 : length(meinfo.path{subj})
+        
+        % Component table -------------------------------------------------
         
         comptable_file{subj}{run} = fullfile( get_parent_path( meinfo.path{subj}{run}{1} ), 'comp_table_ica.txt' );
         
@@ -88,6 +92,20 @@ for subj = 1 : length(comptable_file)
         end
         
         names{count}    = get_parent_path(strrep(comptable_file{subj}{run}, study_path, ''));
+        
+        % Log file --------------------------------------------------------
+        
+        log_file{subj}{run} = fullfile( get_parent_path( meinfo.path{subj}{run}{1} ), 'tedana.log' );
+        
+        %         if exist( log_file{subj}{run}, 'file')
+        %
+        %             content = get_file_content_as_char(log_file{subj}{run});
+        %             lines = strsplit(content,sprintf('\n'))';
+        %             converged = strfind(lines,'converged in');
+        %             ICA_lines = strfind(lines,'ICA');
+        %
+        %         else
+        %         end
         
     end
     
