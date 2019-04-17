@@ -64,7 +64,7 @@ for o = 1 : length(field_to_get)
             
         case { 'char' , 'string' , 'str' }
             
-            token = regexp(content, [ '"' field_to_get{o} '": "([A-Za-z0-9-_,;]+)",' ],'tokens');
+            token = regexp(content, [ '"' field_to_get{o} '": "([A-Za-z0-9-_,;^]+)",' ],'tokens');
             if ~isempty(token)
                 out{o} = token{:}{:};
             else
