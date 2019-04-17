@@ -49,8 +49,9 @@ log_file          = cell(size(meinfo.path));
 
 count = 0;
 
-ctable = zeros(0);
-names  = cell(0);
+ctable     = zeros(0,4);
+names      = cell(0);
+ICAattempt = zeros(0,2);
 
 for subj = 1 : length(comptable_file)
     
@@ -97,15 +98,35 @@ for subj = 1 : length(comptable_file)
         
         log_file{subj}{run} = fullfile( get_parent_path( meinfo.path{subj}{run}{1} ), 'tedana.log' );
         
-        %         if exist( log_file{subj}{run}, 'file')
-        %
-        %             content = get_file_content_as_char(log_file{subj}{run});
-        %             lines = strsplit(content,sprintf('\n'))';
-        %             converged = strfind(lines,'converged in');
-        %             ICA_lines = strfind(lines,'ICA');
-        %
-        %         else
-        %         end
+        if exist( log_file{subj}{run}, 'file')
+            
+            content = get_file_content_as_char(log_file{subj}{run});
+            lines = strsplit(content,sprintf('\n'))';
+            converged = ~cellfun(@isempty, strfind(lines,'converged in') ); %#ok<*STRCLFH>
+            ICA_lines = ~cellfun(@isempty, strfind(lines,'ICA attempt' ) );
+            
+            if any(converged) % yes ! it converged !
+                
+                converge_line = lines{converged};
+                res = regexp(converge_line, 'ICA attempt (?<attempt>\d+) converged in (?<iteration>\d+) iterations', 'names');
+                assert(~isempty(res),'wrong interpretation of ICA converged attempt in %s', log_file{subj}{run})
+                ICAattempt(count,1:2) = [str2double(res.attempt) str2double(res.iteration)];
+                
+            else % no it didn't ...
+                
+                ICA_failed = lines(ICA_lines);
+                last_ICA   = ICA_failed{end};
+                res = regexp(last_ICA, 'ICA attempt (?<attempt>\d+) failed to converge after (?<iteration>\d+) iterations', 'names');
+                assert(~isempty(res),'wrong interpretation of ICA attempt in %s', log_file{subj}{run})
+                ICAattempt(count,1:2) = [str2double(res.attempt) str2double(res.iteration)];
+                
+            end
+            
+        else
+            
+            ICAattempt(count,1:2) = [NaN NaN];
+            
+        end
         
     end
     
@@ -117,7 +138,9 @@ end
 
 %% Convert to table
 
-Table = array2table(ctable, 'VariableNames',{'Components', 'Accepted', 'Rejected', 'Ignored'}, 'RowNames', names);
+data = [ICAattempt ctable];
+
+Table = array2table(data, 'VariableNames',{'Attempty', 'Iterations','Components', 'Accepted', 'Rejected', 'Ignored'}, 'RowNames', names);
 
 
 %% Output
@@ -143,16 +166,16 @@ if par.verbose > 0
     
     t.ColumnName = Table.Properties.VariableNames;
     t.RowName    = Table.Properties.RowNames;
-    t.Data       = ctable;
+    t.Data       = data;
     
     % Fig 2
     
     f2 = figure('Name',meinfo_file);
     ax = axes(f2);
-    barh(ax,ctable(:,2:end),'stacked','DisplayName','ctable')
+    barh(ax,flipud(ctable(:,2:end)),'stacked','DisplayName','ctable')
     ax.TickLabelInterpreter = 'none';
     ax.YTick      = 1 : size(ctable,1);
-    ax.YTickLabel = names;
+    ax.YTickLabel = fliplr(names);
     
 end
 
