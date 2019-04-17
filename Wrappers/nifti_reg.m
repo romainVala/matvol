@@ -61,10 +61,11 @@ for k=1:length(fmov)
         cmd = sprintf('%s -aff aff_%s.txt -res aff_%s.nii.gz -omp %d \n',cmd,transform,transform,par.nb_thread);
     end
     
-    cmd = sprintf('%s reg_f3d -flo %s -ref  %s',cmd,fname_mov{k},fref{k});
-    cmd = sprintf('%s %s ',cmd,par.nl_args);
-    cmd = sprintf('%s -aff aff_%s.txt -res %s.nii.gz -cpp ycpp_%s.nii.gz -omp %d ',cmd,transform,transform,transform,par.nb_thread);
-    
+    if par.do_NL
+        cmd = sprintf('%s reg_f3d -flo %s -ref  %s',cmd,fname_mov{k},fref{k});
+        cmd = sprintf('%s %s ',cmd,par.nl_args);
+        cmd = sprintf('%s -aff aff_%s.txt -res %s.nii.gz -cpp ycpp_%s.nii.gz -omp %d ',cmd,transform,transform,transform,par.nb_thread);
+    end
     
     if ~isempty(par.mask)
         cmd = sprintf('%s -rmask %s ',cmd,par.mask{k})
