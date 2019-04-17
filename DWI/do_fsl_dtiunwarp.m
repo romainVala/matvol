@@ -22,7 +22,8 @@ defpar.find_param_from_dicom=0;
 defpar.find_param_from_json=1;
 defpar.dicfile = '';
 %see also default params from do_cmd_sge
-par.sge=0;
+defpar.sge=0;
+
 par = complet_struct(par,defpar);
 
 for nbs = 1:length(f4D)
