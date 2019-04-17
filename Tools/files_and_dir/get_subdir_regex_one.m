@@ -1,4 +1,4 @@
-function output = get_subdir_regex_one(indir,reg_ex,varargin)
+function [output no_reg no_dir no_ind ] = get_subdir_regex_one(indir,reg_ex,varargin)
 
 wanted_nbdir =1;
 
@@ -35,7 +35,8 @@ if length(indir)~=length(reg_ex)
     error('you should have one regex for each indi\n')
 end
 
-
+ no_dir ={}; no_reg={}; no_ind=[];
+ 
 for nb_dir=1:length(indir)
     od = dir(indir{nb_dir});
     od = od(3:end);
@@ -58,10 +59,13 @@ for nb_dir=1:length(indir)
     end
     if isempty(output{nb_dir})
         fprintf('warning suj %d %s has no %s subdir\n',nb_dir,indir{nb_dir},reg_ex{nb_dir})
-    
-    elseif found~=wanted_nbdir
+        no_dir{end+1} = indir{nb_dir};
+        no_reg{end+1} = reg_ex{nb_dir};
+        no_ind(end+1) = nb_dir;
+    elseif all(repmat(found,size(wanted_nbdir))~=wanted_nbdir)
     
         fprintf('warning suj %d %s has %d  subdir for %s \n',nb_dir,indir{nb_dir},found,reg_ex{nb_dir})
+        %tomuch_dir{end+1} = reg_ex{nb_dir};
     end
     
    end
