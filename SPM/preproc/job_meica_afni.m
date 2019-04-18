@@ -76,6 +76,7 @@ if ischar(dir_func{1})
     end
 end
 
+
 %% Other checks
 
 if par.MNI == 0 && isempty(par.space) % native space

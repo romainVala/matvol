@@ -34,10 +34,11 @@ defpar.fake     = 0; % do everything exept running
 defpar.verbose  = 2; % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
 
 % Cluster
-defpar.sge      = 0; % for ICM cluster, run the jobs in paralle
+defpar.sge      = 0;               % for ICM cluster, run the jobs in paralle
 defpar.jobname  = 'job_tedana';
-defpar.walltime = '08:00:00'; % HH:MM:SS
-defpar.mem      = 16000;      % MB
+defpar.walltime = '08:00:00';      % HH:MM:SS
+defpar.mem      = 16000;           % MB
+defpar.sge_queu = 'normal,bigmem'; % use both
 
 par = complet_struct(par,defpar);
 
