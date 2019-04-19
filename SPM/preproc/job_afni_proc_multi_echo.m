@@ -93,7 +93,7 @@ for iSubj = 1 : nSubj
         skip = [skip iSubj]; %#ok<AGROW>
         continue
     elseif exist(working_dir,'dir')==7
-        movefile(working_dir, [working_dir '.prev'])
+        rmdir(working_dir,'s')
     end
     
     fprintf('[%s]: Preparing JOB %d/%d @ %s \n', mfilename, iSubj, nSubj, subj_path);
