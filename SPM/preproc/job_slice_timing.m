@@ -125,7 +125,7 @@ for subj=1:nSubj
         if isempty(json)
             error('no JSON found with regex [ %s ] in dir : %s', par.use_JSON_regex, fin{subj})
         else
-            json = json{1}; % only take the first one, we assume all volumes have the same TR, nrSlices, ...
+            json = deblank(json{1}(1,:)); % only take the first one, we assume all volumes have the same TR, nrSlices, ...
         end
         res = get_string_from_json(json, {'CsaSeries.MrPhoenixProtocol.sSliceArray.lSize', 'RepetitionTime', 'CsaImage.MosaicRefAcqTimes'}, {'num', 'num', 'vect'});
         nrSlices    = res{1};
@@ -190,13 +190,15 @@ end
 
 %% Add outputs objects
 
-if obj && par.auto_add_obj
+if obj && par.auto_add_obj && par.run
     
     serieArray = [fin_obj.serie];
-    tag        =  fin_obj(1).tag;
+    tag        =  {fin_obj.tag};
     ext        = '.*.nii$';
     
-    serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
+    for vol = 1 : numel(fin_obj)
+        serieArray(vol).addVolume(['^' par.prefix tag{vol} ext],[par.prefix tag{vol}])
+    end
     
 end
 

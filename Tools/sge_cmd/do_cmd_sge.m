@@ -290,6 +290,8 @@ end
 
 for c = 1 : length(cmd)
     
+    cmd{c} = strrep(cmd{c},'\\','\'); % remove double \\, only usefull for sge compatibility
+    
     switch par.verbose
         case 1
             if nn < 3 || nn > (length(job)-2) % print first 2 and last 2 jobs
