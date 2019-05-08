@@ -42,7 +42,7 @@ defpar.verbose       = 2; % 0 : print nothing, 1 : print 2 first and 2 last mess
 defpar.jobname       = 'job_meica';
 
 % report
-defpar.report        = 1; % uses meica_report
+defpar.report        = 0; % uses meica_report
 
 par = complet_struct(par,defpar);
 
@@ -75,6 +75,7 @@ if ischar(dir_func{1})
         dir_func = {dir_func};
     end
 end
+
 
 %% Other checks
 

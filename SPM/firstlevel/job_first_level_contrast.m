@@ -21,7 +21,7 @@ end
 
 defpar.sessrep         = 'none';
 defpar.file_reg        = '^s.*nii';
-defpar.report          = 1;
+defpar.report          = 0;
 
 defpar.jobname         ='spm_glm_con';
 defpar.walltime        = '04:00:00';
