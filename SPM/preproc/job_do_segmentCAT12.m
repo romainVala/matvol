@@ -49,6 +49,7 @@ defpar.GM        = [0 0 1 0]; % warped_space_Unmodulated(wp*) / warped_space_mod
 defpar.WM        = [0 0 1 0];
 defpar.CSF       = [0 0 1 0];
 defpar.bias      = [1 1 0] ;  % native normalize dartel     [0 1]; % bias field / bias corrected image
+defpar.label       = [0 0 0] ;  % native normalize dartel
 defpar.warp      = [1 1]; % warp field native->template / warp field native<-template
 
 defpar.jacobian  = 1;         % write jacobian determinant in normalize space
@@ -159,6 +160,10 @@ for nbsuj = 1:length(img)
     jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.native = par.bias(1);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.warped = par.bias(2);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.dartel = par.bias(3)*2;
+
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.label.native = par.label(1);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.label.warped = par.label(2);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.label.dartel = par.label(3)*2;
     
     jobs{nbsuj}.spm.tools.cat.estwrite.output.jacobian.warped = par.jacobian;
     
