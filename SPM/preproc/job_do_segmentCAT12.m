@@ -50,6 +50,7 @@ defpar.WM        = [0 0 1 0];
 defpar.CSF       = [0 0 1 0];
 defpar.bias      = [1 1 0] ;  % native normalize dartel     [0 1]; % bias field / bias corrected image
 defpar.label       = [0 0 0] ;  % native normalize dartel
+defpar.TPMC       = [0 0 0] ;  % native normalize dartel
 defpar.warp      = [1 1]; % warp field native->template / warp field native<-template
 
 defpar.jacobian  = 1;         % write jacobian determinant in normalize space
@@ -69,8 +70,9 @@ defpar.walltime = '02:00:00';
 
 par = complet_struct(par,defpar);
 
-defpar.cmd_prepend = sprintf('global cat; cat_defaults; cat.extopts.subfolders=%d; cat.extopts.expertgui=1;clear defaults; spm_jobman(''initcfg'');',...
-    par.subfolder);
+if any(par.TPMC),    expert_mode=2; else expert_mode=1; end
+defpar.cmd_prepend = sprintf('global cat; cat_defaults; cat.extopts.subfolders=%d; cat.extopts.expertgui=%d;clear defaults; spm_jobman(''initcfg'');',...
+    par.subfolder,expert_mode);
 defpar.matlab_opt = ' -nodesktop ';
 
 
@@ -165,6 +167,12 @@ for nbsuj = 1:length(img)
     jobs{nbsuj}.spm.tools.cat.estwrite.output.label.warped = par.label(2);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.label.dartel = par.label(3)*2;
     
+    if any(par.TPMC)
+        jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.native = par.TPMC(1);
+        jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.warped = par.TPMC(2);
+        jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.dartel = par.TPMC(3)*2;
+    end
+
     jobs{nbsuj}.spm.tools.cat.estwrite.output.jacobian.warped = par.jacobian;
     
     % Warp fields : y_ & iy_
