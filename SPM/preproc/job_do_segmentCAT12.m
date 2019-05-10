@@ -50,7 +50,7 @@ defpar.WM        = [0 0 1 0];
 defpar.CSF       = [0 0 1 0];
 defpar.bias      = [1 1 0] ;  % native normalize dartel     [0 1]; % bias field / bias corrected image
 defpar.label       = [0 0 0] ;  % native normalize dartel
-defpar.TPMC       = [0 0 0] ;  % native normalize dartel
+defpar.TPMC       = [0 0 0] ;  % native normalize dartel  to write other  Tissu Probability Map Classes 
 defpar.warp      = [1 1]; % warp field native->template / warp field native<-template
 
 defpar.jacobian  = 1;         % write jacobian determinant in normalize space
