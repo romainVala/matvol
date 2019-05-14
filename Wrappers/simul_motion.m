@@ -14,6 +14,12 @@ if isempty(retroMoCoPath)
     run(fullfile(d,'/mirt/setup.m'))
 end
 
+if length(swallowMagnitude)==1
+    swallowMagnitude = [swallowMagnitude swallowMagnitude];% first is translations, second is rotations
+end
+if length(suddenMagnitude)==1
+    suddenMagnitude  = [suddenMagnitude suddenMagnitude];% first is translations, second is rotations
+end
 
 %%% Load input volume
 
