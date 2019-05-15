@@ -5,6 +5,7 @@ if ~exist('par','var')
 end
 defpar.pct  = 0; % Parallel Computing Toolbox
 defpar.redo = 0;
+defpar.out_format = 'cell'; %'cell or table'
 
 par = complet_struct(par,defpar);
 
@@ -12,20 +13,41 @@ pct = par.pct;
 
 %% Main loop
 
-param = cell(size(fin));
+if strcmp(par.out_format, 'cell')
+    param = cell(size(fin));
+end
+
+%param = repmat(struct,size(fin));
 
 if pct
     
-    parfor idx = 1 : numel(fin)
-        param{idx} = parse_csv(fin{idx},par);
+    if strcmp(par.out_format, 'cell')
+        parfor idx = 1 : numel(fin)
+            param{idx} = parse_csv(fin{idx},par);            
+        end
+    else %table
+        parfor idx = 1 : numel(fin)
+            param(idx) = parse_csv(fin{idx},par);
+        end
+        
     end
-    
+     
 else
-    
-    for idx = 1 : numel(fin)
-        param{idx} = parse_csv(fin{idx},par);
+    if strcmp(par.out_format, 'cell')
+        for idx = 1 : numel(fin)
+            param{idx} = parse_csv(fin{idx},par);            
+        end
+    else %table
+        for idx = 1 : numel(fin)
+            param(idx) = parse_csv(fin{idx},par);
+        end
+        
     end
     
+end
+
+if strcmp(par.out_format, 'table')
+    param = struct2table(param);
 end
 
 end% function
