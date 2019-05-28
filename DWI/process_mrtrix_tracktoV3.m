@@ -18,6 +18,7 @@ defpar.stop = 0;
 defpar.onedirection = 0;
 defpar.exclude = '';
 defpar.nthreads = 1;
+defpar.option = '';
 
 defpar.sge = 1;
 defpar.jobname = 'mrtrix_trackto';
@@ -47,8 +48,8 @@ for nbsuj = 1:length(sdata)
     
     mask_filename = par.mask{nbsuj};
     
-    cmd = sprintf('LD_LIBRARY_PATH=;tckgen -force -seed_image %s -select %d -algorithm %s -grad %s -nthreads %d',...
-        seed_file, par.track_num, par.type, fullfile(dir_mrtrix,par.grad_file), par.nthreads);
+    cmd = sprintf('LD_LIBRARY_PATH=;tckgen %s -force -seed_image %s -select %d -algorithm %s -grad %s -nthreads %d',...
+        par.option,seed_file, par.track_num, par.type, fullfile(dir_mrtrix,par.grad_file), par.nthreads);
     
     if ~isempty(par.act)
         cmd = sprintf('%s -act %s',cmd, par.act{nbsuj});
