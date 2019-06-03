@@ -16,6 +16,7 @@ defpar.force_eddy=1;
 defpar.eddy_add_cmd=' --data_is_shelled --repol --cnr_maps --residuals';
 defpar.do_denoise = 1;
 defpar.remove_gibs = 1;
+defpar.remove_negative = 32000; %all value < -1 will be replace by 32000
 defpar.pct = 0;
 defpar.do_qc = 1;
 
@@ -185,6 +186,19 @@ fb0 = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(f
 
 %make it one job if several B0 to extracts
 for kkk=1:length(jobs), jobappend{1} = sprintf('%s\n%s',jobappend{1},jobs{kkk});end
+
+
+if par.remove_negative
+    ftemp = [tempname '.nii.gz'];
+    cmd = sprintf('fslmaths %s  -uthr -1 %s\n',fodti,ftemp);
+    cmd = sprintf('%s mrcalc -force  %s.nii.gz  -1 -le %d -mult %s -subtract %s.nii.gz -add %s.nii.gz  \n',...
+        cmd,fodti, par.remove_negative,ftemp,fodti,fodti);
+    cmd = sprintf('%s rm -f %s ',cmd,ftemp);
+    jobappend{1} = sprintf('%s \n #remove NEGATIVE valus \n %s',jobappend{1},cmd);    
+end
+%fslmaths 4D_dwi.nii.gz -thr -1 toto
+% mrcalc 4D_dwi.nii.gz -1 -le 32000 -mult toto.nii.gz -subtract 4D_dwi.nii.gz -add clean.nii
+%rm toto.nii.gz
 
 
 if par.do_denoise
