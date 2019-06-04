@@ -3,7 +3,7 @@ function jobs= do_freesurfer_longitudinal(sujid,sujdirs,params)
 if ~isfield(params,'sge_queu'),  params.sge_queu = 'long';end
 if ~isfield(params,'skip'),  params.skip = 1; end
 if ~isfield(params,'version'),  params.version = 5; end
-if ~isfield(params,'version_path'),params.version_path='';end
+if ~isfield(params,'version_path'),params.version_path='module load FreeSurfer/6.0.0';end
 if ~isfield(params,'free_sujdir')
     [pr ff] = get_parent_path(anat,3);
     aa = r_mkdir(pr(1),'freesurfer');
