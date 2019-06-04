@@ -9,9 +9,10 @@ def_par.mask = 'nodif_brain_mask';
 def_par.sge=1;
 def_par.jobname='noddi';
 def_par.AMICO_data_path = '';
-def_par.sujname = '';
+def_par.sujname = ''; %if empty it will be guess from fdti (get_parent_path 3)
 def_par.common_protocol = 0;  %set to one if you are sure there are the exact same bval between the subject 
-                               % it save time but first subject must run first
+% it save time but first subject must run first if 1 all amico kernel will be in AMICO_data_path
+% if 0 this will be recompute for each subject and store in AMICO subject dir
 
 par = complet_struct(par,def_par);
 
