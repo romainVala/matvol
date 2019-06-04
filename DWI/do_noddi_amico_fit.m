@@ -91,29 +91,36 @@ for nbs = 1:length(dti)
     end
     
     AMICO_PrecomputeRotationMatrices(); % NB: this needs to be done only once and for all but skip if exist
-
-
+    
+    
     afdti=unzip_volume(fdti(nbs));afm=unzip_volume(fm(nbs))
-    
-    AMICO_SetSubject( 'amico_all', par.sujname{nbs} );
-    
-    % Override default file names
-    CONFIG.DATA_path = dti{nbs};
-    CONFIG.dwiFilename    = afdti{1};
-    CONFIG.maskFilename   = afm{1};
-    CONFIG.schemeFilename =fsche{nbs};
-    
-    AMICO_LoadData
-    %Generate the kernels corresponding to the different compartments of the NODDI model:
-    % Setup AMICO to use the 'NODDI' model
-    AMICO_SetModel( 'NODDI' );
-    % Generate the kernels corresponding to the protocol
-    AMICO_GenerateKernels( false );
-    % Resample the kernels to match the specific subject's scheme
-    AMICO_ResampleKernels();
-    % Load the kernels in memory
-    %nomore KERNELS = AMICO_LoadKernels();
-    AMICO_Fit()
+
+    try        
+        AMICO_SetSubject( 'amico_all', par.sujname{nbs} );
+        
+        % Override default file names
+        CONFIG.DATA_path = dti{nbs};
+        CONFIG.dwiFilename    = afdti{1};
+        CONFIG.maskFilename   = afm{1};
+        CONFIG.schemeFilename =fsche{nbs};
+        
+        AMICO_LoadData
+        %Generate the kernels corresponding to the different compartments of the NODDI model:
+        % Setup AMICO to use the 'NODDI' model
+        AMICO_SetModel( 'NODDI' );
+        % Generate the kernels corresponding to the protocol
+        AMICO_GenerateKernels( false );
+        % Resample the kernels to match the specific subject's scheme
+        AMICO_ResampleKernels();
+        % Load the kernels in memory
+        %nomore KERNELS = AMICO_LoadKernels();
+        AMICO_Fit()
+
+    catch err
+        display(err.message);
+        disp(getReport(err,'extended'));
+    end
+
     gzip_volume(afdti);    gzip_volume(afm);
 end
 
