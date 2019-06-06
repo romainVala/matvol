@@ -40,7 +40,7 @@ for k=1:length(f)
     fmask{k} = fullfile(pp,[par.output_name '_mask']);
     
     if par.no4D
-        job{k} = sprintf('%s\n #extra to remove 4th dimention\n fslroi %s_mask %s_mask 0 1\n',job{k},par.output_name)
+        job{k} = sprintf('%s\n #extra to remove 4th dimention\n fslroi %s_mask %s_mask 0 1\n',job{k},par.output_name,par.output_name)
     end
     
 end
