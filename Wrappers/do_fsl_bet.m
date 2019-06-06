@@ -13,6 +13,7 @@ defpar.jobname = 'bet2';
 defpar.sge=0;
 defpar.radius = [];
 defpar.anat_brain=0;
+defpar.no4D = 0;
 
 par = complet_struct(par,defpar);
 
@@ -37,6 +38,11 @@ for k=1:length(f)
     job{k} = cmd;
     
     fmask{k} = fullfile(pp,[par.output_name '_mask']);
+    
+    if par.no4D
+        job{k} = sprintf('%s\n #extra to remove 4th dimention\n fslroi %s_mask %s_mask 0 1\n',job{k},par.output_name)
+    end
+    
 end
 
 job = do_cmd_sge(job,par,jobappend);
