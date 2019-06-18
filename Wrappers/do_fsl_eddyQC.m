@@ -70,4 +70,12 @@ end
 
 fclose(ffid)
 
-job = do_cmd_sge(job,par,jobappend);
+job2 = {sprintf('eddy_squad %s/%s',pwd,par.qc_dir_file)};
+
+
+[job fqsub] = do_cmd_sge(job,par,jobappend);
+
+    
+par.jobname = [par.jobname '_last'];
+do_cmd_sge(job2,par,'',fqsub);
+    
