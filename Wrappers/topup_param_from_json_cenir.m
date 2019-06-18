@@ -88,13 +88,17 @@ for k = 1:length(finii)
             hz =  j.global.const.BandwidthPerPixelPhaseEncode;
         else
             
-            hsession(totfile) =  out{1};
-            hseries(totfile) = k;
-            phase_angle = out{2};
-            phase_dir = out{3};
-            phase_sign = out{4};
-            hz = out{5};
-            
+            if isempty(out{1})
+                hsession(totfile)=1;  hseries(totfile) = k;
+                phase_angle=0;   phase_dir = 'COL'; phase_sign=1; hz=0.005;
+            else
+                hsession(totfile) =  out{1};
+                hseries(totfile) = k;
+                phase_angle = out{2};
+                phase_dir = out{3};
+                phase_sign = out{4};
+                hz = out{5};
+            end
         end
         
         switch phase_dir
