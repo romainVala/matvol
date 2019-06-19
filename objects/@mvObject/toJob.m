@@ -35,7 +35,7 @@ for idx = 1:size(mvArray,1)
     
     if flag == 1
         
-        pathArray{idx} = {mvArray(idx,:).path}';
+        pathArray{idx} = {mvArray(idx,:).removeEmpty.path}';
         
         % to simulate the output of get_subdir_regex_multi
         if isempty(char(mvArray(idx,:).path))
@@ -44,7 +44,7 @@ for idx = 1:size(mvArray,1)
         
     elseif flag == 0
         
-        pathArray{idx} = char(mvArray(idx,:).path);
+        pathArray{idx} = char(mvArray(idx,:).removeEmpty.path);
         
         % to simulate the output of get_subdir_regex_multi
         if isempty(char(mvArray(idx,:).path))
