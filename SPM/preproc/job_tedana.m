@@ -157,8 +157,8 @@ for iJob = 1 : nJobs
     echo_arg = sprintf(echo_sprintf,TE{iJob}); % looks like : "TE1, TE2, TE3"
     
     % Main command
-    cmd = sprintf('cd %s;\n tedana \\\\\n -e %s \\\\\n -d %s \\\\\n',...
-        working_dir, echo_arg, data_arg);
+    cmd = sprintf('mkdir -p %s; \n cd %s;\n tedana \\\\\n -e %s \\\\\n -d %s \\\\\n',...
+        outdir_path, outdir_path, echo_arg, data_arg);
     
     % Save dir
     cmd =                              sprintf('%s --out-dir %s    \\\\\n', cmd, outdir_path   );
