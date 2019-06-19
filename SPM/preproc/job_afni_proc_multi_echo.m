@@ -199,7 +199,7 @@ if par.sge
         par.OMP_NUM_THREADS = 1; % on the cluster, each node have 28 cores and 128Go of RAM
     end
     par.sge_nb_coeur = par.OMP_NUM_THREADS;
-    par.mem          = 2000; % AFNI is very memory efficient, even with huge data
+    par.mem          = 4000; % AFNI is memory efficient, even with huge data
     par.walltime     = '04'; % 4h computation max for 8 runs MEMB runs
 end
 
