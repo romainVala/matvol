@@ -150,7 +150,7 @@ for iSubj = 1 : nSubj
     % volreg
     if strfind(blocks, 'volreg')
         cmd = sprintf('%s -reg_echo 1                  \\\\\n', cmd);
-        cmd = sprintf('%s -volreg_align_to MIN_OUTLIER \\\\\n', cmd);
+        cmd = sprintf('%s -volreg_align_to first       \\\\\n', cmd); % orientation changes, a lot with 'MIN_OUTLIER' (brain can be cropped), a bit with 'first
         cmd = sprintf('%s -volreg_interp -quintic      \\\\\n', cmd);
         cmd = sprintf('%s -volreg_zpad 4               \\\\\n', cmd);
     end
