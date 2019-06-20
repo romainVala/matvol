@@ -87,7 +87,7 @@ for nbsuj = 1:length(ref)
             jobs{nbsuj}.spm.spatial.coreg.estimate.source = src(nbsuj);
             if ~isempty(other)
                 if iscell(other{nbsuj})
-                    jobs{nbsuj}.spm.spatial.coreg.estimate.other = other{nbsuj}
+                    jobs{nbsuj}.spm.spatial.coreg.estimate.other = other{nbsuj};
                 else
                 jobs{nbsuj}.spm.spatial.coreg.estimate.other = cellstr(other{nbsuj});
                 end
