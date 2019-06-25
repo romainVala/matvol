@@ -38,6 +38,7 @@ defpar.OMP_NUM_THREADS = 0; % number of CPU threads : 0 means all CPUs available
 
 defpar.sge      = 0;
 defpar.jobname  = 'job_afni_proc_multi_echo';
+defpar.subdir   = 'afni'
 
 defpar.auto_add_obj = 1;
 
@@ -85,7 +86,7 @@ for iSubj = 1 : nSubj
     
     subj_path       = get_parent_path(meinfo.path{iSubj}{1}{1},2);
     [~,subj_name,~] = fileparts(subj_path);
-    working_dir     = fullfile(subj_path,'afni');
+    working_dir     = fullfile(subj_path,par.subdir);
     
     if ~par.redo  &&  exist(working_dir,'dir')==7
         fprintf('[%s]: skiping %d/%d because %s exist \n', mfilename, iSubj, nSubj, working_dir);
@@ -150,7 +151,7 @@ for iSubj = 1 : nSubj
     % volreg
     if strfind(blocks, 'volreg')
         cmd = sprintf('%s -reg_echo 1                  \\\\\n', cmd);
-        cmd = sprintf('%s -volreg_align_to first       \\\\\n', cmd); % orientation changes, a lot with 'MIN_OUTLIER' (brain can be cropped), a bit with 'first
+        cmd = sprintf('%s -volreg_align_to MIN_OUTLIER \\\\\n', cmd);
         cmd = sprintf('%s -volreg_interp -quintic      \\\\\n', cmd);
         cmd = sprintf('%s -volreg_zpad 4               \\\\\n', cmd);
     end
