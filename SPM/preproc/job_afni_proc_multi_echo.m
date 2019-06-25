@@ -201,7 +201,7 @@ if par.sge
     end
     par.sge_nb_coeur = par.OMP_NUM_THREADS;
     par.mem          = 4000; % AFNI is memory efficient, even with huge data
-    par.walltime     = '04'; % 4h computation max for 8 runs MEMB runs
+    par.walltime     = '08'; % 8h computation max for 8 runs MEMB runs
 end
 
 % Run CPU, run !
