@@ -42,6 +42,8 @@ end
 
 %% defpar
 
+defpar.fname        = 'meinfo'; % ,neme of the .mat file that will be saved
+
 defpar.sge          = 0;
 defpar.jobname      = 'job_sort_echos';
 defpar.walltime     = '00:30:00';
@@ -72,7 +74,7 @@ par.verbose = 0; % don't print anything yet
 
 %% Check if already done
 
-fname = fullfile( get_parent_path(multilvl_funcdir{1}{1},2) , 'meinfo.mat' );
+fname = fullfile( get_parent_path(multilvl_funcdir{1}{1},2) , [par.fname '.mat'] );
 
 if exist(fname,'file')  &&  ~par.redo
     
