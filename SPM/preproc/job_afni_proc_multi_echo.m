@@ -38,7 +38,7 @@ defpar.OMP_NUM_THREADS = 0; % number of CPU threads : 0 means all CPUs available
 
 defpar.sge      = 0;
 defpar.jobname  = 'job_afni_proc_multi_echo';
-defpar.subdir   = 'afni'
+defpar.subdir   = 'afni';
 
 defpar.auto_add_obj = 1;
 
