@@ -84,14 +84,14 @@ par.verbose = 0; % don't print anything yet
 %% Expand meinfo path & TE
 
 % pth
-pth = [meinfo.path{:}];
+pth = cat(1,meinfo.path{:});
 pth = pth(:);
 pth = cellfun(@char, pth, 'UniformOutput', 0);
 pth = addprefixtofilenames(pth,prefix);
 pth = cellfun(@cellstr, pth, 'UniformOutput', 0);
 
 % TE
-TE = [meinfo.TE{:}];
+TE = cat(1,meinfo.TE{:});
 TE = TE(:);
 
 
