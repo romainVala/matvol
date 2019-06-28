@@ -32,7 +32,7 @@ defpar.prefix      = 'r';
 
 defpar.jobname  = 'spm_realign_multi_echo';
 defpar.walltime = '02:00:00'; % HH:MM:SS
-defpar.mem      = 4000;       % MB
+defpar.mem      = 2000;       % MB
 
 defpar.auto_add_obj = 1;
 
