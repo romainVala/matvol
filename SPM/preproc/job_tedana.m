@@ -110,18 +110,6 @@ for iJob = 1 : nJobs
     run_path = get_parent_path( pth{iJob}{1} );
     working_dir = run_path;
     
-    % Already done processing ?
-    if ~par.redo  &&  exist(fullfile(working_dir,'dn_ts_OC.nii'),'file') == 2
-        fprintf('[%s]: skiping %d/%d @ %s because %s exist \n', mfilename, iJob, nJobs, run_path, 'dn_ts_OC.nii');
-        jobchar = '';
-        skip = [skip iJob];
-    else
-        % Echo in terminal & initialize job_subj
-        fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, iJob, nJobs, run_path);
-        jobchar = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, iJob, nJobs, run_path); % initialize
-    end
-    
-    
     % Prepare outdir & mask if needed
     if ~isempty(outdir)
         switch class(outdir)
@@ -144,6 +132,16 @@ for iJob = 1 : nJobs
         mask_path = '';
     end
     
+    % Already done processing ?
+    if ~par.redo  &&  exist(fullfile(outdir_path,'dn_ts_OC.nii'),'file') == 2
+        fprintf('[%s]: skiping %d/%d @ %s because %s exist \n', mfilename, iJob, nJobs, run_path, 'dn_ts_OC.nii');
+        jobchar = '';
+        skip = [skip iJob];
+    else
+        % Echo in terminal & initialize job_subj
+        fprintf('[%s]: Preparing JOB %d/%d for %s \n', mfilename, iJob, nJobs, run_path);
+        jobchar = sprintf('#################### [%s] JOB %d/%d for %s #################### \n', mfilename, iJob, nJobs, run_path); % initialize
+    end
     
     %-Prepare command : tedana
     %==================================================================
