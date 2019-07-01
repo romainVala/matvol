@@ -134,7 +134,7 @@ for iJob = 1 : nJobs
     
     % Already done processing ?
     if ~par.redo  &&  exist(fullfile(outdir_path,'dn_ts_OC.nii'),'file') == 2
-        fprintf('[%s]: skiping %d/%d @ %s because %s exist \n', mfilename, iJob, nJobs, run_path, 'dn_ts_OC.nii');
+        fprintf('[%s]: skiping %d/%d @ %s because %s exist \n', mfilename, iJob, nJobs, outdir_path, 'dn_ts_OC.nii');
         jobchar = '';
         skip = [skip iJob];
     else
