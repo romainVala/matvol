@@ -87,7 +87,6 @@ for iRun = 1 : nRun
             diff_vol_idx   = [ AcquisitionNumber{idx_min_nrVol} , [ diff(AcquisitionNumber{idx_min_nrVol}) ; 0 ] ];
             idx_interp_vol = diff_vol_idx(diff_vol_idx(:,2) == 2,1) + 1;
             V = nifti(deblank( echos_path(idx_min_nrVol,:) ));
-            V.dat.dim(4) = max_nrVol;
             % I need a trick to "add" a volume in the 4D file
             prev   = V.dat(:,:,:,1:idx_interp_vol-1);
             middle = (V.dat(:,:,:,idx_interp_vol-1)+V.dat(:,:,:,idx_interp_vol))/2 ; % missing volume is average athe two surroundings
