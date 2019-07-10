@@ -10,13 +10,16 @@ end
 
 % general background noise movement:
 fitpars = zeros(6,nT);
-fitpars(1,:) = maxDisp*(perlinNoise1D(nT,noiseBasePars).'-.5);
-fitpars(2,:) = maxDisp*(perlinNoise1D(nT,noiseBasePars).'-.5);
-fitpars(3,:) = maxDisp*(perlinNoise1D(nT,noiseBasePars).'-.5);
 
-fitpars(4,:) = maxRot*(perlinNoise1D(nT,noiseBasePars).'-.5);
-fitpars(5,:) = maxRot*(perlinNoise1D(nT,noiseBasePars).'-.5);
-fitpars(6,:) = maxRot*(perlinNoise1D(nT,noiseBasePars).'-.5);
+if  noiseBasePars
+    fitpars(1,:) = maxDisp*(perlinNoise1D(nT,noiseBasePars).'-.5);
+    fitpars(2,:) = maxDisp*(perlinNoise1D(nT,noiseBasePars).'-.5);
+    fitpars(3,:) = maxDisp*(perlinNoise1D(nT,noiseBasePars).'-.5);
+    
+    fitpars(4,:) = maxRot*(perlinNoise1D(nT,noiseBasePars).'-.5);
+    fitpars(5,:) = maxRot*(perlinNoise1D(nT,noiseBasePars).'-.5);
+    fitpars(6,:) = maxRot*(perlinNoise1D(nT,noiseBasePars).'-.5);
+end
 
 % add in swallowing-like movements - just to z direction and pitch:
 if swallowFrequency
