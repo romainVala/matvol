@@ -378,6 +378,21 @@ end % subj
 % Now the jobs are prepared
 
 
+%% Remove skipable jobs
+
+skip = false(length(job),1);
+for j = 1 : length(job)
+    has_meica = ~isempty( strfind(job{j}, 'meica.py') );
+    has_cd    = ~isempty( strfind(job{j}, 'cd ') );
+    has_ln    = ~isempty( strfind(job{j}, 'ln -sf ') );
+    if ~has_meica && ~has_cd && ~has_ln
+        skip(j) = true;
+    end
+end
+
+job(skip) = [];
+
+
 %% Run the jobs
 
 % Fetch origial parameters, because all jobs are prepared
