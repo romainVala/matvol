@@ -71,7 +71,7 @@ rms_round = round(( RMS_displacement + RMS_rot)/2 *100);
 %find the prefix
 file_prefix = sprintf('Motion_RMS_%d_Disp_%d_Noise_%d_swalF_%d_swalM_%d_sudF_%d_sudM_%d_',...
     rms_round,round(maxDisp*100),round(noiseBasePars*100),round(swallowFrequency*100),...
-    ,round(swallowMagnitude(1)*100),round(suddenFrequency*100),round(suddenMagnitude(1)*100));
+    round(swallowMagnitude(1)*100),round(suddenFrequency*100),round(suddenMagnitude(1)*100));
     
 fname = addprefixtofilenames(fout,  file_prefix);
 
