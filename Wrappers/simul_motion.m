@@ -88,7 +88,7 @@ while ( image_corr>minCor && nb_attempt < maxAttemp )
 end
 
 
-rms_round = round(( RMS_displacement + RMS_rot)/2 *100);
+rms_round = round(( RMS_displacement + RMS_rot)/2 *100)
 
 %find the prefix
 file_prefix = sprintf('Motion_RMS_%d_Disp_%d_Noise_%d_swalF_%d_swalM_%d_sudF_%d_sudM_%d_',...
@@ -117,7 +117,7 @@ fparam = change_file_extension(fname,'.csv');
 
 ff = fopen(fparam,'w');
 fprintf(ff,'Nb_attenmpt, Disp, NoiseBar, swalF, swalM, sudF, sudM, corr, nmi, rmse, RMS,filename \n');
-fprintf(ff,'%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%s\n', nb_attempt, ...
+fprintf(ff,'%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%s \n', nb_attempt, ...
     maxDisp,noiseBasePars,swallowFrequency,swallowMagnitude(1),suddenFrequency,suddenMagnitude(1),image_corr,image_nmi,rmse,...
     ( RMS_displacement + RMS_rot)/2  ,fname );
 fclose(ff);
