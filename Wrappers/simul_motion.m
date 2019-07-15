@@ -69,10 +69,10 @@ while ( image_corr>minCor && nb_attempt < maxAttemp )
     % then apply just the translations:
     [~,~,image_simMotion_tmp] = applyRetroMC_nufft(fft3s(image_simRotOnly),fitMats,alignDim,alignIndices,11,hostVoxDim_mm,Hxyz,kspaceCentre_xyz,-1);
     
-    image_simMotion = ifft3s(image_simMotion);
+    image_simMotion_tmp = ifft3s(image_simMotion_tmp);
     %rrr no normalisation   image_simMotion = image_simMotion / percentile(abs(image_simMotion),95);
     
-    image_corr_tmp = corr(image_original(:),abs(image_simMotion(:))) ;
+    image_corr_tmp = corr(image_original(:),abs(image_simMotion_tmp(:))) ;
     nb_attempt = nb_attempt + 1;
     
     if image_corr_tmp < image_corr  %update only if correlation is worth
