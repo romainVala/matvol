@@ -7,7 +7,7 @@ minCor = 0.95
 maxAttemp = 5;
 image_corr = 1;nb_attempt = 0;
 
-while ( image_corr>minCor && nb_attempt > maxAttemp )
+while ( image_corr>minCor && nb_attempt < maxAttemp )
     %path to the toolbox if needed
     retroMoCoPath = which('addRetroMoCoBoxToPath.m');
     if isempty(retroMoCoPath)
