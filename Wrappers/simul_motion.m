@@ -84,7 +84,7 @@ while ( image_corr>minCor && nb_attempt < maxAttemp )
     else
         fprintf('skiping image correlation was %f \n',image_corr_tmp);
     end
-    seed_num = round(rand*image_corr_tmp*10000); %important for the simul_displacement to be different
+    seed_num = round(rand*image_corr_tmp*1000); %important for the simul_displacement to be different
 end
 
 
