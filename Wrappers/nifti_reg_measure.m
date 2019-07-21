@@ -3,7 +3,7 @@ function res=nifti_reg_measure(fflo,ffref,par)
 
 count=0;
  for k=1:length(ffref)
-     for kf=1:size(fflo{k},1) >1
+     for kf=1:size(fflo{k},1) 
          count=count+1;
          ffflo = deblank( fflo{k}(kf,:) );
          cc=sprintf('reg_measure -ref %s -flo %s -ncc -nmi',ffref{k},ffflo);
