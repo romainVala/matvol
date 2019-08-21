@@ -1,6 +1,10 @@
 function [fitpars,RMS_displacement,RMS_rot ] = simul_displacement(...
     nT,noiseBasePars,maxDisp,maxRot,...
-    swallowFrequency,swallowMagnitude,suddenFrequency,suddenMagnitude,seed_num)
+    swallowFrequency,swallowMagnitude,suddenFrequency,suddenMagnitude,seed_num,displacement_shit)
+
+if ~exist('displacement_shit','var')
+    displacement_shit = 1;
+end
 
 
 if seed_num
@@ -42,8 +46,9 @@ if suddenFrequency
     fitpars = fitpars+suddenTrace;
 end
 
-fitpars = bsxfun(@minus,fitpars,fitpars(:,round(nT/2)));
-
+if displacement_shit
+    fitpars = bsxfun(@minus,fitpars,fitpars(:,round(nT/2)));
+end
 
 displacements = sqrt(sum(fitpars(1:3,:).^2,1));
 RMS_displacement = sqrt(mean(displacements.^2));
