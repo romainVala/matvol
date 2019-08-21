@@ -1,7 +1,8 @@
 function [fitpars,RMS_displacement,RMS_rot ] = simul_motion(...
     fin, fout,noiseBasePars,maxDisp,maxRot,...
-    swallowFrequency,swallowMagnitude,suddenFrequency,suddenMagnitude,seed_num)
+    swallowFrequency,swallowMagnitude,suddenFrequency,suddenMagnitude,seed_num,PF_num)
 
+if ~exist('PF_num'), PF_num=0;end
 
 %path to the toolbox if needed
 retroMoCoPath = which('addRetroMoCoBoxToPath.m');
@@ -16,7 +17,7 @@ end
 
 
 minCor = 0.95
-maxAttemp = 5;
+maxAttemp = 1;
 image_corr = 1;nb_attempt = 0;
 
 %%% Load input volume
@@ -38,6 +39,7 @@ rawData = fft3s(image_original);
 
 nT = size(rawData,2);
 
+
 while ( image_corr>minCor && nb_attempt < maxAttemp )
     
     if length(swallowMagnitude)==1
@@ -47,9 +49,21 @@ while ( image_corr>minCor && nb_attempt < maxAttemp )
         suddenMagnitude  = [suddenMagnitude suddenMagnitude];% first is translations, second is rotations
     end
         
+    if PF_num % anly apply on 1/6 of the fourrier space
+        nT_pf = round(nT/6);
+        fitpars_tmp  =  zeros(6,nT);
+        
+        [fitpars_tmp_PF,RMS_displacement_tmp,RMS_rot_tmp ] = simul_displacement(...
+        nT_pf,noiseBasePars,maxDisp,maxRot,swallowFrequency,swallowMagnitude,suddenFrequency,suddenMagnitude,seed_num,0);
     
-    [fitpars_tmp,RMS_displacement_tmp,RMS_rot_tmp ] = simul_displacement(...
+        fitpars_tmp ( :, ( (nT_pf)*(PF_num-1) + 1 ) : ( (nT_pf)*(PF_num-1) + nT_pf ) ) = fitpars_tmp_PF;
+    else
+        [fitpars_tmp,RMS_displacement_tmp,RMS_rot_tmp ] = simul_displacement(...
         nT,noiseBasePars,maxDisp,maxRot,swallowFrequency,swallowMagnitude,suddenFrequency,suddenMagnitude,seed_num);
+    
+
+
+    end
     
     mat=vol(1).mat(1:3,1:3);
     hostVoxDim_mm = sqrt(diag(mat'*mat));
@@ -91,9 +105,9 @@ end
 rms_round = round(( RMS_displacement + RMS_rot)/2 *100)
 
 %find the prefix
-file_prefix = sprintf('Motion_RMS_%d_Disp_%d_Noise_%d_swalF_%d_swalM_%d_sudF_%d_sudM_%d_',...
+file_prefix = sprintf('Motion_RMS_%d_Disp_%d_Noise_%d_swalF_%d_swalM_%d_sudF_%d_sudM_%d_PF_%d_',...
     rms_round,round(maxDisp*100),round(noiseBasePars*100),round(swallowFrequency*100),...
-    round(swallowMagnitude(1)*100),round(suddenFrequency*100),round(suddenMagnitude(1)*100));
+    round(swallowMagnitude(1)*100),round(suddenFrequency*100),round(suddenMagnitude(1)*100),PF_num);
     
 fname = addprefixtofilenames(fout,  file_prefix);
 
@@ -116,9 +130,9 @@ rmse = sqrt(sum((x-y).^2))./length(x);
 fparam = change_file_extension(fname,'.csv');
 
 ff = fopen(fparam,'w');
-fprintf(ff,'Nb_attenmpt, Disp, NoiseBar, swalF, swalM, sudF, sudM, corr, nmi, rmse, RMS,filename \n');
+fprintf(ff,'Nb_attenmpt, Disp, NoiseBar, swalF, swalM, sudF, sudM, PF, corr, nmi, rmse, RMS,filename \n');
 fprintf(ff,'%d,%f,%f,%f,%f,%f,%f,%f,%f,%f,%f,%s \n', nb_attempt, ...
-    maxDisp,noiseBasePars,swallowFrequency,swallowMagnitude(1),suddenFrequency,suddenMagnitude(1),image_corr,image_nmi,rmse,...
+    maxDisp,noiseBasePars,swallowFrequency,swallowMagnitude(1),suddenFrequency,suddenMagnitude(1),PF_num,image_corr,image_nmi,rmse,...
     ( RMS_displacement + RMS_rot)/2  ,fname );
 fclose(ff);
 
