@@ -24,9 +24,9 @@ for k=1:length(fi)
     cmd = sprintf(' mri_convert %s %s',fi{k},fo{k})
   
     %unix(cmd)
+  job{end+1} = cmd;
   end
   
-  job{end+1} = cmd;
 end
 
 
