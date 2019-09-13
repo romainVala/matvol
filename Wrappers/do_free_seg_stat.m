@@ -9,6 +9,7 @@ defpar.mult = 1;
 defpar.empty = 1;
 defpar.robust = 0;
 defpar.seg_erode=0;
+defpar.redo = 0;
 
 par = complet_struct(par,defpar);
 
@@ -42,26 +43,41 @@ end
 for k=1:length(ref)
     ff = cellstr(src{k});
     ffo = cellstr(fo{k});
-        
+    
     for kk=1:length(ff)
-%mri_segstats --seg aparc.a2009s+aseg.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt 
-%--i ranat_mean_fonc.nii.gz --sum ttt.stats
-
+        %mri_segstats --seg aparc.a2009s+aseg.mgz --ctab $FREESURFER_HOME/FreeSurferColorLUT.txt
+        %--i ranat_mean_fonc.nii.gz --sum ttt.stats
+        
         if par.mult(kk) ~= 1
             cmd = sprintf('%s --mul %f ',cmd0,par.mult(kk));
-        else 
+        else
             cmd = cmd0;
         end
         
-        cmd = sprintf('%s   --seg %s  --i %s --sum %s \n',...
-            cmd,ref{k},ff{kk},ffo{kk});
-        job{nbj} = cmd;
-        nbj=nbj+1;
+        doit=0;
+        if exist(ffo{kk},'file')
+            if par.redo
+                fprintf('Warning erasing %s \n',ffo{kk})
+                doit=1;
+            else
+                fprintf('Skiping %s \n',ffo{kk});
+            end
+        else
+            doit=1;
+        end
+        
+        if doit
+            cmd = sprintf('%s   --seg %s  --i %s --sum %s \n',...
+                cmd,ref{k},ff{kk},ffo{kk});
+            job{nbj} = cmd;
+            nbj=nbj+1;
+
+        end
+        
     end
-    
 end
 
-do_cmd_sge(job,par);
+    do_cmd_sge(job,par);
 
 % mri_segstats 
 % --seg ./anat3D/mri/wmparc.mgz
