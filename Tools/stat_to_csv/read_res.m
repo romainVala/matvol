@@ -6,10 +6,13 @@ end
 defpar.pct  = 0; % Parallel Computing Toolbox
 defpar.redo = 0;
 defpar.out_format = 'cell'; %'cell or table'
+defpar.sort = 1;
 
 par = complet_struct(par,defpar);
 
 pct = par.pct;
+
+if ischar(fin), fin = {fin}; end
 
 %% Main loop
 
@@ -57,49 +60,55 @@ function [cout] = parse_csv(fin,par)
 
 
 
-[r h] = readtext(fin);
+[r h] = readtext(fin,',','','','empty2NaN');
 
-% not working if some val are string
-%    val = cell2mat(r(h.numberMask))';
-%    hdr = r(h.stringMask)';
-% so assume first line is hdr second is val and first collum only is a string
-%if ischar(r{2,1})
-is_vector = 0;
+is_vector = 0; % ie multiple subjects
 
-if size(r,1)> size(r,2) %collumn
-    %val = cell2mat(r(2:end,2))' ;
-    val = (r(2:end,2))' ;
-    hdr = r(2:end,1)';
-    if ~ischar(hdr{1}) %may be multiple values
-        hdr = r(1,1:end)';
-        val = r(2:end,1:end)';
-        is_vector=1;
-    end        
-else %line
-    %val = cell2mat(r(2,2:end))' ;
-    val = (r(2,1:end))' ;
-    hdr = r(1,1:end)';
+%decide if multiple values 
+if min(size(r))>2
+    is_vector=1;
 end
-%else
-%    val = cell2mat(r(h.numberMask))';
-%    hdr = r(h.stringMask)';
-%end
+   
+if is_vector % assume suj in line value in columns
+    hdr = r(1,1:end)';
+    val = r(2:end,1:end)';
+
+else
+    if size(r,1)> size(r,2) %collumn
+        %val = cell2mat(r(2:end,2))' ;
+        val = (r(2:end,2))' ;
+        hdr = r(2:end,1)';
+    else %line
+        %val = cell2mat(r(2,2:end))' ;
+        val = (r(2,1:end))' ;
+        hdr = r(1,1:end)';
+    end
+    
+end
+
 
 hdr = nettoie_dir(hdr);
+if par.sort
+    [hdr indh] = sort(hdr);
+else
+    indh=1:length(hdr);
+end
 
-[hdr indh] = sort(hdr);
 if is_vector
     val = val(indh,:);
 else
     val = val(indh);
 end
 
-
-cout.suj = get_parent_path(fin);
+%cout.suj_file = fin;
 
 for k=1:length(hdr)
     if is_vector
-        cout.(hdr{k}) = cell2mat(val(k,:)); %val{k,:}; %vals(:,k);
+        if ischar(val{k,1})
+            cout.(hdr{k}) = val(k,:);
+        else
+            cout.(hdr{k}) = cell2mat(val(k,:)); %val{k,:}; %vals(:,k);
+        end
     else
         cout.(hdr{k}) = val{k}; %vals(:,k);
     end
