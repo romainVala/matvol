@@ -431,6 +431,9 @@ end % function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function dirname = clean_string(dirname)
 
+if isempty(dirname)
+    return 
+end
 
 % cherche s'il y a des caracteres non alphanumeriques dans la chaine
 str = isstrprop(dirname,'alphanum');
