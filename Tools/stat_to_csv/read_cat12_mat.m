@@ -15,7 +15,13 @@ if isfield(S,'qualitymeasures')
 end
 
 for k=1:length(fin)
-    load(fin{k})
+    try 
+        load(fin{k})
+    catch 
+        fprintf('corupt %s\n',fin{k})
+        continue
+        
+    end
     
     found=0;
     
