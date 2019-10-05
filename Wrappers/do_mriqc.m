@@ -46,7 +46,7 @@ for nbbids=1:length(bids_dir) %wont work with multiple workdir or outdir
             cmdini = 'mriqc';
         end        
 
-        cmd{end+1} = sprintf('%s %s %s participant  --n_cpus 1  --ants-nthreads 1 ',cmdini,bdir,od);
+        cmd{end+1} = sprintf('%s %s %s participant  --n_cpus 1  --ants-nthreads 1 -m T1w ',cmdini,bdir,od);
         cmd{end} = sprintf('%s--ica --fft-spikes-detector --hmc-fsl --no-sub --verbose-reports --participant-label %s ',...
             cmd{end},sujname{kk}(5:end));
         if ~isempty(par.workdir)
