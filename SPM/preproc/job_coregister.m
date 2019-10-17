@@ -62,6 +62,9 @@ defpar.auto_add_obj = 1;
 
 defpar.jobname  = 'spm_coreg';
 defpar.walltime = '00:30:00';
+defpar.sep = [4 2];
+defpar.wrap = [0 0 0];
+
 
 par = complet_struct(par,defpar);
 
@@ -94,7 +97,7 @@ for nbsuj = 1:length(ref)
             end
             
             jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.cost_fun = 'nmi';
-            jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.sep = [4 2];
+            jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.sep = par.sep;
             jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
             jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.fwhm = [7 7];
             
@@ -107,12 +110,12 @@ for nbsuj = 1:length(ref)
             end
             
             jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.cost_fun = 'nmi';
-            jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.sep = [4 2];
+            jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.sep = par.sep;
             jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
             jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.fwhm = [7 7];
             
             jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.interp = par.interp;
-            jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.wrap = [0 0 0];
+            jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.wrap = par.wrap ;
             jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.mask = 0;
             jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.prefix = par.prefix;
             
