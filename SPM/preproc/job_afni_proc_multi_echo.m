@@ -166,15 +166,16 @@ for iSubj = 1 : nSubj
     % align
     if strfind(blocks, 'align')
         % no volume generated, do not increment nBlock
-        cmd = sprintf('%s -copy_anat %s                                \\\\\n', cmd, anat{iSubj});
-        cmd = sprintf('%s -volreg_align_e2a                            \\\\\n', cmd             );
-        cmd = sprintf('%s -align_opts_aea -ginormous_move -cost lpc+ZZ \\\\\n', cmd             );
+        cmd = sprintf('%s -copy_anat %s                                              \\\\\n', cmd, anat{iSubj});
+        cmd = sprintf('%s -volreg_align_e2a                                          \\\\\n', cmd             );
+        cmd = sprintf('%s -align_opts_aea -ginormous_move -cost lpc+ZZ -resample off \\\\\n', cmd             );
     end
     
     % volreg
     if strfind(blocks, 'volreg')
         nBlock = nBlock + 1;
         cmd    = sprintf('%s -reg_echo 1                          \\\\\n', cmd);
+        cmd    = sprintf('%s -volreg_warp_final_interp wsinc5     \\\\\n', cmd);
         cmd    = sprintf('%s -volreg_align_to MIN_OUTLIER         \\\\\n', cmd);
         cmd    = sprintf('%s -volreg_interp -quintic              \\\\\n', cmd);
         cmd    = sprintf('%s -volreg_zpad 4                       \\\\\n', cmd);
