@@ -21,7 +21,7 @@ if ischar(jobdir)
 end
 
 %erf = get_subdir_regex_files(jobdir,[jobname{1} '.e']);
-erf = get_subdir_regex_files(jobdir,'err');
+erf = get_subdir_regex_files(jobdir,'err-');
 erf = cellstr(char(erf));
 logf =  get_subdir_regex_files(jobdir,'log');logf = cellstr(char(logf));
 
