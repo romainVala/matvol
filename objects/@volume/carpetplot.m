@@ -27,10 +27,11 @@ for vol = 1 : numel(volumeArray)
     % Detrend &
     Y = detrend(Y);
     Ymean = mean(Y);
-    Ystd  = mean(Y);
+    Ystd  = std (Y);
+    Ysum  = sum (Y);
     
     % Reorder by std, and only keep the top voxels
-    [~,order] = sort(Ystd,'descend');
+    [~,order] = sort(Ysum,'descend');
     Y     = Y    (:,order); Y     = Y    (:,1:keep_nVoxels);
     Ymean = Ymean(:,order); Ymean = Ymean(:,1:keep_nVoxels);
     Ystd  = Ystd (:,order); Ystd  = Ystd (:,1:keep_nVoxels);
