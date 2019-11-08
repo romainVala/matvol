@@ -70,6 +70,8 @@ if par.sge
     %         save(varfile{k},'j');
     %     end
     
+    %force run to zero (since now default is defpar.run=1
+    par.run=0;
 end
 
 
