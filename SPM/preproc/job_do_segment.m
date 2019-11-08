@@ -50,7 +50,7 @@ defpar.bias = [0 1]; % bias field / bias corrected image
 defpar.warp = [1 1]; % warp field native->template / warp field native<-template
 defpar.TPMC       = [0 0 0] ;  % native normalize dartel  to write other  Tissu Probability Map Classes 
 
-defpar.run     = 0;
+defpar.run     = 1;
 defpar.display = 0;
 defpar.redo    = 0;
 defpar.sge     = 0;

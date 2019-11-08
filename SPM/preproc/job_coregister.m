@@ -55,7 +55,7 @@ defpar.interp = 1;
 defpar.prefix = 'r';
 defpar.sge    = 0;
 defpar.redo   = 0;
-defpar.run    = 0;
+defpar.run    = 1;
 defpar.display= 0;
 
 defpar.auto_add_obj = 1;
