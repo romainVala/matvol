@@ -39,7 +39,7 @@ defpar.walltime = '00:30:00';
 defpar.auto_add_obj = 1;
 
 defpar.redo     = 0;
-defpar.run      = 0;
+defpar.run      = 1;
 defpar.display  = 0;
 
 par = complet_struct(par,defpar);

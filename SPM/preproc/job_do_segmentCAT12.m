@@ -60,7 +60,7 @@ defpar.subfolder = 0; % all results in the same subfolder
 
 defpar.auto_add_obj = 1;
 
-defpar.run     = 0;
+defpar.run     = 1;
 defpar.display = 0;
 defpar.redo    = 0;
 defpar.sge     = 0;

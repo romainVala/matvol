@@ -53,7 +53,7 @@ defpar.auto_add_obj = 1;
 
 defpar.verbose      = 1;
 defpar.redo         = 0;
-defpar.run          = 0;
+defpar.run          = 1;
 
 par = complet_struct(par,defpar);
 
