@@ -117,11 +117,11 @@ for iSubj = 1 : nSubj
     % afni_proc.py basics
     %----------------------------------------------------------------------
     
-    cmd = sprintf('%s OMP_NUM_THREADS=%d; \n', cmd, par.OMP_NUM_THREADS); % multi CPU option
-    cmd = sprintf('%s cd %s; \n', cmd, subj_path);                        % go to subj dir so afni_proc tcsh script is written there
-    cmd = sprintf('%s afni_proc.py -subj_id %s \\\\\n', cmd, subj_name);    % subj_id is almost mendatory with afni
-    cmd = sprintf('%s -out_dir %s \\\\\n',cmd, working_dir);                % afni working dir
-    cmd = sprintf('%s -scr_overwrite \\\\\n',cmd);                          % overwrite previous afni_proc tcsh script, if exists
+    cmd = sprintf('%s export OMP_NUM_THREADS=%d;   \n', cmd, par.OMP_NUM_THREADS); % multi CPU option
+    cmd = sprintf('%s cd %s;                       \n', cmd, subj_path);           % go to subj dir so afni_proc tcsh script is written there
+    cmd = sprintf('%s afni_proc.py -subj_id %s \\\\\n', cmd, subj_name);           % subj_id is almost mendatory with afni
+    cmd = sprintf('%s -out_dir %s              \\\\\n', cmd, working_dir);         % afni working dir
+    cmd = sprintf('%s -scr_overwrite           \\\\\n', cmd);                      % overwrite previous afni_proc tcsh script, if exists
     
     % add ME datasets
     for iRun = 1 : length(meinfo.path{iSubj})
