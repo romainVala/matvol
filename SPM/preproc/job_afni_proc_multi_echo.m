@@ -42,10 +42,11 @@ end
 
 % TEDANA recomandations : tshift, volreg
 % MEICA pipeline        : despike, tshift, align, volreg
-% robust for TEDANA     : despike, tshift, align, volreg
+% robust for TEDANA     : despike, tshift, align, volreg BUT it "blurs" the data
 
-defpar.blocks  = {'despike','tshift','volreg'}; % now codded : despike, tshift, align, volreg
-defpar.execute = 1; % execute afni_proc.py generated tcsh script file immidatly after the generation
+defpar.blocks   = {'despike','tshift','volreg'}; % now codded : despike, tshift, align, volreg
+defpar.seperate = 0;                             % each volume is treated seperatly : useful when runs have different orientations
+defpar.execute  = 1;                             % execute afni_proc.py generated tcsh script file immidatly after the generation
 
 defpar.OMP_NUM_THREADS = 0; % number of CPU threads : 0 means all CPUs available
 
@@ -67,9 +68,39 @@ par = complet_struct(par,defpar);
 if par.sge
     par.auto_add_obj = 0;
 end
-% if par.sge || par.pct
-%     par.OMP_NUM_THREADS = 1; % in case of parallelization, only use 1 thread per job
-% end
+if par.sge || par.pct
+    par.OMP_NUM_THREADS = 1; % in case of parallelization, only use 1 thread per job
+end
+
+%% Seperate ? then we need to reformat meinfo
+
+if par.seperate
+    
+    meinfo_orig = meinfo; % make a copy
+    
+    j = 0; % job
+    
+    meinfo_new = struct;
+    
+    for iSubj =  1 : length(meinfo.path)
+        for iRun = 1 : length(meinfo.path{iSubj})
+            
+            j = j + 1;
+            
+            meinfo_new.full       {j,1}{1} = meinfo_orig.full       {iSubj}{iRun};
+            meinfo_new.path       {j,1}{1} = meinfo_orig.path       {iSubj}{iRun};
+            meinfo_new.TE         {j,1}{1} = meinfo_orig.TE         {iSubj}{iRun};
+            meinfo_new.TR         {j,1}{1} = meinfo_orig.TR         {iSubj}{iRun};
+            meinfo_new.sliceonsets{j,1}{1} = meinfo_orig.sliceonsets{iSubj}{iRun};
+            meinfo_new.volume              = meinfo_orig.volume                  ;
+            meinfo_new.anat                = meinfo_orig.anat                    ;
+            
+        end % iSubj
+    end % iRun
+    
+    meinfo = meinfo_new; % swap
+    
+end
 
 
 %% Setup that allows this scipt to prepare the commands only, no execution
@@ -97,9 +128,18 @@ for iSubj = 1 : nSubj
     % Prepare job
     %----------------------------------------------------------------------
     
-    subj_path       = get_parent_path(meinfo.path{iSubj}{1}{1},2);
-    [~,subj_name,~] = fileparts(subj_path);
-    working_dir     = fullfile(subj_path,par.subdir);
+    subj_path = get_parent_path(meinfo.path{iSubj}{1}{1},2);
+    
+    if par.seperate
+        [~,subj_name,~] = fileparts(subj_path);
+        run_path        = get_parent_path(meinfo.path{iSubj}{1}{1});
+        [~,run_name,~]  = fileparts(run_path);
+        subj_name       = sprintf('%s__%s',subj_name,run_name);
+        working_dir     = fullfile(run_path,par.subdir);
+    else
+        [~,subj_name,~] = fileparts(subj_path);
+        working_dir     = fullfile(subj_path,par.subdir);
+    end
     
     if ~par.redo  &&  exist(working_dir,'dir')==7
         fprintf('[%s]: skiping %d/%d because %s exist \n', mfilename, iSubj, nSubj, working_dir);
@@ -117,11 +157,17 @@ for iSubj = 1 : nSubj
     % afni_proc.py basics
     %----------------------------------------------------------------------
     
-    cmd = sprintf('%s OMP_NUM_THREADS=%d; \n', cmd, par.OMP_NUM_THREADS); % multi CPU option
-    cmd = sprintf('%s cd %s; \n', cmd, subj_path);                        % go to subj dir so afni_proc tcsh script is written there
-    cmd = sprintf('%s afni_proc.py -subj_id %s \\\\\n', cmd, subj_name);    % subj_id is almost mendatory with afni
-    cmd = sprintf('%s -out_dir %s \\\\\n',cmd, working_dir);                % afni working dir
-    cmd = sprintf('%s -scr_overwrite \\\\\n',cmd);                          % overwrite previous afni_proc tcsh script, if exists
+    cmd     = sprintf('%s export OMP_NUM_THREADS=%d;   \n', cmd, par.OMP_NUM_THREADS); % multi CPU option
+    if par.seperate
+        cmd = sprintf('%s cd %s;                       \n', cmd, run_path   );         % go to subj dir so afni_proc tcsh script is written there
+        cmd = sprintf('%s afni_proc.py -subj_id %s \\\\\n', cmd, subj_name  );         % subj_id is almost mendatory with afni
+        cmd = sprintf('%s -out_dir %s              \\\\\n', cmd, working_dir);         % afni working dir
+    else
+        cmd = sprintf('%s cd %s;                       \n', cmd, subj_path  );         % go to subj dir so afni_proc tcsh script is written there
+        cmd = sprintf('%s afni_proc.py -subj_id %s \\\\\n', cmd, subj_name  );         % subj_id is almost mendatory with afni
+        cmd = sprintf('%s -out_dir %s              \\\\\n', cmd, working_dir);         % afni working dir
+    end
+    cmd     = sprintf('%s -scr_overwrite           \\\\\n', cmd);                      % overwrite previous afni_proc tcsh script, if exists
     
     % add ME datasets
     for iRun = 1 : length(meinfo.path{iSubj})
