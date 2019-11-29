@@ -1,35 +1,49 @@
 function Ta = read_mriqc_json(fmr)
 
+if ~exist('sid','var')
+    [~, prot, sujn, ser, ~, ~, ~, ~, ~] = get_parent_path(fmr,8);
+    sid = concat_cell_str(prot,sujn,ser);
+end
 
 tic
 for ns=1:length(fmr)
     j=spm_jsonread(fmr{ns});
-    meta=j.bids_meta.global.const;
-    j = rmfield(j,{'bids_meta','provenance'});
-    T=struct2table(j);
-    fname=fieldnames(meta);
-    fnameT = addprefixtofilenames(fname,'meta_');
-    for ii =1:length( fname)
-        if ~startsWith(fname{ii},{'Csa','DateOfLastCalibration'})
-            val = meta.(fname{ii});
-            if iscell(val)
-                if isstruct(val{1})
-                    continue;
-                end
-                if isnumeric(val{1})
-                    val=cell2mat(val)';
-                elseif isstring(val{1})|ischar(val{1})
-                    aa=val{1};
-                    for kk=2:numel(val), aa=[aa '_' val{kk}];end;
-                    val=string(aa);
-                else
-                    fprintf('skiping %s \n',fname{ii});meta.(fname{ii});
+    if isfield(j,'bids_meta')
+        if isfield(j.bids_meta, 'global')
+            meta=j.bids_meta.global.const;
+            
+            j = rmfield(j,{'bids_meta','provenance'});
+            T=struct2table(j);
+            
+            fname=fieldnames(meta);
+            fnameT = addprefixtofilenames(fname,'meta_');
+            for ii =1:length( fname)
+                if ~startsWith(fname{ii},{'Csa','DateOfLastCalibration'})
+                    val = meta.(fname{ii});
+                    if iscell(val)
+                        if isstruct(val{1})
+                            continue;
+                        end
+                        if isnumeric(val{1})
+                            val=cell2mat(val)';
+                        elseif isstring(val{1})|ischar(val{1})
+                            aa=val{1};
+                            for kk=2:numel(val), aa=[aa '_' val{kk}];end;
+                            val=string(aa);
+                        else
+                            fprintf('skiping %s \n',fname{ii});meta.(fname{ii});
+                        end
+                    end
+                    if ischar(val); val=string(val);end %for good concatenation of table
+                    T.(fnameT{ii}) = val;
                 end
             end
-            if ischar(val); val=string(val);end %for good concatenation of table
-            T.(fnameT{ii}) = val;
+        else
+            T=struct2table(j);
+
         end
     end
+    
     if ns==1
         Ta=T;
     else
@@ -44,8 +58,7 @@ for ns=1:length(fmr)
 end
 toc
 
-[~, prot, sujn, ser, ~, ~, ~, ~, ~] = get_parent_path(fmr,8);
-sid = concat_cell_str(prot,sujn,ser);
+
 Ta.sujid = sid;
 
 removevars = {'PatientComments','PhysiciansOfRecord','ImageComments','AccessionNumber','ContrastBolusVolume','ContrastBolusTotalDose',...
@@ -55,7 +68,9 @@ removevars = {'PatientComments','PhysiciansOfRecord','ImageComments','AccessionN
     'SpecificCharacterSet','RescaleIntercept','RescaleSlope','RescaleType','WindowCenter','WindowWidth','PerformingPhysicianName'};
 removevars = addprefixtofilenames(removevars,'meta_');
 
-for ii = 1:length(removevars)
-    Ta.(removevars{ii})	=[];
+aa= intersect(removevars,Ta.Properties.VariableNames);
+
+for ii = 1:length(aa)
+    Ta.(aa{ii})	=[];
 end
 
