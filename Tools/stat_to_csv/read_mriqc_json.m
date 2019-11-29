@@ -1,4 +1,4 @@
-function Ta = read_mriqc_json(fmr)
+function Ta = read_mriqc_json(fmr,sid)
 
 if ~exist('sid','var')
     [~, prot, sujn, ser, ~, ~, ~, ~, ~] = get_parent_path(fmr,8);
