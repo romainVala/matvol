@@ -20,7 +20,7 @@ for k=1:length(fin)
         load(fin{k})
     catch 
         fprintf('corupt %s\n',fin{k})
-        dir_missing(end+1) = fin{k};
+        dir_missing{end+1} = fin{k};
         continue
         
     end
@@ -70,7 +70,7 @@ for k=1:length(fin)
     
     if ~found
         fprintf('Suject %s failled (no field) \n',fin{k});
-        dir_missing(end+1) = fin{k};
+        dir_missing{end+1} = fin{k};
     end
     
     
