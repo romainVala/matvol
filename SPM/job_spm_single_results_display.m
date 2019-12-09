@@ -1,30 +1,37 @@
 function job_spm_single_results_display (fsub, Coordlist, par)
 %%  INPUTS
-%   FSPM : cell variable defining the path to the SPM.mat file
-%   CI : integer variable with the number of the contrast to display
-%   T1 : character variable defining the path to the T1 MRI volume to
-%   display
+%
+%   FSUB : cell structure containing paths to subjects' folders (one or multiple)
+% fsub = e.gpath; % EXAMPLE for multiple subjects
+% fsub = {'/network/lustre/iss01/cenir/analyse/irm/users/anna.skrzatek/nifti/2019_02_27_REMINARY_HM_005_V2/model_meica/'} % EXAMPLE for one subject
+%
 %   COORDLIST : structure variable defining ROI's names and coordinates to
 %   display
-%   OUTPUT_DIR : directory path where you want your figures to be saved
-%   SPMFILE : structure variable defining SPM model
-%   WD : working directory path where to find this script
+% Coordlist.values = cat(2,[0.0; 0.0; 0.0], [34.0; -24.0; 68.0], [-34.0; -24.0; 68.0], [-4.0; -48.0; -24.0], [0.0; -24.0; 10.0]); % EXAMPLE
+% Coordlist.names = {'centre'; 'RIGHT SM'; 'LEFT SM'; 'CEREBELLUM'; 'MOTOR BI'}; % EXAMPLE
 %
-%%
-    % fsub = e.gpath;
-% fspm = {'/network/lustre/iss01/cenir/analyse/irm/users/anna.skrzatek/nifti/2019_02_27_REMINARY_HM_005_V2/model_meica/'}
-% fanat = {'/network/lustre/iss01/cenir/analyse/irm/users/anna.skrzatek/nifti/2019_02_27_REMINARY_HM_005_V2/S03_t1mpr_S256_0_8iso_p2/'}
-% Coordlist.values = cat(2,[0.0; 0.0; 0.0], [34.0; -24.0; 68.0], [-34.0; -24.0; 68.0], [-4.0; -48.0; -24.0], [0.0; -24.0; 10.0]); 
-% Coordlist.names = {'centre'; 'RIGHT SM'; 'LEFT SM'; 'CEREBELLUM'; 'MOTOR BI'}; 
-
+%   PAR : strucutre containing all variable parameters
+% .RUN = 0; % prepares
+% .DISPLAY = 0; %could be 1 in this case (to test)
+% .REDO = 0;
+% .ANAT_DIR_REG : regular expression to fetch the folder containing t1 image file
+% .ANAT_FILE_REG : regular expression to fetch the t1 image file
+% .SUBDIR : name of the working directory (wd) containing the SPM.mat file
+% .OUTPUT_DIR : name of the output directory where we will save created figures : must be or will be created INSIDE the wd
+% .CONNAME = 'F-all'; % name of the contrast we want to create figures for (only 1 at a time) - case insensitive
+%
+% + CLASSIC MATLAB PARAMETERS FOR SPM RESULTS SECTION LIKE:
+% .CONTRASTS : number of the contrast in case conname unknown or not found in SPM.mat
+% .THRESH : threshold of significance to use in statistics
+% .EXTENT : minimal cluster size
 
 % %% Init
     if ~exist('par','var')
         par = ''; % for defpar
     end
+
 %% defpar
 
-    defpar.sge = 0;
     defpar.run = 0;
     defpar.display = 0; %could be 1 in this case (to test)
     defpar.redo = 0;
@@ -32,10 +39,10 @@ function job_spm_single_results_display (fsub, Coordlist, par)
     defpar.anat_file_reg = '^wms_S\d{2}.*p2.nii';
     defpar.subdir = 'model_meica';
     defpar.output_dir = 'figures_meica';
-    defpar.conname = 'F-all'; % default corresponding to defpar.contrasts = 1
+    defpar.conname = 'F-all'; % default corresponding to defpar.contrasts = 1 if user doesn't give any name of the contrast
     
     defpar.titlestr = '';
-    defpar.contrasts = 1; % default if conname not found in SPM.mat %coming soon research of name in the SPM file
+    defpar.contrasts = 0; % default to know if conname not found in SPM.mat
     defpar.threshdesc = 'none';
     defpar.thresh = 0.001;
     defpar.extent = 5;
@@ -49,7 +56,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
     
 %% SPM:Stats:Results
     
-    % assert length(fspm)==length(fanat)
+    % assert length(fspm)==length(fanat) % coming soon to check if we have the anat and stat files for every subject
     
     if iscell(fsub(1))
         nrSubject = length(fsub);
@@ -76,19 +83,24 @@ function job_spm_single_results_display (fsub, Coordlist, par)
     
         load (char(SPM_found));
         
-% can I put a contrast loop here ? do a separate function looking for a
-% contrast name in the SPM file
+% maybe a contrast loop here in the fututre
         for Ci = 1 : length(SPM.xCon)
             if strcmpi(SPM.xCon(1,Ci).name, par.conname)
                 par.contrasts = Ci;
             end
         end
-        %% SPM run
+% msg if contrast not found and default contrast display
+        if par.contrasts == 0
+            fprintf('Contrast %s not found, displaying the F-all contrast instead', par.conname);
+            par.contrasts == 1;
+        end
+
+%% SPM run
     
     spm('defaults','FMRI');
         jobs{subj}.spm.stats.results.spmmat = SPM_found;
         jobs{subj}.spm.stats.results.conspec.titlestr = par.titlestr;
-        jobs{subj}.spm.stats.results.conspec.contrasts = par.contrasts; % do a Contrast loop
+        jobs{subj}.spm.stats.results.conspec.contrasts = par.contrasts; % Contrast loop in the future ?
         jobs{subj}.spm.stats.results.conspec.threshdesc = par.threshdesc;
         jobs{subj}.spm.stats.results.conspec.thresh = par.thresh;
         jobs{subj}.spm.stats.results.conspec.extent = par.extent;
@@ -99,7 +111,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
         jobs{subj}.spm.stats.results.write.none = par.write.none;
         spm_jobman('run',jobs);
         
-        
+
         hReg = findobj('Tag','hReg');
         xSPM = evalin('base', 'xSPM');
         
@@ -109,7 +121,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
             %% Go to the position : aka ROI choice
          for iROI = 1 : length(Coordlist.values)
 
-             hX    = findobj('Tag','hX'); % pick on, because we need the upper USerData
+             hX    = findobj('Tag','hX');
              hFxyz = get(hX,'UserData');
              UD    = get(hFxyz,'UserData');
 
@@ -120,10 +132,11 @@ function job_spm_single_results_display (fsub, Coordlist, par)
              spm_results_ui('UpdateSPMval',UD)
                 
             %% Save figure
+            %%inspired from orthviews_save (hObj, event, hC, imgfile) function in spm_ov_save.m (Guillaume Flandin (C))
 
              Fgraph = spm_figure('GetWin','Graphics');
                 
-             graphName = char(addsuffixtofilenames(addsuffixtofilenames(Coordlist.names(iROI),'_'),xSPM.title));
+             graphName = char(addsuffixtofilenames(addsuffixtofilenames(Coordlist.names(iROI),'_'),xSPM.title)); % choose the name according to the Subject & the Contrast & the ROI
                 
              global st
                 X  = frame2im(getframe(st.fig));
@@ -145,8 +158,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
                 
                 imwrite(X,graphName,'png');
                 fprintf('Saving image as:\n');
-                fprintf('  %s\n',spm_file(graphName,'link','web(''%s'')'));
-                %saveas(Fgraph, graphName, 'jpeg') % choose the name according to the Subject & the Contrast & the ROI
+                fprintf('  %s\n',spm_file(graphName,'link','web(''%s'')')); % saving file in the output directory
             end
         end
 end
