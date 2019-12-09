@@ -53,7 +53,7 @@ function job_spm_single_results_display(dirStats, Conname, coordList, par)
 	for subj = 1 : nrSubject
 
 		fspm = char(addsuffixtofilenames(dirStats(subj),'meica/SPM.mat'));
-		t1 = char(addsuffixtofilenames(addsuffixtofilenames((dirStats(subj),'meica/'), par.anat_file_reg));
+		t1 = char(addsuffixtofilenames(addsuffixtofilenames(dirStats(subj),'meica/'), par.anat_file_reg));
 
 		wd = char(addsuffixtofilenames(dirStats(subj),'meica'));
 
@@ -120,7 +120,9 @@ function job_spm_single_results_display(dirStats, Conname, coordList, par)
 	                sz = ([1-a(2)-a(4),1-a(2),a(1),a(1)+a(3)] .* (sz-1)) + 1;
 	                sz = round(sz);
 	                X  = X(sz(1):sz(2),sz(3):sz(4),:);
+
 	                cd (output_dir);
+
 	                imwrite(X,graphName,'png');
 	                fprintf('Saving image as:\n');
 	                fprintf('  %s\n',spm_file(graphName,'link','web(''%s'')'));
