@@ -2,28 +2,27 @@ function job_spm_single_results_display (fsub, Coordlist, par)
 %%  INPUTS
 %
 %   FSUB : cell structure containing paths to subjects' folders (one or multiple)
-% fsub = e.gpath; % EXAMPLE for multiple subjects
+% fsub = e.gpath; % EXAMPLE for multiple subjects loaded to the exam object
 % fsub = {'/network/lustre/iss01/cenir/analyse/irm/users/anna.skrzatek/nifti/2019_02_27_REMINARY_HM_005_V2/model_meica/'} % EXAMPLE for one subject
 %
-%   COORDLIST : structure variable defining ROI's names and coordinates to
-%   display
+%   COORDLIST : structure variable defining ROI's names and coordinates to display
 % Coordlist.values = cat(2,[0.0; 0.0; 0.0], [34.0; -24.0; 68.0], [-34.0; -24.0; 68.0], [-4.0; -48.0; -24.0], [0.0; -24.0; 10.0]); % EXAMPLE
 % Coordlist.names = {'centre'; 'RIGHT SM'; 'LEFT SM'; 'CEREBELLUM'; 'MOTOR BI'}; % EXAMPLE
 %
 %   PAR : strucutre containing all variable parameters
-% .RUN = 0; % prepares
-% .DISPLAY = 0; %could be 1 in this case (to test)
-% .REDO = 0;
-% .ANAT_DIR_REG : regular expression to fetch the folder containing t1 image file
-% .ANAT_FILE_REG : regular expression to fetch the t1 image file
-% .SUBDIR : name of the working directory (wd) containing the SPM.mat file
-% .OUTPUT_DIR : name of the output directory where we will save created figures : must be or will be created INSIDE the wd
-% .CONNAME = 'F-all'; % name of the contrast we want to create figures for (only 1 at a time) - case insensitive
+% .RUN           : (0/1) prepares the commands with (1) or without (0) executing them immediately
+% .DISPLAY       : (0/1)
+% .REDO          : (0/1) overwriting the existing files (1) or not (0)
+% .ANAT_DIR_REG  : char regular expression to fetch the folder containing t1 image file
+% .ANAT_FILE_REG : char regular expression to fetch the t1 image file
+% .SUBDIR        : char name of the working directory (wd) containing the SPM.mat file
+% .OUTPUT_DIR    : char name of the output directory where we will save created figures : must be or will be created INSIDE the wd
+% .CONNAME       : char name of the contrast we want to create figures for (only 1 at a time) - case insensitive
 %
 % + CLASSIC MATLAB PARAMETERS FOR SPM RESULTS SECTION LIKE:
-% .CONTRASTS : number of the contrast in case conname unknown or not found in SPM.mat
-% .THRESH : threshold of significance to use in statistics
-% .EXTENT : minimal cluster size
+% .CONTRASTS     : int number of the contrast in case conname unknown or not found in SPM.mat
+% .THRESH        : double threshold of significance to use in statistics
+% .EXTENT        : int minimal cluster size
 
 % %% Init
     if ~exist('par','var')
@@ -33,7 +32,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
 %% defpar
 
     defpar.run = 0;
-    defpar.display = 0; %could be 1 in this case (to test)
+    defpar.display = 0; % could be 1 in this case (to test)
     defpar.redo = 0;
     defpar.anat_dir_reg = 'S03_t1mpr_S256_0_8iso_p2';
     defpar.anat_file_reg = '^wms_S\d{2}.*p2.nii';
@@ -56,7 +55,6 @@ function job_spm_single_results_display (fsub, Coordlist, par)
     
 %% SPM:Stats:Results
     
-    % assert length(fspm)==length(fanat) % coming soon to check if we have the anat and stat files for every subject
     
     if iscell(fsub(1))
         nrSubject = length(fsub);
@@ -76,9 +74,9 @@ function job_spm_single_results_display (fsub, Coordlist, par)
         
         if exist(SPM_search, 'file')
            SPM_found = get_subdir_regex_files (fspm, 'SPM.mat');
-           t1 = char(get_subdir_regex_files (fanat, par.anat_file_reg));
+           t1 = char(get_subdir_regex_files (fanat, par.anat_file_reg)); % must check if the file exists : coming soon
         else
-            skip = [skip subj];
+            skip = [skip subj]; % not used after all, should generate a msg with the name of the skipped subject
         end
     
         load (char(SPM_found));
@@ -91,7 +89,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
         end
 % msg if contrast not found and default contrast display
         if par.contrasts == 0
-            fprintf('Contrast %s not found, displaying the F-all contrast instead', par.conname);
+            fprintf('Contrast %s not found, displaying the F-all contrast instead ', par.conname);
             par.contrasts == 1;
         end
 
