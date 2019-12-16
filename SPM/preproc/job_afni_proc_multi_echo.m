@@ -42,13 +42,15 @@ end
 
 % TEDANA recomandations : tshift, volreg
 % MEICA pipeline        : despike, tshift, align, volreg
-% robust for TEDANA     : despike, tshift, align, volreg BUT it "blurs" the data
+% robust for TEDANA     : despike, tshift, volreg & par.seperate = 1
 
 defpar.blocks   = {'despike','tshift','volreg'}; % now codded : despike, tshift, align, volreg
 defpar.seperate = 0;                             % each volume is treated seperatly : useful when runs have different orientations
 defpar.execute  = 1;                             % execute afni_proc.py generated tcsh script file immidatly after the generation
 
-defpar.OMP_NUM_THREADS = 0; % number of CPU threads : 0 means all CPUs available
+defpar.write_nifti = 1;                          % convert afni_proc outputs .BRIK .HEAD to .nii
+
+defpar.OMP_NUM_THREADS = 0;                      % number of CPU threads : 0 means all CPUs available
 
 defpar.sge      = 0;
 defpar.jobname  = 'job_afni_proc_multi_echo';
@@ -92,8 +94,8 @@ if par.seperate
             meinfo_new.TE         {j,1}{1} = meinfo_orig.TE         {iSubj}{iRun};
             meinfo_new.TR         {j,1}{1} = meinfo_orig.TR         {iSubj}{iRun};
             meinfo_new.sliceonsets{j,1}{1} = meinfo_orig.sliceonsets{iSubj}{iRun};
-            meinfo_new.volume              = meinfo_orig.volume                  ;
-            meinfo_new.anat                = meinfo_orig.anat                    ;
+            if isfield(meinfo_orig,'volume'), meinfo_new.volume = meinfo_orig.volume; end
+            if isfield(meinfo_orig,'anat'  ), meinfo_new.anat   = meinfo_orig.anat  ; end
             
         end % iSubj
     end % iRun
@@ -242,13 +244,17 @@ for iSubj = 1 : nSubj
     % Convert processed echos to nifi
     %----------------------------------------------------------------------
     
-    for iRun = 1 : length(meinfo.path{iSubj})
-        for echo = 1 : length( meinfo.path{iSubj}{iRun} )
-            in  = fullfile(working_dir, sprintf('pb%0.2d.%s.r%0.2d.e%0.2d.%s+orig', nBlock, subj_name, iRun, echo, par.blocks{end}) );
-            out = addprefixtofilenames( meinfo.path{iSubj}{iRun}{echo}, prefix);
-            cmd = sprintf('%s 3dAFNItoNIFTI -verb -verb -prefix %s %s \n', cmd, out, in);
-        end % echo
-    end % iRun
+    if par.write_nifti
+        
+        for iRun = 1 : length(meinfo.path{iSubj})
+            for echo = 1 : length( meinfo.path{iSubj}{iRun} )
+                in  = fullfile(working_dir, sprintf('pb%0.2d.%s.r%0.2d.e%0.2d.%s+orig', nBlock, subj_name, iRun, echo, par.blocks{end}) );
+                out = addprefixtofilenames( meinfo.path{iSubj}{iRun}{echo}, prefix);
+                cmd = sprintf('%s 3dAFNItoNIFTI -verb -verb -prefix %s %s \n', cmd, out, in);
+            end % echo
+        end % iRun
+        
+    end
     
     %----------------------------------------------------------------------
     % Save job
