@@ -149,14 +149,20 @@ function job_spm_single_results_display (fsub, Coordlist, par)
                 X  = X(sz(1):sz(2),sz(3):sz(4),:);
                 
                 output_dir = char(get_subdir_regex(fspm, par.output_dir));
+                con_output_dir = char(addsuffixtofilenames(output_dir,par.conname));
                  if ~exist(output_dir,'dir')
                      mkdir(output_dir);
+                     cd (output_dir)
+                     if ~exist(con_output_dir,'dir')
+                        mkdir(con_output_dir)
+                     end
                  end
-                 cd (output_dir)
+
+                 cd (con_output_dir)
                 
                 imwrite(X,graphName,'png');
                 fprintf('Saving image as:\n');
-                fprintf('  %s\n',spm_file(graphName,'link','web(''%s'')')); % saving file in the output directory
+                fprintf('  %s\n',spm_file(graphName,'link','web(''%s'')')); % saving file in the contrast folder in the output directory
             end
         end
 end
