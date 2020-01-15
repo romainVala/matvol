@@ -81,7 +81,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
     
         load (char(SPM_found));
         
-% maybe a contrast loop here in the fututre
+% maybe a contrast loop here in the future but for now it is better to put the function in a loop iterating the par.conname or par.contrasts
         for Ci = 1 : length(SPM.xCon)
             if strcmpi(SPM.xCon(1,Ci).name, par.conname)
                 par.contrasts = Ci;
@@ -134,7 +134,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
 
              Fgraph = spm_figure('GetWin','Graphics');
                 
-             graphName = char(addsuffixtofilenames(addsuffixtofilenames(Coordlist.names(iROI),'_'),xSPM.title)); % choose the name according to the Subject & the Contrast & the ROI
+             graphName = char(addsuffixtofilenames(addsuffixtofilenames(Coordlist.names(iROI),'_'),xSPM.title)); % choose the name according to the ROI -> Contrast name not needed if we have folder architecture
                 
              global st
                 X  = frame2im(getframe(st.fig));
@@ -152,13 +152,12 @@ function job_spm_single_results_display (fsub, Coordlist, par)
                 con_output_dir = char(addsuffixtofilenames(output_dir,par.conname));
                  if ~exist(output_dir,'dir')
                      mkdir(output_dir);
-                     cd (output_dir)
-                     if ~exist(con_output_dir,'dir')
-                        mkdir(con_output_dir)
-                     end
                  end
-
-                 cd (con_output_dir)
+                cd (output_dir)
+                if ~exist(con_output_dir,'dir')
+                    mkdir(con_output_dir)
+                end
+                cd (con_output_dir)
                 
                 imwrite(X,graphName,'png');
                 fprintf('Saving image as:\n');
