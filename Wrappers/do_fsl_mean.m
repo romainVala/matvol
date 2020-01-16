@@ -5,13 +5,17 @@ if ~exist('jobappend','var'), jobappend ='';end
 
 
 defpar.sge=0;
-defpar.fsl_output_format = 'NIFTI_GZ'; %ANALYZE, NIFTI, NIFTI_PAIR, NIFTI_GZ
+defpar.fsl_output_format = 'NIFTI_GZ'; % ANALYZE, NIFTI, NIFTI_PAIR, NIFTI_GZ
 defpar.jobname='fslmean';
 defpar.skip = 1;
-%defpar
+defpar.redo = 0;
 job ='';
 
 par = complet_struct(par,defpar);
+
+if par.redo
+    par.skip = 0;
+end
 
 if iscell(outname)
     if length(fin)~=length(outname)
@@ -45,7 +49,7 @@ if par.skip && exist(out,'file')
     fprintf('skipping fsl mean because %s exist\n',out)
     return
 end
-    
+
 fin = cellstr(char(fin));
 
 [pp ffo]=get_parent_path(fin);
