@@ -174,7 +174,8 @@ for iSubj = 1 : nSubj
     % add ME datasets
     for iRun = 1 : length(meinfo.path{iSubj})
         run_path = get_parent_path(meinfo.path{iSubj}{iRun}{1});
-        cmd = sprintf('%s -dsets_me_run %s \\\\\n',cmd, fullfile(run_path,'e*.nii'));
+        ext      = meinfo.ext{iSubj}{iRun}{1};
+        cmd = sprintf('%s -dsets_me_run %s \\\\\n',cmd, fullfile(run_path,['e*' ext]));
     end % iRun
     
     % blocks
@@ -292,8 +293,8 @@ job = do_cmd_sge(job, par);
 
 if obj && par.auto_add_obj && par.run
     
-    tag             =  {in_obj.tag};
-    ext             = '.*.nii$';
+    tag =  {in_obj.tag};
+    ext = '.*.nii'; % can be .nii.gz
     for iVol = 1 : numel(in_obj)
         in_obj(iVol).serie.addVolume(['^' prefix tag{iVol} ext],[prefix tag{iVol}])
     end
