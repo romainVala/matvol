@@ -118,6 +118,7 @@ for iSubj = 1 : nSubj
     meinfo_TE  {iSubj} = cell(nRun,1);
     meinfo_TR  {iSubj} = cell(nRun,1);
     meinfo_so  {iSubj} = cell(nRun,1);
+    meinfo_ext {iSubj} = cell(nRun,1);
     for iRun = 1 : nRun
         
         meinfo_full{iSubj}{iRun} = struct;
@@ -194,6 +195,7 @@ for iSubj = 1 : nSubj
         meinfo_TE  {iSubj}{iRun} = [meinfo_full{iSubj}{iRun}.TE];
         meinfo_TR  {iSubj}{iRun} =  meinfo_full{iSubj}{iRun}(1).TR;
         meinfo_so  {iSubj}{iRun} =  meinfo_full{iSubj}{iRun}(1).sliceonsets;
+        meinfo_ext {iSubj}{iRun} = {meinfo_full{iSubj}{iRun}.ext}';
     end % iRun
     
     % Save job_subj
@@ -207,6 +209,7 @@ meinfo.path = meinfo_path;
 meinfo.TE   = meinfo_TE;
 meinfo.TR   = meinfo_TR;
 meinfo.sliceonsets = meinfo_so;
+meinfo.ext  = meinfo_ext;
 
 
 %% Run the jobs
