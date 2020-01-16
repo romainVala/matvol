@@ -12,13 +12,12 @@ if ~exist('jobappend','var'), jobappend = ''                    ; end
 defpar.output_name       = 'nodif_brain';
 defpar.fsl_output_format = 'NIFTI_GZ'; % ANALYZE, NIFTI, NIFTI_PAIR, NIFTI_GZ
 
-
 % bet options
 defpar.robust           = 1;     % robust brain centre estimation (iterates BET several times)
 defpar.mask             = 1;     % generate binary brain mask
 defpar.frac             = 0.3 ;  % fractional intensity threshold (0->1); default=0.5; smaller values give larger brain outline estimates
 defpar.radius           = [];    % head radius (mm not voxels); initial surface sphere is set to half of this
-defpar.anat_brain       = 0;     % don't generate segmented brain image output
+defpar.no_masked_brain  = 0;     % don't generate segmented brain image output
 
 % fsl options
 defpar.software         = 'fsl'; % to set the path
@@ -50,6 +49,7 @@ for iFile = 1 : nFile
     
     % in
     [pathstr, name, ~] = fileparts( fin{iFile} );
+    [~      , name, ~] = fileparts( name       ); % remove second extension, if exists
     ext_in             = file_ext ( fin{iFile} );
     
     % out
@@ -66,16 +66,16 @@ for iFile = 1 : nFile
     % Skip ?
     out_fullpath = fullfile(pathstr,[par.fsl_output_format ext_out]);
     if par.skip && exist(out_fullpath,'file')
-        fprintf('skipping fslbet because %s exist\n',out_fullpath)
+        fprintf('skipping fslbet because %s exists \n',out_fullpath)
         continue
     end
     
-    cmd = sprintf( 'export FSLOUTPUTTYPE=%s;\n cd %s;\n bet %s %s', par.fsl_output_format, pathstr, [name ext_in], [par.output_name ext_out] );
+    cmd = sprintf( 'export FSLOUTPUTTYPE=%s;\n cd %s;\n bet %s %s', par.fsl_output_format, pathstr, fin{iFile}, [par.output_name ext_out] );
     
     if par.robust          , cmd = sprintf('%s -R'   ,cmd           ); end
     if par.mask            , cmd = sprintf('%s -m'   ,cmd           ); end
     if ~isempty(par.frac)  , cmd = sprintf('%s -f %g',cmd,par.frac  ); end
-    if par.anat_brain==0   , cmd = sprintf('%s -n'   ,cmd           ); end
+    if par.no_masked_brain , cmd = sprintf('%s -n'   ,cmd           ); end
     if ~isempty(par.radius), cmd = sprintf('%s -r %d',cmd,par.radius); end
     
     job{iFile} = cmd;

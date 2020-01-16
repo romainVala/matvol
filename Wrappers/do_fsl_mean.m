@@ -7,11 +7,12 @@ function [ out, job ]= do_fsl_mean(fin,outname,par,jobappend)
 if ~exist('par'      ,'var'), par       = ''; end
 if ~exist('jobappend','var'), jobappend = ''; end
 
-defpar.sge=0;
 defpar.fsl_output_format = 'NIFTI_GZ'; % ANALYZE, NIFTI, NIFTI_PAIR, NIFTI_GZ
-defpar.jobname='fslmean';
-defpar.skip = 1;
-defpar.redo = 0;
+
+defpar.sge               = 0;
+defpar.jobname           = 'fslmean';
+defpar.skip              = 1;
+defpar.redo              = 0;
 job ='';
 
 par = complet_struct(par,defpar);
