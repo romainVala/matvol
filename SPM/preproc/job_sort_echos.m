@@ -168,7 +168,8 @@ for iSubj = 1 : nSubj
             
             E_src{echo} = allEchos{echo};
             
-            [pth,nam,ext] = spm_fileparts(E_src{echo});
+            [pth,nam,~] = spm_fileparts(E_src{echo});
+            ext = file_ext(E_src{echo});
             
             filename = sprintf('e%d%s',echo,ext);
             
@@ -234,10 +235,26 @@ end
 end % function
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function add_obj(in_obj,meinfo)
 
 for iEcho = 1 : length(meinfo.full{1}{1})
     in_obj.addVolume(sprintf('^e%d.nii',iEcho),sprintf('e%d',iEcho))
+end
+
+end % function
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function out = file_ext(in)
+
+% File extension ?
+if strcmp(in(end-6:end),'.nii.gz')
+    out = '.nii.gz';
+elseif strcmp(in(end-3:end),'.nii')
+    out = '.nii';
+else
+    error('WTF ? supported files are .nii and .nii.gz')
 end
 
 end % function
