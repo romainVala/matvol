@@ -149,7 +149,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
                 X  = X(sz(1):sz(2),sz(3):sz(4),:);
                 
                 output_dir = char(addsuffixtofilenames(fspm, par.output_dir));
-                con_output_dir = char(addsuffixtofilenames(output_dir,par.conname));
+                con_output_dir = char(addsuffixtofilenames(addsuffixtofilenames(output_dir,'/'),par.conname));
                  if ~exist(output_dir,'dir')
                      mkdir(output_dir);
                  end
