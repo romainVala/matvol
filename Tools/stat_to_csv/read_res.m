@@ -7,6 +7,10 @@ defpar.pct  = 0; % Parallel Computing Toolbox
 defpar.redo = 0;
 defpar.out_format = 'cell'; %'cell or table'
 defpar.sort = 1;
+defpar.delimiter=',';
+defpar.comment = '';
+defpar.quotes = '';
+defpar.options = 'empty2NaN';
 
 par = complet_struct(par,defpar);
 
@@ -59,8 +63,8 @@ end% function
 function [cout] = parse_csv(fin,par)
 
 
-
-[r h] = readtext(fin,',','','','empty2NaN');
+%[r h] = readtext(fin,',','','','empty2NaN');
+[r h] = readtext(fin,par.delimiter,par.comment,par.quotes,par.options);
 
 is_vector = 0; % ie multiple subjects
 
@@ -104,10 +108,17 @@ end
 
 for k=1:length(hdr)
     if is_vector
-        if ischar(val{k,1})
+        test_ind=1;
+        if isempty(val{k,1}), for kk=1:length(val(k,:)); if ~isempty(val{k,kk}); test_ind=kk;end;end;end
+        
+        if ischar(val{k,test_ind})
             cout.(hdr{k}) = val(k,:);
         else
-            cout.(hdr{k}) = cell2mat(val(k,:)); %val{k,:}; %vals(:,k);
+            the_val = val(k,:);
+            ii= find(cellfun(@(x) isempty(x), the_val)); 
+            for kk=1:length(ii), the_val{ii(kk)} = NaN;end
+                
+            cout.(hdr{k}) = cell2mat(the_val); %val{k,:}; %vals(:,k);
         end
     else
         cout.(hdr{k}) = val{k}; %vals(:,k);
