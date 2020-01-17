@@ -1,9 +1,9 @@
-function varargout = do_cmd_matlab_sge(job,par,jobappend,qsubappend)
+function varargout = do_cmd_matlab_sge(job,par,jobappend)
 
 
 if ~exist('par'),  par=''; end
 if ~exist('jobappend','var'), jobappend ='';end
-if ~exist('qsubappend','var'), qsubappend ='';end
+%if ~exist('qsubappend','var'), qsubappend ='';end
 
 def_par.jobname='jobname';
 def_par.job_append = 1;
@@ -18,7 +18,6 @@ def_par.sge_nb_coeur=1;
 def_par.submit_sleep = 1;  %add a sleep of 1 second between each qsub
 def_par.fake = 0;
 def_par.walltime = '';
-def_par.qsubappend = '';
 def_par.job_pack=1;
 
 par = complet_struct(par,def_par);
@@ -102,7 +101,8 @@ fprintf(fpnfonc,'\n\n catch err\n display(err.message);\n disp(getReport(err,''e
     
 end
 
-[job f_do_qsubar] = do_cmd_sge(cmdd,par,'',qsubappend);
+%[job f_do_qsubar] = do_cmd_sge(cmdd,par,'',qsubappend);
+[job f_do_qsubar] = do_cmd_sge(cmdd,par);
 
 if nargout>=1
     varargout{1} = job_variable;
