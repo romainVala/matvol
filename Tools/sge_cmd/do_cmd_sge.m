@@ -120,10 +120,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if ~exist(job_dir,'dir')
         mkdir(job_dir);
     end
-    
-    
-    % unix('source /usr/cenir/sge/default/common/settings.sh ')
-    
+            
     fprintf('\n writing %d job for the slurm and local execution in %s \n',length(job),job_dir);
     
     if ~isempty(qsubappend)
@@ -135,9 +132,8 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         do_qsub_file=fullfile(job_dir,'do_qsub.sh');
         fid_do_qsub_file=fopen(do_qsub_file,'w');
     end
-    
-    
-    f_do_array=fullfile(job_dir,'do_job_array.sh');
+        
+    do_array_file=fullfile(job_dir,'do_job_array.sh');
     f_do_loc=fullfile(job_dir,'do_all_local.sh');
     
     if par.job_append
@@ -157,6 +153,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         job = job(randperm(length(job)));
     end
     
+    %% writing each single job file
     for k=1:length(job)
         
         cmdd = job{k};
@@ -167,8 +164,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
         jname = sprintf('j%.2d_%s',k+kinit,par.jobname);
-        fpn = fullfile(job_dir,jname);
-        fpnlog = sprintf('%s.log',fpn);        fpnlogerror = sprintf('%s.err',fpn);
+        job_file = fullfile(job_dir,jname);
         
         if par.parallel>0
             pack_para = par.parallel * par.parallel_pack;
@@ -177,31 +173,32 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             para_jname = sprintf('p%.2d_%s',k_para,par.jobname);
             fpara = fullfile(job_dir,para_jname);
             ffpara = fopen(fpara,'a+');
-            fprintf(ffpara,'bash %s > log_%s 2> err_%s \n',fpn,jname,jname);
+            fprintf(ffpara,'bash %s > log_%s 2> err_%s \n',job_file,jname,jname);
             fclose(ffpara);
         end
         
-        ff=fopen(fpn,'w');
+        fid_job_file=fopen(job_file,'w');
         switch par.sge_queu
             case {'server_ondule','server_irm'}
-                fprintf(ff,'#$ -S /bin/bash \n');
+                fprintf(fid_job_file,'#$ -S /bin/bash \n');
             otherwise
-                fprintf(ff,'#!/bin/bash\n');
+                fprintf(fid_job_file,'#!/bin/bash\n');
         end
         
-        fprintf(ff,'\n\necho started on $HOSTNAME \n date\n\n');
-        fprintf(ff,'tic="$(date +%%s)"\n\n');
-        fprintf(ff,cmdd);
-        fprintf(ff,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
+        fprintf(fid_job_file,'\n\necho started on $HOSTNAME \n date\n\n');
+        fprintf(fid_job_file,'tic="$(date +%%s)"\n\n');
+        fprintf(fid_job_file,cmdd);
+        fprintf(fid_job_file,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
         
-        fclose(ff);
+        fclose(fid_job_file);
         
-        fprintf(floc,'bash %s > log_%s 2> err_%s \n',fpn,jname,jname);
+        fprintf(floc,'bash %s > log_%s 2> err_%s \n',job_file,jname,jname);
         
     end
     
     fclose(floc);
     
+    %% writing the do_qsub.sh : slurm submission file
     
     fprintf(fid_do_qsub_file,'export jobid=`sbatch -p %s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
     if ~isempty(par.walltime)
@@ -218,29 +215,24 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
     
     if ~isempty(qsubappend)
-        fprintf(fid_do_qsub_file,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,f_do_array);
+        fprintf(fid_do_qsub_file,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,do_array_file);
     else
-        fprintf(fid_do_qsub_file,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,f_do_array);
+        fprintf(fid_do_qsub_file,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,do_array_file);
     end
     fclose(fid_do_qsub_file);
     
-    fffa = fopen(f_do_array,'w');
-    fprintf(fffa,'#!/bin/bash\n');
-    %	fprintf(fffa,'\n\necho started on $HOSTNAME \n date\n\n');
-    %    fprintf(fffa,'tic="$(date +%%s)"\n\n');
+    %% writting the generic do_job_array.sh file
+    fid_do_array_file = fopen(do_array_file,'w');
+    fprintf(fid_do_array_file,'#!/bin/bash\n');
     
     if par.parallel
-        fprintf(fffa,' cmd=$( printf "p%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n parallel -j %d < %s/$cmd\n\n',par.jobname,par.parallel,job_dir);
+        fprintf(fid_do_array_file,' cmd=$( printf "p%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n parallel -j %d < %s/$cmd\n\n',par.jobname,par.parallel,job_dir);
     else
-        fprintf(fffa,' cmd=$( printf "j%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n bash %s/$cmd\n\n',par.jobname,job_dir);
+        fprintf(fid_do_array_file,' cmd=$( printf "j%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n bash %s/$cmd\n\n',par.jobname,job_dir);
     end
     
-    %    fprintf(fffa,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
-    
-    % seff does not work because the job is still runing
-    %fprintf(fffa,'\n seff -d ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}\n');
-    fprintf(fffa,'\n echo seff -d ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID} >> do_seff\n');
-    fclose(fffa);
+    fprintf(fid_do_array_file,'\n echo seff -d ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID} >> do_seff\n');
+    fclose(fid_do_array_file);
     
     cmdout=sprintf('bash %s',f_do_qsub);
     
@@ -251,7 +243,6 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
 end % if par.sge
 
-%--depend=afterok:343599
 
 end % function : do_cmd_sge
 
