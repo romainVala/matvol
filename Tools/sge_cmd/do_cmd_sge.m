@@ -129,7 +129,6 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         if exist(do_workflow_qsub_file,'file'), first_time_workflow = 0; else, first_time_workflow = 1; end
         fid_do_workflow_qsub_file = fopen(do_workflow_qsub_file,'a');
     end            
-    fprintf('qsdfdsqfqsdf %d\n',first_time_workflow)
     
     do_qsub_file=fullfile(job_dir,'do_qsub.sh');
     fid_do_qsub_file=fopen(do_qsub_file,'w');
