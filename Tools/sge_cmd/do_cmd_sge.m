@@ -1,4 +1,4 @@
-function [job f_do_qsubar] = do_cmd_sge(job,par,jobappend,qsubappend)
+function [job do_qsub_file] = do_cmd_sge(job,par,jobappend,qsubappend)
 % DO_CMD_SGE
 
 
@@ -127,13 +127,13 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     fprintf('\n writing %d job for the slurm and local execution in %s \n',length(job),job_dir);
     
     if ~isempty(qsubappend)
-        f_do_qsubar=qsubappend;
-        fqsubar=fopen(f_do_qsubar,'a');
-        fprintf(fqsubar,'\n');
+        do_qsub_file=qsubappend;
+        fid_do_qsub_file=fopen(do_qsub_file,'a');
+        fprintf(fid_do_qsub_file,'\n');
         
     else
-        f_do_qsubar=fullfile(job_dir,'do_qsub.sh');
-        fqsubar=fopen(f_do_qsubar,'w');
+        do_qsub_file=fullfile(job_dir,'do_qsub.sh');
+        fid_do_qsub_file=fopen(do_qsub_file,'w');
     end
     
     
@@ -203,14 +203,14 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     fclose(floc);
     
     
-    fprintf(fqsubar,'export jobid=`sbatch -p %s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
+    fprintf(fid_do_qsub_file,'export jobid=`sbatch -p %s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
     if ~isempty(par.walltime)
-        fprintf(fqsubar,' -t %s',par.walltime);
+        fprintf(fid_do_qsub_file,' -t %s',par.walltime);
     end
-    if ~isempty(par.mem),        fprintf(fqsubar,' --mem=%d',par.mem);    end
-    if ~isempty(qsubappend),        fprintf(fqsubar,'  --depend=afterok:$jobid ');    end
+    if ~isempty(par.mem),        fprintf(fid_do_qsub_file,' --mem=%d',par.mem);    end
+    if ~isempty(qsubappend),        fprintf(fid_do_qsub_file,'  --depend=afterok:$jobid ');    end
     
-    fprintf(fqsubar,' %s ',par.sbatch_args);
+    fprintf(fid_do_qsub_file,' %s ',par.sbatch_args);
     if par.parallel
         nb_job=nbpara;
     else
@@ -218,11 +218,11 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
     
     if ~isempty(qsubappend)
-        fprintf(fqsubar,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,f_do_array);
+        fprintf(fid_do_qsub_file,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,f_do_array);
     else
-        fprintf(fqsubar,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,f_do_array);
+        fprintf(fid_do_qsub_file,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,f_do_array);
     end
-    fclose(fqsubar);
+    fclose(fid_do_qsub_file);
     
     fffa = fopen(f_do_array,'w');
     fprintf(fffa,'#!/bin/bash\n');
