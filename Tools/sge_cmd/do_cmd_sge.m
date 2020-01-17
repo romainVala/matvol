@@ -124,9 +124,8 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     % unix('source /usr/cenir/sge/default/common/settings.sh ')
     
-    fprintf('\n writing %d job for the grid engin in %s \n',length(job),job_dir);
+    fprintf('\n writing %d job for the slurm and local execution in %s \n',length(job),job_dir);
     
-    f_do_qsub=fullfile(job_dir,'do_qsub_sge.sh');
     if ~isempty(qsubappend)
         f_do_qsubar=qsubappend;
         fqsubar=fopen(f_do_qsubar,'a');
@@ -142,15 +141,12 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     f_do_loc=fullfile(job_dir,'do_all_local.sh');
     
     if par.job_append
-        fqsub=fopen(f_do_qsub,'a');
         floc=fopen(f_do_loc,'a');
     else
-        fqsub=fopen(f_do_qsub,'w');
         floc=fopen(f_do_loc,'w');
     end
     
     if par.job_append
-        %dd=dir([job_dir '/*' par.jobname '*']);
         dd=get_subdir_regex_files(job_dir,['^j.*' par.jobname],struct('verbose',0));if ~isempty(dd),dd = cellstr(char(dd));end
         kinit = length(dd);
     else
@@ -192,29 +188,19 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             otherwise
                 fprintf(ff,'#!/bin/bash\n');
         end
-        %        if par.parallel
         
         fprintf(ff,'\n\necho started on $HOSTNAME \n date\n\n');
         fprintf(ff,'tic="$(date +%%s)"\n\n');
         fprintf(ff,cmdd);
         fprintf(ff,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
-        %        else
-        %            fprintf(ff,cmdd);
-        %        end
         
         fclose(ff);
         
-        switch par.sge_queu
-            case {'server_ondule','server_irm'}
-                
-                cmd{k} = sprintf('qsub -V -q %s %s -o %s -e %s %s',par.sge_queu,par.qsubappend,fpnlog,fpnlogerror,fpn);
-                fprintf(fqsub,'%s\n sleep %d \n',cmd{k},par.submit_sleep);
-        end
         fprintf(floc,'bash %s > log_%s 2> err_%s \n',fpn,jname,jname);
         
     end
     
-    fclose(fqsub);fclose(floc);
+    fclose(floc);
     
     
     fprintf(fqsubar,'export jobid=`sbatch -p %s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
