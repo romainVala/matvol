@@ -13,7 +13,7 @@ for kk=1:length(l.SPM.xCon)
     if  strcmp(l.SPM.xCon(kk).STAT,'T')
         kkk=kkk+1;
         icon(kkk) = kk;
-        namecon{kkk} =  l.SPM.xCon(kk).name;
+        namecon{kkk} =  strrep(l.SPM.xCon(kk).name,' ','');
     end
 end
 
@@ -28,7 +28,7 @@ for nbcon = 1:length(namecon)
     fcon = get_subdir_regex_files(indir_stat,conname,1);
     
     matlabbatch{nbjob}.spm.stats.factorial_design.dir = stat_out;
-    matlabbatch{nbjob}.spm.stats.factorial_design.des.t1.scans = fcon';
+    matlabbatch{nbjob}.spm.stats.factorial_design.des.t1.scans = fcon;
     matlabbatch{nbjob}.spm.stats.factorial_design.cov = struct('c', {}, 'cname', {}, 'icfi', {}, 'icc', {});
     matlabbatch{nbjob}.spm.stats.factorial_design.multi_cov = struct('files', {}, 'icfi', {}, 'icc', {});
     matlabbatch{nbjob}.spm.stats.factorial_design.masking.tm.tm_none = 1;
