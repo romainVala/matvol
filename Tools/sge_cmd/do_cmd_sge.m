@@ -126,9 +126,10 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if par.workflow_qsub
         do_workflow_qsub_file = fullfile(par.parent_jobdir,'do_workflow_qsub.sh');
-        fid_do_workflow_qsub_file = fopen(do_workflow_qsub_file,'a');
         if exist(do_workflow_qsub_file,'file'), first_time_workflow = 0; else, first_time_workflow = 1; end
+        fid_do_workflow_qsub_file = fopen(do_workflow_qsub_file,'a');
     end            
+    fprintf('qsdfdsqfqsdf %d\n',first_time_workflow)
     
     do_qsub_file=fullfile(job_dir,'do_qsub.sh');
     fid_do_qsub_file=fopen(do_qsub_file,'w');
@@ -217,6 +218,8 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if par.workflow_qsub
         if ~ first_time_workflow
             content_do_qsub_file_workflow = sprintf('%s  --depend=afterok:$jobid ',content_do_qsub_file);
+        else
+           content_do_qsub_file_workflow =  content_do_qsub_file;
         end
     end            
          
@@ -246,7 +249,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     fprintf(fid_do_array_file,'\n echo seff -d ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID} >> do_seff\n');
     fclose(fid_do_array_file);
     
-    cmdout=sprintf('bash %s',f_do_qsub);
+    cmdout=sprintf('bash %s',do_qsub_file);
     
     if strfind(par.jobname,'dti_bedpostx')
         fprintf('\n warning RUN without qsub because bedpostx calls qsub\n');
