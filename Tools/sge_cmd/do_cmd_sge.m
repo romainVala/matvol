@@ -198,26 +198,25 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     fclose(fid_do_local_file);
     
     %% writing the do_qsub.sh : slurm submission file
-    
-    fprintf(fid_do_qsub_file,'export jobid=`sbatch -p %s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
+    content_do_qsub_file = sprintf('export jobid=`sbatch -p %s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
     if ~isempty(par.walltime)
-        fprintf(fid_do_qsub_file,' -t %s',par.walltime);
+        content_do_qsub_file = sprintf('%s -t %s',content_do_qsub_file,par.walltime);
     end
-    if ~isempty(par.mem),        fprintf(fid_do_qsub_file,' --mem=%d',par.mem);    end
-    if ~isempty(qsubappend),        fprintf(fid_do_qsub_file,'  --depend=afterok:$jobid ');    end
+    if ~isempty(par.mem),    content_do_qsub_file = sprintf('%s --mem=%d',content_do_qsub_file,par.mem);           end
+    if ~isempty(qsubappend), content_do_qsub_file = sprintf('%s  --depend=afterok:$jobid ',content_do_qsub_file);  end
     
-    fprintf(fid_do_qsub_file,' %s ',par.sbatch_args);
+    content_do_qsub_file = sprintf('%s %s ',content_do_qsub_file,par.sbatch_args);
+    
     if par.parallel
         nb_job=nbpara;
     else
         nb_job=k+kinit;
     end
     
-    if ~isempty(qsubappend)
-        fprintf(fid_do_qsub_file,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,do_array_file);
-    else
-        fprintf(fid_do_qsub_file,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,do_array_file);
-    end
+    content_do_qsub_file = sprintf(' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',...
+                                    content_do_qsub_file, job_dir,job_dir, nb_job, do_array_file);
+
+    fprintf(fid_do_qsub_file,'%s',content_do_qsub_file);
     fclose(fid_do_qsub_file);
     
     %% writting the generic do_job_array.sh file
