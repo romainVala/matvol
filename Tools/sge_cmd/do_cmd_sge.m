@@ -32,7 +32,6 @@ def_par.split_cmd = 0;
 
 def_par.verbose       = 1;
 def_par.fake          = 0;
-
 def_par.pct           = 0;
 
 
@@ -134,12 +133,12 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end
         
     do_array_file=fullfile(job_dir,'do_job_array.sh');
-    f_do_loc=fullfile(job_dir,'do_all_local.sh');
+    do_local_file=fullfile(job_dir,'do_all_local.sh');
     
     if par.job_append
-        floc=fopen(f_do_loc,'a');
+        fid_do_local_file=fopen(do_local_file,'a');
     else
-        floc=fopen(f_do_loc,'w');
+        fid_do_local_file=fopen(do_local_file,'w');
     end
     
     if par.job_append
@@ -153,7 +152,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         job = job(randperm(length(job)));
     end
     
-    %% writing each single job file
+    %% writing each single job file and populate the do_all_local.sh file
     for k=1:length(job)
         
         cmdd = job{k};
@@ -192,11 +191,11 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         
         fclose(fid_job_file);
         
-        fprintf(floc,'bash %s > log_%s 2> err_%s \n',job_file,jname,jname);
+        fprintf(fid_do_local_file,'bash %s > log_%s 2> err_%s \n',job_file,jname,jname);
         
     end
     
-    fclose(floc);
+    fclose(fid_do_local_file);
     
     %% writing the do_qsub.sh : slurm submission file
     
@@ -238,7 +237,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     
     if strfind(par.jobname,'dti_bedpostx')
         fprintf('\n warning RUN without qsub because bedpostx calls qsub\n');
-        cmdout=sprintf('bash %s',f_do_loc);
+        cmdout=sprintf('bash %s',do_local_file);
         delete(f_do_qsub)
     end
 end % if par.sge
