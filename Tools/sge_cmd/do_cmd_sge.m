@@ -1,4 +1,4 @@
-function [job do_qsub_file] = do_cmd_sge(job,par,jobappend,qsubappend)
+function [job do_qsub_file] = do_cmd_sge(job,par,jobappend)
 % DO_CMD_SGE
 
 
@@ -6,7 +6,6 @@ function [job do_qsub_file] = do_cmd_sge(job,par,jobappend,qsubappend)
 
 if ~exist('par'       ,'var'), par        =''; end
 if ~exist('jobappend' ,'var'), jobappend  =''; end
-if ~exist('qsubappend','var'), qsubappend =''; end
 
 def_par.jobname          = 'jobname';
 def_par.software         = '';%fsl freesurfer
@@ -29,7 +28,9 @@ def_par.parallel      = 0;
 def_par.parallel_pack = 1;
 def_par.random = 0;
 def_par.split_cmd = 0;
-
+def_par.workflow_qsub = 1; % if set not set to 0 it will create a do_qsub_workflow.sh in the parent dir,
+                           %and append all qsub command with slurm dependence
+def_par.parent_jobdir = ''; %If empty it will simply be the parent jobdir
 def_par.verbose       = 1;
 def_par.fake          = 0;
 def_par.pct           = 0;
@@ -97,6 +98,7 @@ if par.job_pack>1
 end
 
 %make jobdir in a subdir with jobname
+if isempty(par.parent_jobdir), par.parent_jobdir = par.jobdir; end
 par.jobdir = fullfile(par.jobdir,par.jobname);
 
 if par.sge==0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -119,19 +121,17 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if ~exist(job_dir,'dir')
         mkdir(job_dir);
     end
-            
+    
     fprintf('\n writing %d job for the slurm and local execution in %s \n',length(job),job_dir);
     
-    if ~isempty(qsubappend)
-        do_qsub_file=qsubappend;
-        fid_do_qsub_file=fopen(do_qsub_file,'a');
-        fprintf(fid_do_qsub_file,'\n');
-        
-    else
-        do_qsub_file=fullfile(job_dir,'do_qsub.sh');
-        fid_do_qsub_file=fopen(do_qsub_file,'w');
-    end
-        
+    if par.workflow_qsub
+        do_workflow_qsub_file = fullfile(par.parent_jobdir,'do_workflow_qsub.sh');
+        fid_do_workflow_qsub_file = fopen(do_workflow_qsub_file,'a');
+        if exist(do_workflow_qsub_file,'file'), first_time_workflow = 0; else, first_time_workflow = 1; end
+    end            
+    
+    do_qsub_file=fullfile(job_dir,'do_qsub.sh');
+    fid_do_qsub_file=fopen(do_qsub_file,'w');
     do_array_file=fullfile(job_dir,'do_job_array.sh');
     do_local_file=fullfile(job_dir,'do_all_local.sh');
     
@@ -203,9 +203,8 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         content_do_qsub_file = sprintf('%s -t %s',content_do_qsub_file,par.walltime);
     end
     if ~isempty(par.mem),    content_do_qsub_file = sprintf('%s --mem=%d',content_do_qsub_file,par.mem);           end
-    if ~isempty(qsubappend), content_do_qsub_file = sprintf('%s  --depend=afterok:$jobid ',content_do_qsub_file);  end
     
-    content_do_qsub_file = sprintf('%s %s ',content_do_qsub_file,par.sbatch_args);
+   content_do_qsub_file = sprintf('%s %s ',content_do_qsub_file,par.sbatch_args);
     
     if par.parallel
         nb_job=nbpara;
@@ -213,10 +212,25 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         nb_job=k+kinit;
     end
     
-    content_do_qsub_file = sprintf(' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',...
-                                    content_do_qsub_file, job_dir,job_dir, nb_job, do_array_file);
+    content_do_qsub_file = sprintf('%s -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d ',content_do_qsub_file, job_dir,job_dir, nb_job);
 
+    if par.workflow_qsub
+        if ~ first_time_workflow
+            content_do_qsub_file_workflow = sprintf('%s  --depend=afterok:$jobid ',content_do_qsub_file);
+        end
+    end            
+         
+    content_do_qsub_file = sprintf('%s %s |awk ''{print $4}''` \necho submitted job $jobid\n', content_do_qsub_file, do_array_file);
+                                
+    content_do_qsub_file_workflow = sprintf('%s %s |awk ''{print $4}''` \necho submitted job $jobid\n',...
+                                    content_do_qsub_file_workflow, do_array_file);
+
+                                
     fprintf(fid_do_qsub_file,'%s',content_do_qsub_file);
+    if par.workflow_qsub
+        fprintf(fid_do_workflow_qsub_file,'%s',content_do_qsub_file_workflow);
+    end
+
     fclose(fid_do_qsub_file);
     
     %% writting the generic do_job_array.sh file
