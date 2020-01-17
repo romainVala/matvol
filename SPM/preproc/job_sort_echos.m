@@ -118,6 +118,7 @@ for iSubj = 1 : nSubj
     meinfo_TE  {iSubj} = cell(nRun,1);
     meinfo_TR  {iSubj} = cell(nRun,1);
     meinfo_so  {iSubj} = cell(nRun,1);
+    meinfo_ext {iSubj} = cell(nRun,1);
     for iRun = 1 : nRun
         
         meinfo_full{iSubj}{iRun} = struct;
@@ -168,7 +169,8 @@ for iSubj = 1 : nSubj
             
             E_src{echo} = allEchos{echo};
             
-            [pth,nam,ext] = spm_fileparts(E_src{echo});
+            [pth,nam,~] = spm_fileparts(E_src{echo});
+            ext = file_ext(E_src{echo});
             
             filename = sprintf('e%d%s',echo,ext);
             
@@ -193,6 +195,7 @@ for iSubj = 1 : nSubj
         meinfo_TE  {iSubj}{iRun} = [meinfo_full{iSubj}{iRun}.TE];
         meinfo_TR  {iSubj}{iRun} =  meinfo_full{iSubj}{iRun}(1).TR;
         meinfo_so  {iSubj}{iRun} =  meinfo_full{iSubj}{iRun}(1).sliceonsets;
+        meinfo_ext {iSubj}{iRun} = {meinfo_full{iSubj}{iRun}.ext}';
     end % iRun
     
     % Save job_subj
@@ -206,6 +209,7 @@ meinfo.path = meinfo_path;
 meinfo.TE   = meinfo_TE;
 meinfo.TR   = meinfo_TR;
 meinfo.sliceonsets = meinfo_so;
+meinfo.ext  = meinfo_ext;
 
 
 %% Run the jobs
@@ -234,10 +238,26 @@ end
 end % function
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function add_obj(in_obj,meinfo)
 
 for iEcho = 1 : length(meinfo.full{1}{1})
     in_obj.addVolume(sprintf('^e%d.nii',iEcho),sprintf('e%d',iEcho))
+end
+
+end % function
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function out = file_ext(in)
+
+% File extension ?
+if strcmp(in(end-6:end),'.nii.gz')
+    out = '.nii.gz';
+elseif strcmp(in(end-3:end),'.nii')
+    out = '.nii';
+else
+    error('WTF ? supported files are .nii and .nii.gz')
 end
 
 end % function
