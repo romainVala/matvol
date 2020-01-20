@@ -38,6 +38,9 @@ for iRun = 1 : nRun
     nVol     = size(echos_path,1);
     volCount = zeros(1,nVol);
     for iVol = 1 : nVol
+        pp = unzip_volume(echos_path(iVol,:));
+        echos_path(iVol,:) = pp{1};
+        
         V = nifti(deblank( echos_path(iVol,:) ));
         volCount(iVol) = V.dat.dim(4);
     end
