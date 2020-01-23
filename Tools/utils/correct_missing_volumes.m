@@ -11,7 +11,11 @@ function correct_missing_volumes(img,par)
 if ~exist('par','var')
     par = ''; % for defpar
 end
-par.sge = 0;
+defpar.sge = 0;
+defpar.delete = 1; %if 0 it will copy it in a subfolder copy
+defpar.zip_output=0;
+
+par = complet_struct(par,defpar);
 
 if nargin < 1
     help(mfilename)
@@ -88,7 +92,7 @@ for iRun = 1 : nRun
                 new_4D = cat(4,prev, middle, next);
                 
                 V.dat.dim(4) = V.dat.dim(4) + 1;
-                V =  replace_volume(V,new_4D);
+                V =  replace_volume(V,new_4D,par);
 
                 clear prev middle next new_4D
                 volCount(iVol) =  volCount(iVol) + 1;
@@ -143,7 +147,7 @@ for iRun = 1 : nRun
                         
                         new_4D = V.dat(:,:,:,1:min_nrVol);
                         V.dat.dim(4) = min_nrVol;                        
-                        replace_volume(V,new_4D)                       
+                        replace_volume(V,new_4D,par)   ;                    
                         clear V
                     end
                 end                
@@ -161,7 +165,7 @@ for iRun = 1 : nRun
                         new_4D = V.dat(:,:,:,start_ind:end);
                         V.dat.dim(4) = min_nrVol;  %attention ca change la taille du 4D
                                                 
-                        replace_volume(V,new_4D)
+                        replace_volume(V,new_4D,par);
                         clear V
                     end
                 end            
@@ -172,6 +176,10 @@ for iRun = 1 : nRun
     
 end
 
+if par.zip_output
+    gzip_volume(img)
+end
+
 fprintf('[%s]: ok ! \n', mfilename);
 
 
@@ -179,14 +187,14 @@ end % function
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function V = replace_volume(V,new_4D)
+function V = replace_volume(V,new_4D,par)
 %change output filename taking into account the new volume number
 
 old_name = V.dat.fname;
 [fname_dir, fname] = get_parent_path( old_name );
 ii = strfind(fname,'_');
 new_fname = sprintf('f%3d%s',size(V.dat,4),fname(ii(1):end));
-fprintf('Creating %s and Deleting %s\n',new_fname,old_name);
+fprintf('Creating %s \n',new_fname);
 V.dat.fname = fullfile(fname_dir, new_fname);
 
 if strcmp(new_fname,fname)
@@ -198,7 +206,24 @@ if exist('new_4D','var')
 end
 
 create(V); % write volume
-do_delete(old_name,0);
+if par.zip_output
+    gzip_volume({V.dat.fname});
+end
+
+if par.delete
+    fprintf(' Deleting %s\n',old_name);
+
+    do_delete(old_name,0);    
+else
+    new_dir = r_mkdir(fname_dir,'copy_bad_volume');
+    fprintf(' Copying %s\n',old_name);
+
+    ff=r_movefile(old_name,new_dir,'move');
+    if par.zip_output
+        gzip_volume(ff);
+    end
+
+end
 
 end %function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
