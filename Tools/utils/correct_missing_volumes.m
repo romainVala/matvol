@@ -29,11 +29,12 @@ end
 
 
 %% Main
+ppar.verbose       =0;
 
 nRun = numel(img);
 %unzip keeping the same cell structure
 for iRun = 1 : nRun
-    img{iRun} = char(unzip_volume(img(iRun)));
+    img{iRun} = char(unzip_volume(img(iRun),ppar));
 end
 
 for iRun = 1 : nRun
@@ -177,7 +178,7 @@ for iRun = 1 : nRun
 end
 
 if par.zip_output
-    gzip_volume(img)
+    gzip_volume(img,ppar)
 end
 
 fprintf('[%s]: ok ! \n', mfilename);
@@ -189,6 +190,8 @@ end % function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function V = replace_volume(V,new_4D,par)
 %change output filename taking into account the new volume number
+
+ppar.verbose       =0;
 
 old_name = V.dat.fname;
 [fname_dir, fname] = get_parent_path( old_name );
@@ -207,7 +210,7 @@ end
 
 create(V); % write volume
 if par.zip_output
-    gzip_volume({V.dat.fname});
+    gzip_volume({V.dat.fname},ppar);
 end
 
 if par.delete
@@ -220,7 +223,7 @@ else
 
     ff=r_movefile(old_name,new_dir,'move');
     if par.zip_output
-        gzip_volume(ff);
+        gzip_volume(ff,ppar);
     end
 
 end
