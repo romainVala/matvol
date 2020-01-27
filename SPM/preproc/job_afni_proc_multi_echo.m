@@ -94,9 +94,9 @@ if par.seperate
             meinfo_new.TE         {j,1}{1} = meinfo_orig.TE         {iSubj}{iRun};
             meinfo_new.TR         {j,1}{1} = meinfo_orig.TR         {iSubj}{iRun};
             meinfo_new.sliceonsets{j,1}{1} = meinfo_orig.sliceonsets{iSubj}{iRun};
+            meinfo_new.ext        {j,1}{1} = meinfo_orig.ext        {iSubj}{iRun};
             if isfield(meinfo_orig,'volume'), meinfo_new.volume = meinfo_orig.volume; end
             if isfield(meinfo_orig,'anat'  ), meinfo_new.anat   = meinfo_orig.anat  ; end
-            meinfo_new.ext         {j,1}{1} = meinfo_orig.ext         {iSubj}{iRun};
             
         end % iSubj
     end % iRun
