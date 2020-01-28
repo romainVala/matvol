@@ -66,13 +66,10 @@ defpar.verbose  = 1;
 
 par = complet_struct(par,defpar);
 
-% Security
-if par.sge
-    par.auto_add_obj = 0;
-end
 if par.sge || par.pct
     par.OMP_NUM_THREADS = 1; % in case of parallelization, only use 1 thread per job
 end
+
 
 %% Seperate ? then we need to reformat meinfo
 
@@ -84,22 +81,17 @@ if par.seperate
     
     meinfo_new = struct;
     
-    for iSubj =  1 : length(meinfo.path)
-        for iRun = 1 : length(meinfo.path{iSubj})
+    for iSubj =  1 : size(meinfo.data,1)
+        for iRun = 1 : length(meinfo.data{iSubj})
             
             j = j + 1;
             
-            meinfo_new.full       {j,1}{1} = meinfo_orig.full       {iSubj}{iRun};
-            meinfo_new.path       {j,1}{1} = meinfo_orig.path       {iSubj}{iRun};
-            meinfo_new.TE         {j,1}{1} = meinfo_orig.TE         {iSubj}{iRun};
-            meinfo_new.TR         {j,1}{1} = meinfo_orig.TR         {iSubj}{iRun};
-            meinfo_new.sliceonsets{j,1}{1} = meinfo_orig.sliceonsets{iSubj}{iRun};
-            meinfo_new.ext        {j,1}{1} = meinfo_orig.ext        {iSubj}{iRun};
-            if isfield(meinfo_orig,'volume'), meinfo_new.volume = meinfo_orig.volume; end
-            if isfield(meinfo_orig,'anat'  ), meinfo_new.anat   = meinfo_orig.anat  ; end
+            meinfo_new.data{j,1}{1} = meinfo_orig.data{iSubj}{iRun};
+            if isfield(meinfo_orig,'volume'), meinfo_new.volume(j,1,:) = meinfo_orig.volume(iSubj,iRun,:); end
             
-        end % iSubj
-    end % iRun
+        end % iRun
+        if isfield(meinfo_orig,'anat'  ), meinfo_new.anat   = meinfo_orig.anat  ; end
+    end % iSubj
     
     meinfo = meinfo_new; % swap
     
@@ -121,8 +113,8 @@ prefix = char(par.blocks); % {'despike', 'tshift', 'volreg'}
 prefix = prefix(:,1)';
 prefix = fliplr(prefix);   % 'vtd'
 
-nSubj = length(meinfo.path);
-job   = cell(0);
+nSubj = size(meinfo.data,1);
+job   = cell(nSubj,1);
 skip  = [];
 
 for iSubj = 1 : nSubj
@@ -131,11 +123,11 @@ for iSubj = 1 : nSubj
     % Prepare job
     %----------------------------------------------------------------------
     
-    subj_path = get_parent_path(meinfo.path{iSubj}{1}{1},2);
+    subj_path = get_parent_path(meinfo.data{iSubj}{1}(1).pth);
     
     if par.seperate
         [~,subj_name,~] = fileparts(subj_path);
-        run_path        = get_parent_path(meinfo.path{iSubj}{1}{1});
+        run_path        = meinfo.data{iSubj}{1}(1).pth;
         [~,run_name,~]  = fileparts(run_path);
         subj_name       = sprintf('%s__%s',subj_name,run_name);
         working_dir     = fullfile(run_path,par.subdir);
@@ -173,9 +165,9 @@ for iSubj = 1 : nSubj
     cmd     = sprintf('%s -scr_overwrite           \\\\\n', cmd);                      % overwrite previous afni_proc tcsh script, if exists
     
     % add ME datasets
-    for iRun = 1 : length(meinfo.path{iSubj})
-        run_path = get_parent_path(meinfo.path{iSubj}{iRun}{1});
-        ext      = meinfo.ext{iSubj}{iRun}{1};
+    for iRun = 1 : length(meinfo.data{iSubj})
+        run_path = meinfo.data{iSubj}{iRun}(1).pth;
+        ext      = meinfo.data{iSubj}{iRun}(1).ext;
         cmd = sprintf('%s -dsets_me_run %s \\\\\n',cmd, fullfile(run_path,['e*' ext]));
     end % iRun
     
@@ -200,8 +192,8 @@ for iSubj = 1 : nSubj
         cmd    = sprintf('%s -tshift_interp -heptic \\\\\n', cmd);
         
         % TR & slice onsets
-        sliceonsets = meinfo.sliceonsets{iSubj}{1} / 1000; % millisecond -> second;
-        TR =  meinfo.TR{iSubj}{1} / 1000;
+        sliceonsets = meinfo.data{iSubj}{iRun}(1).sliceonsets / 1000; % millisecond -> second;
+        TR =  meinfo.data{iSubj}{iRun}(1).TR / 1000;
         tpattern = fullfile(subj_path,'sliceonsets.txt'); % destination file
         fileID = fopen( tpattern , 'w' , 'n' , 'UTF-8' );
         if fileID < 0
@@ -248,10 +240,10 @@ for iSubj = 1 : nSubj
     
     if par.write_nifti
         
-        for iRun = 1 : length(meinfo.path{iSubj})
-            for echo = 1 : length( meinfo.path{iSubj}{iRun} )
+        for iRun = 1 : length(meinfo.data{iSubj})
+            for echo = 1 : length( meinfo.data{iSubj}{iRun} )
                 in  = fullfile(working_dir, sprintf('pb%0.2d.%s.r%0.2d.e%0.2d.%s+orig', nBlock, subj_name, iRun, echo, par.blocks{end}) );
-                out = addprefixtofilenames( meinfo.path{iSubj}{iRun}{echo}, prefix);
+                out = addprefixtofilenames( meinfo.data{iSubj}{iRun}(echo).fname, prefix);
                 cmd = sprintf('%s 3dAFNItoNIFTI -verb -verb -prefix %s %s \n', cmd, out, in);
             end % echo
         end % iRun
@@ -292,13 +284,29 @@ job = do_cmd_sge(job, par);
 
 %% Add outputs objects
 
-if obj && par.auto_add_obj && par.run
+if obj && par.auto_add_obj && (par.run || par.sge)
     
-    tag =  {in_obj.tag};
-    ext = '.*.nii'; % can be .nii.gz
-    for iVol = 1 : numel(in_obj)
-        in_obj(iVol).serie.addVolume(['^' prefix tag{iVol} ext],[prefix tag{iVol}])
-    end
+    for iSubj = 1 : length(meinfo.data)
+        for iRun = 1 : length(meinfo.data{iSubj})
+            for iEcho = 1 : length(meinfo.data{iSubj}{iRun})
+                
+                % Shortcut
+                echo = meinfo.data{iSubj}{iRun}(iEcho);
+                
+                % Fetch the good serie
+                % In case of empty element in in_obj, this "weird" strategy is very robust.
+                series = [in_obj.serie]';
+                serie = series.getVolume( echo.pth ,'path').removeEmpty.getOne.serie;
+                
+                if par.run     % use the normal method
+                    serie.addVolume( ['^' prefix echo.outname echo.ext '$'] , sprintf('%se%d',prefix,iEcho), 1 );
+                elseif par.sge % add the new volume in the object manually, becuse the file is not created yet
+                    serie.volume(end + 1) = volume( addprefixtofilenames(echo.fname,prefix), sprintf('%se%d',prefix,iEcho), serie.exam, serie );
+                end
+                
+            end % iEcho
+        end % iRun
+    end % iSubj
     
 end
 
