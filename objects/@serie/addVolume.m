@@ -17,18 +17,20 @@ function varargout = addVolume( serieArray, varargin )
 % Need at least dir_regex + tag
 assert( length(varargin)>=2 , '[%s]: requires at least 2 input arguments dir_regex + tag', mfilename)
 
-% nrSeries defined ?
+% nrVolumes defined ?
 if isnumeric( varargin{end} )
     nrVolumes = varargin{end};
     assert( nrVolumes==round(nrVolumes) && nrVolumes>0, 'If defined, nrVolumes must be positive integer' )
+else
+    nrVolumes = [];
 end
 
 % Get recursive args : 'dir_regex_1', 'dir_regex_2', ..., 'tag'
 % Other previous args are used to navigate/search for GET_SUBDIR_REGEX
-if exist('nrSeries','var')
-    recursive_args = varargin(1:end-2);
-else
+if ~isempty(nrVolumes)
     recursive_args = varargin(1:end-1);
+else
+    recursive_args = varargin;
 end
 
 % Get content of recursive args
@@ -121,12 +123,27 @@ for ser = 1 : numel(serieArray)
                     
                 else
                     
-                    % When volumes found are not exactly nrVolumes
-                    warning([
-                        'Found %d/%d volumes with the regex [ %s ] \n'...
-                        '#[%d %d] : %s ' ...
-                        ], size(volume_found,1), nrVolumes, file_regex, ...
-                        exam_idx, serie_idx, serieArray(ser).path )
+                    if exist('subdirs','var')
+                        
+                        all_regex = [subdirs {tag}];
+                        
+                        % When volumes found are not exactly nrVolumes
+                        warning([
+                            'Found %d/%d volumes with the regex [ %s] \n'...
+                            '#[%d %d] : %s ' ...
+                            ], size(volume_found,1), nrVolumes, sprintf('%s ',all_regex{:}), ...
+                            exam_idx, serie_idx, serieArray(ser).path )
+                        
+                    else
+                        
+                        % When volumes found are not exactly nrVolumes
+                        warning([
+                            'Found %d/%d volumes with the regex [ %s ] \n'...
+                            '#[%d %d] : %s ' ...
+                            ], size(volume_found,1), nrVolumes, file_regex, ...
+                            exam_idx, serie_idx, serieArray(ser).path )
+                        
+                    end
                     
                     serieArray(ser).exam.is_incomplete = 1; % set incomplete flag
                     
