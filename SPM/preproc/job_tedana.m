@@ -44,6 +44,12 @@ if ~exist('mask','var')
     mask = [];
 end
 
+if isfield(meinfo,'volume')
+    obj = 1;
+else
+    obj = 0;
+end
+
 
 %% defpar
 
@@ -57,10 +63,11 @@ defpar.png        = 1;  % tedana will make some PNG files of the components Beta
 defpar.cmd_arg = ''; % Allows you to use all addition arguments not scripted in this job_tedana.m file
 
 % matvol classic options
-defpar.pct      = 0; % Parallel Computing Toolbox, will execute in parallel all the subjects
-defpar.redo     = 0; % overwrite previous files
-defpar.fake     = 0; % do everything exept running
-defpar.verbose  = 2; % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
+defpar.pct          = 0; % Parallel Computing Toolbox, will execute in parallel all the subjects
+defpar.redo         = 0; % overwrite previous files
+defpar.fake         = 0; % do everything exept running
+defpar.verbose      = 2; % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
+defpar.auto_add_obj = 1;
 
 % Cluster
 defpar.sge      = 0;               % for ICM cluster, run the jobs in paralle
@@ -83,16 +90,23 @@ par.verbose = 0; % don't print anything yet
 
 %% Expand meinfo path & TE
 
-% pth
-pth = cat(1,meinfo.path{:});
-pth = pth(:);
-pth = cellfun(@char, pth, 'UniformOutput', 0);
-pth = addprefixtofilenames(pth,prefix);
-pth = cellfun(@cellstr, pth, 'UniformOutput', 0);
+% Strip down the echo data
+echos = [meinfo.data{:}];
+echos = echos(:);
+echos = cell2mat(echos);
 
-% TE
-TE = cat(1,meinfo.TE{:});
-TE = TE(:);
+% path of serie
+pth = cell(size(echos,1),1);
+for e = 1 : size(echos,1)
+    pth{e} = {echos(e,:).fname};
+    pth{e} = addprefixtofilenames(pth{e},prefix);
+end
+
+% TEs associated
+TE = cell(size(echos,1),1);
+for e = 1 : size(echos,1)
+    TE{e} = [echos(e,:).TE];
+end
 
 
 %% Main
@@ -100,8 +114,6 @@ TE = TE(:);
 nJobs = length(pth);
 
 job = cell(nJobs,1); % pre-allocation, this is the job containter
-
-fprintf('\n')
 
 skip  = [];
 for iJob = 1 : nJobs
@@ -117,6 +129,8 @@ for iJob = 1 : nJobs
                 outdir_path = fullfile(working_dir,outdir);
             case 'cell'
                 outdir_path = outdir{iJob};
+            otherwise
+                error('outdir must be char our cellstr')
         end
     else
         outdir_path = working_dir;
@@ -127,6 +141,8 @@ for iJob = 1 : nJobs
                 mask_path = fullfile(working_dir,mask);
             case 'cell'
                 mask_path = mask{iJob};
+            otherwise
+                error('mask must be char our cellstr')
         end
     else
         mask_path = '';
@@ -195,6 +211,58 @@ par.verbose = parverbose;
 
 % Run CPU, run !
 job = do_cmd_sge(job, par);
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj && (par.run || par.sge)
+    
+    volumes = meinfo.volume;
+    series  = [volumes.serie];
+    series  = unique(series);
+    
+    for iSer = 1 : length(series)
+        
+        ser = series(iSer);
+        ech = echos(iSer,1);
+        
+        if par.run     % use the normal method
+            
+            if ~isempty(outdir) && ischar(outdir)
+                ser.addVolume(outdir,    '^ts_OC.nii' ,    'ts_OC', 1 );
+                ser.addVolume(outdir, '^dn_ts_OC.nii' , 'dn_ts_OC', 1 );
+                ser.addVolume(outdir,      '^s0v.nii' ,      's0v', 1 );
+                ser.addVolume(outdir,     '^t2sv.nii' ,     't2sv', 1 );
+            elseif ~isempty(outdir) && iscellstr(outdir)
+                error('not coded yet')
+            else
+                ser.addVolume(    '^ts_OC.nii' ,    'ts_OC', 1 );
+                ser.addVolume( '^dn_ts_OC.nii' , 'dn_ts_OC', 1 );
+                ser.addVolume(      '^s0v.nii' ,      's0v', 1 );
+                ser.addVolume(     '^t2sv.nii' ,     't2sv', 1 );
+            end
+            
+        elseif par.sge % add the new volume in the object manually, because the file is not created yet
+            
+            if ~isempty(outdir) && ischar(outdir)
+                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[   'ts_OC' ech.ext]),    'ts_OC' , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,['dn_ts_OC' ech.ext]), 'dn_ts_OC' , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[     's0v' ech.ext]),      's0v' , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[    't2sv' ech.ext]),    'ts_OC' , ser.exam, ser );
+            elseif ~isempty(outdir) && iscellstr(outdir)
+                error('not coded yet')
+            else
+                ser.volume(end + 1) = volume( fullfile(ser.path,[   'ts_OC' ech.ext]),    'ts_OC' , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,['dn_ts_OC' ech.ext]), 'dn_ts_OC' , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,[     's0v' ech.ext]),      's0v' , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,[    't2sv' ech.ext]),    'ts_OC' , ser.exam, ser );
+            end
+            
+        end % run / sge
+        
+    end % iSer
+    
+end % if
 
 
 end % function

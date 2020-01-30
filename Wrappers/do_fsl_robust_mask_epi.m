@@ -151,7 +151,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             ser.addVolume( ['^' FMEAN{iVol} '.nii'] , [              par.meanprefix tags{iVol}        ], 1 );
             ser.addVolume( ['^'  FBET{iVol} '.nii'] , [par.betprefix par.meanprefix tags{iVol}        ], 1 );
             ser.addVolume( ['^' FMASK{iVol} '.nii'] , [par.betprefix par.meanprefix tags{iVol} '_mask'], 1 );
-        elseif par.sge % add the new volume in the object manually, becuse the file is not created yet
+        elseif par.sge % add the new volume in the object manually, because the file is not created yet
             ser.volume(end + 1) = volume( fullfile(ser.path,[FMEAN{iVol} ext])  , [              par.meanprefix tags{iVol}        ], ser.exam, ser );
             ser.volume(end + 1) = volume( fullfile(ser.path,[ FBET{iVol} ext])  , [par.betprefix par.meanprefix tags{iVol}        ], ser.exam, ser );
             ser.volume(end + 1) = volume( fullfile(ser.path,[FMASK{iVol} ext])  , [par.betprefix par.meanprefix tags{iVol} '_mask'], ser.exam, ser );

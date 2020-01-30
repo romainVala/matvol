@@ -223,7 +223,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 
                 if par.run     % use the normal method
                     serie.addVolume( ['^' echo.outname echo.ext '$'] , sprintf('e%d',iEcho), 1 );
-                elseif par.sge % add the new volume in the object manually, becuse the file is not created yet
+                elseif par.sge % add the new volume in the object manually, because the file is not created yet
                     serie.volume(end + 1) = volume( echo.fname, sprintf('e%d',iEcho), serie.exam, serie );
                 end
                 
