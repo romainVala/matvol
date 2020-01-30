@@ -229,10 +229,10 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         if par.run     % use the normal method
             
             if ~isempty(outdir) && ischar(outdir)
-                ser.addVolume(outdir,    '^ts_OC.nii' ,    'ts_OC', 1 );
-                ser.addVolume(outdir, '^dn_ts_OC.nii' , 'dn_ts_OC', 1 );
-                ser.addVolume(outdir,      '^s0v.nii' ,      's0v', 1 );
-                ser.addVolume(outdir,     '^t2sv.nii' ,     't2sv', 1 );
+                ser.addVolume(outdir,    '^ts_OC.nii' , [outdir    '_ts_OC'], 1 );
+                ser.addVolume(outdir, '^dn_ts_OC.nii' , [outdir '_dn_ts_OC'], 1 );
+                ser.addVolume(outdir,      '^s0v.nii' , [outdir      '_s0v'], 1 );
+                ser.addVolume(outdir,     '^t2sv.nii' , [outdir     '_t2sv'], 1 );
             elseif ~isempty(outdir) && iscellstr(outdir)
                 error('not coded yet')
             else
@@ -245,10 +245,10 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         elseif par.sge % add the new volume in the object manually, because the file is not created yet
             
             if ~isempty(outdir) && ischar(outdir)
-                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[   'ts_OC' ech.ext]),    'ts_OC' , ser.exam, ser );
-                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,['dn_ts_OC' ech.ext]), 'dn_ts_OC' , ser.exam, ser );
-                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[     's0v' ech.ext]),      's0v' , ser.exam, ser );
-                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[    't2sv' ech.ext]),    'ts_OC' , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[   'ts_OC' ech.ext]), [outdir    '_ts_OC'] , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,['dn_ts_OC' ech.ext]), [outdir '_dn_ts_OC'] , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[     's0v' ech.ext]), [outdir      '_s0v'] , ser.exam, ser );
+                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[    't2sv' ech.ext]), [outdir    '_ts_OC'] , ser.exam, ser );
             elseif ~isempty(outdir) && iscellstr(outdir)
                 error('not coded yet')
             else
