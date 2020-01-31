@@ -79,6 +79,8 @@ end
 
 if par.sge == -1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     return
+elseif isempty(job)
+    return
 end
 
 if par.job_pack>1
