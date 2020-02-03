@@ -48,21 +48,23 @@ defpar.blocks   = {'despike','tshift','volreg'}; % now codded : despike, tshift,
 defpar.seperate = 0;                             % each volume is treated seperatly : useful when runs have different orientations
 defpar.execute  = 1;                             % execute afni_proc.py generated tcsh script file immidatly after the generation
 
-defpar.write_nifti = 1;                          % convert afni_proc outputs .BRIK .HEAD to .nii
+defpar.write_nifti = 1;                          % convert afni_proc outputs .BRIK .HEAD to .nii .nii.gz
 
 defpar.OMP_NUM_THREADS = 0;                      % number of CPU threads : 0 means all CPUs available
 
 defpar.sge      = 0;
+defpar.subdir   = 'afni';                        % subdir is mandatory, because afni_proc creates a lot of files
 defpar.jobname  = 'job_afni_proc_multi_echo';
-defpar.subdir   = 'afni';
-
-defpar.auto_add_obj = 1;
+defpar.mem      = '4G';                          % AFNI is memory efficient, even with huge data
+defpar.walltime = '08';                          % 8h computation max for 8 runs MEMB runs
 
 defpar.pct      = 0;
 defpar.redo     = 0;
 defpar.run      = 1;
 defpar.display  = 0;
 defpar.verbose  = 1;
+
+defpar.auto_add_obj = 1;
 
 par = complet_struct(par,defpar);
 
@@ -274,8 +276,6 @@ if par.sge
         par.OMP_NUM_THREADS = 1; % on the cluster, each node have 28 cores and 128Go of RAM
     end
     par.sge_nb_coeur = par.OMP_NUM_THREADS;
-    par.mem          = 4000; % AFNI is memory efficient, even with huge data
-    par.walltime     = '08'; % 8h computation max for 8 runs MEMB runs
 end
 
 % Run CPU, run !

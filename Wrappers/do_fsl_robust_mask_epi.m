@@ -39,6 +39,8 @@ defpar.software_version = 5;     % 4 or 5 : fsl version
 
 defpar.sge               = 0;
 defpar.jobname           = 'fsl_robust_mask_epi';
+defpar.mem               = '2G';
+
 defpar.skip              = 1;
 defpar.redo              = 0;
 defpar.verbose           = 1;
