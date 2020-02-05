@@ -22,32 +22,30 @@ end
 obj = 0;
 if isa(img,'volume')
     obj = 1;
-    img_obj  = img;
-    img = img_obj.toJob(0);
+    volumeArray  = img;
+    img = volumeArray.toJob(0);
 end
 
 
 %% defpar
 
+% SPM:Spatial:Smooth
 defpar.smooth   = [8 8 8];
 defpar.prefix   = 's';
 
+% cluster
 defpar.sge      = 0;
 defpar.jobname  = 'spm_smooth';
 defpar.walltime = '00:30:00';
 
+% matvol classics
+defpar.redo         = 0;
+defpar.run          = 1;
+defpar.display      = 0;
 defpar.auto_add_obj = 1;
 
-defpar.redo     = 0;
-defpar.run      = 1;
-defpar.display  = 0;
 
 par = complet_struct(par,defpar);
-
-% Security
-if par.sge
-    par.auto_add_obj = 0;
-end
 
 
 %% SPM:Spatial:Smooth
@@ -75,15 +73,30 @@ end
 
 %% Add outputs objects
 
-if obj && par.auto_add_obj
+if obj && par.auto_add_obj && (par.run || par.sge)
     
-    serieArray = [img_obj.serie];
-    tag        =  img_obj(1).tag;
-    ext        = '.*.nii$';
+    for iVol = 1 : length(volumeArray)
+        
+        % Shortcut
+        vol = volumeArray(iVol);
+        ser = vol.serie;
+        tag = vol.tag;
+        
+        if par.run
+            
+            ext  = '.*.nii';
+            
+            ser.addVolume(['^' par.prefix tag ext],[par.prefix tag],1)
+            
+        elseif par.sge
+            
+            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix),[par.prefix tag])
+            
+        end
+        
+    end % iVol
     
-    serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
-    
-end
+end % obj
 
 
 end % function
