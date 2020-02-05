@@ -1,13 +1,23 @@
 function [ job, fmask ] = do_fsl_robust_mask_epi( fin, par, jobappend )
+%DO_FSL_ROBUST_MASK_EPI
+%
 % DO_FSL_ROBUST_MASK_EPI will use fslmath to compute a temporal mean, then BET to generate a mask
 % This strategy WORKS with signal BIAS in the volume
 %
-% Seel also do_fsl_mean do_fsl_bet
+% SYNTAX :
+% [ job, fmask ] = DO_FSL_ROBUST_MASK_EPI( fin, par )
+%
+% EXAMPLE
+% DO_FSL_ROBUST_MASK_EPI( examArray.getSerie('run').getVolume('^vtde1'), par );
+%
+% INPUTS :
+% - fin : @volume array
+% OR
+% - fin : single-level cellstr of file names
+%
+% See also get_subdir_regex_files do_fsl_mean do_fsl_bet exam exam.AddSerie serie.addVolume
 
-if nargin < 1
-    help(mfilename)
-    error('[%s]: not enough input arguments - fin is required',mfilename)
-end
+if nargin==0, help(mfilename), return, end
 
 
 %% Check input arguments

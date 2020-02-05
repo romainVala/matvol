@@ -1,30 +1,32 @@
 function [meinfo, jobs] = job_sort_echos( multilvl_funcdir , par )
-%JOB_SORT_ECHOS
+% JOB_SORT_ECHOS
+%
+% SYNTAX
+% [meinfo, jobs] = JOB_SORT_ECHOS( multilvl_funcdir , par )
+%
+% EXAMPLE
+% meinfo = JOB_SORT_ECHOS( examArray.getSerie('run') , par );
 %
 % INPUT
+% - @serie array ( nSubj x nSerie ) // ex : get it with < e.getSereie('run') >
+% OR
 % - multilvl_funcdir is multi-level cell
 %   level 1 : subj
 %   level 2 : run
-% OR
-% - @serie array ( nSubj x nSerie ) // ex : get it with < e.getSereie('run') >
 %
 % OUTPUT
-% - meinfo.full : multi-level cell containing structure the structure contains info about the sorted volumes (name, TE, ...)
-% - meinfo.path : multi-level cell containing echos paths as cellstr
-% - meinfo.TE   : multi-level cell containing TE as vecor
+%  - meinfo.data   : multi-level cell containing structure the structure contains info about the sorted volumes (name, TE, ...)
+% [- meinfo.volume : @volume array for e1.nii(.gz), e2.nii(.gz), e3.nii(.gz), ...]
 %
-% see also get_subdir_regex get_subdir_regex_multi
+% see also get_subdir_regex get_subdir_regex_multi exam exam.AddSerie serie.addVolume
+
+if nargin==0, help(mfilename), return, end
 
 
 %% Check input arguments
 
 if ~exist('par','var')
     par = ''; % for defpar
-end
-
-if nargin < 1
-    help(mfilename)
-    error('[%s]: not enough input arguments - multilvl_funcdir is required',mfilename)
 end
 
 % Make sure we have a multi-level cell
@@ -46,16 +48,17 @@ end
 
 defpar.fname        = 'meinfo'; % ,neme of the .mat file that will be saved
 
+% cluster
 defpar.sge          = 0;
 defpar.jobname      = 'job_sort_echos';
 defpar.walltime     = '00:30:00';
 defpar.mem          = '1G';
 
-defpar.auto_add_obj = 1;
-
+% matvol classics
+defpar.run          = 1;
 defpar.verbose      = 1;
 defpar.redo         = 0;
-defpar.run          = 1;
+defpar.auto_add_obj = 1;
 
 par = complet_struct(par,defpar);
 
@@ -94,10 +97,10 @@ for iSubj = 1 : nSubj
         fprintf('[%s]: Found meinfo file : %s \n', mfilename, fname)
         
         % Load file content
-        l                         = load(fname);
-        meinfo_.data{iSubj}       = l.meinfo.data;
-        meinfo_.volume(iSubj,:,:) = l.meinfo.volume;
-        to_write    (iSubj)       = false;
+        l                   = load(fname);
+        meinfo_.data{iSubj} = l.meinfo.data;
+        if obj, meinfo_.volume(iSubj,:,:) = l.meinfo.volume; end
+        to_write    (iSubj) = false;
         
         skip = [skip iSubj];
         
@@ -239,7 +242,7 @@ end
 %% Save info in file
 
 if ( par.run || par.sge ) && ~par.fake
-        
+    
     for iSubj = 1 : nSubj
         
         if to_write(iSubj)
