@@ -259,17 +259,17 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         elseif par.sge % add the new volume in the object manually, because the file is not created yet
             
             if ~isempty(outdir) && ischar(outdir)
-                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[   'ts_OC' ech.ext]), [outdir    '_ts_OC'] , ser.exam, ser );
-                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,['dn_ts_OC' ech.ext]), [outdir '_dn_ts_OC'] , ser.exam, ser );
-                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[     's0v' ech.ext]), [outdir      '_s0v'] , ser.exam, ser );
-                ser.volume(end + 1) = volume( fullfile(ser.path,outdir,[    't2sv' ech.ext]), [outdir    '_ts_OC'] , ser.exam, ser );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,[   'ts_OC' ech.ext]), [outdir    '_ts_OC'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,['dn_ts_OC' ech.ext]), [outdir '_dn_ts_OC'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,[     's0v' ech.ext]), [outdir      '_s0v'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,[    't2sv' ech.ext]), [outdir     '_t2sv'] );
             elseif ~isempty(outdir) && iscellstr(outdir)
                 error('not coded yet')
             else
-                ser.volume(end + 1) = volume( fullfile(ser.path,[   'ts_OC' ech.ext]),    'ts_OC' , ser.exam, ser );
-                ser.volume(end + 1) = volume( fullfile(ser.path,['dn_ts_OC' ech.ext]), 'dn_ts_OC' , ser.exam, ser );
-                ser.volume(end + 1) = volume( fullfile(ser.path,[     's0v' ech.ext]),      's0v' , ser.exam, ser );
-                ser.volume(end + 1) = volume( fullfile(ser.path,[    't2sv' ech.ext]),    'ts_OC' , ser.exam, ser );
+                ser.addVolume( 'root', fullfile(ser.path,[   'ts_OC' ech.ext]),    'ts_OC' );
+                ser.addVolume( 'root', fullfile(ser.path,['dn_ts_OC' ech.ext]), 'dn_ts_OC' );
+                ser.addVolume( 'root', fullfile(ser.path,[     's0v' ech.ext]),      's0v' );
+                ser.addVolume( 'root', fullfile(ser.path,[    't2sv' ech.ext]),     't2sv' );
             end
             
         end % run / sge

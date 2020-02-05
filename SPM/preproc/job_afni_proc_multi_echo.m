@@ -306,7 +306,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 if     par.run % use the normal method
                     serie.addVolume( ['^' prefix echo.outname echo.ext '$'] , sprintf('%se%d',prefix,iEcho), 1 );
                 elseif par.sge % add the new volume in the object manually, because the file is not created yet
-                    serie.volume(end + 1) = volume( addprefixtofilenames(echo.fname,prefix), sprintf('%se%d',prefix,iEcho), serie.exam, serie );
+                    serie.addVolume( 'root' , addprefixtofilenames(echo.fname,prefix), sprintf('%se%d',prefix,iEcho) );
                 end
                 
             end % iEcho

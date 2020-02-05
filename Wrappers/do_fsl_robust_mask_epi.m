@@ -141,9 +141,7 @@ job = do_cmd_sge(job, par, jobappend);
 %% Add outputs objects
 
 if obj && par.auto_add_obj && (par.run || par.sge)
-    
-    tags = {img_obj.tag}';
-    
+        
     switch par.fsl_output_format
         case 'NIFTI_GZ'
             ext = '.nii.gz';
@@ -158,15 +156,16 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         % Shortcut
         vol = img_obj(iVol);
         ser = vol.serie;
+        tag = vol.tag;
         
         if par.run     % use the normal method
-            ser.addVolume( ['^' FMEAN{iVol} '.nii'] , [              par.meanprefix tags{iVol}        ], 1 );
-            ser.addVolume( ['^'  FBET{iVol} '.nii'] , [par.betprefix par.meanprefix tags{iVol}        ], 1 );
-            ser.addVolume( ['^' FMASK{iVol} '.nii'] , [par.betprefix par.meanprefix tags{iVol} '_mask'], 1 );
+            ser.addVolume( ['^' FMEAN{iVol} ext] , [              par.meanprefix tag        ], 1 );
+            ser.addVolume( ['^'  FBET{iVol} ext] , [par.betprefix par.meanprefix tag        ], 1 );
+            ser.addVolume( ['^' FMASK{iVol} ext] , [par.betprefix par.meanprefix tag '_mask'], 1 );
         elseif par.sge % add the new volume in the object manually, because the file is not created yet
-            ser.volume(end + 1) = volume( fullfile(ser.path,[FMEAN{iVol} ext])  , [              par.meanprefix tags{iVol}        ], ser.exam, ser );
-            ser.volume(end + 1) = volume( fullfile(ser.path,[ FBET{iVol} ext])  , [par.betprefix par.meanprefix tags{iVol}        ], ser.exam, ser );
-            ser.volume(end + 1) = volume( fullfile(ser.path,[FMASK{iVol} ext])  , [par.betprefix par.meanprefix tags{iVol} '_mask'], ser.exam, ser );
+            ser.addVolume( 'root', fullfile(ser.path,[FMEAN{iVol} ext])  , [              par.meanprefix tag        ] );
+            ser.addVolume( 'root', fullfile(ser.path,[ FBET{iVol} ext])  , [par.betprefix par.meanprefix tag        ] );
+            ser.addVolume( 'root', fullfile(ser.path,[FMASK{iVol} ext])  , [par.betprefix par.meanprefix tag '_mask'] );
         end
         
     end

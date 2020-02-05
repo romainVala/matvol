@@ -8,6 +8,8 @@ function varargout = addVolume( serieArray, varargin )
 % Syntax  : jobInput = serieArray.addVolume( 'file_regex'       , 'tag'        , nrVolumes );
 % Example : jobInput = serieArray.addVolume( '^c[123456].*nii'  , 'compartment', 6         );
 %
+% If the first subdir regex is 'root', override the search & check, and add the volume as a fullpath contained in 'file_regex'
+%
 % jobInput is the output serieArray.getVolume(['^' tag '$']).toJob
 %
 
@@ -105,8 +107,12 @@ for ser = 1 : numel(serieArray)
         
         % Fetch files
         if exist('subdirs','var')
-            subdir_found = get_subdir_regex( serieArray(ser).path, subdirs{:} );
-            volume_found = char(get_subdir_regex_files( subdir_found        , file_regex, par ));
+            if length(subdirs)==1 && strcmp(subdirs{1},'root')
+                volume_found = file_regex;
+            else
+                subdir_found = get_subdir_regex( serieArray(ser).path, subdirs{:} );
+                volume_found = char(get_subdir_regex_files( subdir_found        , file_regex, par ));
+            end
         else
             volume_found = char(get_subdir_regex_files( serieArray(ser).path, file_regex, par ));
         end
