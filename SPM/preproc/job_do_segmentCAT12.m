@@ -48,9 +48,9 @@ end
 defpar.GM        = [0 0 1 0]; % warped_space_Unmodulated(wp*) / warped_space_modulated(mwp*) / native_space(p*) / native_space_dartel_import(rp*)
 defpar.WM        = [0 0 1 0];
 defpar.CSF       = [0 0 1 0];
-defpar.bias      = [1 0 0] ;  % native/ normalize / dartel     This will save the biasfiled 
-defpar.label     = [0 0 0] ;  % native/ normalize / dartel     This will create a label map
-defpar.TPMC      = [0 0 0] ;  % native/ normalize / dartel     This wil create other probalities map (p4 p5 p6)
+defpar.bias      = [1 0 0] ;  % native (ms*) / normalize (wms*) / dartel (rms*)     This will save the bias field corrected T1 
+defpar.label     = [0 0 0] ;  % native (p0*) / normalize (wp0*) / dartel (rp0*)    This will create a label map
+defpar.TPMC      = [0 0 0] ;  % native  (p4*, p5*, p6*) / normalize (w*) / dartel (r*)     This wil create other probalities map (p4 p5 p6)
 defpar.warp      = [1 1];     % warp field native->template / warp field native<-template
 
 defpar.jacobian  = 1;         % write jacobian determinant in normalize space
