@@ -48,14 +48,14 @@ end
 defpar.GM        = [0 0 1 0]; % warped_space_Unmodulated(wp*) / warped_space_modulated(mwp*) / native_space(p*) / native_space_dartel_import(rp*)
 defpar.WM        = [0 0 1 0];
 defpar.CSF       = [0 0 1 0];
-defpar.bias      = [1 1 0] ;  % native normalize dartel     [0 1]; % bias field / bias corrected image
-defpar.label       = [0 0 0] ;  % native normalize dartel
-defpar.TPMC       = [0 0 0] ;  % native normalize dartel  to write other  Tissu Probability Map Classes 
-defpar.warp      = [1 1]; % warp field native->template / warp field native<-template
+defpar.bias      = [1 0 0] ;  % native/ normalize / dartel     This will save the biasfiled 
+defpar.label     = [0 0 0] ;  % native/ normalize / dartel     This will create a label map
+defpar.TPMC      = [0 0 0] ;  % native/ normalize / dartel     This wil create other probalities map (p4 p5 p6)
+defpar.warp      = [1 1];     % warp field native->template / warp field native<-template
 
 defpar.jacobian  = 1;         % write jacobian determinant in normalize space
-defpar.doROI     = 1;
-defpar.doSurface = 1;
+defpar.doROI     = 0;
+defpar.doSurface = 0;
 defpar.subfolder = 0; % all results in the same subfolder
 
 defpar.auto_add_obj = 1;
