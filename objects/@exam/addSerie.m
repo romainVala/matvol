@@ -37,7 +37,7 @@ end
 AssertIsCharOrCellstr(tags);
 tags = cellstr(tags);
 
-% Get recursive args : 'dir_regex_1', 'dir_regex_2'
+% Get recursive args : 'dir_regex_1', 'dir_regex_2', ...
 % Other previous args are used to navigate/search for GET_SUBDIR_REGEX
 if exist('nrSeries','var')
     recursive_args = varargin(1:end-2);

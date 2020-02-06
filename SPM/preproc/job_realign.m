@@ -22,33 +22,30 @@ end
 obj = 0;
 if isa(in,'volume')
     obj = 1;
-    in_obj  = in;
+    volumeArray = in;
 end
 
 
 %% defpar
 
+% SPM:Spatial:Realign:Estimate & Reslice
 defpar.prefix      = 'r';
 defpar.file_reg    = '^f.*nii';
 defpar.type        = 'estimate'; %estimate_and_reslice
 defpar.which_write = [2 1]; %all + mean
 
+% cluster
 defpar.jobname  = 'spm_realign';
 defpar.walltime = '04:00:00';
 
+% matvol classics
+defpar.sge          = 0;
+defpar.run          = 1;
+defpar.display      = 0;
+defpar.redo         = 0;
 defpar.auto_add_obj = 1;
 
-defpar.sge     = 0;
-defpar.run     = 1;
-defpar.display = 0;
-defpar.redo    = 0;
-
 par = complet_struct(par,defpar);
-
-% Security
-if par.sge
-    par.auto_add_obj = 0;
-end
 
 
 %%  SPM:Spatial:Realign:Estimate & Reslice
@@ -64,8 +61,8 @@ end
 
 % obj : unzip if necesary
 if obj
-    in_obj.unzip(par);
-    in = in_obj.toJob(1);
+    volumeArray.unzip(par);
+    in = volumeArray.toJob(1);
 end
 
 % nrSubject ?
@@ -151,17 +148,56 @@ end
 
 %% Add outputs objects
 
-if obj && par.auto_add_obj
+if obj && par.auto_add_obj && (par.run || par.sge)
     
-    serieArray      = [in_obj     .serie];
-    serieArray_run1 = [in_obj(:,1).serie]; % the mean is only written in the run1
-    tag             =  in_obj(1).tag;
-    ext             = '.*.nii$';
+    for iVol = 1 : length(volumeArray)
+        
+        % Shortcut
+        vol = volumeArray(iVol);
+        ser = vol.serie;
+        tag = vol.tag;
+        
+        if par.run
+            
+            ext  = '.*.nii';
+            
+            ser.addVolume(['^' par.prefix tag ext],[par.prefix tag],1)
+            
+        elseif par.sge
+            
+            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix),[par.prefix tag],1)
+            
+        end
+        
+    end % iVol
     
-    serieArray.     addVolume(['^' par.prefix tag ext],[par.prefix tag])
-    serieArray_run1.addVolume(['^mean'        tag ext],['mean'     tag])
+    % Special case for the mean -------------------------------------------
     
-end
+    firstVolume = volumeArray(:,1); % the mean is only written in the run1
+    
+    for iVol = 1 : length(firstVolume)
+        
+        % Shortcut
+        vol = firstVolume(iVol);
+        ser = vol.serie;
+        tag = vol.tag;
+        
+        if par.run
+            
+            ext  = '.*.nii';
+            
+            ser.addVolume(['^mean' tag ext],['mean' tag],1)
+            
+        elseif par.sge
+            
+            ser.addVolume('root', addprefixtofilenames(vol.path,'mean'),['mean' tag])
+            
+        end
+        
+    end % iVol
+    
+end % obj
+
 
 
 end % function

@@ -25,31 +25,30 @@ end
 obj = 0;
 if isa(in,'volume')
     obj = 1;
-    in_obj  = in;
-    in = in_obj.toJob(1);
+    volumeArray  = in;
+    in = volumeArray.toJob(1);
 end
 
 
 %% defpar
 
+% fsl
 defpar.todo               = 0;
 defpar.subdir             = 'topup';
 defpar.file_reg           = '^f.*nii';
 defpar.fsl_output_format  = 'NIFTI';
 defpar.do_apply           = [];
 
+% matvol classics
 defpar.redo               = 0;
 defpar.pct                = 0;
 defpar.verbose            = 1;
+defpar.auto_add_obj       = 1;
 
-defpar.auto_add_obj = 1;
+% cluster
+defpar.jobname            = 'fsltopup_unwarp4D';
 
 par = complet_struct(par,defpar);
-
-% Security
-if par.sge
-    par.auto_add_obj = 0;
-end
 
 parsge  = par.sge;
 par.sge = -1; % only prepare commands
@@ -68,8 +67,6 @@ end
 
 job = cell(nrSubject,1);
 
-fprintf('\n')
-
 for subj=1:nrSubject
     
     % Extract subject name, and print it
@@ -85,7 +82,7 @@ for subj=1:nrSubject
     
     if obj
         % Fetch current subject images files
-        runList = in_obj(subj,:).getPath';
+        runList = volumeArray(subj,:).removeEmpty.getPath';
     else
         % Fetch current subject images files
         runList = get_subdir_regex_files(in{subj},par.file_reg,1);
@@ -175,7 +172,21 @@ for subj=1:nrSubject
 end % for - subject
 
 
-%% Executes th prepared commands
+%% Skip
+
+skip = [];
+
+for iJob = 1 : length(job)
+    n_lines_in_job = length(regexp(job{iJob},sprintf('\n')));
+    if n_lines_in_job==1  &&  strcmp(job{iJob}(1,1),'#')
+        skip = [skip iJob]; %#ok<AGROW>
+    end
+end
+
+job(skip) = [];
+
+
+%% Executes the prepared commands
 
 par.sge     = parsge;
 par.verbose = parverbose;
@@ -185,28 +196,59 @@ job = do_cmd_sge(job,par);
 
 %% Add outputs objects
 
-if obj && par.auto_add_obj
+if obj && par.auto_add_obj && (par.run || par.sge)
     
-    serieArray      = [in_obj.serie];
-    tag             =  in_obj(1).tag;
+    volumeArray = volumeArray.removeEmpty;
     
-    switch defpar.fsl_output_format
-        case 'NIFTI'
-            ext = '.*.nii';
-        case 'NIFTI_GZ'
-            ext = '.*.nii.gz';
-    end
+    for iVol = 1 : length(volumeArray)
+        
+        % Shortcut
+        vol = volumeArray(iVol);
+        ser = vol.serie;
+        tag = vol.tag;
+        
+        if par.run
+            
+            switch par.fsl_output_format
+                case 'NIFTI'
+                    ext = '.*.nii';
+                case 'NIFTI_GZ'
+                    ext = '.*.nii.gz';
+            end
+            
+            ser.addVolume(['^ut'     tag ext],['ut'     tag],1)
+            
+            if strcmp(tag(1),'r')
+                tag = tag(2:end);
+            end
+            ser.addVolume(['^utmean' tag ext],['utmean' tag],1)
+            
+        elseif par.sge
+            
+            switch par.fsl_output_format
+                case 'NIFTI'
+                    ext = '.nii';
+                case 'NIFTI_GZ'
+                    ext = '.nii.gz';
+            end
+            
+            [pathstr, name, ~] = fileparts(vol.path);
+            [~      , name, ~] = fileparts(name); % make sure to have the name, in case of 2 extension .nii.gz
+            
+            ser.addVolume('root', [pathstr filesep 'ut' name ext] ,['ut' tag])
+            
+            if strcmp(tag(1),'r')
+                tag  = tag (2:end);
+                name = name(2:end);
+            end
+            ser.addVolume('root', [pathstr filesep 'utmean' name ext] ,['utmean' tag])
+            
+        end
+        
+    end % iVol
     
-    serieArray.addVolume(['^ut'     tag ext],['ut'     tag])
-    
-    if strcmp(tag(1),'r')
-        tag = tag(2:end);
-    end
-    
-    serieArray.addVolume(['^mean'   tag ext],['mean'   tag])
-    serieArray.addVolume(['^utmean' tag ext],['utmean' tag])
-    
-end
+end % obj
+
 
 
 end % function

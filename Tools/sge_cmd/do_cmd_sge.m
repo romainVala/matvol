@@ -53,8 +53,8 @@ if isfield(par,'nb_thread')
     par.sge_nb_coeur = par.nb_thread;
 end
 
-if isstr(par.mem)
-    par.mem = str2num(par.mem);
+if isnumeric(par.mem)
+    par.mem = num2str(par.mem);
 end
 
 
@@ -78,6 +78,8 @@ if ~isempty(jobappend)
 end
 
 if par.sge == -1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    return
+elseif isempty(job)
     return
 end
 
@@ -202,7 +204,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     if ~isempty(par.walltime)
         content_do_qsub_file = sprintf('%s -t %s',content_do_qsub_file,par.walltime);
     end
-    if ~isempty(par.mem),    content_do_qsub_file = sprintf('%s --mem=%d',content_do_qsub_file,par.mem);           end
+    if ~isempty(par.mem),    content_do_qsub_file = sprintf('%s --mem=%s',content_do_qsub_file,par.mem);           end
     
    content_do_qsub_file = sprintf('%s %s ',content_do_qsub_file,par.sbatch_args);
     

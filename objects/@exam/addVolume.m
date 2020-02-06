@@ -1,4 +1,4 @@
-function varargout = addVolume( examArray, series_tag_regex, file_regex, tag, nrVolumes)
+function varargout = addVolume( examArray, series_tag_regex, varargin)
 % Syntax  : jobInput = examArray.addVolume( 'series_tag_regex', 'file_regex', 'tag', nrVolumes );
 % Example : jobInput = examArray.addVolume( 'run1'            , '^f.*nii'   , 'f'  , 1         );
 % Syntax  : jobInput = examArray.addVolume( 'series_tag_regex', 'file_regex', 'tag' );
@@ -13,14 +13,9 @@ function varargout = addVolume( examArray, series_tag_regex, file_regex, tag, nr
 
 %% Check inputs
 
+assert( length(varargin)>=2 , '[%s]: requires at least 3 input arguments : series_tag_regex, file_regex, tag', mfilename)
+
 AssertIsCharOrCellstr(series_tag_regex);
-
-AssertIsCharOrCellstr(file_regex);
-AssertIsCharOrCellstr(tag);
-
-if ~exist('nrVolumes','var')
-    nrVolumes = [];
-end
 
 
 %% Select the series corresponding to series_tag_regex
@@ -34,7 +29,11 @@ end
 
 %% Add volumes to the series found
 
-jobInput = serieArray.addVolume(file_regex, tag, nrVolumes );
+if nargout > 0
+    jobInput = serieArray.addVolume( varargin{:} );
+else
+    serieArray.addVolume( varargin{:} );
+end
 
 
 %% Output

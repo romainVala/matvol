@@ -1,28 +1,32 @@
 function [meinfo, jobs] = job_sort_echos( multilvl_funcdir , par )
-%JOB_SORT_ECHOS
+% JOB_SORT_ECHOS
+%
+% SYNTAX
+% [meinfo, jobs] = JOB_SORT_ECHOS( multilvl_funcdir , par )
+%
+% EXAMPLE
+% meinfo = JOB_SORT_ECHOS( examArray.getSerie('run') , par );
 %
 % INPUT
+% - @serie array ( nSubj x nSerie ) // ex : get it with < e.getSereie('run') >
+% OR
 % - multilvl_funcdir is multi-level cell
 %   level 1 : subj
 %   level 2 : run
 %
 % OUTPUT
-% - meinfo.full : multi-level cell containing structure the structure contains info about the sorted volumes (name, TE, ...)
-% - meinfo.path : multi-level cell containing echos paths as cellstr
-% - meinfo.TE   : multi-level cell containing TE as vecor
+%  - meinfo.data   : multi-level cell containing structure the structure contains info about the sorted volumes (name, TE, ...)
+% [- meinfo.volume : @volume array for e1.nii(.gz), e2.nii(.gz), e3.nii(.gz), ...]
 %
-% see also get_subdir_regex get_subdir_regex_multi
+% see also get_subdir_regex get_subdir_regex_multi exam exam.AddSerie serie.addVolume
+
+if nargin==0, help(mfilename), return, end
 
 
 %% Check input arguments
 
 if ~exist('par','var')
     par = ''; % for defpar
-end
-
-if nargin < 1
-    help(mfilename)
-    error('[%s]: not enough input arguments - multilvl_funcdir is required',mfilename)
 end
 
 % Make sure we have a multi-level cell
@@ -44,23 +48,19 @@ end
 
 defpar.fname        = 'meinfo'; % ,neme of the .mat file that will be saved
 
+% cluster
 defpar.sge          = 0;
 defpar.jobname      = 'job_sort_echos';
 defpar.walltime     = '00:30:00';
 defpar.mem          = '1G';
 
-defpar.auto_add_obj = 1;
-
+% matvol classics
+defpar.run          = 1;
 defpar.verbose      = 1;
 defpar.redo         = 0;
-defpar.run          = 1;
+defpar.auto_add_obj = 1;
 
 par = complet_struct(par,defpar);
-
-% Security
-if par.sge
-    par.auto_add_obj = 0;
-end
 
 
 %% Setup that allows this scipt to prepare the commands only, no execution
@@ -72,37 +72,41 @@ parverbose  = par.verbose;
 par.verbose = 0; % don't print anything yet
 
 
-%% Check if already done
-
-fname = fullfile( get_parent_path(multilvl_funcdir{1}{1},2) , [par.fname '.mat'] );
-
-if exist(fname,'file')  &&  ~par.redo
-    
-    fprintf('[%s]: Found meinfo file : %s \n', mfilename, fname)
-    
-    l      = load(fname);
-    meinfo = l.meinfo;
-    jobs   = l.jobs;
-    
-    if obj && par.auto_add_obj
-        add_obj(in_obj,meinfo)
-    end
-    
-    return
-end
-
-
 %% Sort echos
 
-nSubj = length(multilvl_funcdir);
+nSubj    = length(multilvl_funcdir);
 
-jobs = cell(nSubj,1);
-meinfo_full = jobs;
-meinfo_path = jobs;
-meinfo_TE   = jobs;
-meinfo_TR   = jobs;
-meinfo_so   = jobs;
+fnames       = cell( nSubj , 1 );
+meinfo_      = struct; % => this meinfo_ structure is the one with all subjects
+meinfo_.data = cell( nSubj , 1 );
+jobs         = cell( nSubj , 1 );
+to_write     = true( nSubj , 1);
+skip         = [];
+
 for iSubj = 1 : nSubj
+    
+    % Generate fullpath of filename meinfo.mat for each subj
+    fnames{iSubj} = get_parent_path( multilvl_funcdir{iSubj}{1} );
+    fnames{iSubj} = fullfile( fnames{iSubj} , [par.fname '.mat'] );
+    
+    fname = fnames{iSubj};
+    
+    % Check if the file exists
+    if exist(fname,'file')  &&  ~par.redo
+        
+        fprintf('[%s]: Found meinfo file : %s \n', mfilename, fname)
+        
+        % Load file content
+        l                   = load(fname);
+        meinfo_.data{iSubj} = l.meinfo.data;
+        if obj, meinfo_.volume(iSubj,:,:) = l.meinfo.volume; end
+        to_write    (iSubj) = false;
+        
+        skip = [skip iSubj];
+        
+        continue
+        
+    end
     
     % Extract subject name, and print it
     subjectName = get_parent_path(multilvl_funcdir{iSubj}(1));
@@ -113,15 +117,9 @@ for iSubj = 1 : nSubj
     
     nRun = length(multilvl_funcdir{iSubj});
     
-    meinfo_full{iSubj} = cell(nRun,1);
-    meinfo_path{iSubj} = cell(nRun,1);
-    meinfo_TE  {iSubj} = cell(nRun,1);
-    meinfo_TR  {iSubj} = cell(nRun,1);
-    meinfo_so  {iSubj} = cell(nRun,1);
-    meinfo_ext {iSubj} = cell(nRun,1);
     for iRun = 1 : nRun
         
-        meinfo_full{iSubj}{iRun} = struct;
+        meinfo_.data{iSubj}{iRun,1} = struct;
         
         run_path = multilvl_funcdir{iSubj}{iRun};
         
@@ -174,14 +172,14 @@ for iSubj = 1 : nSubj
             
             filename = sprintf('e%d%s',echo,ext);
             
-            meinfo_full{iSubj}{iRun}(echo).pth     = pth;
-            meinfo_full{iSubj}{iRun}(echo).ext     = ext;
-            meinfo_full{iSubj}{iRun}(echo).inname  = nam;
-            meinfo_full{iSubj}{iRun}(echo).outname = sprintf('e%d',echo);
-            meinfo_full{iSubj}{iRun}(echo).TE      = sortedTE(echo);
-            meinfo_full{iSubj}{iRun}(echo).fname   = fullfile( pth, sprintf('e%d%s',echo,ext) );
-            meinfo_full{iSubj}{iRun}(echo).TR      = TR;
-            meinfo_full{iSubj}{iRun}(echo).sliceonsets = sliceonsets;
+            meinfo_.data{iSubj}{iRun,1}(echo).pth         = pth;
+            meinfo_.data{iSubj}{iRun,1}(echo).ext         = ext;
+            meinfo_.data{iSubj}{iRun,1}(echo).inname      = nam;
+            meinfo_.data{iSubj}{iRun,1}(echo).outname     = sprintf('e%d',echo);
+            meinfo_.data{iSubj}{iRun,1}(echo).TE          = sortedTE(echo);
+            meinfo_.data{iSubj}{iRun,1}(echo).fname       = fullfile( pth, sprintf('e%d%s',echo,ext) );
+            meinfo_.data{iSubj}{iRun,1}(echo).TR          = TR;
+            meinfo_.data{iSubj}{iRun,1}(echo).sliceonsets = sliceonsets;
             
             E_dst{echo} = fullfile(run_path,filename);
             [ ~ , job_tmp ] = r_movefile(E_src{echo}, E_dst{echo}, 'linkn', par);
@@ -191,25 +189,13 @@ for iSubj = 1 : nSubj
             
         end % echo
         
-        meinfo_path{iSubj}{iRun} = {meinfo_full{iSubj}{iRun}.fname}';
-        meinfo_TE  {iSubj}{iRun} = [meinfo_full{iSubj}{iRun}.TE];
-        meinfo_TR  {iSubj}{iRun} =  meinfo_full{iSubj}{iRun}(1).TR;
-        meinfo_so  {iSubj}{iRun} =  meinfo_full{iSubj}{iRun}(1).sliceonsets;
-        meinfo_ext {iSubj}{iRun} = {meinfo_full{iSubj}{iRun}.ext}';
+        
     end % iRun
     
     % Save job_subj
     jobs{iSubj} = job_subj;
     
 end % iSubj
-
-meinfo      = struct;
-meinfo.full = meinfo_full;
-meinfo.path = meinfo_path;
-meinfo.TE   = meinfo_TE;
-meinfo.TR   = meinfo_TR;
-meinfo.sliceonsets = meinfo_so;
-meinfo.ext  = meinfo_ext;
 
 
 %% Run the jobs
@@ -218,32 +204,63 @@ meinfo.ext  = meinfo_ext;
 par.sge     = parsge;
 par.verbose = parverbose;
 
+jobs(skip) = [];
+
 jobs = do_cmd_sge(jobs, par);
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj && (par.run || par.sge)
+    
+    for iSubj = 1 : length(meinfo_.data)
+        for iRun = 1 : length(meinfo_.data{iSubj})
+            for iEcho = 1 : length(meinfo_.data{iSubj}{iRun})
+                
+                % Shortcut
+                echo = meinfo_.data{iSubj}{iRun}(iEcho);
+                
+                % Fetch the good serie
+                % In case of empty element in in_obj, this "weird" strategy is very robust.
+                serie = in_obj.getVolume( echo.pth ,'path').removeEmpty.getOne.serie;
+                
+                if par.run     % use the normal method
+                    serie.addVolume( ['^' echo.outname echo.ext '$'] , sprintf('e%d',iEcho), 1 );
+                elseif par.sge % add the new volume in the object manually, because the file is not created yet
+                    serie.volume(end + 1) = volume( echo.fname, sprintf('e%d',iEcho), serie.exam, serie );
+                end
+                
+            end % iEcho
+        end % iRun
+    end % iSubj
+    
+    meinfo_.volume = in_obj.getVolume('^e\d+$');
+    
+end
 
 
 %% Save info in file
 
 if ( par.run || par.sge ) && ~par.fake
-    save(fname, 'meinfo', 'jobs')
+    
+    for iSubj = 1 : nSubj
+        
+        if to_write(iSubj)
+            meinfo      = struct; % local
+            meinfo.data = meinfo_.data{iSubj};
+            if obj
+                meinfo.volume = in_obj(iSubj,:).getVolume('^e\d+$'); %#ok<STRNU>
+            end
+            save(fnames{iSubj}, 'meinfo')
+        end
+        
+    end % iSubj
+    
 end
 
+% Output of the function is the "general" one, with all subjects
+meinfo = meinfo_;
 
-%% Add outputs objects
-
-if obj && par.auto_add_obj && par.run
-    add_obj(in_obj,meinfo)
-end
-
-
-end % function
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function add_obj(in_obj,meinfo)
-
-for iEcho = 1 : length(meinfo.full{1}{1})
-    in_obj.addVolume(sprintf('^e%d.nii',iEcho),sprintf('e%d',iEcho))
-end
 
 end % function
 
