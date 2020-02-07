@@ -144,6 +144,8 @@ defpar.matlab_opt  = ' -nodesktop ';
 
 par = complet_struct(par,defpar);
 
+global cat; cat_defaults; cat.extopts.subfolders=par.subfolder;
+
 
 %% Prepare job generation
 
