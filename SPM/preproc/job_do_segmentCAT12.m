@@ -84,16 +84,17 @@ defpar.accstr    = 0.5;
 defpar.GM        = [0 0 1 0]; % warped_space_Unmodulated (wp1*)     / warped_space_modulated (mwp1*)     / native_space (p1*)     / native_space_dartel_import (rp1*)
 defpar.WM        = [0 0 1 0]; %                          (wp2*)     /                        (mwp2*)     /              (p2*)     /                            (rp2*)
 defpar.CSF       = [0 0 1 0]; %                          (wp3*)     /                        (mwp3*)     /              (p3*)     /                            (rp3*)
-defpar.TPMC      = [0 0 1 0]; %                          (wp[456]*) /                        (mwp[456]*) /              (p[456]*) /                            (rp[456]*)   This will create other probalities map (p4 p5 p6)
+defpar.TPMC      = [0 0 1 0]; %                          (wp[456]*) /                        (mwp[456]*) /              (p[456]*) /                            (rp[456]*)
 
 % dartel (rp0*)(rp[456]*)(rms*)      0 -> No
 %                                    1 -> Rigid (SPM12 default)
 %                                    2 -> Affine
 %                                    3 -> Both
 %
-% Values can be :               0,1              / 0,1              / 0,1,2,3
-defpar.label     = [0 0 0] ;  % native (p0*)     / normalize (wp0*) / dartel (rp0*)       This will create a label map : p0 = (1 x p1) + (3 x p2) + (1 x p3)
-defpar.bias      = [1 1 0] ;  % native (ms*)     / normalize (wms*) / dartel (rms*)       This will save the bias field corrected  + SANLM T1
+% Values can be :               0,1           / 0,1               / 0,1,2,3
+defpar.label     = [0 0 0] ;  % native (p0*)  / normalize (wp0*)  / dartel (rp0*)       This will create a label map : p0 = (1 x p1) + (3 x p2) + (1 x p3)
+defpar.bias      = [1 1 0] ;  % native (ms*)  / normalize (wms*)  / dartel (rms*)       This will save the bias field corrected  + SANLM (global) T1
+defpar.las       = [0 0 0] ;  % native (mis*) / normalize (wmis*) / dartel (rmis*)      This will save the bias field corrected  + SANLM (local) T1
 
 defpar.warp      = [1 1];     % Warp fields  : native->template (y_*) / native<-template (iy_*)
 
@@ -230,9 +231,9 @@ for nbsuj = 1:length(img)
     jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.native = par.bias(1);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.warped = par.bias(2);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.bias.dartel = par.bias(3);
-    jobs{nbsuj}.spm.tools.cat.estwrite.output.las .native = par.bias(1);
-    jobs{nbsuj}.spm.tools.cat.estwrite.output.las .warped = par.bias(2);
-    jobs{nbsuj}.spm.tools.cat.estwrite.output.las .dartel = par.bias(3);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.las .native = par. las(1);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.las .warped = par. las(2);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.las .dartel = par. las(3);
     
     % Labels
     jobs{nbsuj}.spm.tools.cat.estwrite.output.label.native = par.label(1);
