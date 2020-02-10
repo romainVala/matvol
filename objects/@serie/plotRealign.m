@@ -33,13 +33,13 @@ for ex = 1 : size(serieArray,1)
         
         % Plot
         figure('Name',serieArray(ex,ser).exam.name,'NumberTitle','off')
-        fprintf('[plotRealign]: Plotting %s \n', serieArray(ex,ser).exam.name)
+        fprintf(    '[plotRealign]: Plotting %s \n', serieArray(ex,ser).exam.name)
         for ser = 1 : size(serieArray,2)
             fprintf('[plotRealign]:          %s \n', serieArray(ex,ser).name)
         end
         
         % translation
-        subplot(2,1,1);
+        subplot(3,1,1);
         plot(rp(:,1:3))
         axis tight
         ylabel('translation in mm')
@@ -47,12 +47,23 @@ for ex = 1 : size(serieArray,1)
         legend('x','y','z','location','best')
         
         % rotation
-        subplot(2,1,2);
+        subplot(3,1,2);
         plot(rp(:,4:6)*180/pi)
         axis tight
         ylabel('rotation in °')
         xlabel('image')
         legend('pitch','roll','yaw','location','best')
+        
+        % FD
+        subplot(3,1,3);
+        rHead  = 50; % mm
+        drp    = diff(rp);
+        drp_mm = [drp(:,1:3) drp(:,4:6)*pi/360*rHead];
+        FD     = sum(abs(drp_mm),2);
+        plot(FD)
+        axis tight
+        ylabel('FD (mm)')
+        xlabel('image')
         
     end
     
