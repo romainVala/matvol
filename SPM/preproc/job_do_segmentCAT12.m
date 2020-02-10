@@ -36,7 +36,7 @@ end
 obj = 0;
 if isa(img,'volume')
     obj = 1;
-    in_obj  = img;
+    volumeArray  = img;
 elseif ischar(img) || iscellstr(img)
     % Ensure the inputs are cellstrings, to avoid dimensions problems
     img = cellstr(img)';
@@ -92,9 +92,9 @@ defpar.TPMC      = [0 0 1 0]; %                          (wp[456]*) /           
 %                                    3 -> Both
 %
 % Values can be :               0,1           / 0,1               / 0,1,2,3
-defpar.label     = [0 0 0] ;  % native (p0*)  / normalize (wp0*)  / dartel (rp0*)       This will create a label map : p0 = (1 x p1) + (3 x p2) + (1 x p3)
-defpar.bias      = [1 1 0] ;  % native (ms*)  / normalize (wms*)  / dartel (rms*)       This will save the bias field corrected  + SANLM (global) T1
-defpar.las       = [0 0 0] ;  % native (mis*) / normalize (wmis*) / dartel (rmis*)      This will save the bias field corrected  + SANLM (local) T1
+defpar.label     = [0 0 0] ;  % native (p0*)  / normalize (wp0*)  / dartel (rp0*)      This will create a label map : p0 = (1 x p1) + (3 x p2) + (1 x p3)
+defpar.bias      = [1 1 0] ;  % native (m*)   / normalize (wm*)   / dartel (rm*)       This will save the bias field corrected  + SANLM (global) T1
+defpar.las       = [0 0 0] ;  % native (mi*)  / normalize (wmi*)  / dartel (rmi*)      This will save the bias field corrected  + SANLM (local)  T1
 
 defpar.warp      = [1 1];     % Warp fields  : native->template (y_*) / native<-template (iy_*)
 
@@ -145,15 +145,19 @@ defpar.matlab_opt  = ' -nodesktop ';
 
 par = complet_struct(par,defpar);
 
+% Subdir ?
 global cat; cat_defaults; cat.extopts.subfolders=par.subfolder;
+
+% Check if expertgui is enabeled
+assert(cat.extopts.expertgui==2,'cat.extopts.expertgui = 2 is mandatory. Check cat_defaults.m and reset SPM with spm_jobman(''initcfg'')')
 
 
 %% Prepare job generation
 
 % unzip volumes if required
 if obj
-    in_obj.unzip(par);
-    img = in_obj.toJob;
+    volumeArray.unzip(par);
+    img = volumeArray.toJob;
 else
     if ~iscell(img)
         img = cellstr(img);
@@ -219,7 +223,7 @@ for nbsuj = 1:length(img)
     jobs{nbsuj}.spm.tools.cat.estwrite.output.CSF.native = par.CSF(3);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.CSF.dartel = par.CSF(4);
     
-    % TMPC
+    % TPMC
     jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.native = par.TPMC(1);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.mod    = par.TPMC(2);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.warped = par.TPMC(3);
@@ -255,40 +259,95 @@ end % for : nsubj
 
 
 %% Add outputs objects
+% Here, the order to add volumes looks weird, but its normal.
+% This order is due to the behaviour of "tag", you have anticipate the overwrite of objects when they have similar tags
+% For example, if you want to add p1 and wp1, add first p1 and then wp1, or else you will have overwrite
 
-if obj && par.auto_add_obj && par.run
+if obj && par.auto_add_obj && (par.run || par.sge)
     
-    serieArray = [in_obj.serie];
-    tag        =  in_obj(1).tag;
-    ext        = '.*.nii$';
+    for iVol = 1 : length(volumeArray)
+        
+        % Shortcut
+        vol = volumeArray(iVol);
+        ser = vol.serie;
+        tag = vol.tag;
+        
+        if par.run
+            
+            ext = '.*.nii$';
+            
+            % bias field corrected  + SANLM (global) T1
+            if par.bias(1), ser.addVolume([ '^m' tag ext],[ 'm' tag]), end % native
+            if par.bias(2), ser.addVolume(['^wm' tag ext],['wm' tag]), end % warped
+            if par.bias(3), ser.addVolume(['^rm' tag ext],['rm' tag]), end % dartel
+            
+            % bias field corrected  + SANLM (local)  T1
+            if par.las(1), ser.addVolume([ '^mi' tag ext],[ 'mi' tag]), end % native
+            if par.las(2), ser.addVolume(['^wmi' tag ext],['wmi' tag]), end % warped
+            if par.las(3), ser.addVolume(['^rmi' tag ext],['rmi' tag]), end % dartel
+            
+            % GM
+            if par.GM (3), ser.addVolume([  '^p1' tag ext],[  'p1' tag]), end % native_space(p*)
+            if par.GM (4), ser.addVolume([ '^rp1' tag ext],[ 'rp1' tag]), end % native_space_dartel_import(rp*)
+            if par.GM (1), ser.addVolume([ '^wp1' tag ext],[ 'wp1' tag]), end % warped_space_Unmodulated(wp*)
+            if par.GM (2), ser.addVolume(['^mwp1' tag ext],['mwp1' tag]), end % warped_space_modulated(mwp*)
+            
+            % WM
+            if par.WM (3), ser.addVolume([  '^p2' tag ext],[  'p2' tag]), end % native_space(p*)
+            if par.WM (4), ser.addVolume([ '^rp2' tag ext],[ 'rp2' tag]), end % native_space_dartel_import(rp*)
+            if par.WM (1), ser.addVolume([ '^wp2' tag ext],[ 'wp2' tag]), end % warped_space_Unmodulated(wp*)
+            if par.WM (2), ser.addVolume(['^mwp2' tag ext],['mwp2' tag]), end % warped_space_modulated(mwp*)
+            
+            % CSF
+            if par.CSF(3), ser.addVolume([  '^p3' tag ext],[  'p3' tag]), end % native_space(p*)
+            if par.CSF(4), ser.addVolume([ '^rp3' tag ext],[ 'rp3' tag]), end % native_space_dartel_import(rp*)
+            if par.CSF(1), ser.addVolume([ '^wp3' tag ext],[ 'wp3' tag]), end % warped_space_Unmodulated(wp*)
+            if par.CSF(2), ser.addVolume(['^mwp3' tag ext],['mwp3' tag]), end % warped_space_modulated(mwp*)
+            
+            % TPMC
+            if par.TPMC(3) % native_space(p*)
+                ser.addVolume([ '^p4' tag ext],[ 'p4' tag])
+                ser.addVolume([ '^p5' tag ext],[ 'p5' tag])
+                ser.addVolume([ '^p6' tag ext],[ 'p6' tag])
+            end
+            if par.TPMC(4) % native_space_dartel_import(rp*)
+                ser.addVolume([ '^rp4' tag ext],[ 'rp4' tag])
+                ser.addVolume([ '^rp5' tag ext],[ 'rp5' tag])
+                ser.addVolume([ '^rp6' tag ext],[ 'rp6' tag])
+            end
+            if par.TPMC(1) % warped_space_Unmodulated(wp*)
+                ser.addVolume([ '^wp4' tag ext],[ 'wp4' tag])
+                ser.addVolume([ '^wp5' tag ext],[ 'wp5' tag])
+                ser.addVolume([ '^wp6' tag ext],[ 'wp6' tag])
+            end
+            if par.TPMC(2) % warped_space_modulated(mwp*)
+                ser.addVolume([ '^mwp4' tag ext],[ 'mwp4' tag])
+                ser.addVolume([ '^mwp5' tag ext],[ 'mwp5' tag])
+                ser.addVolume([ '^mwp6' tag ext],[ 'mwp6' tag])
+            end
+            
+            % label
+            if par.label(1), ser.addVolume([ '^p0' tag ext],[ 'p0' tag]), end % native
+            if par.label(2), ser.addVolume(['^wp0' tag ext],['wp0' tag]), end % warped
+            if par.label(3), ser.addVolume(['^rp0' tag ext],['rp0' tag]), end % dartel
+            
+            % Jacobian
+            if par.jacobian, ser.addVolume(['^wj_' tag ext],['wj_' tag]), end
+            
+            % Warp field
+            if par.warp(1), ser.addVolume([ '^y_' tag ext],[ 'y_' tag]), end % Forward
+            if par.warp(2), ser.addVolume(['^iy_' tag ext],['iy_' tag]), end % Inverse
+            
+        elseif par.sge
+            
+            ext = '.nii';
+            %             ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix),[par.prefix tag])
+            
+        end
+        
+    end % iVol
     
-    % Warp field
-    if par.warp(2), serieArray.addVolume([ '^y_' tag ext],[ 'y_' tag],1), end % Forward
-    if par.warp(1), serieArray.addVolume(['^iy_' tag ext],['iy_' tag],1), end % Inverse
-    
-    % Bias field
-    if par.bias(1), serieArray.addVolume([ '^m' tag ext],[ 'm' tag],1), end % Corrected
-    if par.bias(2), serieArray.addVolume(['^wm' tag ext],['wm' tag],1), end % Field
-    
-    % GM
-    if par.GM (3), serieArray.addVolume([  '^p1' tag ext],[  'p1' tag]), end % native_space(p*)
-    if par.GM (4), serieArray.addVolume([ '^rp1' tag ext],[ 'rp1' tag]), end % native_space_dartel_import(rp*)
-    if par.GM (1), serieArray.addVolume([ '^wp1' tag ext],[ 'wp1' tag]), end % warped_space_Unmodulated(wp*)
-    if par.GM (2), serieArray.addVolume(['^mwp1' tag ext],['mwp1' tag]), end % warped_space_modulated(mwp*)
-    
-    % WM
-    if par.WM (3), serieArray.addVolume([  '^p2' tag ext],[  'p2' tag]), end % native_space(p*)
-    if par.WM (4), serieArray.addVolume([ '^rp2' tag ext],[ 'rp2' tag]), end % native_space_dartel_import(rp*)
-    if par.WM (1), serieArray.addVolume([ '^wp2' tag ext],[ 'wp2' tag]), end % warped_space_Unmodulated(wp*)
-    if par.WM (2), serieArray.addVolume(['^mwp2' tag ext],['mwp2' tag]), end % warped_space_modulated(mwp*)
-    
-    % CSF
-    if par.CSF(3), serieArray.addVolume([  '^p3' tag ext],[  'p3' tag]), end % native_space(p*)
-    if par.CSF(4), serieArray.addVolume([ '^rp3' tag ext],[ 'rp3' tag]), end % native_space_dartel_import(rp*)
-    if par.CSF(1), serieArray.addVolume([ '^wp3' tag ext],[ 'wp3' tag]), end % warped_space_Unmodulated(wp*)
-    if par.CSF(2), serieArray.addVolume(['^mwp3' tag ext],['mwp3' tag]), end % warped_space_modulated(mwp*)
-    
-end
+end % obj
 
 
 end % function
