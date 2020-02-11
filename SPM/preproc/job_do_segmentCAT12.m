@@ -276,67 +276,187 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             
             ext = '.*.nii$';
             
+            %--------------------------------------------------------------
             % bias field corrected  + SANLM (global) T1
-            if par.bias(1), ser.addVolume([ '^m' tag ext],[ 'm' tag]), end % native
-            if par.bias(2), ser.addVolume(['^wm' tag ext],['wm' tag]), end % warped
-            if par.bias(3), ser.addVolume(['^rm' tag ext],['rm' tag]), end % dartel
-            
-            % bias field corrected  + SANLM (local)  T1
-            if par.las(1), ser.addVolume([ '^mi' tag ext],[ 'mi' tag]), end % native
-            if par.las(2), ser.addVolume(['^wmi' tag ext],['wmi' tag]), end % warped
-            if par.las(3), ser.addVolume(['^rmi' tag ext],['rmi' tag]), end % dartel
-            
-            % GM
-            if par.GM (3), ser.addVolume([  '^p1' tag ext],[  'p1' tag]), end % native_space(p*)
-            if par.GM (4), ser.addVolume([ '^rp1' tag ext],[ 'rp1' tag]), end % native_space_dartel_import(rp*)
-            if par.GM (1), ser.addVolume([ '^wp1' tag ext],[ 'wp1' tag]), end % warped_space_Unmodulated(wp*)
-            if par.GM (2), ser.addVolume(['^mwp1' tag ext],['mwp1' tag]), end % warped_space_modulated(mwp*)
-            
-            % WM
-            if par.WM (3), ser.addVolume([  '^p2' tag ext],[  'p2' tag]), end % native_space(p*)
-            if par.WM (4), ser.addVolume([ '^rp2' tag ext],[ 'rp2' tag]), end % native_space_dartel_import(rp*)
-            if par.WM (1), ser.addVolume([ '^wp2' tag ext],[ 'wp2' tag]), end % warped_space_Unmodulated(wp*)
-            if par.WM (2), ser.addVolume(['^mwp2' tag ext],['mwp2' tag]), end % warped_space_modulated(mwp*)
-            
-            % CSF
-            if par.CSF(3), ser.addVolume([  '^p3' tag ext],[  'p3' tag]), end % native_space(p*)
-            if par.CSF(4), ser.addVolume([ '^rp3' tag ext],[ 'rp3' tag]), end % native_space_dartel_import(rp*)
-            if par.CSF(1), ser.addVolume([ '^wp3' tag ext],[ 'wp3' tag]), end % warped_space_Unmodulated(wp*)
-            if par.CSF(2), ser.addVolume(['^mwp3' tag ext],['mwp3' tag]), end % warped_space_modulated(mwp*)
-            
-            % TPMC
-            if par.TPMC(3) % native_space(p*)
-                ser.addVolume([ '^p4' tag ext],[ 'p4' tag])
-                ser.addVolume([ '^p5' tag ext],[ 'p5' tag])
-                ser.addVolume([ '^p6' tag ext],[ 'p6' tag])
+            %--------------------------------------------------------------
+            if par.bias(1), ser.addVolume([ '^m' tag ext],[ 'm' tag],1), end % native
+            if par.bias(2), ser.addVolume(['^wm' tag ext],['wm' tag],1), end % warped
+            switch par.bias(3) % dartel
+                case 0
+                    % pass
+                case 1
+                    ser.addVolume(['^rm' tag '.*_rigid'  ext],['rm' tag '_rigid' ],1)
+                case 2
+                    ser.addVolume(['^rm' tag '.*_affine' ext],['rm' tag '_affine'],1)
+                case 3
+                    ser.addVolume(['^rm' tag '.*_affine' ext],['rm' tag '_affine'],1)
             end
-            if par.TPMC(4) % native_space_dartel_import(rp*)
-                ser.addVolume([ '^rp4' tag ext],[ 'rp4' tag])
-                ser.addVolume([ '^rp5' tag ext],[ 'rp5' tag])
-                ser.addVolume([ '^rp6' tag ext],[ 'rp6' tag])
+            
+            %--------------------------------------------------------------
+            % bias field corrected  + SANLM (local)  T1
+            %--------------------------------------------------------------
+            if par.las(1), ser.addVolume([ '^mi' tag ext],[ 'mi' tag],1), end % native
+            if par.las(2), ser.addVolume(['^wmi' tag ext],['wmi' tag],1), end % warped
+            switch par.las(3) % dartel
+                case 0
+                    % pass
+                case 1
+                    ser.addVolume(['^rmi' tag '.*_rigid'  ext],['rmi' tag '_rigid' ],1)
+                case 2
+                    ser.addVolume(['^rmi' tag '.*_affine' ext],['rmi' tag '_affine'],1)
+                case 3
+                    ser.addVolume(['^rmi' tag '.*_affine' ext],['rmi' tag '_affine'],1)
+            end
+            
+            %--------------------------------------------------------------
+            % label
+            %--------------------------------------------------------------
+            if par.label(1), ser.addVolume([ '^p0' tag ext],[ 'p0' tag],1), end % native
+            if par.label(2), ser.addVolume(['^wp0' tag ext],['wp0' tag],1), end % warped
+            switch par.label(3) % dartel
+                case 0
+                    % pass
+                case 1
+                    ser.addVolume(['^rp0' tag '.*_rigid'  ext],['rp0' tag '_rigid' ],1)
+                case 2
+                    ser.addVolume(['^rp0' tag '.*_affine' ext],['rp0' tag '_affine'],1)
+                case 3
+                    ser.addVolume(['^rp0' tag '.*_rigid'  ext],['rp0' tag '_rigid' ],1)
+                    ser.addVolume(['^rp0' tag '.*_affine' ext],['rp0' tag '_affine'],1)
+            end
+            
+            
+            %--------------------------------------------------------------
+            % GM
+            %--------------------------------------------------------------
+            if par.GM(3), ser.addVolume([  '^p1' tag ext],[  'p1' tag],1), end % native_space(p*)
+            switch par.GM(4)
+                case 0
+                    % pass
+                case 1 % native_space_dartel_import(rp* _rigid)
+                    ser.addVolume([ '^rp1' tag '.*_rigid'  ext],[ 'rp1' tag '_rigid' ],1)
+                case 2 % native_space_dartel_import(rp* _affine)
+                    ser.addVolume([ '^rp1' tag '.*_affine' ext],[ 'rp1' tag '_affine'],1)
+                case 3 %  native_space_dartel_import(rp* _rigid & _affine)
+                    ser.addVolume([ '^rp1' tag '.*_rigid'  ext],[ 'rp1' tag '_rigid' ],1)
+                    ser.addVolume([ '^rp1' tag '.*_affine' ext],[ 'rp1' tag '_affine'],1)
+            end
+            if par.GM(1), ser.addVolume([ '^wp1' tag ext],[ 'wp1' tag],1), end % warped_space_Unmodulated(wp*)
+            switch par.GM(2)
+                case 0
+                    % pass
+                case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
+                    ser.addVolume(['^mwp1'  tag ext],['mwp1'  tag],1)
+                case 2 % warped_space_modulated(mwp*) Non-Linear only
+                    ser.addVolume(['^m0wp1' tag ext],['mw0p1' tag],1)
+            end
+            
+            %--------------------------------------------------------------
+            % WM
+            %--------------------------------------------------------------
+            if par.WM(3), ser.addVolume([  '^p2' tag ext],[  'p2' tag],1), end % native_space(p*)
+            switch par.WM(4)
+                case 0
+                    % pass
+                case 1 % native_space_dartel_import(rp* _rigid)
+                    ser.addVolume([ '^rp2' tag '.*_rigid'  ext],[ 'rp2' tag '_rigid' ],1)
+                case 2 % native_space_dartel_import(rp* _affine)
+                    ser.addVolume([ '^rp2' tag '.*_affine' ext],[ 'rp2' tag '_affine'],1)
+                case 3 %  native_space_dartel_import(rp* _rigid & _affine)
+                    ser.addVolume([ '^rp2' tag '.*_rigid'  ext],[ 'rp2' tag '_rigid' ],1)
+                    ser.addVolume([ '^rp2' tag '.*_affine' ext],[ 'rp2' tag '_affine'],1)
+            end
+            if par.WM(1), ser.addVolume([ '^wp2' tag ext],[ 'wp2' tag],1), end % warped_space_Unmodulated(wp*)
+            switch par.WM(2)
+                case 0
+                    % pass
+                case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
+                    ser.addVolume(['^mwp2'  tag ext],['mwp2'  tag],1)
+                case 2 % warped_space_modulated(mwp*) Non-Linear only
+                    ser.addVolume(['^m0wp2' tag ext],['mw0p2' tag],1)
+            end
+            
+            %--------------------------------------------------------------
+            % CSF
+            %--------------------------------------------------------------
+            if par.CSF(3), ser.addVolume([  '^p3' tag ext],[  'p3' tag],1), end % native_space(p*)
+            switch par.CSF(4)
+                case 0
+                    % pass
+                case 1 % native_space_dartel_import(rp* _rigid)
+                    ser.addVolume([ '^rp3' tag '.*_rigid'  ext],[ 'rp3' tag '_rigid' ],1)
+                case 2 % native_space_dartel_import(rp* _affine)
+                    ser.addVolume([ '^rp3' tag '.*_affine' ext],[ 'rp3' tag '_affine'],1)
+                case 3 %  native_space_dartel_import(rp* _rigid & _affine)
+                    ser.addVolume([ '^rp3' tag '.*_rigid'  ext],[ 'rp3' tag '_rigid' ],1)
+                    ser.addVolume([ '^rp3' tag '.*_affine' ext],[ 'rp3' tag '_affine'],1)
+            end
+            if par.CSF(1), ser.addVolume([ '^wp3' tag ext],[ 'wp3' tag],1), end % warped_space_Unmodulated(wp*)
+            switch par.CSF(2)
+                case 0
+                    % pass
+                case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
+                    ser.addVolume(['^mwp3'  tag ext],['mwp3'  tag],1)
+                case 2 % warped_space_modulated(mwp*) Non-Linear only
+                    ser.addVolume(['^m0wp3' tag ext],['mw0p3' tag],1)
+            end
+            
+            %--------------------------------------------------------------
+            % TPMC
+            %--------------------------------------------------------------
+            if par.TPMC(3) % native_space(p*)
+                ser.addVolume([ '^p4' tag ext],[ 'p4' tag],1)
+                ser.addVolume([ '^p5' tag ext],[ 'p5' tag],1)
+                ser.addVolume([ '^p6' tag ext],[ 'p6' tag],1)
+            end
+            switch par.TPMC(4)
+                case 0
+                    % pass
+                case 1 % native_space_dartel_import(rp* _rigid)
+                    ser.addVolume([ '^rp4' tag '.*_rigid'  ext],[ 'rp4' tag '_rigid' ],1)
+                    ser.addVolume([ '^rp5' tag '.*_rigid'  ext],[ 'rp5' tag '_rigid' ],1)
+                    ser.addVolume([ '^rp6' tag '.*_rigid'  ext],[ 'rp6' tag '_rigid' ],1)
+                case 2 % native_space_dartel_import(rp* _affine)
+                    ser.addVolume([ '^rp4' tag '.*_affine' ext],[ 'rp4' tag '_affine'],1)
+                    ser.addVolume([ '^rp5' tag '.*_affine' ext],[ 'rp5' tag '_affine'],1)
+                    ser.addVolume([ '^rp6' tag '.*_affine' ext],[ 'rp6' tag '_affine'],1)
+                case 3 % native_space_dartel_import(rp* _rigid & _affine)
+                    ser.addVolume([ '^rp4' tag '.*_rigid'  ext],[ 'rp4' tag '_rigid' ],1)
+                    ser.addVolume([ '^rp5' tag '.*_rigid'  ext],[ 'rp5' tag '_rigid' ],1)
+                    ser.addVolume([ '^rp6' tag '.*_rigid'  ext],[ 'rp6' tag '_rigid' ],1)
+                    ser.addVolume([ '^rp4' tag '.*_affine' ext],[ 'rp4' tag '_affine'],1)
+                    ser.addVolume([ '^rp5' tag '.*_affine' ext],[ 'rp5' tag '_affine'],1)
+                    ser.addVolume([ '^rp6' tag '.*_affine' ext],[ 'rp6' tag '_affine'],1)
             end
             if par.TPMC(1) % warped_space_Unmodulated(wp*)
-                ser.addVolume([ '^wp4' tag ext],[ 'wp4' tag])
-                ser.addVolume([ '^wp5' tag ext],[ 'wp5' tag])
-                ser.addVolume([ '^wp6' tag ext],[ 'wp6' tag])
+                ser.addVolume([ '^wp4' tag ext],[ 'wp4' tag],1)
+                ser.addVolume([ '^wp5' tag ext],[ 'wp5' tag],1)
+                ser.addVolume([ '^wp6' tag ext],[ 'wp6' tag],1)
             end
-            if par.TPMC(2) % warped_space_modulated(mwp*)
-                ser.addVolume([ '^mwp4' tag ext],[ 'mwp4' tag])
-                ser.addVolume([ '^mwp5' tag ext],[ 'mwp5' tag])
-                ser.addVolume([ '^mwp6' tag ext],[ 'mwp6' tag])
+            switch par.TPMC(2)
+                case 0
+                    % pass
+                case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
+                    ser.addVolume(['^mwp4'  tag ext],['mwp4'  tag],1)
+                    ser.addVolume(['^mwp5'  tag ext],['mwp5'  tag],1)
+                    ser.addVolume(['^mwp6'  tag ext],['mwp6'  tag],1)
+                case 2 % warped_space_modulated(mwp*) Non-Linear only
+                    ser.addVolume(['^m0wp4' tag ext],['mw0p4' tag],1)
+                    ser.addVolume(['^m0wp5' tag ext],['mw0p5' tag],1)
+                    ser.addVolume(['^m0wp6' tag ext],['mw0p6' tag],1)
             end
             
-            % label
-            if par.label(1), ser.addVolume([ '^p0' tag ext],[ 'p0' tag]), end % native
-            if par.label(2), ser.addVolume(['^wp0' tag ext],['wp0' tag]), end % warped
-            if par.label(3), ser.addVolume(['^rp0' tag ext],['rp0' tag]), end % dartel
-            
+            %--------------------------------------------------------------
             % Jacobian
-            if par.jacobian, ser.addVolume(['^wj_' tag ext],['wj_' tag]), end
+            %--------------------------------------------------------------
+            if par.jacobian, ser.addVolume(['^wj_' tag ext],['wj_' tag],1), end
             
+            %--------------------------------------------------------------
             % Warp field
-            if par.warp(1), ser.addVolume([ '^y_' tag ext],[ 'y_' tag]), end % Forward
-            if par.warp(2), ser.addVolume(['^iy_' tag ext],['iy_' tag]), end % Inverse
+            %--------------------------------------------------------------
+            if par.warp(1), ser.addVolume([ '^y_' tag ext],[ 'y_' tag],1), end % Forward
+            if par.warp(2), ser.addVolume(['^iy_' tag ext],['iy_' tag],1), end % Inverse
+            
             
         elseif par.sge
             
