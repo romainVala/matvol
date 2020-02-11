@@ -39,7 +39,6 @@ if isfield(meinfo,'anat')
         otherwise
             error('format of anat input is not supported : cellstr or @volume')
     end
-    assert(length(anat) == length(meinfo.path),'number of anat is not consistent')
 end
 
 
