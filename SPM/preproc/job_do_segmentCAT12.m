@@ -173,7 +173,7 @@ skip=[];
 for nbsuj = 1:length(img)
     
     % skip if y_ exist
-    of = addprefixtofilenames(img(nbsuj),'y_');
+    of = ap(img(nbsuj),'y_');
     if ~par.redo  &&  exist(of{1},'file')
         skip = [skip nbsuj];
         fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,nbsuj,of{1});
@@ -272,7 +272,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         ser = vol.serie;
         tag = vol.tag;
         
-        if par.run
+        if par.run %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
             ext = '.*.nii$';
             
@@ -325,7 +325,6 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                     ser.addVolume(['^rp0' tag '.*_affine' ext],['rp0' tag '_affine'],1)
             end
             
-            
             %--------------------------------------------------------------
             % GM
             %--------------------------------------------------------------
@@ -348,7 +347,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
                     ser.addVolume(['^mwp1'  tag ext],['mwp1'  tag],1)
                 case 2 % warped_space_modulated(mwp*) Non-Linear only
-                    ser.addVolume(['^m0wp1' tag ext],['mw0p1' tag],1)
+                    ser.addVolume(['^m0wp1' tag ext],['m0wp1' tag],1)
             end
             
             %--------------------------------------------------------------
@@ -373,7 +372,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
                     ser.addVolume(['^mwp2'  tag ext],['mwp2'  tag],1)
                 case 2 % warped_space_modulated(mwp*) Non-Linear only
-                    ser.addVolume(['^m0wp2' tag ext],['mw0p2' tag],1)
+                    ser.addVolume(['^m0wp2' tag ext],['m0wp2' tag],1)
             end
             
             %--------------------------------------------------------------
@@ -398,7 +397,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
                     ser.addVolume(['^mwp3'  tag ext],['mwp3'  tag],1)
                 case 2 % warped_space_modulated(mwp*) Non-Linear only
-                    ser.addVolume(['^m0wp3' tag ext],['mw0p3' tag],1)
+                    ser.addVolume(['^m0wp3' tag ext],['m0wp3' tag],1)
             end
             
             %--------------------------------------------------------------
@@ -441,9 +440,9 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                     ser.addVolume(['^mwp5'  tag ext],['mwp5'  tag],1)
                     ser.addVolume(['^mwp6'  tag ext],['mwp6'  tag],1)
                 case 2 % warped_space_modulated(mwp*) Non-Linear only
-                    ser.addVolume(['^m0wp4' tag ext],['mw0p4' tag],1)
-                    ser.addVolume(['^m0wp5' tag ext],['mw0p5' tag],1)
-                    ser.addVolume(['^m0wp6' tag ext],['mw0p6' tag],1)
+                    ser.addVolume(['^m0wp4' tag ext],['m0wp4' tag],1)
+                    ser.addVolume(['^m0wp5' tag ext],['m0wp5' tag],1)
+                    ser.addVolume(['^m0wp6' tag ext],['m0wp6' tag],1)
             end
             
             %--------------------------------------------------------------
@@ -458,69 +457,187 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             if par.warp(2), ser.addVolume(['^iy_' tag ext],['iy_' tag],1), end % Inverse
             
             
-        elseif par.sge
+        elseif par.sge %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
+            %--------------------------------------------------------------
             % bias field corrected  + SANLM (global) T1
-            if par.bias(1), ser.addVolume('root', addprefixtofilenames(vol.path,'m'),['m' tag]), end % native
-            if par.bias(2), ser.addVolume('root', addprefixtofilenames(vol.path,'wm'),['wm' tag]), end % warped
-            if par.bias(3), ser.addVolume('root', addprefixtofilenames(vol.path,'rm'),['rm' tag]), end % dartel
-            
-            % bias field corrected  + SANLM (local)  T1
-            if par.las(1), ser.addVolume('root', addprefixtofilenames(vol.path,'mi'),['mi' tag]), end % native
-            if par.las(2), ser.addVolume('root', addprefixtofilenames(vol.path,'wmi'),['wmi' tag]), end % warped
-            if par.las(3), ser.addVolume('root', addprefixtofilenames(vol.path,'rmi'),['rmi' tag]), end % dartel
-            
-            % GM
-            if par.GM (3), ser.addVolume('root', addprefixtofilenames(vol.path,'p1'),['p1' tag]), end % native_space(p*)
-            if par.GM (4), ser.addVolume('root', addprefixtofilenames(vol.path,'rp1'),['rp1' tag]), end % native_space_dartel_import(rp*)
-            if par.GM (1), ser.addVolume('root', addprefixtofilenames(vol.path,'wp1'),['wp1' tag]), end % warped_space_Unmodulated(wp*)
-            if par.GM (2), ser.addVolume('root', addprefixtofilenames(vol.path,'mwp1'),['mwp1' tag]), end % warped_space_modulated(mwp*)
-            
-            % WM
-            if par.WM (3), ser.addVolume('root', addprefixtofilenames(vol.path,'p2'),['p2' tag]), end % native_space(p*)
-            if par.WM (4), ser.addVolume('root', addprefixtofilenames(vol.path,'rp2'),['rp2' tag]), end % native_space_dartel_import(rp*)
-            if par.WM (1), ser.addVolume('root', addprefixtofilenames(vol.path,'wp2'),['wp2' tag]), end % warped_space_Unmodulated(wp*)
-            if par.WM (2), ser.addVolume('root', addprefixtofilenames(vol.path,'mwp2'),['mwp2' tag]), end % warped_space_modulated(mwp*)
-            
-            % CSF
-            if par.CSF(3), ser.addVolume('root', addprefixtofilenames(vol.path,'p3'),['p3' tag]), end % native_space(p*)
-            if par.CSF(4), ser.addVolume('root', addprefixtofilenames(vol.path,'rp3'),['rp3' tag]), end % native_space_dartel_import(rp*)
-            if par.CSF(1), ser.addVolume('root', addprefixtofilenames(vol.path,'wp3'),['wp3' tag]), end % warped_space_Unmodulated(wp*)
-            if par.CSF(2), ser.addVolume('root', addprefixtofilenames(vol.path,'mwp3'),['mwp3' tag]), end % warped_space_modulated(mwp*)
-            
-            % TPMC
-            if par.TPMC(3) % native_space(p*)
-                ser.addVolume('root', addprefixtofilenames(vol.path,'p4'),[ 'p4' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'p5'),[ 'p5' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'p6'),[ 'p6' tag])
+            %--------------------------------------------------------------
+            if par.bias(1), ser.addVolume( 'root', ap(vol.path, 'm'),[ 'm' tag]), end % native
+            if par.bias(2), ser.addVolume( 'root', ap(vol.path,'wm'),['wm' tag]), end % warped
+            switch par.bias(3) % dartel
+                case 0
+                    % pass
+                case 1
+                    ser.addVolume( 'root', as(ap(vol.path,'rm'),'_rigid' ),['rm' tag '_rigid' ])
+                case 2
+                    ser.addVolume( 'root', as(ap(vol.path,'rm'),'_affine'),['rm' tag '_affine'])
+                case 3
+                    ser.addVolume( 'root', as(ap(vol.path,'rm'),'_affine'),['rm' tag '_affine'])
             end
-            if par.TPMC(4) % native_space_dartel_import(rp*)
-                ser.addVolume('root', addprefixtofilenames(vol.path,'rp4'),[ 'rp4' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'rp5'),[ 'rp5' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'rp6'),[ 'rp6' tag])
+            
+            %--------------------------------------------------------------
+            % bias field corrected  + SANLM (local)  T1
+            %--------------------------------------------------------------
+            if par.las(1), ser.addVolume( 'root', ap(vol.path, 'mi'),[ 'mi' tag]), end % native
+            if par.las(2), ser.addVolume( 'root', ap(vol.path,'wmi'),['wmi' tag]), end % warped
+            switch par.las(3) % dartel
+                case 0
+                    % pass
+                case 1
+                    ser.addVolume( 'root', as(ap(vol.path,'rmi'),'_rigid' ),['rmi' tag '_rigid' ])
+                case 2
+                    ser.addVolume( 'root', as(ap(vol.path,'rmi'),'_affine'),['rmi' tag '_affine'])
+                case 3
+                    ser.addVolume( 'root', as(ap(vol.path,'rmi'),'_affine'),['rmi' tag '_affine'])
+            end
+            
+            %--------------------------------------------------------------
+            % label
+            %--------------------------------------------------------------
+            if par.label(1), ser.addVolume( 'root', ap(vol.path, 'p0'),[ 'p0' tag]), end % native
+            if par.label(2), ser.addVolume( 'root', ap(vol.path,'wp0'),['wp0' tag]), end % warped
+            switch par.label(3) % dartel
+                case 0
+                    % pass
+                case 1
+                    ser.addVolume( 'root', as(ap(vol.path,'rp0'),'_rigid' ),['rp0' tag '_rigid' ])
+                case 2
+                    ser.addVolume( 'root', as(ap(vol.path,'rp0'),'_affine'),['rp0' tag '_affine'])
+                case 3
+                    ser.addVolume( 'root', as(ap(vol.path,'rp0'),'_rigid' ),['rp0' tag '_rigid' ])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp0'),'_affine'),['rp0' tag '_affine'])
+            end
+            
+            %--------------------------------------------------------------
+            % GM
+            %--------------------------------------------------------------
+            if par.GM(3), ser.addVolume( 'root', ap(vol.path,'p1'),[  'p1' tag]), end % native_space(p*)
+            switch par.GM(4)
+                case 0
+                    % pass
+                case 1 % native_space_dartel_import(rp* _rigid)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp1'),'_rigid' ),[ 'rp1' tag '_rigid' ])
+                case 2 % native_space_dartel_import(rp* _affine)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp1'),'_affine'),[ 'rp1' tag '_affine'])
+                case 3 %  native_space_dartel_import(rp* _rigid & _affine)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp1'),'_rigid' ),[ 'rp1' tag '_rigid' ])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp1'),'_affine'),[ 'rp1' tag '_affine'])
+            end
+            if par.GM(1), ser.addVolume( 'root', ap(vol.path,'wp1'),[ 'wp1' tag]), end % warped_space_Unmodulated(wp*)
+            switch par.GM(2)
+                case 0
+                    % pass
+                case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
+                    ser.addVolume( 'root', ap(vol.path,'mwp1' ),['mwp1'  tag])
+                case 2 % warped_space_modulated(mwp*) Non-Linear only
+                    ser.addVolume( 'root', ap(vol.path,'m0wp1'),['m0wp1' tag])
+            end
+            
+            %--------------------------------------------------------------
+            % WM
+            %--------------------------------------------------------------
+            if par.WM(3), ser.addVolume( 'root', ap(vol.path,'p2'),[  'p2' tag]), end % native_space(p*)
+            switch par.WM(4)
+                case 0
+                    % pass
+                case 1 % native_space_dartel_import(rp* _rigid)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp2'),'_rigid' ),[ 'rp2' tag '_rigid' ])
+                case 2 % native_space_dartel_import(rp* _affine)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp2'),'_affine'),[ 'rp2' tag '_affine'])
+                case 3 %  native_space_dartel_import(rp* _rigid & _affine)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp2'),'_rigid' ),[ 'rp2' tag '_rigid' ])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp2'),'_affine'),[ 'rp2' tag '_affine'])
+            end
+            if par.WM(1), ser.addVolume( 'root', ap(vol.path,'wp2'),[ 'wp2' tag]), end % warped_space_Unmodulated(wp*)
+            switch par.WM(2)
+                case 0
+                    % pass
+                case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
+                    ser.addVolume( 'root', ap(vol.path,'mwp2' ),['mwp2'  tag])
+                case 2 % warped_space_modulated(mwp*) Non-Linear only
+                    ser.addVolume( 'root', ap(vol.path,'m0wp2'),['m0wp2' tag])
+            end
+            
+            %--------------------------------------------------------------
+            % CSF
+            %--------------------------------------------------------------
+            if par.CSF(3), ser.addVolume( 'root', ap(vol.path,'p3'),[  'p3' tag]), end % native_space(p*)
+            switch par.CSF(4)
+                case 0
+                    % pass
+                case 1 % native_space_dartel_import(rp* _rigid)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp3'),'_rigid' ),[ 'rp3' tag '_rigid' ])
+                case 2 % native_space_dartel_import(rp* _affine)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp3'),'_affine'),[ 'rp3' tag '_affine'])
+                case 3 %  native_space_dartel_import(rp* _rigid & _affine)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp3'),'_rigid' ),[ 'rp3' tag '_rigid' ])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp3'),'_affine'),[ 'rp3' tag '_affine'])
+            end
+            if par.CSF(1), ser.addVolume( 'root', ap(vol.path,'wp3'),[ 'wp3' tag]), end % warped_space_Unmodulated(wp*)
+            switch par.CSF(2)
+                case 0
+                    % pass
+                case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
+                    ser.addVolume( 'root', ap(vol.path,'mwp3' ),['mwp3'  tag])
+                case 2 % warped_space_modulated(mwp*) Non-Linear only
+                    ser.addVolume( 'root', ap(vol.path,'m0wp3'),['m0wp3' tag])
+            end
+            
+            %--------------------------------------------------------------
+            % TPMC
+            %--------------------------------------------------------------
+            if par.TPMC(3) % native_space(p*)
+                ser.addVolume( 'root', ap(vol.path,'p4'),[ 'p4' tag])
+                ser.addVolume( 'root', ap(vol.path,'p5'),[ 'p5' tag])
+                ser.addVolume( 'root', ap(vol.path,'p6'),[ 'p6' tag])
+            end
+            switch par.TPMC(4)
+                case 0
+                    % pass
+                case 1 % native_space_dartel_import(rp* _rigid)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp4'),'_rigid' ),[ 'rp4' tag '_rigid' ])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp5'),'_rigid' ),[ 'rp5' tag '_rigid' ])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp6'),'_rigid' ),[ 'rp6' tag '_rigid' ])
+                case 2 % native_space_dartel_import(rp* _affine)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp4'),'_affine'),[ 'rp4' tag '_affine'])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp5'),'_affine'),[ 'rp5' tag '_affine'])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp6'),'_affine'),[ 'rp6' tag '_affine'])
+                case 3 % native_space_dartel_import(rp* _rigid & _affine)
+                    ser.addVolume( 'root', as(ap(vol.path,'rp4'),'_rigid' ),[ 'rp4' tag '_rigid' ])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp5'),'_rigid' ),[ 'rp5' tag '_rigid' ])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp6'),'_rigid' ),[ 'rp6' tag '_rigid' ])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp4'),'_affine'),[ 'rp4' tag '_affine'])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp5'),'_affine'),[ 'rp5' tag '_affine'])
+                    ser.addVolume( 'root', as(ap(vol.path,'rp6'),'_affine'),[ 'rp6' tag '_affine'])
             end
             if par.TPMC(1) % warped_space_Unmodulated(wp*)
-                ser.addVolume('root', addprefixtofilenames(vol.path,'wp4'),[ 'wp4' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'wp5'),[ 'wp5' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'wp6'),[ 'wp6' tag])
+                ser.addVolume( 'root', ap(vol.path,'wp4'),[ 'wp4' tag])
+                ser.addVolume( 'root', ap(vol.path,'wp5'),[ 'wp5' tag])
+                ser.addVolume( 'root', ap(vol.path,'wp6'),[ 'wp6' tag])
             end
-            if par.TPMC(2) % warped_space_modulated(mwp*)
-                ser.addVolume('root', addprefixtofilenames(vol.path,'mwp4'),[ 'mwp4' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'mwp5'),[ 'mwp5' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'mwp6'),[ 'mwp6' tag])
+            switch par.TPMC(2)
+                case 0
+                    % pass
+                case 1 % warped_space_modulated(mwp*) Affine + non-linear (SPM12 default)
+                    ser.addVolume( 'root', ap(vol.path,'mwp4' ),['mwp4'  tag])
+                    ser.addVolume( 'root', ap(vol.path,'mwp5' ),['mwp5'  tag])
+                    ser.addVolume( 'root', ap(vol.path,'mwp6' ),['mwp6'  tag])
+                case 2 % warped_space_modulated(mwp*) Non-Linear only
+                    ser.addVolume( 'root', ap(vol.path,'m0wp4'),['m0wp4' tag])
+                    ser.addVolume( 'root', ap(vol.path,'m0wp5'),['m0wp5' tag])
+                    ser.addVolume( 'root', ap(vol.path,'m0wp6'),['m0wp6' tag])
             end
             
-            % label
-            if par.label(1), ser.addVolume('root', addprefixtofilenames(vol.path,'p0'),[ 'p0' tag]), end % native
-            if par.label(2), ser.addVolume('root', addprefixtofilenames(vol.path,'wp0'),['wp0' tag]), end % warped
-            if par.label(3), ser.addVolume('root', addprefixtofilenames(vol.path,'rp0'),['rp0' tag]), end % dartel
-            
+            %--------------------------------------------------------------
             % Jacobian
-            if par.jacobian, ser.addVolume('root', addprefixtofilenames(vol.path,'wj_'),['wj_' tag]), end
+            %--------------------------------------------------------------
+            if par.jacobian, ser.addVolume( 'root', ap(vol.path,'wj_'),['wj_' tag]), end
             
+            %--------------------------------------------------------------
             % Warp field
-            if par.warp(1), ser.addVolume('root', addprefixtofilenames(vol.path,'y_'),[ 'y_' tag]), end % Forward
-            if par.warp(2), ser.addVolume('root', addprefixtofilenames(vol.path,'iy_'),['iy_' tag]), end % Inverse
+            %--------------------------------------------------------------
+            if par.warp(1), ser.addVolume( 'root', ap(vol.path, 'y_'),[ 'y_' tag]), end % Forward
+            if par.warp(2), ser.addVolume( 'root', ap(vol.path,'iy_'),['iy_' tag]), end % Inverse
             
         end
         
@@ -530,3 +647,11 @@ end % obj
 
 
 end % function
+
+% This is a like a shortcut, to reduce verbosity
+function newlist = ap(filelist,prefix)
+newlist = addprefixtofilenames(filelist,prefix);
+end
+function newlist = as(filelist,suffix)
+newlist = addsuffixtofilenames(filelist,suffix);
+end
