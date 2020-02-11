@@ -341,66 +341,66 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         elseif par.sge
             
             % bias field corrected  + SANLM (global) T1
-            if par.bias(1), ser.addVolume('root', addprefixtofilenames(vol.path,'^m'),[ 'm' tag]), end % native
-            if par.bias(2), ser.addVolume('root', addprefixtofilenames(vol.path,'^wm'),['wm' tag]), end % warped
-            if par.bias(3), ser.addVolume('root', addprefixtofilenames(vol.path,'^rm'),['rm' tag]), end % dartel
+            if par.bias(1), ser.addVolume('root', addprefixtofilenames(vol.path,'m'),['m' tag]), end % native
+            if par.bias(2), ser.addVolume('root', addprefixtofilenames(vol.path,'wm'),['wm' tag]), end % warped
+            if par.bias(3), ser.addVolume('root', addprefixtofilenames(vol.path,'rm'),['rm' tag]), end % dartel
             
             % bias field corrected  + SANLM (local)  T1
-            if par.las(1), ser.addVolume('root', addprefixtofilenames(vol.path,'^mi'),[ 'mi' tag]), end % native
-            if par.las(2), ser.addVolume('root', addprefixtofilenames(vol.path,'^wmi'),['wmi' tag]), end % warped
-            if par.las(3), ser.addVolume('root', addprefixtofilenames(vol.path,'^rmi'),['rmi' tag]), end % dartel
+            if par.las(1), ser.addVolume('root', addprefixtofilenames(vol.path,'mi'),['mi' tag]), end % native
+            if par.las(2), ser.addVolume('root', addprefixtofilenames(vol.path,'wmi'),['wmi' tag]), end % warped
+            if par.las(3), ser.addVolume('root', addprefixtofilenames(vol.path,'rmi'),['rmi' tag]), end % dartel
             
             % GM
-            if par.GM (3), ser.addVolume('root', addprefixtofilenames(vol.path,'^p1'),[  'p1' tag]), end % native_space(p*)
-            if par.GM (4), ser.addVolume('root', addprefixtofilenames(vol.path,'^rp1'),[ 'rp1' tag]), end % native_space_dartel_import(rp*)
-            if par.GM (1), ser.addVolume('root', addprefixtofilenames(vol.path,'^wp1'),[ 'wp1' tag]), end % warped_space_Unmodulated(wp*)
-            if par.GM (2), ser.addVolume('root', addprefixtofilenames(vol.path,'^mwp1'),['mwp1' tag]), end % warped_space_modulated(mwp*)
+            if par.GM (3), ser.addVolume('root', addprefixtofilenames(vol.path,'p1'),['p1' tag]), end % native_space(p*)
+            if par.GM (4), ser.addVolume('root', addprefixtofilenames(vol.path,'rp1'),['rp1' tag]), end % native_space_dartel_import(rp*)
+            if par.GM (1), ser.addVolume('root', addprefixtofilenames(vol.path,'wp1'),['wp1' tag]), end % warped_space_Unmodulated(wp*)
+            if par.GM (2), ser.addVolume('root', addprefixtofilenames(vol.path,'mwp1'),['mwp1' tag]), end % warped_space_modulated(mwp*)
             
             % WM
-            if par.WM (3), ser.addVolume('root', addprefixtofilenames(vol.path,'^p2'),[  'p2' tag]), end % native_space(p*)
-            if par.WM (4), ser.addVolume('root', addprefixtofilenames(vol.path,'^rp2'),[ 'rp2' tag]), end % native_space_dartel_import(rp*)
-            if par.WM (1), ser.addVolume('root', addprefixtofilenames(vol.path,'^wp2'),[ 'wp2' tag]), end % warped_space_Unmodulated(wp*)
-            if par.WM (2), ser.addVolume('root', addprefixtofilenames(vol.path,'^mwp2'),['mwp2' tag]), end % warped_space_modulated(mwp*)
+            if par.WM (3), ser.addVolume('root', addprefixtofilenames(vol.path,'p2'),['p2' tag]), end % native_space(p*)
+            if par.WM (4), ser.addVolume('root', addprefixtofilenames(vol.path,'rp2'),['rp2' tag]), end % native_space_dartel_import(rp*)
+            if par.WM (1), ser.addVolume('root', addprefixtofilenames(vol.path,'wp2'),['wp2' tag]), end % warped_space_Unmodulated(wp*)
+            if par.WM (2), ser.addVolume('root', addprefixtofilenames(vol.path,'mwp2'),['mwp2' tag]), end % warped_space_modulated(mwp*)
             
             % CSF
-            if par.CSF(3), ser.addVolume('root', addprefixtofilenames(vol.path,'^p3'),[  'p3' tag]), end % native_space(p*)
-            if par.CSF(4), ser.addVolume('root', addprefixtofilenames(vol.path,'^rp3'),[ 'rp3' tag]), end % native_space_dartel_import(rp*)
-            if par.CSF(1), ser.addVolume('root', addprefixtofilenames(vol.path,'^wp3'),[ 'wp3' tag]), end % warped_space_Unmodulated(wp*)
-            if par.CSF(2), ser.addVolume('root', addprefixtofilenames(vol.path,'^mwp3'),['mwp3' tag]), end % warped_space_modulated(mwp*)
+            if par.CSF(3), ser.addVolume('root', addprefixtofilenames(vol.path,'p3'),['p3' tag]), end % native_space(p*)
+            if par.CSF(4), ser.addVolume('root', addprefixtofilenames(vol.path,'rp3'),['rp3' tag]), end % native_space_dartel_import(rp*)
+            if par.CSF(1), ser.addVolume('root', addprefixtofilenames(vol.path,'wp3'),['wp3' tag]), end % warped_space_Unmodulated(wp*)
+            if par.CSF(2), ser.addVolume('root', addprefixtofilenames(vol.path,'mwp3'),['mwp3' tag]), end % warped_space_modulated(mwp*)
             
             % TPMC
             if par.TPMC(3) % native_space(p*)
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^p4'),[ 'p4' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^p5'),[ 'p5' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^p6'),[ 'p6' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'p4'),[ 'p4' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'p5'),[ 'p5' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'p6'),[ 'p6' tag])
             end
             if par.TPMC(4) % native_space_dartel_import(rp*)
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^rp4'),[ 'rp4' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^rp5'),[ 'rp5' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^rp6'),[ 'rp6' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'rp4'),[ 'rp4' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'rp5'),[ 'rp5' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'rp6'),[ 'rp6' tag])
             end
             if par.TPMC(1) % warped_space_Unmodulated(wp*)
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^wp4'),[ 'wp4' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^wp5'),[ 'wp5' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^wp6'),[ 'wp6' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'wp4'),[ 'wp4' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'wp5'),[ 'wp5' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'wp6'),[ 'wp6' tag])
             end
             if par.TPMC(2) % warped_space_modulated(mwp*)
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^mwp4'),[ 'mwp4' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^mwp5'),[ 'mwp5' tag])
-                ser.addVolume('root', addprefixtofilenames(vol.path,'^mwp6'),[ 'mwp6' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'mwp4'),[ 'mwp4' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'mwp5'),[ 'mwp5' tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,'mwp6'),[ 'mwp6' tag])
             end
             
             % label
-            if par.label(1), ser.addVolume('root', addprefixtofilenames(vol.path,'^p0'),[ 'p0' tag]), end % native
-            if par.label(2), ser.addVolume('root', addprefixtofilenames(vol.path,'^wp0'),['wp0' tag]), end % warped
-            if par.label(3), ser.addVolume('root', addprefixtofilenames(vol.path,'^rp0'),['rp0' tag]), end % dartel
+            if par.label(1), ser.addVolume('root', addprefixtofilenames(vol.path,'p0'),[ 'p0' tag]), end % native
+            if par.label(2), ser.addVolume('root', addprefixtofilenames(vol.path,'wp0'),['wp0' tag]), end % warped
+            if par.label(3), ser.addVolume('root', addprefixtofilenames(vol.path,'rp0'),['rp0' tag]), end % dartel
             
             % Jacobian
-            if par.jacobian, ser.addVolume('root', addprefixtofilenames(vol.path,'^wj_'),['wj_' tag]), end
+            if par.jacobian, ser.addVolume('root', addprefixtofilenames(vol.path,'wj_'),['wj_' tag]), end
             
             % Warp field
-            if par.warp(1), ser.addVolume('root', addprefixtofilenames(vol.path,'^y_'),[ 'y_' tag]), end % Forward
-            if par.warp(2), ser.addVolume('root', addprefixtofilenames(vol.path,'^iy_'),['iy_' tag]), end % Inverse
+            if par.warp(1), ser.addVolume('root', addprefixtofilenames(vol.path,'y_'),[ 'y_' tag]), end % Forward
+            if par.warp(2), ser.addVolume('root', addprefixtofilenames(vol.path,'iy_'),['iy_' tag]), end % Inverse
             
         end
         
