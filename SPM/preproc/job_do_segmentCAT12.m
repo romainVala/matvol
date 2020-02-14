@@ -348,7 +348,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             if par.WM(1), ser.addVolume([ '^wp2' tag ext],[ 'wp2' tag],1), end
             switch par.WM(2)
                 case 0 % pass
-                case 1, er.addVolume(['^mwp2'  tag ext],['mwp2'  tag],1)
+                case 1, ser.addVolume(['^mwp2'  tag ext],['mwp2'  tag],1)
                 case 2, ser.addVolume(['^m0wp2' tag ext],['m0wp2' tag],1)
             end
             
