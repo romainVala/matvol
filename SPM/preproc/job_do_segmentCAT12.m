@@ -224,9 +224,9 @@ for nbsuj = 1:length(img)
     jobs{nbsuj}.spm.tools.cat.estwrite.output.CSF.dartel = par.CSF(4);
     
     % TPMC
-    jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.native = par.TPMC(1);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.warped = par.TPMC(1);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.mod    = par.TPMC(2);
-    jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.warped = par.TPMC(3);
+    jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.native = par.TPMC(3);
     jobs{nbsuj}.spm.tools.cat.estwrite.output.TPMC.dartel = par.TPMC(4);
     
     %----------------------------------------------------------------------
