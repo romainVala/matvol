@@ -16,6 +16,8 @@ defpar.rp       = 0;
 defpar.rp_regex = '^rp.*txt';
 defpar.mask_thr = 0.8;
 defpar.cvi      = 'AR(1)'; % 'AR(1)' / 'FAST' / 'none'
+defpar.user_regressor = {};
+defpar.file_regressor = {};
 
 defpar.jobname  = 'spm_glm';
 defpar.walltime = '04:00:00';
@@ -75,16 +77,12 @@ for subj = 1:nrSubject
             
         end
         
-        %     if iscell(dirFonc{1})
         subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg);
         unzip_volume(subjectRuns);
         subjectRuns = get_subdir_regex_files(dirFonc{subj},par.file_reg,struct('verbose',0));
         if par.rp
             fileRP = get_subdir_regex_files(dirFonc{subj},par.rp_regex);
         end
-        %     else
-        %         subjectRuns = dirFonc;
-        %     end
         
         % When onsets are inside the .mat file
         if ~ isstruct(onsets{1})
@@ -109,13 +107,20 @@ for subj = 1:nrSubject
                 jobs{subj}.spm.stats.fmri_spec.sess(run).multi = fonset(run);
             end
             
-            if par.rp
+            if par.rp && isempty(par.file_regressor)
                 jobs{subj}.spm.stats.fmri_spec.sess(run).multi_reg = fileRP(run);
+            elseif ~par.rp && ~isempty(par.file_regressor)
+                jobs{subj}.spm.stats.fmri_spec.sess(run).multi_reg = par.file_regressor{subj}(run);
+            elseif par.rp && ~isempty(par.file_regressor)
+                jobs{subj}.spm.stats.fmri_spec.sess(run).multi_reg = [par.file_regressor{subj}(run) ; fileRP(run)];
             else
                 jobs{subj}.spm.stats.fmri_spec.sess(run).multi_reg = {''};
             end
             
             jobs{subj}.spm.stats.fmri_spec.sess(run).regress = struct('name', {}, 'val', {});
+            if ~isempty(par.user_regressor)
+                jobs{subj}.spm.stats.fmri_spec.sess(run).regress = par.user_regressor{subj}{run};
+            end
             jobs{subj}.spm.stats.fmri_spec.sess(run).hpf = 128;
             
         end % run
