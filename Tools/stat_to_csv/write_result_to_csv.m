@@ -49,13 +49,21 @@ for npool = 1:length(conc)
                 else
                     val = aa{nbs};
                 end
-                fprintf(fid,'%s,',val);
+                if strcmp(val,'NaN') | isnan(val)
+                    fprintf(fid,',');
+                else
+                    fprintf(fid,'%s,',val);
+                end
             elseif isstruct(aa)
             elseif isempty(aa)
                 fprintf(fid,',');
             else
                 if isnumeric(aa)
-                    fprintf(fid,'%f,',aa(nbs));
+                    if isnan(aa(nbs))
+                        fprintf(fid,',');
+                    else
+                        fprintf(fid,'%f,',aa(nbs));
+                    end
                 else
                     fprintf(fid,'%s,',aa);
                 end                   

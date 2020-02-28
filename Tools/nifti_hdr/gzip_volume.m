@@ -3,6 +3,7 @@ function fo = gzip_volume(f,par)
 if ~exist('par','var'),par ='';end
 defpar.sge=0;
 defpar.jobname='zip';
+defpar.skip_if_not_exist = 1;
 
 par = complet_struct(par,defpar);
 
@@ -21,7 +22,11 @@ for i=1:length(f)
     cmd{i} = sprintf('gzip -f %s',f{i});
 
     fo{i} = [f{i} '.gz'];
-    
+    if par.skip_if_not_exist
+        if ~exist(f{i},'file')
+            ind_to_remove(end+1)=i;
+        end
+    end
   else
     fo{i} = f{i};
     ind_to_remove(end+1)=i;

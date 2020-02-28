@@ -35,7 +35,7 @@ end
 defpar.cat12 = 0 ; % if non 0 it will perform the cat12 longitudinal registration
 defpar.auto_add_obj = 1;
 
-defpar.run     = 0;
+defpar.run     = 1;
 defpar.display = 0;
 defpar.redo    = 0;
 defpar.sge     = 0;

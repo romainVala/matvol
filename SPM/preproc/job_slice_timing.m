@@ -22,8 +22,8 @@ end
 obj = 0;
 if isa(fin,'volume')
     obj = 1;
-    fin_obj  = fin;
-    fin = fin_obj.toJob(1);
+    volumeArray  = fin;
+    fin = volumeArray.toJob(1);
 end
 
 
@@ -53,18 +53,13 @@ defpar.redo    = 0;
 
 par = complet_struct(par,defpar);
 
-% Security
-if par.sge
-    par.auto_add_obj = 0;
-end
-
 
 %% SPM:Temporal:SliceTiming
 
 % obj : unzip if necessary
 if obj
-    fin_obj.unzip(par);
-    fin = fin_obj.toJob(1);
+    volumeArray.unzip(par);
+    fin = volumeArray.toJob(1);
 end
 
 if iscell( fin{1} )
@@ -190,17 +185,30 @@ end
 
 %% Add outputs objects
 
-if obj && par.auto_add_obj && par.run
+if obj && par.auto_add_obj && (par.run || par.sge)
     
-    serieArray = [fin_obj.serie];
-    tag        =  {fin_obj.tag};
-    ext        = '.*.nii$';
+    for iVol = 1 : length(volumeArray)
+        
+        % Shortcut
+        vol = volumeArray(iVol);
+        ser = vol.serie;
+        tag = vol.tag;
+        
+        if par.run
+            
+            ext  = '.*.nii';
+            
+            ser.addVolume(['^' par.prefix tag ext],[par.prefix tag],1)
+            
+        elseif par.sge
+            
+            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix),[par.prefix tag])
+            
+        end
+        
+    end % iVol
     
-    for vol = 1 : numel(fin_obj)
-        serieArray(vol).addVolume(['^' par.prefix tag{vol} ext],[par.prefix tag{vol}])
-    end
-    
-end
+end % obj
 
 
 end % function

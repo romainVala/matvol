@@ -6,10 +6,17 @@ end
 defpar.pct  = 0; % Parallel Computing Toolbox
 defpar.redo = 0;
 defpar.out_format = 'cell'; %'cell or table'
+defpar.sort = 1;
+defpar.delimiter=',';
+defpar.comment = '';
+defpar.quotes = '';
+defpar.options = 'empty2NaN';
 
 par = complet_struct(par,defpar);
 
 pct = par.pct;
+
+if ischar(fin), fin = {fin}; end
 
 %% Main loop
 
@@ -56,50 +63,63 @@ end% function
 function [cout] = parse_csv(fin,par)
 
 
+%[r h] = readtext(fin,',','','','empty2NaN');
+[r h] = readtext(fin,par.delimiter,par.comment,par.quotes,par.options);
 
-[r h] = readtext(fin);
+is_vector = 0; % ie multiple subjects
 
-% not working if some val are string
-%    val = cell2mat(r(h.numberMask))';
-%    hdr = r(h.stringMask)';
-% so assume first line is hdr second is val and first collum only is a string
-%if ischar(r{2,1})
-is_vector = 0;
-
-if size(r,1)> size(r,2) %collumn
-    %val = cell2mat(r(2:end,2))' ;
-    val = (r(2:end,2))' ;
-    hdr = r(2:end,1)';
-    if ~ischar(hdr{1}) %may be multiple values
-        hdr = r(1,1:end)';
-        val = r(2:end,1:end)';
-        is_vector=1;
-    end        
-else %line
-    %val = cell2mat(r(2,2:end))' ;
-    val = (r(2,1:end))' ;
-    hdr = r(1,1:end)';
+%decide if multiple values 
+if min(size(r))>2
+    is_vector=1;
 end
-%else
-%    val = cell2mat(r(h.numberMask))';
-%    hdr = r(h.stringMask)';
-%end
+   
+if is_vector % assume suj in line value in columns
+    hdr = r(1,1:end)';
+    val = r(2:end,1:end)';
+
+else
+    if size(r,1)> size(r,2) %collumn
+        %val = cell2mat(r(2:end,2))' ;
+        val = (r(2:end,2))' ;
+        hdr = r(2:end,1)';
+    else %line
+        %val = cell2mat(r(2,2:end))' ;
+        val = (r(2,1:end))' ;
+        hdr = r(1,1:end)';
+    end
+    
+end
+
 
 hdr = nettoie_dir(hdr);
+if par.sort
+    [hdr indh] = sort(hdr);
+else
+    indh=1:length(hdr);
+end
 
-[hdr indh] = sort(hdr);
 if is_vector
     val = val(indh,:);
 else
     val = val(indh);
 end
 
-
-cout.suj = get_parent_path(fin);
+%cout.suj_file = fin;
 
 for k=1:length(hdr)
     if is_vector
-        cout.(hdr{k}) = cell2mat(val(k,:)); %val{k,:}; %vals(:,k);
+        test_ind=1;
+        if isempty(val{k,1}), for kk=1:length(val(k,:)); if ~isempty(val{k,kk}); test_ind=kk;end;end;end
+        
+        if ischar(val{k,test_ind})
+            cout.(hdr{k}) = val(k,:);
+        else
+            the_val = val(k,:);
+            ii= find(cellfun(@(x) isempty(x), the_val)); 
+            for kk=1:length(ii), the_val{ii(kk)} = NaN;end
+                
+            cout.(hdr{k}) = cell2mat(the_val); %val{k,:}; %vals(:,k);
+        end
     else
         cout.(hdr{k}) = val{k}; %vals(:,k);
     end

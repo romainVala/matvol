@@ -427,6 +427,10 @@ function val = parse_value(varargin)
                 pos = pos + 4;
                 return;
             end
+        case 'N' %rrr add NaN
+            val = NaN;
+            pos = pos + 3;
+            return
     end
     error_pos('Value expected at position %d');
 %%-------------------------------------------------------------------------

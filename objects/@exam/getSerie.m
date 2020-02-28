@@ -6,6 +6,7 @@ function [ serieArray ] = getSerie( examArray, regex, type, verbose )
 %           anat_serie  = examArray.getSerie('S03_t1_mpr','name');
 %           anat_serie  = examArray.getSerie({'run1','run2'}    ); <== works with cellstr
 
+
 %% Check inputs
 
 if nargin < 2
@@ -30,7 +31,7 @@ regex = cellstr2regex(regex);
 
 %% Type managment
 
-obj = serie; % create empty object, to make some tests
+obj = serie(); % create empty object, to make some tests
 assert( isprop(obj,type) && ischar(obj.(type) ), 'type must refer to a char property of the the @serie object' )
 
 

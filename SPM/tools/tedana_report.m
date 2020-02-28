@@ -16,6 +16,7 @@ if nargin < 1
     error('[%s]: not enough input arguments - study_path is required',mfilename)
 end
 
+defpar.subdir     = '';
 defpar.verbose    = 1;           % 0 : print nothing, 1 : print 2 first and 2 last messages, 2 : print all
 
 par = complet_struct(par,defpar);
@@ -28,7 +29,7 @@ study_path = fullfile([study_path filesep],filesep); % make sure the last char i
 meinfo_file = fullfile(study_path, 'meinfo.mat');
 
 if ~exist(meinfo_file, 'file')
-    warning( 'No "meinfo.mat" file found in %s \n', par.subdir, study_path )
+    warning( 'No "meinfo.mat" file found in %s \n', study_path )
     if nargout > 0
         varargout{1} = [];
     end
@@ -62,7 +63,7 @@ for subj = 1 : length(comptable_file)
         
         % Component table -------------------------------------------------
         
-        comptable_file{subj}{run} = fullfile( get_parent_path( meinfo.path{subj}{run}{1} ), 'comp_table_ica.txt' );
+        comptable_file{subj}{run} = fullfile( get_parent_path( meinfo.path{subj}{run}{1} ), par.subdir, 'comp_table_ica.txt' );
         
         count = count + 1;
         
@@ -96,7 +97,7 @@ for subj = 1 : length(comptable_file)
         
         % Log file --------------------------------------------------------
         
-        log_file{subj}{run} = fullfile( get_parent_path( meinfo.path{subj}{run}{1} ), 'tedana.log' );
+        log_file{subj}{run} = fullfile( get_parent_path( meinfo.path{subj}{run}{1} ), par.subdir, 'tedana.log' );
         
         if exist( log_file{subj}{run}, 'file')
             

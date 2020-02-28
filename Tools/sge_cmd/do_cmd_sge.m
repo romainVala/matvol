@@ -1,4 +1,4 @@
-function [job f_do_qsubar] = do_cmd_sge(job,par,jobappend,qsubappend)
+function [job do_qsub_file] = do_cmd_sge(job,par,jobappend)
 % DO_CMD_SGE
 
 
@@ -6,7 +6,6 @@ function [job f_do_qsubar] = do_cmd_sge(job,par,jobappend,qsubappend)
 
 if ~exist('par'       ,'var'), par        =''; end
 if ~exist('jobappend' ,'var'), jobappend  =''; end
-if ~exist('qsubappend','var'), qsubappend =''; end
 
 def_par.jobname          = 'jobname';
 def_par.software         = '';%fsl freesurfer
@@ -29,10 +28,11 @@ def_par.parallel      = 0;
 def_par.parallel_pack = 1;
 def_par.random = 0;
 def_par.split_cmd = 0;
-
+def_par.workflow_qsub = 1; % if set not set to 0 it will create a do_qsub_workflow.sh in the parent dir,
+                           %and append all qsub command with slurm dependence
+def_par.parent_jobdir = ''; %If empty it will simply be the parent jobdir
 def_par.verbose       = 1;
 def_par.fake          = 0;
-
 def_par.pct           = 0;
 
 
@@ -53,8 +53,8 @@ if isfield(par,'nb_thread')
     par.sge_nb_coeur = par.nb_thread;
 end
 
-if isstr(par.mem)
-    par.mem = str2num(par.mem);
+if isnumeric(par.mem)
+    par.mem = num2str(par.mem);
 end
 
 
@@ -79,6 +79,8 @@ end
 
 if par.sge == -1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     return
+elseif isempty(job)
+    return
 end
 
 if par.job_pack>1
@@ -98,6 +100,7 @@ if par.job_pack>1
 end
 
 %make jobdir in a subdir with jobname
+if isempty(par.parent_jobdir), par.parent_jobdir = par.jobdir; end
 par.jobdir = fullfile(par.jobdir,par.jobname);
 
 if par.sge==0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,36 +124,26 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         mkdir(job_dir);
     end
     
+    fprintf('\n writing %d job for the slurm and local execution in %s \n',length(job),job_dir);
     
-    % unix('source /usr/cenir/sge/default/common/settings.sh ')
+    if par.workflow_qsub
+        do_workflow_qsub_file = fullfile(par.parent_jobdir,'do_workflow_qsub.sh');
+        if exist(do_workflow_qsub_file,'file'), first_time_workflow = 0; else, first_time_workflow = 1; end
+        fid_do_workflow_qsub_file = fopen(do_workflow_qsub_file,'a');
+    end            
     
-    fprintf('\n writing %d job for the grid engin in %s \n',length(job),job_dir);
-    
-    f_do_qsub=fullfile(job_dir,'do_qsub_sge.sh');
-    if ~isempty(qsubappend)
-        f_do_qsubar=qsubappend;
-        fqsubar=fopen(f_do_qsubar,'a');
-        fprintf(fqsubar,'\n');
-        
-    else
-        f_do_qsubar=fullfile(job_dir,'do_qsub.sh');
-        fqsubar=fopen(f_do_qsubar,'w');
-    end
-    
-    
-    f_do_array=fullfile(job_dir,'do_job_array.sh');
-    f_do_loc=fullfile(job_dir,'do_all_local.sh');
+    do_qsub_file=fullfile(job_dir,'do_qsub.sh');
+    fid_do_qsub_file=fopen(do_qsub_file,'w');
+    do_array_file=fullfile(job_dir,'do_job_array.sh');
+    do_local_file=fullfile(job_dir,'do_all_local.sh');
     
     if par.job_append
-        fqsub=fopen(f_do_qsub,'a');
-        floc=fopen(f_do_loc,'a');
+        fid_do_local_file=fopen(do_local_file,'a');
     else
-        fqsub=fopen(f_do_qsub,'w');
-        floc=fopen(f_do_loc,'w');
+        fid_do_local_file=fopen(do_local_file,'w');
     end
     
     if par.job_append
-        %dd=dir([job_dir '/*' par.jobname '*']);
         dd=get_subdir_regex_files(job_dir,['^j.*' par.jobname],struct('verbose',0));if ~isempty(dd),dd = cellstr(char(dd));end
         kinit = length(dd);
     else
@@ -161,6 +154,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         job = job(randperm(length(job)));
     end
     
+    %% writing each single job file and populate the do_all_local.sh file
     for k=1:length(job)
         
         cmdd = job{k};
@@ -171,8 +165,7 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         end
         
         jname = sprintf('j%.2d_%s',k+kinit,par.jobname);
-        fpn = fullfile(job_dir,jname);
-        fpnlog = sprintf('%s.log',fpn);        fpnlogerror = sprintf('%s.err',fpn);
+        job_file = fullfile(job_dir,jname);
         
         if par.parallel>0
             pack_para = par.parallel * par.parallel_pack;
@@ -181,91 +174,91 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             para_jname = sprintf('p%.2d_%s',k_para,par.jobname);
             fpara = fullfile(job_dir,para_jname);
             ffpara = fopen(fpara,'a+');
-            fprintf(ffpara,'bash %s > log_%s 2> err_%s \n',fpn,jname,jname);
+            fprintf(ffpara,'bash %s > log_%s 2> err_%s \n',job_file,jname,jname);
             fclose(ffpara);
         end
         
-        ff=fopen(fpn,'w');
+        fid_job_file=fopen(job_file,'w');
         switch par.sge_queu
             case {'server_ondule','server_irm'}
-                fprintf(ff,'#$ -S /bin/bash \n');
+                fprintf(fid_job_file,'#$ -S /bin/bash \n');
             otherwise
-                fprintf(ff,'#!/bin/bash\n');
+                fprintf(fid_job_file,'#!/bin/bash\n');
         end
-        %        if par.parallel
         
-        fprintf(ff,'\n\necho started on $HOSTNAME \n date\n\n');
-        fprintf(ff,'tic="$(date +%%s)"\n\n');
-        fprintf(ff,cmdd);
-        fprintf(ff,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
-        %        else
-        %            fprintf(ff,cmdd);
-        %        end
+        fprintf(fid_job_file,'\n\necho started on $HOSTNAME \n date\n\n');
+        fprintf(fid_job_file,'tic="$(date +%%s)"\n\n');
+        fprintf(fid_job_file,cmdd);
+        fprintf(fid_job_file,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
         
-        fclose(ff);
+        fclose(fid_job_file);
         
-        switch par.sge_queu
-            case {'server_ondule','server_irm'}
-                
-                cmd{k} = sprintf('qsub -V -q %s %s -o %s -e %s %s',par.sge_queu,par.qsubappend,fpnlog,fpnlogerror,fpn);
-                fprintf(fqsub,'%s\n sleep %d \n',cmd{k},par.submit_sleep);
-        end
-        fprintf(floc,'bash %s > log_%s 2> err_%s \n',fpn,jname,jname);
+        fprintf(fid_do_local_file,'bash %s > log_%s 2> err_%s \n',job_file,jname,jname);
         
     end
     
-    fclose(fqsub);fclose(floc);
+    fclose(fid_do_local_file);
     
-    
-    fprintf(fqsubar,'export jobid=`sbatch -p %s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
+    %% writing the do_qsub.sh : slurm submission file
+    content_do_qsub_file = sprintf('export jobid=`sbatch -p %s -N 1 --cpus-per-task=%d --job-name=%s %s ',par.sge_queu,par.sge_nb_coeur,par.jobname,par.qsubappend);
     if ~isempty(par.walltime)
-        fprintf(fqsubar,' -t %s',par.walltime);
+        content_do_qsub_file = sprintf('%s -t %s',content_do_qsub_file,par.walltime);
     end
-    if ~isempty(par.mem),        fprintf(fqsubar,' --mem=%d',par.mem);    end
-    if ~isempty(qsubappend),        fprintf(fqsubar,'  --depend=afterok:$jobid ');    end
+    if ~isempty(par.mem),    content_do_qsub_file = sprintf('%s --mem=%s',content_do_qsub_file,par.mem);           end
     
-    fprintf(fqsubar,' %s ',par.sbatch_args);
+   content_do_qsub_file = sprintf('%s %s ',content_do_qsub_file,par.sbatch_args);
+    
     if par.parallel
         nb_job=nbpara;
     else
         nb_job=k+kinit;
     end
     
-    if ~isempty(qsubappend)
-        fprintf(fqsubar,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,f_do_array);
-    else
-        fprintf(fqsubar,' -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d %s |awk ''{print $4}''` \necho submitted job $jobid\n',job_dir,job_dir,nb_job,f_do_array);
+    content_do_qsub_file = sprintf('%s -o %s/log-%%A_%%a  -e %s/err-%%A_%%a  --array=1-%d ',content_do_qsub_file, job_dir,job_dir, nb_job);
+
+    if par.workflow_qsub
+        if ~ first_time_workflow
+            content_do_qsub_file_workflow = sprintf('%s  --depend=afterok:$jobid ',content_do_qsub_file);
+        else
+           content_do_qsub_file_workflow =  content_do_qsub_file;
+        end
+    end            
+         
+    content_do_qsub_file = sprintf('%s %s |awk ''{print $4}''` \necho submitted job $jobid\n', content_do_qsub_file, do_array_file);
+                                
+    content_do_qsub_file_workflow = sprintf('%s %s |awk ''{print $4}''` \necho submitted job $jobid\n',...
+                                    content_do_qsub_file_workflow, do_array_file);
+
+                                
+    fprintf(fid_do_qsub_file,'%s',content_do_qsub_file);
+    if par.workflow_qsub
+        fprintf(fid_do_workflow_qsub_file,'%s',content_do_qsub_file_workflow);
     end
-    fclose(fqsubar);
+
+    fclose(fid_do_qsub_file);
     
-    fffa = fopen(f_do_array,'w');
-    fprintf(fffa,'#!/bin/bash\n');
-    %	fprintf(fffa,'\n\necho started on $HOSTNAME \n date\n\n');
-    %    fprintf(fffa,'tic="$(date +%%s)"\n\n');
+    %% writting the generic do_job_array.sh file
+    fid_do_array_file = fopen(do_array_file,'w');
+    fprintf(fid_do_array_file,'#!/bin/bash\n');
     
     if par.parallel
-        fprintf(fffa,' cmd=$( printf "p%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n parallel -j %d < %s/$cmd\n\n',par.jobname,par.parallel,job_dir);
+        fprintf(fid_do_array_file,' cmd=$( printf "p%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n parallel -j %d < %s/$cmd\n\n',par.jobname,par.parallel,job_dir);
     else
-        fprintf(fffa,' cmd=$( printf "j%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n bash %s/$cmd\n\n',par.jobname,job_dir);
+        fprintf(fid_do_array_file,' cmd=$( printf "j%%02d_%s" ${SLURM_ARRAY_TASK_ID})\n bash %s/$cmd\n\n',par.jobname,job_dir);
     end
     
-    %    fprintf(fffa,'\n\ntoc="$(date +%%s)";\nsec="$(expr $toc - $tic)";\nmin="$(expr $sec / 60)";\nheu="$(expr $sec / 3600)";\necho Elapsed time: $min min $heu H\n');
+    fprintf(fid_do_array_file,'\n echo seff -d ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID} >> do_seff\n');
+    fclose(fid_do_array_file);
     
-    % seff does not work because the job is still runing
-    %fprintf(fffa,'\n seff -d ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID}\n');
-    fprintf(fffa,'\n echo seff -d ${SLURM_ARRAY_JOB_ID}_${SLURM_ARRAY_TASK_ID} >> do_seff\n');
-    fclose(fffa);
-    
-    cmdout=sprintf('bash %s',f_do_qsub);
+    cmdout=sprintf('bash %s',do_qsub_file);
     
     if strfind(par.jobname,'dti_bedpostx')
         fprintf('\n warning RUN without qsub because bedpostx calls qsub\n');
-        cmdout=sprintf('bash %s',f_do_loc);
+        cmdout=sprintf('bash %s',do_local_file);
         delete(f_do_qsub)
     end
 end % if par.sge
 
-%--depend=afterok:343599
 
 end % function : do_cmd_sge
 

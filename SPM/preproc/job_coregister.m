@@ -35,8 +35,8 @@ if isa(src,'volume')
     ref_obj   = ref;
     ref       = ref_obj.toJob(0);
     if size(other)>0
-        other_obj = other;
-        other     = other_obj.toJob(1);
+        oth_obj = other;
+        other     = oth_obj.toJob(1);
     else
         other = volume.empty;
     end
@@ -50,25 +50,26 @@ end
 
 %% defpar
 
+% SPM:Spatial:Coregister
 defpar.type   = 'estimate';
 defpar.interp = 1;
 defpar.prefix = 'r';
-defpar.sge    = 0;
-defpar.redo   = 0;
-defpar.run    = 0;
-defpar.display= 0;
+defpar.sep    = [4 2];
+defpar.wrap    = [0 0 0];
 
+% matvol classics
+defpar.sge          = 0;
+defpar.redo         = 0;
+defpar.run          = 1;
+defpar.display      = 0;
 defpar.auto_add_obj = 1;
 
+% cluster
 defpar.jobname  = 'spm_coreg';
 defpar.walltime = '00:30:00';
 
-par = complet_struct(par,defpar);
 
-% Security
-if par.sge
-    par.auto_add_obj = 0;
-end
+par = complet_struct(par,defpar);
 
 
 %% SPM:Spatial:Coregister
@@ -89,12 +90,12 @@ for nbsuj = 1:length(ref)
                 if iscell(other{nbsuj})
                     jobs{nbsuj}.spm.spatial.coreg.estimate.other = other{nbsuj};
                 else
-                jobs{nbsuj}.spm.spatial.coreg.estimate.other = cellstr(other{nbsuj});
+                    jobs{nbsuj}.spm.spatial.coreg.estimate.other = cellstr(other{nbsuj});
                 end
             end
             
             jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.cost_fun = 'nmi';
-            jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.sep = [4 2];
+            jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.sep = par.sep;
             jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
             jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.fwhm = [7 7];
             
@@ -107,12 +108,12 @@ for nbsuj = 1:length(ref)
             end
             
             jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.cost_fun = 'nmi';
-            jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.sep = [4 2];
+            jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.sep = par.sep;
             jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
             jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.fwhm = [7 7];
             
             jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.interp = par.interp;
-            jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.wrap = [0 0 0];
+            jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.wrap = par.wrap ;
             jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.mask = 0;
             jobs{nbsuj}.spm.spatial.coreg.estwrite.roptions.prefix = par.prefix;
             
@@ -182,35 +183,79 @@ end
 
 %% Add outputs objects
 
-if obj && par.auto_add_obj
+if obj && par.auto_add_obj && (par.run || par.sge)
     
-    serieArray = [src_obj.serie];
-    tag        =  src_obj(1).tag;
-    ext        = '.*.nii$';
-    
-    switch par.type
-        case 'estimate'
-            % pass, no volume created
-        case 'estimate_and_write'
-            serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
-        case 'write'
-            serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
-    end
-    
-    if ~isempty(other)
+    for iVol = 1 : length(src_obj)
         
-        switch par.type
-            case 'estimate'
-                % pass, no volume created
-            case 'estimate_and_write'
-                serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
-            case 'write'
-                serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
+        % Shortcut
+        src_vol = src_obj(iVol);
+        src_ser = src_vol.serie;
+        src_tag = src_vol.tag;
+        
+        if ~isempty(other)
+            
+            % Shortcut
+            oth_vol = oth_obj(iVol);
+            oth_ser = oth_vol.serie;
+            oth_tag = oth_vol.tag;
+            
         end
         
-    end
+        if par.run
+            
+            ext  = '.*.nii';
+            
+            switch par.type
+                case 'estimate'
+                    % pass, no volume created
+                case 'estimate_and_write'
+                    src_ser.addVolume(['^' par.prefix src_tag ext],[par.prefix src_tag],1)
+                case 'write'
+                    src_ser.addVolume(['^' par.prefix src_tag ext],[par.prefix src_tag],1)
+            end
+            
+            if ~isempty(other)
+                
+                switch par.type
+                    case 'estimate'
+                        % pass, no volume created
+                    case 'estimate_and_write'
+                        oth_ser.addVolume(['^' par.prefix oth_tag ext],[par.prefix oth_tag],1)
+                    case 'write'
+                        oth_ser.addVolume(['^' par.prefix oth_tag ext],[par.prefix oth_tag],1)
+                end
+                
+            end
+            
+        elseif par.sge
+            
+            switch par.type
+                case 'estimate'
+                    % pass, no volume created
+                case 'estimate_and_write'
+                     src_ser.addVolume('root', addprefixtofilenames(src_vol.path,par.prefix),[par.prefix src_tag])
+                case 'write'
+                     src_ser.addVolume('root', addprefixtofilenames(src_vol.path,par.prefix),[par.prefix src_tag])
+            end
+            
+            if ~isempty(other)
+                
+                switch par.type
+                    case 'estimate'
+                        % pass, no volume created
+                    case 'estimate_and_write'
+                         oth_ser.addVolume('root', addprefixtofilenames(oth_vol.path,par.prefix),[par.prefix oth_tag])
+                    case 'write'
+                         oth_ser.addVolume('root', addprefixtofilenames(oth_vol.path,par.prefix),[par.prefix oth_tag])
+                end
+                
+            end
+            
+        end
+        
+    end % iVol
     
-end
+end % obj
 
 
 end % function

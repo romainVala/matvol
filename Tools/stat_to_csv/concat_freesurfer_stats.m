@@ -10,7 +10,10 @@ for k=1:length(fin)
         nbline=nbline+1;
     end
     
-    colname = a(nbline-1,2:end); colname{1} ='';
+    colname = a(nbline-1,2:end); colname(1) ='';
+    ivol =find(cellfun(@(x) ~isempty(findstr(x,'Volume')),colname));
+    imean =find(cellfun(@(x) ~isempty(findstr(x,'Mean')),colname));
+    istd =find(cellfun(@(x) ~isempty(findstr(x,'Std')),colname));
     
     for nbl = nbline:size(a,1)
         
@@ -21,6 +24,13 @@ for k=1:length(fin)
         end   % first number start with a space
     
     end
+        
+    %ii=find(cellfun(@(x) ischar(x) , a(nbline:end,[ivol imean istd]) ) )
+    %for std there may be string -nan value replace by NaN
+    aa = a(nbline:end,7);
+    bb = b.stringMask(nbline:end,7);
+    aa(bb) = repmat({NaN},size(find(bb)));
+    a(nbline:end,7) = aa;
     
     if k==1
         segname = a(nbline:end,5);
@@ -28,9 +38,9 @@ for k=1:length(fin)
         
         [segid1 indsort] = sort (segid1);
         
-        segvol  = cell2mat (a(nbline:end,4));
-        segmean = cell2mat (a(nbline:end,6));
-        segstd  = cell2mat (a(nbline:end,7));
+        segvol  = cell2mat (a(nbline:end,ivol));
+        segmean = cell2mat (a(nbline:end,imean));
+        segstd  = cell2mat (a(nbline:end,istd));
         
         segvols = segvol(indsort);    segmeans = segmean(indsort);    segstds = segstd(indsort);
         
@@ -40,9 +50,9 @@ for k=1:length(fin)
         [segid indsort] = sort (segid);
         if any(segid-segid1), error('different segmentations ids ... TODO '); end
 
-        segvol  = cell2mat (a(nbline:end,4));
-        segmean = cell2mat (a(nbline:end,6));
-        segstd  = cell2mat (a(nbline:end,7));
+        segvol  = cell2mat (a(nbline:end,ivol));
+        segmean = cell2mat (a(nbline:end,imean));
+        segstd  = cell2mat (a(nbline:end,istd));
         
         segvols  = [segvols , segvol(indsort)];    
         segmeans = [segmeans, segmean(indsort)];    
@@ -54,7 +64,7 @@ end
 
 %remove empty labels
 ii=sum(segvols>0,2);
-ii = find(ii==0)
+ii = find(ii==0);
 segid(ii,:)=[];  segname(ii) = []; segvols(ii,:)=[]; segmeans(ii,:) = []; segstds(ii,:)=[];
 
 %construct big table 

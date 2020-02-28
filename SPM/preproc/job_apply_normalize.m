@@ -24,8 +24,8 @@ end
 obj = 0;
 if isa(img,'volume')
     obj = 1;
-    in_obj = img;
-    img    = in_obj.toJob(1);
+    volumeArray = img;
+    img    = volumeArray.toJob(1);
     for i = 1 : length(img)
         img{i} = char(img{i}(~cellfun(@isempty,img{i}))); % remove empty lines
     end
@@ -50,20 +50,17 @@ defpar.interp   = 4;
 defpar.wrap     = [0 0 0];
 defpar.prefix   = 'w';
 
-defpar.redo    = 0;
-defpar.sge     = 0;
-defpar.run     = 0;
-defpar.display = 0;
-defpar.jobname = 'spm_apply_norm';
-
+% matvol classics
+defpar.redo         = 0;
+defpar.sge          = 0;
+defpar.run          = 1;
+defpar.display      = 0;
 defpar.auto_add_obj = 1;
 
-par = complet_struct(par,defpar);
+% cluster
+defpar.jobname = 'spm_apply_norm';
 
-% Security
-if par.sge
-    par.auto_add_obj = 0;
-end
+par = complet_struct(par,defpar);
 
 
 %% SPM:Spatial:Normalise:Write
@@ -113,15 +110,30 @@ end
 
 %% Add outputs objects
 
-if obj && par.auto_add_obj
+if obj && par.auto_add_obj && (par.run || par.sge)
     
-    serieArray = [in_obj.serie];
-    tag        =  in_obj(1).tag;
-    ext        = '.*.nii$';
+    for iVol = 1 : length(volumeArray)
+        
+        % Shortcut
+        vol = volumeArray(iVol);
+        ser = vol.serie;
+        tag = vol.tag;
+        
+        if par.run
+            
+            ext  = '.*.nii';
+            
+            ser.addVolume(['^' par.prefix tag ext],[par.prefix tag],1)
+            
+        elseif par.sge
+            
+            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix),[par.prefix tag])
+            
+        end
+        
+    end % iVol
     
-    serieArray.addVolume(['^' par.prefix tag ext],[par.prefix tag])
-    
-end
+end % obj
 
 
 end % function

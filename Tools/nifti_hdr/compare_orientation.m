@@ -18,7 +18,7 @@ for k=1:length(v1)
         diff_vols(end+1) = v1(k);
     end
     
-    if any(any((abs(vol2.mat - vol1.mat))>0.001))
+    if any(any((abs(vol2.mat - vol1.mat))>0.05))
         fprintf('orientation differ %s compare to %s \n',v1{k},v2{k});
         res_boolean(k)=0;
         diff_vols(end+1) = v1(k);
