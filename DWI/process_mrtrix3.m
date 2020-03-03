@@ -25,6 +25,7 @@ defpar.nthreads = 1;
 defpar.lmax = '';
 defpar.response_type = 'dhollander'; % tournier
 defpar.tempdir = '';
+defpar.bias_correct = 1;
 
 par = complet_struct(par,defpar);
 
@@ -115,7 +116,7 @@ for nbsuj = 1:length(V4D)
         
         
         cmd = sprintf('cd %s\n',dti_dir)
-        
+                
         % Creation du masque if needed
         if isempty(par.fsl_mask)
             
@@ -123,6 +124,14 @@ for nbsuj = 1:length(V4D)
                 cmd,par.nthreads, par.grad_file, the4D,par.mask);
         end
         
+        if par.bias_correct
+            
+            cmd = sprintf('%s\n dwibiascorrect -ants %s bc_%s  -mask %s  -grad grad.b ', ...
+                cmd,the4D,the4D,par.mask);
+            
+            the4D = addprefixtofilenames(the4D,'bc_')
+        end
+
         %tensor and fa
         cmd = sprintf('%s\n dwi2tensor %s dt.nii -mask %s -grad %s -nthreads %d ',cmd,the4D,par.mask,par.grad_file, par.nthreads);
         cmd = sprintf('%s\n tensor2metric dt.nii -fa fa.nii.gz -vector facolor.nii.gz -nthreads %d ',cmd, par.nthreads);
