@@ -110,7 +110,7 @@ for subj=1:nrSubject
         
         % Is the orientation of all runs coherent ?
         if run>1
-            if compare_orientation(fmean(1),runList(run)) == 0
+            if ~sge && compare_orientation(fmean(1),runList(run)) == 0
                 warning('[%s]: WARNING reslicing mean image %s \n', mfilename, mean_files_cellstr{1});
                 [ resliced_mean, job_subj ]= do_fsl_reslice( mean_files_cellstr(1),fmean(1),'', job_subj);
                 mean_files_cellstr(1) = resliced_mean;
