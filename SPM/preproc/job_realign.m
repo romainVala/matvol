@@ -150,7 +150,7 @@ end
 
 if obj && par.auto_add_obj && (par.run || par.sge)
     
-    for iVol = 1 : length(volumeArray)
+    for iVol = 1 : numel(volumeArray)
         
         % Shortcut
         vol = volumeArray(iVol);
