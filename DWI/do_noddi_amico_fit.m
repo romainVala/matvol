@@ -29,6 +29,13 @@ if isempty(par.sujname)
     fprintf('Please check : taking sujname for first and last subject\n%s\n%s\n,',par.sujname{1},par.sujname{end})
 end
 
+bvecf = get_file_from_same_dir(fdti,par.bvec,1);
+bvalf = get_file_from_same_dir(fdti,par.bval,1);
+fm  = get_file_from_same_dir(fdti,par.mask,1);
+
+
+dti = get_parent_path(fdti);
+
 
 if par.sge
     
@@ -66,13 +73,6 @@ if par.sge
     return
 end
 
-
-bvecf = get_file_from_same_dir(fdti,par.bvec,1);
-bvalf = get_file_from_same_dir(fdti,par.bval,1);
-fm  = get_file_from_same_dir(fdti,par.mask,1);
-
-
-dti = get_parent_path(fdti);
 
 cmd={};
 for ns=1:length(dti)
