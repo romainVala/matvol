@@ -31,6 +31,19 @@ end
 
 
 if par.sge
+    
+    %on matlab cluster I get the error java executable not found. Unable to run command
+    cmd={};
+    for ns=1:length(dti)
+        if ~exist(fullfile(dti{ns},'camino.sheme'),'file')
+            cmd{ns} = sprintf('source camino_path; cd %s; fsl2scheme -bvecfile %s -bvalfile %s -bscale 1 > camino.sheme',...
+                dti{ns},bvecf{ns},bvalf{ns})
+        end
+    end
+    do_cmd_sge(cmd,struct('sge',0))
+
+
+    
     cmd = '';
     fn = fieldnames(par);
     %write the parameters
