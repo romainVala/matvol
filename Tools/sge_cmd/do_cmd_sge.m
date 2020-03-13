@@ -225,13 +225,13 @@ else % par.sge ~= 0 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     end            
          
     content_do_qsub_file = sprintf('%s %s |awk ''{print $4}''` \necho submitted job $jobid\n', content_do_qsub_file, do_array_file);
-                                
-    content_do_qsub_file_workflow = sprintf('%s %s |awk ''{print $4}''` \necho submitted job $jobid\n',...
-                                    content_do_qsub_file_workflow, do_array_file);
-
-                                
+    
     fprintf(fid_do_qsub_file,'%s',content_do_qsub_file);
+    
     if par.workflow_qsub
+        content_do_qsub_file_workflow = sprintf('%s %s |awk ''{print $4}''` \necho submitted job $jobid\n',...
+            content_do_qsub_file_workflow, do_array_file);
+        
         fprintf(fid_do_workflow_qsub_file,'%s',content_do_qsub_file_workflow);
     end
 
