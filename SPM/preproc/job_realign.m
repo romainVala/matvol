@@ -154,6 +154,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         
         % Shortcut
         vol = volumeArray(iVol);
+        if isempty(vol.path), continue, end
         ser = vol.serie;
         tag = vol.tag;
         
