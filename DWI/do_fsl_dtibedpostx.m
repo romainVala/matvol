@@ -9,8 +9,8 @@ defpar.mask = 'nodif_brain_mask';
 defpar.source=''
 defpar.sge=0;
 defpar.connectome=0;
-defpar.model = 1;
-defpar.nb_fibres = 2;
+defpar.model = 2;
+defpar.nb_fibres = 3;
 
 
 %
