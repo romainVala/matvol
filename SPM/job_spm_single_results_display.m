@@ -34,7 +34,7 @@ function job_spm_single_results_display (fsub, Coordlist, par)
     defpar.run = 0;
     defpar.display = 0; % could be 1 in this case (to test)
     defpar.redo = 0;
-    defpar.anat_dir_reg = 'S03_t1mpr_S256_0_8iso_p2';
+    defpar.anat_dir_reg = 'S\d{2}_t1mpr_S256_0_8iso_p2$';
     defpar.anat_file_reg = '^wms_S\d{2}.*p2.nii';
     defpar.subdir = 'model_meica';
     defpar.output_dir = 'figures_meica';
