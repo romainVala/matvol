@@ -13,6 +13,8 @@ def_par.sujname = ''; %if empty it will be guess from fdti (get_parent_path 3)
 def_par.common_protocol = 0;  %set to one if you are sure there are the exact same bval between the subject 
 % it save time but first subject must run first if 1 all amico kernel will be in AMICO_data_path
 % if 0 this will be recompute for each subject and store in AMICO subject dir
+def_par.mem = '8000'
+def_par.walltime = '24'
 
 par = complet_struct(par,def_par);
 
