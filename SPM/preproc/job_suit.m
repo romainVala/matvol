@@ -49,7 +49,7 @@ skip = [];
 
 for subj = 1 : length(img)
     jobs{subj}.spm.tools.suit.isolate_seg.source = { cellstr(char(img(subj))) } ;
-    jobs{subj}.spm.tools.suit.isolate_seg.bb = [-76 76 -108 -6 -70 11];
+    jobs{subj}.spm.tools.suit.isolate_seg.bb =  [-76 76; -108 -6; -70 11]; 
     jobs{subj}.spm.tools.suit.isolate_seg.maskp = 0.2;
     jobs{subj}.spm.tools.suit.isolate_seg.keeptempfiles = 0;
 end
