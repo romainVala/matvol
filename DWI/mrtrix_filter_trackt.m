@@ -12,8 +12,11 @@ defpar.jobname = 'mrtrix_filter_track';
 defpar.sge=1;
 defpar.tck_weights='';
 defpar.ref='';
+defpar.nthreads = 1;
 
 par = complet_struct(par,defpar);
+
+par.sge_nb_coeur = par.nthreads ;
 
 
 if isempty(par.roi_include) & isempty(par.roi_exclude)
@@ -69,8 +72,8 @@ for nbsuj = 1:length(track_in)
     
     if par.separate_include
         for ki = 1:length(roi_include)
-            cmd = sprintf('cd %s;tckedit -force %s %s.tck %s %s',...
-                dir_mrtrix,track_in{nbsuj},out_names{ki},str_include{ki},str_exclude);
+            cmd = sprintf('cd %s;tckedit -nthreads %d -force %s %s.tck %s %s',...
+                par.nthreads, dir_mrtrix,track_in{nbsuj},out_names{ki},str_include{ki},str_exclude);
         
             if ~isempty(    par.tck_weights)
                 cmd = sprintf('%s -tck_weights_in %s -tck_weights_out %s_weights.txt',...
@@ -85,8 +88,8 @@ for nbsuj = 1:length(track_in)
     else
         if ~isempty(par.track_name),            out_name = par.track_name;        end
         
-        cmd = sprintf('cd %s;\ntckedit -force %s %s.tck %s %s',...
-            dir_mrtrix,track_in{nbsuj},out_name,str_include,str_exclude);
+        cmd = sprintf('cd %s;\ntckedit -nthreads %d -force %s %s.tck %s %s',...
+            par.nthreads, dir_mrtrix,track_in{nbsuj},out_name,str_include,str_exclude);
         if ~isempty(    par.tck_weights)
             cmd = sprintf('%s -tck_weights_in %s -tck_weights_out %s_weights.txt',...
                 cmd,par.tck_weights{nbsuj},out_name);
