@@ -18,6 +18,12 @@ def_par.walltime = '24'
 
 par = complet_struct(par,def_par);
 
+%TODO, module load if runing on the cluster
+%  module load libxi/1.7.6-oxc5xry
+%  module load libxcursor/1.1.14-gc2n5bl
+%  module load libxcomposite/0.4.4-374lzng
+%  module load libxtst/1.2.2-zsdzu74
+%  module load libxrandr/1.5.0-h3w7kww
 
 if isempty(par.AMICO_data_path) & par.common_protocol
     sujdir = get_parent_path(fdti(1),3);
