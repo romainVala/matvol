@@ -73,7 +73,7 @@ for nbsuj = 1:length(track_in)
     if par.separate_include
         for ki = 1:length(roi_include)
             cmd = sprintf('cd %s;tckedit -nthreads %d -force %s %s.tck %s %s',...
-                par.nthreads, dir_mrtrix,track_in{nbsuj},out_names{ki},str_include{ki},str_exclude);
+                dir_mrtrix, par.nthreads, track_in{nbsuj},out_names{ki},str_include{ki},str_exclude);
         
             if ~isempty(    par.tck_weights)
                 cmd = sprintf('%s -tck_weights_in %s -tck_weights_out %s_weights.txt',...
