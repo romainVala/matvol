@@ -89,7 +89,7 @@ for nbsuj = 1:length(track_in)
         if ~isempty(par.track_name),            out_name = par.track_name;        end
         
         cmd = sprintf('cd %s;\ntckedit -nthreads %d -force %s %s.tck %s %s',...
-            par.nthreads, dir_mrtrix,track_in{nbsuj},out_name,str_include,str_exclude);
+             dir_mrtrix, par.nthreads, track_in{nbsuj},out_name,str_include,str_exclude);
         if ~isempty(    par.tck_weights)
             cmd = sprintf('%s -tck_weights_in %s -tck_weights_out %s_weights.txt',...
                 cmd,par.tck_weights{nbsuj},out_name);
