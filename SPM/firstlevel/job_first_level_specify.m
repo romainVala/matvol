@@ -14,10 +14,20 @@ end
 defpar.file_reg = '^s.*nii';
 defpar.rp       = 0;
 defpar.rp_regex = '^rp.*txt';
-defpar.mask_thr = 0.8;
+
+% Masking
+defpar.mask_thr = 0.8; % spm default option
+defpar.mask     =  {}; % cell(char) of the path for the mask of EACH model : N models means N paths
+
 defpar.cvi      = 'AR(1)'; % 'AR(1)' / 'FAST' / 'none'
-defpar.user_regressor = {};
-defpar.file_regressor = {};
+
+% Regressors
+%-----------
+% multilevel_cells(struct) for used defined regressors : they will NOT be convolved
+defpar.user_regressor = {}; 
+% multilevel_cells(char  ) for used defined regressors : they will NOT be convolved
+% The regressors in the file will be concatenated with rp_*.txt
+defpar.file_regressor = {}; 
 
 defpar.jobname  = 'spm_glm';
 defpar.walltime = '04:00:00';
@@ -135,7 +145,11 @@ for subj = 1:nrSubject
         jobs{subj}.spm.stats.fmri_spec.volt = 1;
         jobs{subj}.spm.stats.fmri_spec.global = 'None';
         jobs{subj}.spm.stats.fmri_spec.mthresh = par.mask_thr;
-        jobs{subj}.spm.stats.fmri_spec.mask = {''};
+        if isempty(par.mask)
+            jobs{subj}.spm.stats.fmri_spec.mask = {''};
+        else
+            jobs{subj}.spm.stats.fmri_spec.mask = par.mask(subj);
+        end
         jobs{subj}.spm.stats.fmri_spec.cvi = par.cvi;
         
     end % SPM.mat exists ?
