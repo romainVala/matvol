@@ -169,8 +169,9 @@ for kk=2:length(dti_files)
     aa=compare_orientation(dti_files(1),dti_files(kk));
     if aa==0
         fprintf('WARNING reslicing diffusion images %s image because DIFFERENT ORIENTATION \n',dti_files{kk});
-        parr.outfilename={tempname};parr.sge=-1;
+        parr.outfilename={tempname};parr.sge=-1; parr.abs=1;
         [bb, jobappend] = do_fsl_coreg_reslice(dti_files(kk),dti_files(1),parr,jobappend);
+        
         dti_files(kk)=bb;
     end
 end
