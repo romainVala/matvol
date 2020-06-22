@@ -1,7 +1,7 @@
 function unzip( volumeArray, par )
 % UNZIP unzip volumes, if needed.
 
-if ~exist('par','var'),par ='';end
+if ~exist('par','var'), par=''; end
 
 if ~isempty(volumeArray)
     unzip_volume(volumeArray.toJob, par);
