@@ -3,12 +3,13 @@ function out = unzip_volume(in,par)
 % If the target file is not zipped (do not have .gz extension), skip it.
 
 
-%% Check input paramerters
+%% Check input parameters
 
 if ~exist('par','var'),par ='';end
 
 defpar.sge     = 0;
-defpar.jobname = 'zip';
+defpar.jobname = 'gunzip';
+defpar.keep    = 0;
 defpar.pct     = 0; % Parallel Computing Toolbox
 
 par = complet_struct(par,defpar);
@@ -16,6 +17,13 @@ par = complet_struct(par,defpar);
 
 % Ensure the inputs are cellstrings, to avoid dimensions problems
 in = cellstr(char(in));
+
+switch par.keep
+    case 0
+        keep = ' ';
+    case 1
+        keep = ' -k ';
+end
 
 
 %% Prepare unzip command
@@ -29,7 +37,7 @@ cmd = cell(size(in));
 for i=1:length(in)
     
     if ~isempty(in{i}) && strcmp(in{i}(end-1:end),'gz')
-        cmd{i} = sprintf('gunzip -f %s',in{i});
+        cmd{i} = sprintf('gunzip -f%s%s', keep, in{i});
         out{i,1} = in{i}(1:end-3); %#ok<*AGROW>
         
     else
