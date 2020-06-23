@@ -86,7 +86,7 @@ defpar.auto_add_obj = 1;
 % Cluster
 defpar.sge      = 0;               % for ICM cluster, run the jobs in paralle
 defpar.jobname  = 'job_tedana';
-defpar.walltime = '1:00:00';       % HH:MM:SS
+defpar.walltime = '01:00:00';       % HH:MM:SS
 defpar.mem      = '4G';            % ICA is very memory consuming
 defpar.sge_queu = 'normal,bigmem'; % use both
 
