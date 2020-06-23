@@ -1,5 +1,13 @@
-function [ job ] = job_tedana( meinfo, prefix, outdir, mask, par )
-%JOB_TEDANA
+function [ job ] = job_tedana_007( meinfo, prefix, outdir, mask, par )
+%JOB_TEDANA For TEDANA version 0.0.7
+%
+% CENIR environnement & ICM cluster : 
+% ---------------------------------
+%
+%  source python_path3.6
+%  source activate tedana_0.0.7
+%
+%
 %
 % Usual workflow is :
 % - job_sort_echos           : prepare the data by reordering the files according to their echo time, extracte slice onsets, ...
