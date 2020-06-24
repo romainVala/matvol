@@ -86,8 +86,9 @@ defpar.auto_add_obj = 1;
 % Cluster
 defpar.sge      = 0;               % for ICM cluster, run the jobs in paralle
 defpar.jobname  = 'job_tedana';
-defpar.walltime = '01:00:00';       % HH:MM:SS
-defpar.mem      = '4G';            % ICA is very memory consuming
+defpar.walltime = '12:00:00';      % HH:MM:SS
+defpar.mem      = '16G';           % ICA is very memory consuming
+defpar.sge_nb_coeur = 2;           % I dont't know why, but 2 CPU increase the "stability" of the job on the cluster
 defpar.sge_queu = 'normal,bigmem'; % use both
 
 par = complet_struct(par,defpar);
