@@ -260,17 +260,17 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         elseif par.sge % add the new volume in the object manually, because the file is not created yet
             
             if ~isempty(outdir) && ischar(outdir)
-                ser.addVolume( 'root', fullfile(ser.path,outdir,[   'ts_OC' ext '$']), [outdir    '_ts_OC'] );
-                ser.addVolume( 'root', fullfile(ser.path,outdir,['dn_ts_OC' ext '$']), [outdir '_dn_ts_OC'] );
-                ser.addVolume( 'root', fullfile(ser.path,outdir,[     's0v' ext '$']), [outdir      '_s0v'] );
-                ser.addVolume( 'root', fullfile(ser.path,outdir,[    't2sv' ext '$']), [outdir     '_t2sv'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,[   'ts_OC' ext]), [outdir    '_ts_OC'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,['dn_ts_OC' ext]), [outdir '_dn_ts_OC'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,[     's0v' ext]), [outdir      '_s0v'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,[    't2sv' ext]), [outdir     '_t2sv'] );
             elseif ~isempty(outdir) && iscellstr(outdir)
                 error('not coded yet')
             else
-                ser.addVolume( 'root', fullfile(ser.path,[   'ts_OC' ext '$']),    'ts_OC' );
-                ser.addVolume( 'root', fullfile(ser.path,['dn_ts_OC' ext '$']), 'dn_ts_OC' );
-                ser.addVolume( 'root', fullfile(ser.path,[     's0v' ext '$']),      's0v' );
-                ser.addVolume( 'root', fullfile(ser.path,[    't2sv' ext '$']),     't2sv' );
+                ser.addVolume( 'root', fullfile(ser.path,[   'ts_OC' ext]),    'ts_OC' );
+                ser.addVolume( 'root', fullfile(ser.path,['dn_ts_OC' ext]), 'dn_ts_OC' );
+                ser.addVolume( 'root', fullfile(ser.path,[     's0v' ext]),      's0v' );
+                ser.addVolume( 'root', fullfile(ser.path,[    't2sv' ext]),     't2sv' );
             end
             
         end % run / sge
