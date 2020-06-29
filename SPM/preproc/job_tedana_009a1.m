@@ -1,5 +1,13 @@
-function [ job ] = job_tedana( meinfo, prefix, outdir, mask, par )
-%JOB_TEDANA
+function [ job ] = job_tedana_009a1( meinfo, prefix, outdir, mask, par )
+%JOB_TEDANA for tedana version 0.0.9a1
+%
+% CENIR environnement & ICM cluster : 
+% ---------------------------------
+%
+%  source python_path3.6
+%  source activate tedana_0.0.9a1
+%
+%
 %
 % Usual workflow is :
 % - job_sort_echos           : prepare the data by reordering the files according to their echo time, extracte slice onsets, ...
@@ -61,10 +69,9 @@ end
 %% defpar
 
 % tedana.py main arguments
-defpar.tedpca     = ''; % mle, kundu, kundu-stabilize (tedana default = mle)
+defpar.tedpca     = ''; % (tedana default = 'mdl) --- kundu, kundu-stabilize, mdl, aic, kic 
 defpar.maxrestart = []; % (tedana default = 10)
 defpar.maxit      = []; % (tedana default = 500)
-defpar.png        = 1;  % tedana will make some PNG files of the components Beta map, for quality checks
 
 % tedana.py other arguments
 defpar.cmd_arg = ''; % Allows you to use all addition arguments not scripted in this job_tedana.m file
@@ -79,7 +86,7 @@ defpar.auto_add_obj = 1;
 % Cluster
 defpar.sge      = 0;               % for ICM cluster, run the jobs in paralle
 defpar.jobname  = 'job_tedana';
-defpar.walltime = '24:00:00';      % HH:MM:SS
+defpar.walltime = '12:00:00';      % HH:MM:SS
 defpar.mem      = '16G';           % ICA is very memory consuming
 defpar.sge_nb_coeur = 2;           % I dont't know why, but 2 CPU increase the "stability" of the job on the cluster
 defpar.sge_queu = 'normal,bigmem'; % use both
@@ -157,13 +164,8 @@ for iJob = 1 : nJobs
     end
     
     % Already done processing ?
-    fnii   = fullfile(outdir_path,'dn_ts_OC.nii'   ); % version<=0.0.7 => write only .nii    files
     fniigz = fullfile(outdir_path,'dn_ts_OC.nii.gz'); % version>=0.0.8 => write only .nii.gz files
-    if     ~par.redo  &&  exist(fnii  ,'file') == 2
-        fprintf('[%s]: skiping %d/%d @ %s because %s exist \n', mfilename, iJob, nJobs, outdir_path, 'dn_ts_OC.nii'   );
-        jobchar = '';
-        skip = [skip iJob];
-    elseif ~par.redo  &&  exist(fniigz,'file') == 2
+    if ~par.redo  &&  exist(fniigz,'file') == 2
         fprintf('[%s]: skiping %d/%d @ %s because %s exist \n', mfilename, iJob, nJobs, outdir_path, 'dn_ts_OC.nii.gz');
         jobchar = '';
         skip = [skip iJob];
@@ -192,7 +194,6 @@ for iJob = 1 : nJobs
     cmd =                              sprintf('%s --out-dir %s    \\\\\n', cmd, outdir_path   );
     
     % Options
-    if par.png                 , cmd = sprintf('%s --png           \\\\\n', cmd                ); end
     if ~isempty(par.maxrestart), cmd = sprintf('%s --maxrestart %d \\\\\n', cmd, par.maxrestart); end
     if ~isempty(par.maxit     ), cmd = sprintf('%s --maxit %d      \\\\\n', cmd, par.maxit     ); end
     if ~isempty(mask_path     ), cmd = sprintf('%s --mask %s       \\\\\n', cmd, mask_path     ); end
@@ -238,38 +239,38 @@ if obj && par.auto_add_obj && (par.run || par.sge)
     for iSer = 1 : length(series)
         
         ser = series(iSer);
-        ech = echos(iSer,1);
+        ext = '.nii.gz';
         
         if par.run % use the normal method
             
             if ~isempty(outdir) && ischar(outdir)
-                ser.addVolume(outdir, [   '^ts_OC' ech.ext], [outdir    '_ts_OC'], 1 );
-                ser.addVolume(outdir, ['^dn_ts_OC' ech.ext], [outdir '_dn_ts_OC'], 1 );
-                ser.addVolume(outdir, [     '^s0v' ech.ext], [outdir      '_s0v'], 1 );
-                ser.addVolume(outdir, [    '^t2sv' ech.ext], [outdir     '_t2sv'], 1 );
+                ser.addVolume(outdir, [   '^ts_OC' ext '$'], [outdir    '_ts_OC'], 1 );
+                ser.addVolume(outdir, ['^dn_ts_OC' ext '$'], [outdir '_dn_ts_OC'], 1 );
+                ser.addVolume(outdir, [     '^s0v' ext '$'], [outdir      '_s0v'], 1 );
+                ser.addVolume(outdir, [    '^t2sv' ext '$'], [outdir     '_t2sv'], 1 );
             elseif ~isempty(outdir) && iscellstr(outdir)
                 error('not coded yet')
             else
-                ser.addVolume( [   '^ts_OC' ech.ext],    'ts_OC', 1 );
-                ser.addVolume( ['^dn_ts_OC' ech.ext], 'dn_ts_OC', 1 );
-                ser.addVolume( [     '^s0v' ech.ext],      's0v', 1 );
-                ser.addVolume( [    '^t2sv' ech.ext],     't2sv', 1 );
+                ser.addVolume( [   '^ts_OC' ext '$'],    'ts_OC', 1 );
+                ser.addVolume( ['^dn_ts_OC' ext '$'], 'dn_ts_OC', 1 );
+                ser.addVolume( [     '^s0v' ext '$'],      's0v', 1 );
+                ser.addVolume( [    '^t2sv' ext '$'],     't2sv', 1 );
             end
             
         elseif par.sge % add the new volume in the object manually, because the file is not created yet
             
             if ~isempty(outdir) && ischar(outdir)
-                ser.addVolume( 'root', fullfile(ser.path,outdir,[   'ts_OC' ech.ext]), [outdir    '_ts_OC'] );
-                ser.addVolume( 'root', fullfile(ser.path,outdir,['dn_ts_OC' ech.ext]), [outdir '_dn_ts_OC'] );
-                ser.addVolume( 'root', fullfile(ser.path,outdir,[     's0v' ech.ext]), [outdir      '_s0v'] );
-                ser.addVolume( 'root', fullfile(ser.path,outdir,[    't2sv' ech.ext]), [outdir     '_t2sv'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,[   'ts_OC' ext]), [outdir    '_ts_OC'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,['dn_ts_OC' ext]), [outdir '_dn_ts_OC'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,[     's0v' ext]), [outdir      '_s0v'] );
+                ser.addVolume( 'root', fullfile(ser.path,outdir,[    't2sv' ext]), [outdir     '_t2sv'] );
             elseif ~isempty(outdir) && iscellstr(outdir)
                 error('not coded yet')
             else
-                ser.addVolume( 'root', fullfile(ser.path,[   'ts_OC' ech.ext]),    'ts_OC' );
-                ser.addVolume( 'root', fullfile(ser.path,['dn_ts_OC' ech.ext]), 'dn_ts_OC' );
-                ser.addVolume( 'root', fullfile(ser.path,[     's0v' ech.ext]),      's0v' );
-                ser.addVolume( 'root', fullfile(ser.path,[    't2sv' ech.ext]),     't2sv' );
+                ser.addVolume( 'root', fullfile(ser.path,[   'ts_OC' ext]),    'ts_OC' );
+                ser.addVolume( 'root', fullfile(ser.path,['dn_ts_OC' ext]), 'dn_ts_OC' );
+                ser.addVolume( 'root', fullfile(ser.path,[     's0v' ext]),      's0v' );
+                ser.addVolume( 'root', fullfile(ser.path,[    't2sv' ext]),     't2sv' );
             end
             
         end % run / sge
