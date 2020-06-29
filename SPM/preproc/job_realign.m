@@ -44,6 +44,7 @@ defpar.run          = 1;
 defpar.display      = 0;
 defpar.redo         = 0;
 defpar.auto_add_obj = 1;
+defpar.mask = 1;
 
 par = complet_struct(par,defpar);
 
@@ -135,7 +136,7 @@ for subj = 1:nrSubject
     jobs{subj}.spm.spatial.realign.estwrite.roptions.which = par.which_write; %all + mean images
     jobs{subj}.spm.spatial.realign.estwrite.roptions.interp = 4;
     jobs{subj}.spm.spatial.realign.estwrite.roptions.wrap = [0 0 0];
-    jobs{subj}.spm.spatial.realign.estwrite.roptions.mask = 1;
+    jobs{subj}.spm.spatial.realign.estwrite.roptions.mask = par.mask;
     jobs{subj}.spm.spatial.realign.estwrite.roptions.prefix = 'r';
     
 end
