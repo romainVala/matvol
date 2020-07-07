@@ -149,7 +149,7 @@ end
 %% Special routine for coregistration with matvol
 % Write a matvol_coregistration_info.txt file to remember it has been done, and allow sckipping the next tine
 
-if par.run % not for display
+if (par.run || par.sge) % not for display
     
     for j = 1:length(jobs)
         
