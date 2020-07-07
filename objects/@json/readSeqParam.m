@@ -32,10 +32,10 @@ for j = 1 : numel(jsonArray)
     
 end
 
-[pp ff ex] = fileparts(path{1});
-if strcmp(ex,'.json')
+[~, ~, ext] = fileparts(path{1}(1,:));
+if strcmp(ext,'.json')
     data = get_sequence_param_from_json(path,par);
-elseif strcmp(ex,'.csv')
+elseif strcmp(ext,'.csv')
     data = read_res(path,par);
 end
 
@@ -45,10 +45,13 @@ for j = 1 : numel(jsonArray)
         if isempty(path{j}) % Use seq param already parsd, or empty struct
             data{j} = jsonArray(j).serie.sequence;
         else
-            jsonArray(j).serie.sequence = data{j}; % save freshly parsed seq param
+            if iscell(data)
+                jsonArray(j).serie.sequence = data{j}; % save freshly parsed seq param
+            elseif isstruct(data)
+                jsonArray(j).serie.sequence = data; % save freshly parsed seq param
+            else
+                error('???')
+            end
         end
     end
-end
-
-
 end % function
