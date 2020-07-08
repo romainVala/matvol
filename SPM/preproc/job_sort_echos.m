@@ -133,32 +133,69 @@ for iSubj = 1 : nSubj
         job_subj = [job_subj sprintf('### Run %d/%d @ %s \n', iRun, nRun, run_path) ]; %#ok<*AGROW>
         
         % Fetch json dics
-        jsons = get_subdir_regex_files(run_path,'^dic.*json$',struct('verbose',0));
-        assert(~isempty(jsons), 'no ^dic.*json file detected in : %s', run_path)
+        jsons = get_subdir_regex_files(run_path,'json$',struct('verbose',0));
+        assert(~isempty(jsons), 'no .json file detected in : %s', run_path)
         
-        % Fetch all TE and reorder them
-        res = get_string_from_json(cellstr(jsons{1}),{'EchoTime', 'RepetitionTime', 'CsaImage.MosaicRefAcqTimes'},{'num', 'num', 'vect'});
-        allTE = zeros(size(jsons{1},1),1);
-        for e = 1 : size(jsons{1},1)
-            allTE(e) = res{e}{1};
-            if e == 1
-                TR = res{e}{2};
-                sliceonsets = res{e}{3};
+        jsons = cellstr(jsons{1});
+        
+        is_dcmstack = ~cellfun('isempty',regexp(jsons, 'dic_param_.*json$'));
+        is_dcm2niix = ~cellfun('isempty',regexp(jsons,         'v_.*json$'));
+        
+        json_dcmstack = jsons(is_dcmstack);
+        json_dcm2niix = jsons(is_dcm2niix);
+        
+        if numel(json_dcmstack)>0 && numel(json_dcm2niix)==0
+            
+            % Fetch all TE and reorder them
+            res = get_string_from_json(json_dcmstack,{'EchoTime', 'RepetitionTime', 'CsaImage.MosaicRefAcqTimes'},{'num', 'num', 'vect'});
+            allTE = zeros(size(json_dcmstack));
+            for e = 1 : numel(json_dcmstack)
+                allTE(e) = res{e}{1};
+                if e == 1
+                    TR = res{e}{2};
+                    sliceonsets = res{e}{3};
+                end
             end
+            [sortedTE,order] = sort(allTE);
+            fprintf(['TEs are : '   repmat('%g ',[1,length(allTE)   ])        ], allTE)
+            fprintf(['sorted as : ' repmat('%g ',[1,length(sortedTE)]) 'ms \n'], sortedTE)
+            
+            % Fetch volume corrsponding to the echo
+            allEchos = cell(length(order),1);
+            for echo = 1 : length(order)
+                if order(echo) == 1
+                    allEchos(echo) = get_subdir_regex_files(run_path, ['^f\d+_' serie_name '.nii'], 1);
+                else
+                    allEchos(echo) = get_subdir_regex_files(run_path, ['^f\d+_' serie_name '_' sprintf('V%.3d',order(echo)) '.nii'], 1);
+                end
+            end % echo
+            
+        elseif numel(json_dcm2niix)>0 && numel(json_dcmstack)==0
+            
+            % Fetch all TE and reorder them
+            res   =  cell(size(json_dcm2niix));
+            allTE = zeros(size(json_dcm2niix));
+            for e = 1 : numel(json_dcm2niix)
+                % I cannot save in a strcutre because of conversion problem : the json files do not always have the same fields
+                res  {e} = spm_jsonread(json_dcm2niix{e});
+                allTE(e) = res{e}.EchoTime * 1000;
+            end
+            TR          = res{1}.RepetitionTime;
+            sliceonsets = res{1}.SliceTiming;
+            [sortedTE,order] = sort(allTE);
+            fprintf(['TEs are : '   repmat('%g ',[1,length(allTE)   ])        ],    allTE)
+            fprintf(['sorted as : ' repmat('%g ',[1,length(sortedTE)]) 'ms \n'], sortedTE)
+            
+            % Fetch volume corrsponding to the echo
+            allEchos = get_subdir_regex_files(run_path, '^v_.*nii', numel(allTE));
+            allEchos = cellstr(allEchos{1});
+            allEchos = allEchos(order);
+            
+        else
+            error('pb with the json files, please check the files and the code of this function')
         end
-        [sortedTE,order] = sort(allTE);
-        fprintf(['TEs are : '   repmat('%g ',[1,length(allTE)   ])        ], allTE)
-        fprintf(['sorted as : ' repmat('%g ',[1,length(sortedTE)]) 'ms \n'], sortedTE)
         
-        % Fetch volume corrsponding to the echo
-        allEchos = cell(length(order),1);
-        for echo = 1 : length(order)
-            if order(echo) == 1
-                allEchos(echo) = get_subdir_regex_files(run_path, ['^f\d+_' serie_name '.nii'], 1);
-            else
-                allEchos(echo) = get_subdir_regex_files(run_path, ['^f\d+_' serie_name '_' sprintf('V%.3d',order(echo)) '.nii'], 1);
-            end
-        end % echo
+        
         
         % Make symbolic link of the echo in the working directory
         E_src = cell(length(allEchos),1);
