@@ -178,10 +178,10 @@ for iSubj = 1 : nSubj
             for e = 1 : numel(json_dcm2niix)
                 % I cannot save in a strcutre because of conversion problem : the json files do not always have the same fields
                 res  {e} = spm_jsonread(json_dcm2niix{e});
-                allTE(e) = res{e}.EchoTime * 1000;
+                allTE(e) = res{e}.EchoTime       * 1000; % s -> ms
             end
-            TR          = res{1}.RepetitionTime;
-            sliceonsets = res{1}.SliceTiming;
+            TR           = res{1}.RepetitionTime * 1000; % s -> ms
+            sliceonsets  = res{1}.SliceTiming    * 1000; % s -> ms
             [sortedTE,order] = sort(allTE);
             fprintf(['TEs are : '   repmat('%g ',[1,length(allTE)   ])        ],    allTE)
             fprintf(['sorted as : ' repmat('%g ',[1,length(sortedTE)]) 'ms \n'], sortedTE)
