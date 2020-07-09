@@ -21,7 +21,7 @@ if nargin<3
     niftidir = get_parent_path(finii);
     
     try
-        fdic = get_subdir_regex_files(niftidir,'^dic.*json',1) ;
+        fdic = get_subdir_regex_files(niftidir,'(^dic.*json$)|(^stack_.*json$)',1) ;
         
     catch
         try %may be multiecho so take the volume 2 json
