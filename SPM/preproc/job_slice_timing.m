@@ -117,15 +117,35 @@ for subj=1:nSubj
         else
             json = get_subdir_regex_files( fin{subj}, par.use_JSON_regex, struct('verbose',0) );
         end
-        if isempty(json)
-            error('no JSON found with regex [ %s ] in dir : %s', par.use_JSON_regex, fin{subj})
+        assert( ~isempty(json) ,'no JSON found with regex [ %s ] in dir : %s', par.use_JSON_regex, fin{subj})
+        
+        jsons = cellstr(json{1});
+        
+        is_dcmstack = ~cellfun('isempty',regexp(jsons, 'dic_param_.*json$'));
+        is_dcm2niix = ~cellfun('isempty',regexp(jsons,         'v_.*json$'));
+        
+        json_dcmstack = jsons(is_dcmstack);
+        json_dcm2niix = jsons(is_dcm2niix);
+        
+        if     numel(json_dcmstack)==1 && numel(json_dcm2niix)==0
+            
+            res = get_string_from_json(json, {'CsaSeries.MrPhoenixProtocol.sSliceArray.lSize', 'RepetitionTime', 'CsaImage.MosaicRefAcqTimes'}, {'num', 'num', 'vect'});
+            res = res{1};
+            nrSlices    = res{1};
+            TR          = res{2}/1000; % millisecond -> second
+            sliceonsets = res{3};      % keep millisecond
+            
+        elseif numel(json_dcm2niix)==1 && numel(json_dcmstack)==0
+            
+            content = spm_jsonread( json_dcm2niix{1} );
+            
+            nrSlices    = length(content.SliceTiming);
+            TR          = content.RepetitionTime;    % keep second
+            sliceonsets = content.SliceTiming*1000;  % s -> ms
+            
         else
-            json = deblank(json{1}(1,:)); % only take the first one, we assume all volumes have the same TR, nrSlices, ...
+            error('pb with the json files, please check the files and the code of this function')
         end
-        res = get_string_from_json(json, {'CsaSeries.MrPhoenixProtocol.sSliceArray.lSize', 'RepetitionTime', 'CsaImage.MosaicRefAcqTimes'}, {'num', 'num', 'vect'});
-        nrSlices    = res{1};
-        TR          = res{2}/1000; % millisecond -> second
-        sliceonsets = res{3};      % keep millisecond
         
         assert( max(sliceonsets)/1000 <= TR , ' slice onset > TR ! pb with the JSON ? pb unit conversion ?' )
         
