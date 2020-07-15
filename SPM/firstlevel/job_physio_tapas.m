@@ -142,9 +142,9 @@ for subj = 1:nrSubject
         
         % from JSON extracted by matvol functions
         json = get_subdir_regex_files( dirFunc{subj}(run) , 'json$' , p );
-        json = char(json{1});
+        json = cellstr(json{1});
         res  = get_string_from_json(json, {'RepetitionTime'}, {'num'});
-        TR   = res{1}/1000; % ms -> s
+        TR   = res{1}{1}/1000; % ms -> s
         
         jobs{j}.spm.tools.physio.scan_timing.sqpar.Nslices = nrSlices;
         jobs{j}.spm.tools.physio.scan_timing.sqpar.NslicesPerBeat = [];
