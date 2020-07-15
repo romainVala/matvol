@@ -135,8 +135,8 @@ for subj = 1:nrSubject
         
         % from header extracted by SPM
         volumes = get_subdir_regex_files( dirFunc{subj}(run) , par.file_reg , p ); % Can be more than 1 volume in case of multi-echo.
-        volume  = volumes{1};                                                      % Only use the first volume. In case of ME, all volumes have the same 4D-matrix.
-        V       = spm_vol_nifti(char(volume));                                     % Read volume header
+        volume  = volumes{1}(1,:);                                           % Only use the first volume. In case of ME, all volumes have the same 4D-matrix.
+        V       = spm_vol_nifti(volume);                                     % Read volume header
         nrVolumes = V.private.dat.dim(4);
         nrSlices  = V.private.dat.dim(3);
         
