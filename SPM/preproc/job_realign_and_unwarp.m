@@ -123,8 +123,10 @@ for subj = 1:nrSubject
             fphase = gfile(fmdir{subj}{1},'^s.*nii',1);
             fmag   = gfile(fmdir{subj}{1},'^s.*nii',2);
             fmag = {deblank(fmag{1}(1,:))};
+            fphase = unzip_volume(fphase);
+            fmag = unzip_volume(fmag);
             fdisp = fphase;
-            fdisp = addprefixtofilenames(fdist,'vdm5_sc');
+            fdisp = addprefixtofilenames(fdisp,'vdm5_sc');
             
             jobs{2*subj}.spm.tools.fieldmap.calculatevdm.subj.data.presubphasemag.phase = fphase;
             jobs{2*subj}.spm.tools.fieldmap.calculatevdm.subj.data.presubphasemag.magnitude = fmag;
