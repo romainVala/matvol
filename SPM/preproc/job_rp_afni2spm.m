@@ -5,7 +5,7 @@ function job_rp_afni2spm(dfile, output_dir)
 % location (output_dir)
 
 % INPUTS :
-% dfile      = inputs  directory, must be cellstr
+% dfile      = inputs       file, must be cellstr
 % output_dir = outputs directory, must be cellstr
 
 N = length(dfile);
