@@ -120,7 +120,7 @@ for subj = 1:nrSubject
             else
                 allVolumes = currentRun;
             end
-            fphase = gfile(fmdir{subj}{1},'^s.*nii',1);
+            fphase = gfile(fmdir{subj}{2},'^s.*nii',1);
             fmag   = gfile(fmdir{subj}{1},'^s.*nii',2);
             fmag = {deblank(fmag{1}(1,:))};
             
