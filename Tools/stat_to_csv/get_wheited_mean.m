@@ -3,6 +3,7 @@ function [Y varargout] = get_wheited_mean(fa,fcon,par)
 if ~exist('par'),par ='';end
 
 defpar.seuil = 0;
+defpar.mask = '';
 
 par = complet_struct(par,defpar);
 
@@ -23,6 +24,11 @@ for i=1:length(fa)
     
     [FAimg,dimes,vox]=read_avw(fa{i});
     [Conimg,dimes,vox]=read_avw(fcon{i});
+    if par.mask
+        [MASKimg,dimes,vox]=read_avw(par.mask{i});
+        FAimg = FAimg(MASKimg>0);
+        Conimg = Conimg(MASKimg>0);
+    end
 
     %remove NaN
     FAimg(isnan(FAimg))=0;
