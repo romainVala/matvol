@@ -156,6 +156,10 @@ for subj = 1:nrSubject
             if ~isempty(par.fanat)
                 jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.anat = par.fanat{subj};
                 jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.matchanat = 1;
+            else
+                jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.anat = '';
+                jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.matchanat = 0;
+
             end
             
             %job realign
