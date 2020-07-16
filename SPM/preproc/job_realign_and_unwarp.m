@@ -97,12 +97,12 @@ for subj = 1:nrSubject
         
         [es, pdir, TE, totes] = get_EPI_param_from_json(currentRun);
         switch pdir
-            case '-y'
+            case {'-y'}
                 pdir = -1
-            case 'y'
+            case {'y'}
                 pdir = 1
             otherwise
-                    error('wrong phase encoding direction")
+                error('wrong phase encoding direction')
         end
         
         %echo time diff from field map magnetude
