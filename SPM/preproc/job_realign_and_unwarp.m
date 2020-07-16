@@ -187,21 +187,6 @@ for subj = 1:nrSubject
         
     end
     
-
-    
-    jobs{subj}.spm.spatial.realign.estwrite.eoptions.quality = 1; %#ok<*AGROW>
-    jobs{subj}.spm.spatial.realign.estwrite.eoptions.sep = 4;
-    jobs{subj}.spm.spatial.realign.estwrite.eoptions.fwhm = 5;
-    jobs{subj}.spm.spatial.realign.estwrite.eoptions.rtm = 1;
-    jobs{subj}.spm.spatial.realign.estwrite.eoptions.interp = 2;
-    jobs{subj}.spm.spatial.realign.estwrite.eoptions.wrap = [0 0 0];
-    jobs{subj}.spm.spatial.realign.estwrite.eoptions.weight = '';
-    jobs{subj}.spm.spatial.realign.estwrite.roptions.which = par.which_write; %all + mean images
-    jobs{subj}.spm.spatial.realign.estwrite.roptions.interp = 4;
-    jobs{subj}.spm.spatial.realign.estwrite.roptions.wrap = [0 0 0];
-    jobs{subj}.spm.spatial.realign.estwrite.roptions.mask = par.mask;
-    jobs{subj}.spm.spatial.realign.estwrite.roptions.prefix = 'r';
-    
 end
 
 
