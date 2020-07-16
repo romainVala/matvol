@@ -184,8 +184,6 @@ for subj = 1:nrSubject
             jobs{2*subj+1}.spm.spatial.realignunwarp.uwroptions.mask =  par.mask;
             jobs{2*subj+1}.spm.spatial.realignunwarp.uwroptions.prefix = 'u';
 
-
-            jobs{subj}.spm.spatial.realign.estwrite.data{run} = allVolumes;
             
         end
         
