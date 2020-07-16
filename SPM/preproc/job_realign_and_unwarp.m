@@ -101,8 +101,8 @@ for subj = 1:nrSubject
         json = gfile(fmdir{subj}{1},'json')
         json=cellstr(char(json))
         res = get_string_from_json(json, {'EchoTime'}, {'num'});
-        fm_TE(1) = min(res{1}{1}, res {1}{2});
-        fm_TE(2) = max(res{1}{1}, res {1}{2});
+        fm_TE(1) = min(res{1}{1}, res{2}{1});
+        fm_TE(2) = max(res{1}{1}, res{2}{1});
         
         
         %skip if last one exist
@@ -123,8 +123,10 @@ for subj = 1:nrSubject
             fphase = gfile(fmdir{subj}{1},'^s.*nii',1);
             fmag   = gfile(fmdir{subj}{1},'^s.*nii',2);
             fmag = {deblank(fmag{1}(1,:))};
+            
             fphase = unzip_volume(fphase);
             fmag = unzip_volume(fmag);
+            
             fdisp = fphase;
             fdisp = addprefixtofilenames(fdisp,'vdm5_sc');
             
