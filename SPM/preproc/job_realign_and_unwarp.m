@@ -128,8 +128,8 @@ for subj = 1:nrSubject
             else
                 allVolumes = currentRun;
             end
-            fphase = gfile(fmdir{subj}{2},'^s.*nii',1);
-            fmag   = gfile(fmdir{subj}{1},'^s.*nii',2);
+            fphase = gfile(fmdir{subj}{2},'^s_S.*nii',1);
+            fmag   = gfile(fmdir{subj}{1},'^s_S.*nii',2);
             fmag = {deblank(fmag{1}(1,:))};
             
             fphase = unzip_volume(fphase);
