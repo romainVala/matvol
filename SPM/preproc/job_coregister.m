@@ -51,11 +51,16 @@ end
 %% defpar
 
 % SPM:Spatial:Coregister
-defpar.type   = 'estimate';
-defpar.interp = 1;
-defpar.prefix = 'r';
-defpar.sep    = [4 2];
-defpar.wrap    = [0 0 0];
+defpar.type     = 'estimate';
+defpar.interp   = 1;
+defpar.prefix   = 'r';
+defpar.sep      = [4 2];
+defpar.wrap     = [0 0 0];
+defpar.cost_fun = 'nmi';
+%  mi =            Mutual Information
+% nmi = Normalised Mutual Information
+% ecc = Entropy Correlation Coefficient
+% ncc = Normalised Cross Correlation
 
 % matvol classics
 defpar.sge          = 0;
@@ -94,7 +99,7 @@ for nbsuj = 1:length(ref)
                 end
             end
             
-            jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.cost_fun = 'nmi';
+            jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.cost_fun = par.cost_fun;
             jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.sep = par.sep;
             jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
             jobs{nbsuj}.spm.spatial.coreg.estimate.eoptions.fwhm = [7 7];
@@ -107,7 +112,7 @@ for nbsuj = 1:length(ref)
                 jobs{nbsuj}.spm.spatial.coreg.estwrite.other = cellstr(other{nbsuj});
             end
             
-            jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.cost_fun = 'nmi';
+            jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.cost_fun = par.cost_fun;
             jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.sep = par.sep;
             jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.tol = [0.02 0.02 0.02 0.001 0.001 0.001 0.01 0.01 0.01 0.001 0.001 0.001];
             jobs{nbsuj}.spm.spatial.coreg.estwrite.eoptions.fwhm = [7 7];
@@ -149,7 +154,7 @@ end
 %% Special routine for coregistration with matvol
 % Write a matvol_coregistration_info.txt file to remember it has been done, and allow sckipping the next tine
 
-if par.run % not for display
+if (par.run || par.sge) % not for display
     
     for j = 1:length(jobs)
         

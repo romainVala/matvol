@@ -1,17 +1,28 @@
-function fo = write_multiple_mask(fi,label,outname,outdir,methode_type,output_vol)
+function fo = write_multiple_mask(fi,label,outname,outdir,par)
 
+if ~exist('par','var'),par ='';end
+
+defpar.methode_type = '3dcalc';
+defpar.output_vol   = '';
+defpar.sge = 0;
+defpar.jobname = 'roi_extract';
+
+par = complet_struct(par,defpar);
+
+methode_type = par.methode_type
 if ~exist('methode_type')
     %  methode_type='marsbar';%'image_calc';
-    methode_type='3dcalc';
+    '3dcalc';
 end
 
-if ~exist('output_vol')
-    output_vol='';
-else
-    if length(fi) ~= length(output_vol)
-        error('length of reference to reslice volume should be the same as the input volume')
-    end
-end
+output_vol = par.output_vol;
+% if ~exist('output_vol')
+%     output_vol='';
+% else
+%     if length(fi) ~= length(output_vol)
+%         error('length of reference to reslice volume should be the same as the input volume')
+%     end
+% end
 
 
 if ~iscell(fi)
@@ -25,6 +36,7 @@ if length(fi) ~= length(outdir)
     error('length outdir should be the same as the input volume')
 end
 
+job = {}
 
 for num_in = 1:length(fi)
     %vi = spm_vol(fi{num_in});
@@ -51,9 +63,9 @@ for num_in = 1:length(fi)
                         cmd = sprintf('%s )''',cmd);
                     end
                     
-                    cmd = sprintf('%s -prefix %s',cmd,fo{k})
+                    cmd = sprintf('%s -prefix %s',cmd,fo{k});
                     
-                    unix(cmd);
+                    job{end+1} = cmd;
                     
                 case 'image_calc'
                     exp = sprintf('i1==%d',ll(1));
@@ -124,5 +136,8 @@ for num_in = 1:length(fi)
     end
     
 end
+
+job = do_cmd_sge(job,par)
+
 
 

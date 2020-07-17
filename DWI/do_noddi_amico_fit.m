@@ -13,9 +13,17 @@ def_par.sujname = ''; %if empty it will be guess from fdti (get_parent_path 3)
 def_par.common_protocol = 0;  %set to one if you are sure there are the exact same bval between the subject 
 % it save time but first subject must run first if 1 all amico kernel will be in AMICO_data_path
 % if 0 this will be recompute for each subject and store in AMICO subject dir
+def_par.mem = '8000'
+def_par.walltime = '24'
 
 par = complet_struct(par,def_par);
 
+%TODO, module load if runing on the cluster
+%  module load libxi/1.7.6-oxc5xry
+%  module load libxcursor/1.1.14-gc2n5bl
+%  module load libxcomposite/0.4.4-374lzng
+%  module load libxtst/1.2.2-zsdzu74
+%  module load libxrandr/1.5.0-h3w7kww
 
 if isempty(par.AMICO_data_path) & par.common_protocol
     sujdir = get_parent_path(fdti(1),3);
@@ -29,8 +37,28 @@ if isempty(par.sujname)
     fprintf('Please check : taking sujname for first and last subject\n%s\n%s\n,',par.sujname{1},par.sujname{end})
 end
 
+bvecf = get_file_from_same_dir(fdti,par.bvec,1);
+bvalf = get_file_from_same_dir(fdti,par.bval,1);
+fm  = get_file_from_same_dir(fdti,par.mask,1);
+
+
+dti = get_parent_path(fdti);
+
 
 if par.sge
+    
+    %on matlab cluster I get the error java executable not found. Unable to run command
+    cmd={};
+    for ns=1:length(dti)
+        if ~exist(fullfile(dti{ns},'camino.sheme'),'file')
+            cmd{ns} = sprintf('source camino_path; cd %s; fsl2scheme -bvecfile %s -bvalfile %s -bscale 1 > camino.sheme',...
+                dti{ns},bvecf{ns},bvalf{ns})
+        end
+    end
+    do_cmd_sge(cmd,struct('sge',0))
+
+
+    
     cmd = '';
     fn = fieldnames(par);
     %write the parameters
@@ -53,13 +81,6 @@ if par.sge
     return
 end
 
-
-bvecf = get_file_from_same_dir(fdti,par.bvec,1);
-bvalf = get_file_from_same_dir(fdti,par.bval,1);
-fm  = get_file_from_same_dir(fdti,par.mask,1);
-
-
-dti = get_parent_path(fdti);
 
 cmd={};
 for ns=1:length(dti)

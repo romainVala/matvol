@@ -12,6 +12,7 @@ defpar.trans_mat = '';
 defpar.sge = 0;
 defpar.jobname='fsl_reslice';
 defpar.fsl_output_format = 'NIFTI_GZ';
+defpar.abs = 0
 defpar.outfilename='' ;
 
 par = complet_struct(par,defpar);
@@ -55,6 +56,9 @@ else
                     par.fsl_output_format,ff{kk},ref{k},ffomat{kk},par.trans_mat{k},par.interp_fsl);
             end
             cmd = sprintf('%s\napplyxfm4D %s %s %s %s  -singlematrix\n',cmd,ff{kk},ref{k},ffo{k},ffomat{kk});
+            if par.abs
+                cmd = sprintf('%s\n fslmaths %s -abs %s',cmd, ffo{k}, ffo{k})
+            end
             %unix(cmd);
             job{nbj} = cmd;
             nbj=nbj+1;

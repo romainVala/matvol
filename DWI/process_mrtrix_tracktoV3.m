@@ -20,6 +20,10 @@ defpar.exclude = '';
 defpar.nthreads = 1;
 defpar.option = '';
 
+defpar.seed_dynamic=0;
+defpar.cutoff = '';
+defpar.maxlength='';
+
 defpar.sge = 1;
 defpar.jobname = 'mrtrix_trackto';
 
@@ -48,9 +52,22 @@ for nbsuj = 1:length(sdata)
     
     mask_filename = par.mask{nbsuj};
     
-    cmd = sprintf('LD_LIBRARY_PATH=;tckgen %s -force -seed_image %s -select %d -algorithm %s -grad %s -nthreads %d',...
-        par.option,seed_file, par.track_num, par.type, fullfile(dir_mrtrix,par.grad_file), par.nthreads);
+    if par.seed_dynamic
+        cmd = sprintf('LD_LIBRARY_PATH=;tckgen %s -force -seed_dynamic %s -select %d -algorithm %s -grad %s -nthreads %d',...
+            par.option, sdata{nbsuj}, par.track_num, par.type, fullfile(dir_mrtrix,par.grad_file), par.nthreads);        
+    else
+        cmd = sprintf('LD_LIBRARY_PATH=;tckgen %s -force -seed_image %s -select %d -algorithm %s -grad %s -nthreads %d',...
+            par.option,seed_file, par.track_num, par.type, fullfile(dir_mrtrix,par.grad_file), par.nthreads);
+    end
+
+    if ~isempty(par.cutoff)
+        cmd = sprintf('%s -cutoff %d',cmd, par.cutoff);
+    end
     
+    if ~isempty(par.maxlength)
+        cmd = sprintf('%s -maxlength %d',cmd, par.maxlength);
+    end
+        
     if ~isempty(par.act)
         cmd = sprintf('%s -act %s',cmd, par.act{nbsuj});
     else % with act you do not need to specify the mask

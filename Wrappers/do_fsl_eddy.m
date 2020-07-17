@@ -86,3 +86,9 @@ else
 end
 
 job = do_cmd_sge(job,par,jobappend);
+
+
+%comment on mailing list from jesper
+%There is an undocumented (and I think hidden) option to keep type two errors constant instead (--ol_ec=2). The “problem” with that approach is that shells with very few observations will end up with poor estimates of uncertainty.
+
+
