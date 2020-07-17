@@ -117,7 +117,7 @@ for subj = 1:nrSubject
         %skip if last one exist
         lastrun_filenames_cellstr = addprefixtofilenames(currentRun(end),par.prefix);
         if ~par.redo   &&   exist(lastrun_filenames_cellstr{1},'file')
-            skip = [skip subj];
+            skip = [skip (2*subj -1) (2*subj)];
             fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,subj,lastrun_filenames_cellstr{1});
             
         else
