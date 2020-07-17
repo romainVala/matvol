@@ -85,7 +85,7 @@ for subj = 1:nrSubject
     end
     
     %skip if mean exist
-    mean_filenames_cellstr = addprefixtofilenames(subjectRuns(1),'mean');
+    mean_filenames_cellstr = addprefixtofilenames(subjectRuns(1),'meanu');
     if ~par.redo   &&   exist(mean_filenames_cellstr{1},'file')
         skip = [skip subj];
         fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,subj,mean_filenames_cellstr{1});
