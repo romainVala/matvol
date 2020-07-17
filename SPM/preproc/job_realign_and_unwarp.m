@@ -89,6 +89,7 @@ for subj = 1:nrSubject
     if ~par.redo   &&   exist(mean_filenames_cellstr{1},'file')
         skip = [skip subj];
         fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,subj,mean_filenames_cellstr{1});
+        continue
     end
     
     for run = 1:length(subjectRuns)
