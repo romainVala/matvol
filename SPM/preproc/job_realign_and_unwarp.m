@@ -34,7 +34,7 @@ defpar.file_reg    = '^f.*nii';
 defpar.which_write = [2 1]; %all + mean
 
 % cluster
-defpar.jobname  = 'spm_realign';
+defpar.jobname  = 'spm_realign_and_unwarp';
 defpar.walltime = '04:00:00';
 
 % matvol classics
@@ -88,7 +88,7 @@ for subj = 1:nrSubject
     %skip if mean exist
     mean_filenames_cellstr = addprefixtofilenames(subjectRuns(1),'meanu');
     if ~par.redo   &&   exist(mean_filenames_cellstr{1},'file')
-        skip = [skip subj];
+        skip = [skip  (2*subj -1) (2*subj) ];
         fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,subj,mean_filenames_cellstr{1});
         continue
     end
