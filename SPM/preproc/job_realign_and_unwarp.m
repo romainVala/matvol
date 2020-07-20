@@ -44,6 +44,7 @@ defpar.display      = 0;
 defpar.redo         = 0;
 defpar.auto_add_obj = 1;
 defpar.mask = 1;
+defpar.mask_vdm = 1;
 defpar.use_JSON_regex = 'json';
 defpar.fanat = '';
 
@@ -142,7 +143,7 @@ for subj = 1:nrSubject
             jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.data.presubphasemag.phase = fphase;
             jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.data.presubphasemag.magnitude = fmag;
             jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.et = fm_TE;
-            jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.maskbrain = 1;
+            jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.maskbrain = par.mask_vdm;
             jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.blipdir = pdir;
             jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.tert = totes;
             jobs{2*subj-1}.spm.tools.fieldmap.calculatevdm.subj.defaults.defaultsval.epifm = 0;
@@ -193,7 +194,7 @@ for subj = 1:nrSubject
             jobs{2*subj}.spm.spatial.realignunwarp.uweoptions.expround = 'Average';
             jobs{2*subj}.spm.spatial.realignunwarp.uwroptions.uwwhich = par.which_write; %all + mean images
             jobs{2*subj}.spm.spatial.realignunwarp.uwroptions.rinterp = 4;
-            jobs{2*subj}.spm.spatial.realignunwarp.uwroptions.wrap = [0 0 0];
+            jobs{2*subj}.spm.spatial.realignunwarp.uwroptions.wrap = [0 1 0];
             jobs{2*subj}.spm.spatial.realignunwarp.uwroptions.mask =  par.mask;
             jobs{2*subj}.spm.spatial.realignunwarp.uwroptions.prefix = 'u';
 
