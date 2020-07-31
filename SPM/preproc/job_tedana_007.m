@@ -107,7 +107,7 @@ par.verbose = 0; % don't print anything yet
 %% Expand meinfo path & TE
 
 % Strip down the echo data
-echos = [meinfo.data{:}];
+echos = cat(1,meinfo.data{:});
 echos = echos(:);
 echos = cell2mat(echos);
 
