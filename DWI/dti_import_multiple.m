@@ -7,7 +7,7 @@ end
 defpar.skip_vol='';
 defpar.sge=1;
 defpar.data4D= '4D_dwi';
-defpar.imgregex = '^[fs]';
+defpar.imgregex = '^[fsv]';
 defpar.swap=''; %for swap dim for sag par.swap='-y z -x' for coro par.swap='x z -y '
 defpar.skip_if_exist = 1;
 defpar.make_even_number_of_slice=1;
@@ -19,6 +19,9 @@ defpar.remove_gibs = 1;
 defpar.remove_negative = 32000; %all value < -1 will be replace by 32000
 defpar.pct = 0;
 defpar.do_qc = 1;
+defpar.bvec = 'bvec';
+defpar.bval = 'bval';
+defpar.json = '(^dic.*json|^stack.*json)';
 
 par = complet_struct(par,defpar);
 choose_sge=par.sge;
@@ -54,13 +57,13 @@ dti_files=get_subdir_regex_images(dti_spm_dir,par.imgregex);
 dti_files=cellstr(char(dti_files));
 for k=1:length(dti_spm_dir)
     try
-        bval_f(k) = get_subdir_regex_files(dti_spm_dir(k),'bvals',1);
-        bvec_f(k) = get_subdir_regex_files(dti_spm_dir(k),'bvecs',1);
+        bval_f(k) = get_subdir_regex_files(dti_spm_dir(k),par.bval,1);
+        bvec_f(k) = get_subdir_regex_files(dti_spm_dir(k),par.bvec,1);
     catch
         fprintf('WARNING no bvals bvecs found in %s\n',dti_spm_dir{k})
         fprintf('supposing one B0 acquisition\n')
         %check if dti file start with s which mean only one volume
-        fftest = get_subdir_regex_files(dti_spm_dir{k},'^s.*nii')
+        fftest = get_subdir_regex_files(dti_spm_dir{k},'^[sv].*nii')
         if isempty(fftest), error(sprintf('missing bval or bvec and no s file \n so check %s', dti_spm_dir{k})); end
         
         dd=get_parent_path(which('dti_import_multiple.m'));
@@ -82,7 +85,7 @@ end
 bval(bval<50) = 0;
 
 %copy the json, since b0 are now in the outputdir
-dicjson=get_subdir_regex_files(dti_spm_dir,'^dic.*json');
+dicjson=get_subdir_regex_files(dti_spm_dir,par.json);
 if isempty(dicjson)
     %try to get in in /export/dataCENIR/dicom/nifti_raw
     dicparam = get_subdir_regex_files(dti_spm_dir,'dicom_info.mat',1);
