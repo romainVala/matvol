@@ -418,7 +418,7 @@ VECT_cell = strrep(VECT_cell,',','');
 VECT_cell = strrep(VECT_cell,' ','');
 VECT_cell = strrep(VECT_cell,'[','');
 VECT_cell = strrep(VECT_cell,']','');
-VECT_cell = VECT_cell(~cellfun(@isempty,VECT_cell));
+VECT_cell = VECT_cell(~cellfun('isempty',VECT_cell));
 
 v = str2double(VECT_cell);
 if isempty(v)

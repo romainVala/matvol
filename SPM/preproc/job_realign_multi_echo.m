@@ -87,7 +87,7 @@ for iSubj = 1 : nSubj
     if obj
         subjectRuns = in(iSubj,:);
         subjectRuns = cellfun(@char,subjectRuns,'UniformOutput',0)';
-        subjectRuns = subjectRuns(~cellfun(@isempty, subjectRuns)); % remove empty lines
+        subjectRuns = subjectRuns(~cellfun('isempty', subjectRuns)); % remove empty lines
     else
         if iscell(in{1})
             subjectRuns = get_subdir_regex_files(in{iSubj},par.file_reg);

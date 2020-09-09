@@ -79,7 +79,7 @@ if numel(serieArray) > 0
     for f = 1 : length(fields)
         empty_param.(fields{f}) = '';
     end
-    cellstruct(cellfun(@isempty,cellstruct)) = {empty_param}; % fill the voids
+    cellstruct(cellfun('isempty',cellstruct)) = {empty_param}; % fill the voids
     
     
     %% Convert structure into char

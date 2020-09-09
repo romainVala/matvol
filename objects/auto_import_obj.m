@@ -554,7 +554,7 @@ end % function
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function result = isemptyCELL( input )
 
-result = cellfun(@isempty, input);
+result = cellfun('isempty', input);
 
 end % function
 

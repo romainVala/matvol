@@ -32,7 +32,7 @@ for j = 1 : numel(img)
     end
     % Parse the output of the cmd line
     res = strsplit(result,'\n')';    % if "oblique" dataset, several lines...
-    res(cellfun(@isempty,res)) = []; % last line is empty
+    res(cellfun('isempty',res)) = []; % last line is empty
     res = res{end};                  % get this new last line
     res = strsplit(res,' ');         % split the 3 values delimited by a space
     

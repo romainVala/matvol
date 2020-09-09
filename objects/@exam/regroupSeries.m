@@ -31,12 +31,12 @@ nick                                                = reshape({serieArray.nick},
 
 % Concat : id = seqeunce.nick + seq_param_str
 id = strcat(nick,':',seq_param_str);
-id(~cellfun(@isempty,regexp(id,'^\s?:\s?$'))) = {''};
+id(~cellfun('isempty',regexp(id,'^\s?:\s?$'))) = {''};
 
 % Initialize, with the firt exam
 param_str = id(1,:);
 param_str = unique(param_str);
-param_str(cellfun(@isempty,param_str)) = []; % remove empty tags
+param_str(cellfun('isempty',param_str)) = []; % remove empty tags
 NrSerie   = zeros( numel(examArray), numel(param_str));
 
 % Count the series, using the 'nick' (initial tag, no increment)
@@ -55,10 +55,10 @@ for ex = 1 : numel(examArray)
     
     param_str = unique([param_str(:)' serie_unique_param],'stable'); % concatenate previous nicks and new nicks, and keep only unique ones in the same order
     
-    param_str(cellfun(@isempty,param_str)) = [];             % remove empty tags
+    param_str(cellfun('isempty',param_str)) = [];             % remove empty tags
     
     for n = 1 : length(param_str)
-        found_tags_idx = ~cellfun( @isempty, regexp(serie_param,param_str{n}) );
+        found_tags_idx = ~cellfun( 'isempty', regexp(serie_param,param_str{n}) );
         N = sum( found_tags_idx );
         NrSerie(ex,n) = N;
     end

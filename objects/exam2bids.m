@@ -316,7 +316,7 @@ for e = 1:nrExam
                 
                 % Error managment
                 if ~error_flag_anat
-                    nrGood          = sum(~cellfun(@isempty,subjob_anat));
+                    nrGood          = sum(~cellfun('isempty',subjob_anat));
                     if nrGood == 1
                         job_subj    = [ job_subj sprintf('############\n'  ) ];
                         job_subj    = [ job_subj sprintf('### anat ###\n'  ) ];
@@ -435,7 +435,7 @@ for e = 1:nrExam
                 
                 % Error managment
                 if ~error_flag_func
-                    nrGood          = sum(~cellfun(@isempty,subjob_func));
+                    nrGood          = sum(~cellfun('isempty',subjob_func));
                     if nrGood == 1
                         job_subj = [ job_subj sprintf('############\n'  ) ];
                         job_subj = [ job_subj sprintf('### func ###\n'  ) ];
@@ -544,7 +544,7 @@ for e = 1:nrExam
                 
                 % Error managment
                 if ~error_flag_dwi
-                    nrGood          = sum(~cellfun(@isempty,subjob_dwi));
+                    nrGood          = sum(~cellfun('isempty',subjob_dwi));
                     if nrGood == 1
                         job_subj = [ job_subj sprintf('###########\n'  ) ];
                         job_subj = [ job_subj sprintf('### dwi ###\n'  ) ];
@@ -663,7 +663,7 @@ for e = 1:nrExam
                 
                 % Error managment
                 if ~error_flag_fmap
-                    nrGood          = sum(~cellfun(@isempty,subjob_fmap));
+                    nrGood          = sum(~cellfun('isempty',subjob_fmap));
                     if nrGood == 1
                         job_subj = [ job_subj sprintf('############\n'  ) ];
                         job_subj = [ job_subj sprintf('### fmap ###\n'  ) ];
@@ -808,7 +808,7 @@ for e = 1:nrExam
                 
                 % Error managment
                 if ~error_flag_swi
-                    nrGood          = sum(~cellfun(@isempty,subjob_swi));
+                    nrGood          = sum(~cellfun('isempty',subjob_swi));
                     if nrGood == 1
                         job_subj    = [ job_subj sprintf('###########\n'  ) ];
                         job_subj    = [ job_subj sprintf('### swi ###\n'  ) ];

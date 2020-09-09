@@ -79,7 +79,7 @@ for o = 1 : length(field_to_get)
             VECT_str = content(start:start+stop);
             
             VECT_cell_raw = strsplit(VECT_str,'\n')';
-            VECT_cell = VECT_cell_raw(cellfun( @isempty, regexp(VECT_cell_raw,'\[|\]') ));
+            VECT_cell = VECT_cell_raw(cellfun( 'isempty', regexp(VECT_cell_raw,'\[|\]') ));
             VECT_cell_nocoma = strrep(VECT_cell,',','');
             VECT_cell_nocoma_nowhitespace = strrep(VECT_cell_nocoma,' ','');
             VECT_char = char(VECT_cell_nocoma_nowhitespace);
