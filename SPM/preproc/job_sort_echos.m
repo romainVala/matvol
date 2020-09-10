@@ -138,8 +138,8 @@ for iSubj = 1 : nSubj
         
         jsons = cellstr(jsons{1});
         
-        is_dcmstack = ~cellfun('isempty',regexp(jsons, 'dic_param_.*json$'));
-        is_dcm2niix = ~cellfun('isempty',regexp(jsons,         'v_.*json$'));
+        is_dcmstack = ~cellfun('isempty',regexp(jsons, '^dic_param_.*json$'));
+        is_dcm2niix = ~cellfun('isempty',regexp(jsons,         '^v_.*json$'));
         
         json_dcmstack = jsons(is_dcmstack);
         json_dcm2niix = jsons(is_dcm2niix);
