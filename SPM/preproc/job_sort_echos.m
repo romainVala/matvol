@@ -137,10 +137,10 @@ for iSubj = 1 : nSubj
         assert(~isempty(jsons), 'no .json file detected in : %s', run_path)
         
         jsons = cellstr(jsons{1});
-        jsons = spm_file(jsons,'filename'); % remove path, only keep filename
+        jsonsname = spm_file(jsons,'filename'); % remove path, only keep filename
         
-        is_dcmstack = ~cellfun('isempty',regexp(jsons, '^dic_param_.*json$'));
-        is_dcm2niix = ~cellfun('isempty',regexp(jsons,         '^v_.*json$'));
+        is_dcmstack = ~cellfun('isempty',regexp(jsonsname, '^dic_param_.*json$'));
+        is_dcm2niix = ~cellfun('isempty',regexp(jsonsname,         '^v_.*json$'));
         
         json_dcmstack = jsons(is_dcmstack);
         json_dcm2niix = jsons(is_dcm2niix);
