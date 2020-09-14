@@ -69,7 +69,7 @@ for idx = 1:numel(in)
             
             % fetch the freshly DEEP COPY object that was the first caller
             res = regexp( path_first_line, deblank(in(idx).path(1,:)) );
-            res = find(~cellfun(@isempty, res));
+            res = find(~cellfun('isempty', res));
             if length(res)~=1
                 warning('humm... something whent wrong')
                 warning('.copyObject is a very complicated function')
@@ -120,12 +120,12 @@ for idx = 1:numel(in)
     propName = properties( in );
     for l =  1:length(to_deep_copy)
         where_cell = regexp(propName,to_deep_copy{l},'once');
-        where_idx = cellfun( @isempty, where_cell, 'uniformoutput', 1);
+        where_idx = cellfun( 'isempty', where_cell, 'uniformoutput', 1);
         propName = propName(where_idx);
     end
     for l =  1:length(do_not_copy)
         where_cell = regexp(propName,do_not_copy{l},'once');
-        where_idx = cellfun( @isempty, where_cell, 'uniformoutput', 1);
+        where_idx = cellfun( 'isempty', where_cell, 'uniformoutput', 1);
         propName = propName(where_idx);
     end
     for prop = 1 : length(propName)

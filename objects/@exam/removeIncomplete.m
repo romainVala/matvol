@@ -23,7 +23,7 @@ end
 %% Sort out
 
 flags = {examArray.is_incomplete}; % { [] []  1 [] ...}
-where = cellfun(@isempty, flags);  % [  1  1  0  1 ...]
+where = cellfun('isempty', flags);  % [  1  1  0  1 ...]
 
 if do_deep_copy
     

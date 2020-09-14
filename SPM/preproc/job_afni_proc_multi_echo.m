@@ -137,9 +137,11 @@ for iSubj = 1 : nSubj
         [~,run_name,~]  = fileparts(run_path);
         subj_name       = sprintf('%s__%s',subj_name,run_name);
         working_dir     = fullfile(run_path,par.subdir);
+        real_path       = run_path;
     else
         [~,subj_name,~] = fileparts(subj_path);
         working_dir     = fullfile(subj_path,par.subdir);
+        real_path       = subj_path;
     end
     
     if ~par.redo  &&  exist(working_dir,'dir')==7
@@ -151,23 +153,17 @@ for iSubj = 1 : nSubj
         rmdir(working_dir,'s')
     end
     
-    fprintf('[%s]: Preparing JOB %d/%d @ %s \n', mfilename, iSubj, nSubj, subj_path);
-    cmd = sprintf('#################### [%s] JOB %d/%d @ %s #################### \n', mfilename, iSubj, nSubj, subj_path); % initialize
+    fprintf('[%s]: Preparing JOB %d/%d @ %s \n', mfilename, iSubj, nSubj, real_path);
+    cmd = sprintf('#################### [%s] JOB %d/%d @ %s #################### \n', mfilename, iSubj, nSubj, real_path); % initialize
     
     %----------------------------------------------------------------------
     % afni_proc.py basics
     %----------------------------------------------------------------------
     
     cmd     = sprintf('%s export OMP_NUM_THREADS=%d;   \n', cmd, par.OMP_NUM_THREADS); % multi CPU option
-    if par.seperate
-        cmd = sprintf('%s cd %s;                       \n', cmd, run_path   );         % go to subj dir so afni_proc tcsh script is written there
-        cmd = sprintf('%s afni_proc.py -subj_id %s \\\\\n', cmd, subj_name  );         % subj_id is almost mendatory with afni
-        cmd = sprintf('%s -out_dir %s              \\\\\n', cmd, working_dir);         % afni working dir
-    else
-        cmd = sprintf('%s cd %s;                       \n', cmd, subj_path  );         % go to subj dir so afni_proc tcsh script is written there
-        cmd = sprintf('%s afni_proc.py -subj_id %s \\\\\n', cmd, subj_name  );         % subj_id is almost mendatory with afni
-        cmd = sprintf('%s -out_dir %s              \\\\\n', cmd, working_dir);         % afni working dir
-    end
+    cmd = sprintf('%s cd %s;                           \n', cmd, real_path   );        % go to subj dir so afni_proc tcsh script is written there
+    cmd = sprintf('%s afni_proc.py -subj_id %s     \\\\\n', cmd, subj_name  );         % subj_id is almost mendatory with afni
+    cmd = sprintf('%s -out_dir %s                  \\\\\n', cmd, working_dir);         % afni working dir
     cmd     = sprintf('%s -scr_overwrite           \\\\\n', cmd);                      % overwrite previous afni_proc tcsh script, if exists
     
     % add ME datasets
@@ -303,9 +299,9 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 serie = series.getVolume(echo.pth ,'path').removeEmpty.getOne.serie;
                 
                 if     par.run % use the normal method
-                    serie.addVolume( ['^' prefix echo.outname echo.ext '$'] , sprintf('%se%d',prefix,iEcho), 1 );
+                    serie.addVolume( ['^' prefix echo.outname echo.ext '$']          , sprintf('%se%d',prefix,iEcho), 1 );
                 elseif par.sge % add the new volume in the object manually, because the file is not created yet
-                    serie.addVolume( 'root' , addprefixtofilenames(echo.fname,prefix), sprintf('%se%d',prefix,iEcho) );
+                    serie.addVolume( 'root' , addprefixtofilenames(echo.fname,prefix), sprintf('%se%d',prefix,iEcho)    );
                 end
                 
             end % iEcho

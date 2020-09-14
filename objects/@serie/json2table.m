@@ -32,7 +32,7 @@ par = complet_struct(par,defpar);
 
 % Skip empty serie
 serieArray    = shiftdim(serieArray,1); % meaningful after the (:)
-%integrity_ser = ~cellfun(@isempty,serieArray.getPath);
+%integrity_ser = ~cellfun('isempty',serieArray.getPath);
 serieArray    = serieArray(:);
 %integrity_ser = integrity_ser(:);
 %serieArray    = serieArray(integrity_ser==1);
@@ -40,7 +40,7 @@ serieArray    = serieArray(:);
 jsonArray = serieArray.getJson(par.regex,par.type,par.verbose);
 
 % Skip empty jsons
-integrity = ~cellfun(@isempty,jsonArray.getPath);
+integrity = ~cellfun('isempty',jsonArray.getPath);
 jsonArray = jsonArray(:);
 integrity = integrity(:);
 jsonArray = jsonArray(integrity==1);
@@ -88,7 +88,7 @@ end
 
 % Fortmat the cell of fieldnames and only keep the unique ones
 names = names(:); % change from 2d to 1d
-names( cellfun(@isempty,names) ) = []; % remove empty
+names( cellfun('isempty',names) ) = []; % remove empty
 list = unique(names,'stable');
 
 % Compare current structure fields with the definitive 'list' of fields
@@ -138,7 +138,7 @@ end
 id_str = serieArray.getPath;
 id_str = id_str(:); % in column
 
-integrity_ser = cellfun(@isempty,id_str);integrity_ser=find(integrity_ser);
+integrity_ser = cellfun('isempty',id_str);integrity_ser=find(integrity_ser);
 for ii =1:length(integrity_ser)
     id_str{integrity_ser(ii)} =  serieArray(integrity_ser(ii)).exam.path; end
 
@@ -161,7 +161,7 @@ end
 
 % Concatenate the non-common parts of the path
 aa=split_nice(:,col:end);
-iaa=cellfun(@isempty,aa); aa(iaa)={'None'}; %because empty series are getting exam path or serie path of different level
+iaa=cellfun('isempty',aa); aa(iaa)={'None'}; %because empty series are getting exam path or serie path of different level
 split_final = fullfile(aa); % only the non-common part of the path
 id_str = repmat({''},[ size(split_final,1) 1 ]);
 for c = 1 : size(split_final,2)

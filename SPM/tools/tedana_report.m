@@ -103,8 +103,8 @@ for subj = 1 : length(comptable_file)
             
             content = get_file_content_as_char(log_file{subj}{run});
             lines = strsplit(content,sprintf('\n'))';
-            converged = ~cellfun(@isempty, strfind(lines,'converged in') ); %#ok<*STRCLFH>
-            ICA_lines = ~cellfun(@isempty, strfind(lines,'ICA attempt' ) );
+            converged = ~cellfun('isempty', strfind(lines,'converged in') ); %#ok<*STRCLFH>
+            ICA_lines = ~cellfun('isempty', strfind(lines,'ICA attempt' ) );
             
             if any(converged) % yes ! it converged !
                 

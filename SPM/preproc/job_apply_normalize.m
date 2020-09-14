@@ -27,7 +27,7 @@ if isa(img,'volume')
     volumeArray = img;
     img    = volumeArray.toJob(1);
     for i = 1 : length(img)
-        img{i} = char(img{i}(~cellfun(@isempty,img{i}))); % remove empty lines
+        img{i} = char(img{i}(~cellfun('isempty',img{i}))); % remove empty lines
     end
     warp_field = warp_field.toJob;
 elseif ischar(img) || iscellstr(img)
@@ -118,12 +118,13 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         vol = volumeArray(iVol);
         ser = vol.serie;
         tag = vol.tag;
+        sub = vol.subdir;
         
         if par.run
             
             ext  = '.*.nii';
             
-            ser.addVolume(['^' par.prefix tag ext],[par.prefix tag],1)
+            ser.addVolume(sub, ['^' par.prefix tag ext],[par.prefix tag],1)
             
         elseif par.sge
             

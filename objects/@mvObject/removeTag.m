@@ -14,7 +14,7 @@ tags = cellstr2regex(tag);
 
 % Input tag exists in all tags of the array ?
 result = regexp(allTags,tags,'once');
-result = cellfun(@isempty,result);
+result = cellfun('isempty',result);
 
 % Only accept (== keep) the non-matching tags
 newArray = mvArray(result);

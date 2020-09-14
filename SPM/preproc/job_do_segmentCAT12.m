@@ -271,6 +271,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         vol = volumeArray(iVol);
         ser = vol.serie;
         tag = vol.tag;
+        sub = vol.subdir;
         
         if par.run %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             
@@ -279,151 +280,151 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             %--------------------------------------------------------------
             % bias field corrected  + SANLM (global) T1
             %--------------------------------------------------------------
-            if par.bias(1), ser.addVolume([ '^m' tag ext],[ 'm' tag],1), end
-            if par.bias(2), ser.addVolume(['^wm' tag ext],['wm' tag],1), end
+            if par.bias(1), ser.addVolume(sub, [ '^m' tag ext],[ 'm' tag],1), end
+            if par.bias(2), ser.addVolume(sub, ['^wm' tag ext],['wm' tag],1), end
             switch par.bias(3)
                 case 0 % pass
-                case 1, ser.addVolume(['^rm' tag '.*_rigid'  ext],['rm' tag '_rigid' ],1)
-                case 2, ser.addVolume(['^rm' tag '.*_affine' ext],['rm' tag '_affine'],1)
-                case 3, ser.addVolume(['^rm' tag '.*_affine' ext],['rm' tag '_affine'],1)
+                case 1, ser.addVolume(sub, ['^rm' tag '.*_rigid'  ext],['rm' tag '_rigid' ],1)
+                case 2, ser.addVolume(sub, ['^rm' tag '.*_affine' ext],['rm' tag '_affine'],1)
+                case 3, ser.addVolume(sub, ['^rm' tag '.*_affine' ext],['rm' tag '_affine'],1)
             end
             
             %--------------------------------------------------------------
             % bias field corrected  + SANLM (local)  T1
             %--------------------------------------------------------------
-            if par.las(1), ser.addVolume([ '^mi' tag ext],[ 'mi' tag],1), end
-            if par.las(2), ser.addVolume(['^wmi' tag ext],['wmi' tag],1), end
+            if par.las(1), ser.addVolume(sub, [ '^mi' tag ext],[ 'mi' tag],1), end
+            if par.las(2), ser.addVolume(sub, ['^wmi' tag ext],['wmi' tag],1), end
             switch par.las(3)
                 case 0 % pass
-                case 1, ser.addVolume(['^rmi' tag '.*_rigid'  ext],['rmi' tag '_rigid' ],1)
-                case 2, ser.addVolume(['^rmi' tag '.*_affine' ext],['rmi' tag '_affine'],1)
-                case 3, ser.addVolume(['^rmi' tag '.*_affine' ext],['rmi' tag '_affine'],1)
+                case 1, ser.addVolume(sub, ['^rmi' tag '.*_rigid'  ext],['rmi' tag '_rigid' ],1)
+                case 2, ser.addVolume(sub, ['^rmi' tag '.*_affine' ext],['rmi' tag '_affine'],1)
+                case 3, ser.addVolume(sub, ['^rmi' tag '.*_affine' ext],['rmi' tag '_affine'],1)
             end
             
             %--------------------------------------------------------------
             % label
             %--------------------------------------------------------------
-            if par.label(1), ser.addVolume([ '^p0' tag ext],[ 'p0' tag],1), end
-            if par.label(2), ser.addVolume(['^wp0' tag ext],['wp0' tag],1), end
+            if par.label(1), ser.addVolume(sub, [ '^p0' tag ext],[ 'p0' tag],1), end
+            if par.label(2), ser.addVolume(sub, ['^wp0' tag ext],['wp0' tag],1), end
             switch par.label(3)
                 case 0 % pass
-                case 1, ser.addVolume(['^rp0' tag '.*_rigid'  ext],['rp0' tag '_rigid' ],1)
-                case 2, ser.addVolume(['^rp0' tag '.*_affine' ext],['rp0' tag '_affine'],1)
+                case 1, ser.addVolume(sub, ['^rp0' tag '.*_rigid'  ext],['rp0' tag '_rigid' ],1)
+                case 2, ser.addVolume(sub, ['^rp0' tag '.*_affine' ext],['rp0' tag '_affine'],1)
                 case 3
-                    ser.addVolume(['^rp0' tag '.*_rigid'  ext],['rp0' tag '_rigid' ],1)
-                    ser.addVolume(['^rp0' tag '.*_affine' ext],['rp0' tag '_affine'],1)
+                    ser.addVolume(sub, ['^rp0' tag '.*_rigid'  ext],['rp0' tag '_rigid' ],1)
+                    ser.addVolume(sub, ['^rp0' tag '.*_affine' ext],['rp0' tag '_affine'],1)
             end
             
             %--------------------------------------------------------------
             % GM
             %--------------------------------------------------------------
-            if par.GM(3), ser.addVolume([  '^p1' tag ext],[  'p1' tag],1), end
+            if par.GM(3), ser.addVolume(sub, [  '^p1' tag ext],[  'p1' tag],1), end
             switch par.GM(4)
                 case 0 % pass
-                case 1, ser.addVolume([ '^rp1' tag '.*_rigid'  ext],[ 'rp1' tag '_rigid' ],1)
-                case 2, ser.addVolume([ '^rp1' tag '.*_affine' ext],[ 'rp1' tag '_affine'],1)
+                case 1, ser.addVolume(sub, [ '^rp1' tag '.*_rigid'  ext],[ 'rp1' tag '_rigid' ],1)
+                case 2, ser.addVolume(sub, [ '^rp1' tag '.*_affine' ext],[ 'rp1' tag '_affine'],1)
                 case 3
-                    ser.addVolume([ '^rp1' tag '.*_rigid'  ext],[ 'rp1' tag '_rigid' ],1)
-                    ser.addVolume([ '^rp1' tag '.*_affine' ext],[ 'rp1' tag '_affine'],1)
+                    ser.addVolume(sub, [ '^rp1' tag '.*_rigid'  ext],[ 'rp1' tag '_rigid' ],1)
+                    ser.addVolume(sub, [ '^rp1' tag '.*_affine' ext],[ 'rp1' tag '_affine'],1)
             end
-            if par.GM(1), ser.addVolume([ '^wp1' tag ext],[ 'wp1' tag],1), end
+            if par.GM(1), ser.addVolume(sub, [ '^wp1' tag ext],[ 'wp1' tag],1), end
             switch par.GM(2)
                 case 0 % pass
-                case 1, ser.addVolume(['^mwp1'  tag ext],['mwp1'  tag],1)
-                case 2, ser.addVolume(['^m0wp1' tag ext],['m0wp1' tag],1)
+                case 1, ser.addVolume(sub, ['^mwp1'  tag ext],['mwp1'  tag],1)
+                case 2, ser.addVolume(sub, ['^m0wp1' tag ext],['m0wp1' tag],1)
             end
             
             %--------------------------------------------------------------
             % WM
             %--------------------------------------------------------------
-            if par.WM(3), ser.addVolume([  '^p2' tag ext],[  'p2' tag],1), end
+            if par.WM(3), ser.addVolume(sub, [  '^p2' tag ext],[  'p2' tag],1), end
             switch par.WM(4)
                 case 0 % pass
-                case 1, ser.addVolume([ '^rp2' tag '.*_rigid'  ext],[ 'rp2' tag '_rigid' ],1)
-                case 2, ser.addVolume([ '^rp2' tag '.*_affine' ext],[ 'rp2' tag '_affine'],1)
+                case 1, ser.addVolume(sub, [ '^rp2' tag '.*_rigid'  ext],[ 'rp2' tag '_rigid' ],1)
+                case 2, ser.addVolume(sub, [ '^rp2' tag '.*_affine' ext],[ 'rp2' tag '_affine'],1)
                 case 3
-                    ser.addVolume([ '^rp2' tag '.*_rigid'  ext],[ 'rp2' tag '_rigid' ],1)
-                    ser.addVolume([ '^rp2' tag '.*_affine' ext],[ 'rp2' tag '_affine'],1)
+                    ser.addVolume(sub, [ '^rp2' tag '.*_rigid'  ext],[ 'rp2' tag '_rigid' ],1)
+                    ser.addVolume(sub, [ '^rp2' tag '.*_affine' ext],[ 'rp2' tag '_affine'],1)
             end
-            if par.WM(1), ser.addVolume([ '^wp2' tag ext],[ 'wp2' tag],1), end
+            if par.WM(1), ser.addVolume(sub, [ '^wp2' tag ext],[ 'wp2' tag],1), end
             switch par.WM(2)
                 case 0 % pass
-                case 1, ser.addVolume(['^mwp2'  tag ext],['mwp2'  tag],1)
-                case 2, ser.addVolume(['^m0wp2' tag ext],['m0wp2' tag],1)
+                case 1, ser.addVolume(sub, ['^mwp2'  tag ext],['mwp2'  tag],1)
+                case 2, ser.addVolume(sub, ['^m0wp2' tag ext],['m0wp2' tag],1)
             end
             
             %--------------------------------------------------------------
             % CSF
             %--------------------------------------------------------------
-            if par.CSF(3), ser.addVolume([  '^p3' tag ext],[  'p3' tag],1), end
+            if par.CSF(3), ser.addVolume(sub, [  '^p3' tag ext],[  'p3' tag],1), end
             switch par.CSF(4)
                 case 0 % pass
-                case 1, ser.addVolume([ '^rp3' tag '.*_rigid'  ext],[ 'rp3' tag '_rigid' ],1)
-                case 2, ser.addVolume([ '^rp3' tag '.*_affine' ext],[ 'rp3' tag '_affine'],1)
+                case 1, ser.addVolume(sub, [ '^rp3' tag '.*_rigid'  ext],[ 'rp3' tag '_rigid' ],1)
+                case 2, ser.addVolume(sub, [ '^rp3' tag '.*_affine' ext],[ 'rp3' tag '_affine'],1)
                 case 3
-                    ser.addVolume([ '^rp3' tag '.*_rigid'  ext],[ 'rp3' tag '_rigid' ],1)
-                    ser.addVolume([ '^rp3' tag '.*_affine' ext],[ 'rp3' tag '_affine'],1)
+                    ser.addVolume(sub, [ '^rp3' tag '.*_rigid'  ext],[ 'rp3' tag '_rigid' ],1)
+                    ser.addVolume(sub, [ '^rp3' tag '.*_affine' ext],[ 'rp3' tag '_affine'],1)
             end
-            if par.CSF(1), ser.addVolume([ '^wp3' tag ext],[ 'wp3' tag],1), end
+            if par.CSF(1), ser.addVolume(sub, [ '^wp3' tag ext],[ 'wp3' tag],1), end
             switch par.CSF(2)
                 case 0 % pass
-                case 1, ser.addVolume(['^mwp3'  tag ext],['mwp3'  tag],1)
-                case 2, ser.addVolume(['^m0wp3' tag ext],['m0wp3' tag],1)
+                case 1, ser.addVolume(sub, ['^mwp3'  tag ext],['mwp3'  tag],1)
+                case 2, ser.addVolume(sub, ['^m0wp3' tag ext],['m0wp3' tag],1)
             end
             
             %--------------------------------------------------------------
             % TPMC
             %--------------------------------------------------------------
             if par.TPMC(3)
-                ser.addVolume([ '^p4' tag ext],[ 'p4' tag],1)
-                ser.addVolume([ '^p5' tag ext],[ 'p5' tag],1)
-                ser.addVolume([ '^p6' tag ext],[ 'p6' tag],1)
+                ser.addVolume(sub, [ '^p4' tag ext],[ 'p4' tag],1)
+                ser.addVolume(sub, [ '^p5' tag ext],[ 'p5' tag],1)
+                ser.addVolume(sub, [ '^p6' tag ext],[ 'p6' tag],1)
             end
             switch par.TPMC(4)
                 case 0 % pass
                 case 1
-                    ser.addVolume([ '^rp4' tag '.*_rigid'  ext],[ 'rp4' tag '_rigid' ],1)
-                    ser.addVolume([ '^rp5' tag '.*_rigid'  ext],[ 'rp5' tag '_rigid' ],1)
-                    ser.addVolume([ '^rp6' tag '.*_rigid'  ext],[ 'rp6' tag '_rigid' ],1)
+                    ser.addVolume(sub, [ '^rp4' tag '.*_rigid'  ext],[ 'rp4' tag '_rigid' ],1)
+                    ser.addVolume(sub, [ '^rp5' tag '.*_rigid'  ext],[ 'rp5' tag '_rigid' ],1)
+                    ser.addVolume(sub, [ '^rp6' tag '.*_rigid'  ext],[ 'rp6' tag '_rigid' ],1)
                 case 2
-                    ser.addVolume([ '^rp4' tag '.*_affine' ext],[ 'rp4' tag '_affine'],1)
-                    ser.addVolume([ '^rp5' tag '.*_affine' ext],[ 'rp5' tag '_affine'],1)
-                    ser.addVolume([ '^rp6' tag '.*_affine' ext],[ 'rp6' tag '_affine'],1)
+                    ser.addVolume(sub, [ '^rp4' tag '.*_affine' ext],[ 'rp4' tag '_affine'],1)
+                    ser.addVolume(sub, [ '^rp5' tag '.*_affine' ext],[ 'rp5' tag '_affine'],1)
+                    ser.addVolume(sub, [ '^rp6' tag '.*_affine' ext],[ 'rp6' tag '_affine'],1)
                 case 3
-                    ser.addVolume([ '^rp4' tag '.*_rigid'  ext],[ 'rp4' tag '_rigid' ],1)
-                    ser.addVolume([ '^rp5' tag '.*_rigid'  ext],[ 'rp5' tag '_rigid' ],1)
-                    ser.addVolume([ '^rp6' tag '.*_rigid'  ext],[ 'rp6' tag '_rigid' ],1)
-                    ser.addVolume([ '^rp4' tag '.*_affine' ext],[ 'rp4' tag '_affine'],1)
-                    ser.addVolume([ '^rp5' tag '.*_affine' ext],[ 'rp5' tag '_affine'],1)
-                    ser.addVolume([ '^rp6' tag '.*_affine' ext],[ 'rp6' tag '_affine'],1)
+                    ser.addVolume(sub, [ '^rp4' tag '.*_rigid'  ext],[ 'rp4' tag '_rigid' ],1)
+                    ser.addVolume(sub, [ '^rp5' tag '.*_rigid'  ext],[ 'rp5' tag '_rigid' ],1)
+                    ser.addVolume(sub, [ '^rp6' tag '.*_rigid'  ext],[ 'rp6' tag '_rigid' ],1)
+                    ser.addVolume(sub, [ '^rp4' tag '.*_affine' ext],[ 'rp4' tag '_affine'],1)
+                    ser.addVolume(sub, [ '^rp5' tag '.*_affine' ext],[ 'rp5' tag '_affine'],1)
+                    ser.addVolume(sub, [ '^rp6' tag '.*_affine' ext],[ 'rp6' tag '_affine'],1)
             end
             if par.TPMC(1)
-                ser.addVolume([ '^wp4' tag ext],[ 'wp4' tag],1)
-                ser.addVolume([ '^wp5' tag ext],[ 'wp5' tag],1)
-                ser.addVolume([ '^wp6' tag ext],[ 'wp6' tag],1)
+                ser.addVolume(sub, [ '^wp4' tag ext],[ 'wp4' tag],1)
+                ser.addVolume(sub, [ '^wp5' tag ext],[ 'wp5' tag],1)
+                ser.addVolume(sub, [ '^wp6' tag ext],[ 'wp6' tag],1)
             end
             switch par.TPMC(2)
                 case 0 % pass
                 case 1
-                    ser.addVolume(['^mwp4'  tag ext],['mwp4'  tag],1)
-                    ser.addVolume(['^mwp5'  tag ext],['mwp5'  tag],1)
-                    ser.addVolume(['^mwp6'  tag ext],['mwp6'  tag],1)
+                    ser.addVolume(sub, ['^mwp4'  tag ext],['mwp4'  tag],1)
+                    ser.addVolume(sub, ['^mwp5'  tag ext],['mwp5'  tag],1)
+                    ser.addVolume(sub, ['^mwp6'  tag ext],['mwp6'  tag],1)
                 case 2
-                    ser.addVolume(['^m0wp4' tag ext],['m0wp4' tag],1)
-                    ser.addVolume(['^m0wp5' tag ext],['m0wp5' tag],1)
-                    ser.addVolume(['^m0wp6' tag ext],['m0wp6' tag],1)
+                    ser.addVolume(sub, ['^m0wp4' tag ext],['m0wp4' tag],1)
+                    ser.addVolume(sub, ['^m0wp5' tag ext],['m0wp5' tag],1)
+                    ser.addVolume(sub, ['^m0wp6' tag ext],['m0wp6' tag],1)
             end
             
             %--------------------------------------------------------------
             % Jacobian
             %--------------------------------------------------------------
-            if par.jacobian, ser.addVolume(['^wj_' tag ext],['wj_' tag],1), end
+            if par.jacobian, ser.addVolume(sub, ['^wj_' tag ext],['wj_' tag],1), end
             
             %--------------------------------------------------------------
             % Warp field
             %--------------------------------------------------------------
-            if par.warp(1), ser.addVolume([ '^y_' tag ext],[ 'y_' tag],1), end
-            if par.warp(2), ser.addVolume(['^iy_' tag ext],['iy_' tag],1), end
+            if par.warp(1), ser.addVolume(sub, [ '^y_' tag ext],[ 'y_' tag],1), end
+            if par.warp(2), ser.addVolume(sub, ['^iy_' tag ext],['iy_' tag],1), end
             
             
         elseif par.sge %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
