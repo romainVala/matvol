@@ -107,14 +107,22 @@ for ser = 1 : numel(serieArray)
         
         % Fetch files
         if exist('subdirs','var')
-            if length(subdirs)==1 && strcmp(subdirs{1},'root')
+            if length(subdirs)==1 && strcmp(subdirs{1},'root')     % define manually the path of the object
                 volume_found = file_regex;
-            else
+                file_path = [fileparts(file_regex) filesep];       % be sure to have a / in the end of the path
+                sub = strrep(file_path, serieArray(ser).path, ''); % remove / at the end to save a clean subdir variable
+                if ~isempty(sub) && strcmp(sub(end),filesep), sub(end) = []; end
+            elseif length(subdirs)==1 && strcmp(subdirs{1},'')     % dynamic adding,    no subdir
+                volume_found = char(get_subdir_regex_files( serieArray(ser).path, file_regex, par ));
+                sub = '';
+            else                                                   % dynamic adding, using subdir(s)
                 subdir_found = get_subdir_regex( serieArray(ser).path, subdirs{:} );
-                volume_found = char(get_subdir_regex_files( subdir_found        , file_regex, par ));
+                volume_found = char(get_subdir_regex_files( subdir_found, file_regex, par ));
+                sub = char(fullfile(subdirs{:}));
             end
         else
             volume_found = char(get_subdir_regex_files( serieArray(ser).path, file_regex, par ));
+            sub = '';
         end
         
         if ~isempty(volume_found) % file found
@@ -125,7 +133,7 @@ for ser = 1 : numel(serieArray)
                 if size(volume_found,1) == nrVolumes
                     
                     % Volume found, so add it
-                    serieArray(ser).volume(end + 1) = volume(volume_found, tag, serieArray(ser).exam , serieArray(ser));
+                    serieArray(ser).volume(end + 1) = volume(volume_found, tag, serieArray(ser).exam , serieArray(ser), sub);
                     
                 else
                     
@@ -158,7 +166,7 @@ for ser = 1 : numel(serieArray)
             else % no, so the number of files foud does not matter
                 
                 % Volume found, so add it
-                serieArray(ser).volume(end + 1) = volume(volume_found, tag, serieArray(ser).exam , serieArray(ser));
+                serieArray(ser).volume(end + 1) = volume(volume_found, tag, serieArray(ser).exam , serieArray(ser), sub);
                 
             end
             

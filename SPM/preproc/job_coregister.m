@@ -196,6 +196,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         src_vol = src_obj(iVol);
         src_ser = src_vol.serie;
         src_tag = src_vol.tag;
+        src_sub = src_vol.subdir;
         
         if ~isempty(other)
             
@@ -203,7 +204,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             oth_vol = oth_obj(iVol);
             oth_ser = oth_vol.serie;
             oth_tag = oth_vol.tag;
-            
+            oth_sub = oth_vol.subdir;
         end
         
         if par.run
@@ -214,9 +215,9 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 case 'estimate'
                     % pass, no volume created
                 case 'estimate_and_write'
-                    src_ser.addVolume(['^' par.prefix src_tag ext],[par.prefix src_tag],1)
+                    src_ser.addVolume(src_sub, ['^' par.prefix src_tag ext],[par.prefix src_tag],1)
                 case 'write'
-                    src_ser.addVolume(['^' par.prefix src_tag ext],[par.prefix src_tag],1)
+                    src_ser.addVolume(src_sub, ['^' par.prefix src_tag ext],[par.prefix src_tag],1)
             end
             
             if ~isempty(other)
@@ -225,9 +226,9 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                     case 'estimate'
                         % pass, no volume created
                     case 'estimate_and_write'
-                        oth_ser.addVolume(['^' par.prefix oth_tag ext],[par.prefix oth_tag],1)
+                        oth_ser.addVolume(oth_sub, ['^' par.prefix oth_tag ext],[par.prefix oth_tag],1)
                     case 'write'
-                        oth_ser.addVolume(['^' par.prefix oth_tag ext],[par.prefix oth_tag],1)
+                        oth_ser.addVolume(oth_sub, ['^' par.prefix oth_tag ext],[par.prefix oth_tag],1)
                 end
                 
             end

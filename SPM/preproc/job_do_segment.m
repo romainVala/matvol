@@ -174,36 +174,37 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         vol = volumeArray(iVol);
         ser = vol.serie;
         tag = vol.tag;
+        sub = vol.subdir;
         
         if par.run
             
             ext  = '.*.nii';
             
             % Warp field
-            if par.warp(2), ser.addVolume([        '^y_' tag ext],[        'y_' tag],1), end % Forward
-            if par.warp(1), ser.addVolume([       '^iy_' tag ext],[       'iy_' tag],1), end % Inverse
+            if par.warp(2), ser.addVolume(sub, [        '^y_' tag ext],[        'y_' tag],1), end % Forward
+            if par.warp(1), ser.addVolume(sub, [       '^iy_' tag ext],[       'iy_' tag],1), end % Inverse
             
             % Bias field
-            if par.bias(2), ser.addVolume(['^m'          tag ext],['m'          tag],1), end % Corrected
-            if par.bias(1), ser.addVolume(['^BiasField_' tag ext],['BiasField_' tag],1), end % Field
+            if par.bias(2), ser.addVolume(sub, ['^m'          tag ext],['m'          tag],1), end % Corrected
+            if par.bias(1), ser.addVolume(sub, ['^BiasField_' tag ext],['BiasField_' tag],1), end % Field
             
             % GM
-            if par.GM (3), ser.addVolume([         '^c1' tag ext],[        'c1' tag],1), end % native_space(c*)
-            if par.GM (4), ser.addVolume([        '^rc1' tag ext],[       'rc1' tag],1), end % native_space_dartel_import(rc*)
-            if par.GM (1), ser.addVolume([        '^wc1' tag ext],[       'wc1' tag],1), end % warped_space_Unmodulated(wc*)
-            if par.GM (2), ser.addVolume([       '^mwc1' tag ext],[      'mwc1' tag],1), end % warped_space_modulated(mwc*)
+            if par.GM (3), ser.addVolume(sub, [         '^c1' tag ext],[        'c1' tag],1), end % native_space(c*)
+            if par.GM (4), ser.addVolume(sub, [        '^rc1' tag ext],[       'rc1' tag],1), end % native_space_dartel_import(rc*)
+            if par.GM (1), ser.addVolume(sub, [        '^wc1' tag ext],[       'wc1' tag],1), end % warped_space_Unmodulated(wc*)
+            if par.GM (2), ser.addVolume(sub, [       '^mwc1' tag ext],[      'mwc1' tag],1), end % warped_space_modulated(mwc*)
             
             % WM
-            if par.WM (3), ser.addVolume([         '^c2' tag ext],[        'c2' tag],1), end % native_space(c*)
-            if par.WM (4), ser.addVolume([        '^rc2' tag ext],[       'rc2' tag],1), end % native_space_dartel_import(rc*)
-            if par.WM (1), ser.addVolume([        '^wc2' tag ext],[       'wc2' tag],1), end % warped_space_Unmodulated(wc*)
-            if par.WM (2), ser.addVolume([       '^mwc2' tag ext],[      'mwc2' tag],1), end % warped_space_modulated(mwc*)
+            if par.WM (3), ser.addVolume(sub, [         '^c2' tag ext],[        'c2' tag],1), end % native_space(c*)
+            if par.WM (4), ser.addVolume(sub, [        '^rc2' tag ext],[       'rc2' tag],1), end % native_space_dartel_import(rc*)
+            if par.WM (1), ser.addVolume(sub, [        '^wc2' tag ext],[       'wc2' tag],1), end % warped_space_Unmodulated(wc*)
+            if par.WM (2), ser.addVolume(sub, [       '^mwc2' tag ext],[      'mwc2' tag],1), end % warped_space_modulated(mwc*)
             
             % CSF
-            if par.CSF(3), ser.addVolume([         '^c3' tag ext],[        'c3' tag],1), end % native_space(c*)
-            if par.CSF(4), ser.addVolume([        '^rc3' tag ext],[       'rc3' tag],1), end % native_space_dartel_import(rc*)
-            if par.CSF(1), ser.addVolume([        '^wc3' tag ext],[       'wc3' tag],1), end % warped_space_Unmodulated(wc*)
-            if par.CSF(2), ser.addVolume([       '^mwc3' tag ext],[      'mwc3' tag],1), end % warped_space_modulated(mwc*)
+            if par.CSF(3), ser.addVolume(sub, [         '^c3' tag ext],[        'c3' tag],1), end % native_space(c*)
+            if par.CSF(4), ser.addVolume(sub, [        '^rc3' tag ext],[       'rc3' tag],1), end % native_space_dartel_import(rc*)
+            if par.CSF(1), ser.addVolume(sub, [        '^wc3' tag ext],[       'wc3' tag],1), end % warped_space_Unmodulated(wc*)
+            if par.CSF(2), ser.addVolume(sub, [       '^mwc3' tag ext],[      'mwc3' tag],1), end % warped_space_modulated(mwc*)
             
             
         elseif par.sge

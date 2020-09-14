@@ -97,10 +97,16 @@ job = do_cmd_sge(job, par);
 
 if obj && par.auto_add_obj && par.run
     
-    tag             =  {in_obj.tag};
-    ext             = '.*.nii$';
     for iVol = 1 : numel(in_obj)
-        in_obj(iVol).serie.addVolume(['^' par.prefix tag{iVol} ext],[par.prefix tag{iVol}])
+        
+        vol = in_obj(iVol);
+        ser = vol.serie;
+        tag = vol.tag;
+        ext = '.*.nii';
+        sub = vol.subdir;
+        
+        ser.addVolume( sub, ['^' par.prefix tag{iVol} ext], [par.prefix tag{iVol}] )
+        
     end
     
 end

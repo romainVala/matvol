@@ -200,48 +200,42 @@ if obj && par.auto_add_obj && (par.run || par.sge)
     
     volumeArray = volumeArray.removeEmpty;
     
+    switch par.fsl_output_format
+        case 'NIFTI'
+            ext = '.*.nii';
+        case 'NIFTI_GZ'
+            ext = '.*.nii.gz';
+    end
+    
     for iVol = 1 : length(volumeArray)
         
         % Shortcut
         vol = volumeArray(iVol);
         ser = vol.serie;
         tag = vol.tag;
+        sub = vol.subdir;
         
         if par.run
             
-            switch par.fsl_output_format
-                case 'NIFTI'
-                    ext = '.*.nii';
-                case 'NIFTI_GZ'
-                    ext = '.*.nii.gz';
-            end
-            
-            ser.addVolume(['^ut'     tag ext],['ut'     tag],1)
+            ser.addVolume(sub, ['^ut'     tag ext],['ut'     tag],1)
             
             if strcmp(tag(1),'r')
                 tag = tag(2:end);
             end
-            ser.addVolume(['^utmean' tag ext],['utmean' tag],1)
+            ser.addVolume(sub, ['^utmean' tag ext],['utmean' tag],1)
             
         elseif par.sge
-            
-            switch par.fsl_output_format
-                case 'NIFTI'
-                    ext = '.nii';
-                case 'NIFTI_GZ'
-                    ext = '.nii.gz';
-            end
             
             [pathstr, name, ~] = fileparts(vol.path);
             [~      , name, ~] = fileparts(name); % make sure to have the name, in case of 2 extension .nii.gz
             
-            ser.addVolume('root', [pathstr filesep 'ut' name ext] ,['ut' tag])
+            ser.addVolume('root', fullfile(pathstr, sub, ['ut' name ext]) ,['ut' tag])
             
             if strcmp(tag(1),'r')
                 tag  = tag (2:end);
                 name = name(2:end);
             end
-            ser.addVolume('root', [pathstr filesep 'utmean' name ext] ,['utmean' tag])
+            ser.addVolume('root', fullfile(pathstr, sub, ['utmean' name ext]) ,['utmean' tag])
             
         end
         

@@ -7,12 +7,14 @@ classdef volume < mvObject
         exam   = exam.empty  % exam   associated with this serie (See @serie object)
         serie  = serie.empty % series associated with this exam  (See @exam  object)
         
+        subdir = ''          % name of the subdir, in regards of the @serie that contains this @volume
+        
     end
     
     methods
         
         % --- Constructor -------------------------------------------------
-        function self = volume(inputPath, tag, examObj, serieObj)
+        function self = volume(inputPath, tag, examObj, serieObj, subdir)
             %
             
             % Input args ?
@@ -35,6 +37,11 @@ classdef volume < mvObject
                 % object.
                 if exist('serieObj','var')
                     self.serie = serieObj;
+                end
+                
+                % Subdir ?
+                if exist('subdir','var')
+                    self.subdir = subdir;
                 end
                 
             end

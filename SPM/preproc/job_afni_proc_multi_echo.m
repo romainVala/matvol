@@ -299,9 +299,9 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 serie = series.getVolume(echo.pth ,'path').removeEmpty.getOne.serie;
                 
                 if     par.run % use the normal method
-                    serie.addVolume( ['^' prefix echo.outname echo.ext '$'] , sprintf('%se%d',prefix,iEcho), 1 );
+                    serie.addVolume( ['^' prefix echo.outname echo.ext '$']          , sprintf('%se%d',prefix,iEcho), 1 );
                 elseif par.sge % add the new volume in the object manually, because the file is not created yet
-                    serie.addVolume( 'root' , addprefixtofilenames(echo.fname,prefix), sprintf('%se%d',prefix,iEcho) );
+                    serie.addVolume( 'root' , addprefixtofilenames(echo.fname,prefix), sprintf('%se%d',prefix,iEcho)    );
                 end
                 
             end % iEcho

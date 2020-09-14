@@ -1,6 +1,5 @@
 function examArray = getExam( volumeArray )
-%GETPATH output is a cell of mvArray(i).path, with the same dimension as mvArray
-% exemple : path{x,y,x} = mvArray{x,y,z}.path
+%GETEXAM output is a @exam array, with the same dimension as volumeArray
 
 examArray = exam.empty;
 

@@ -158,12 +158,13 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         if isempty(vol.path), continue, end
         ser = vol.serie;
         tag = vol.tag;
+        sub = vol.subdir;
         
         if par.run
             
             ext  = '.*.nii';
             
-            ser.addVolume(['^' par.prefix tag ext],[par.prefix tag],1)
+            ser.addVolume(sub, ['^' par.prefix tag ext],[par.prefix tag],1)
             
         elseif par.sge
             
@@ -183,12 +184,13 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         vol = firstVolume(iVol);
         ser = vol.serie;
         tag = vol.tag;
+        sub = vol.subdir;
         
         if par.run
             
             ext  = '.*.nii';
             
-            ser.addVolume(['^mean' tag ext],['mean' tag],1)
+            ser.addVolume(sub, ['^mean' tag ext],['mean' tag],1)
             
         elseif par.sge
             
