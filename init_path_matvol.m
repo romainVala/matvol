@@ -9,7 +9,7 @@ regexp_to_take_out = {
 
 for l =  1:length(regexp_to_take_out)
     where_cell = regexp(paths_to_add,regexp_to_take_out{l},'once');
-    where_idx = cellfun( 'isempty', where_cell, 'UniformOutput', 1);
+    where_idx = cellfun( @isempty, where_cell, 'UniformOutput', 1);
     paths_to_add = paths_to_add(where_idx);
 end
 
