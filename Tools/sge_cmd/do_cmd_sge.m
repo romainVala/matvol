@@ -52,6 +52,9 @@ end
 if isfield(par,'nb_thread')
     par.sge_nb_coeur = par.nb_thread;
 end
+if isfield(par,'par.nthreads')
+    par.sge_nb_coeur = par.nthread;
+end
 
 if isnumeric(par.mem)
     par.mem = num2str(par.mem);
