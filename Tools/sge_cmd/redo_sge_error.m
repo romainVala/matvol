@@ -53,7 +53,7 @@ for k=1:length(erf)
             r_movefile(logf(k),redodir{1},'move');
             
             if par.python_job
-                jobfile = sprintf('j%d.bash',numjob);
+                jobfile = sprintf('j%.3d.bash',numjob);
             else
                 jobfile = sprintf('j%.2d_%s',numjob,jobname);
             end
