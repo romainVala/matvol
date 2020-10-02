@@ -151,7 +151,9 @@ for subj=1:nrSubject
     fo = addsuffixtofilenames(topup_outdir,'/4D_orig_topup');
     
     if isempty(par.do_apply)
-        par.do_apply = ones(size(runList));
+        do_apply = ones(size(runList));
+    else
+        do_apply = par.do_apply;
     end
     
     for run=1:length(runList)
@@ -159,7 +161,7 @@ for subj=1:nrSubject
         %par.index=realind;
         
         par.index=run;
-        if par.do_apply(run)
+        if do_apply(run)
             for volume_idx = 1:size(runList{run},1)
                 job_subj = do_fsl_apply_topup(runList{run}(volume_idx,:),fo,par, job_subj);
             end
