@@ -52,7 +52,7 @@ end
 if isfield(par,'nb_thread')
     par.sge_nb_coeur = par.nb_thread;
 end
-if isfield(par,'par.nthreads')
+if isfield(par,'nthreads')
     par.sge_nb_coeur = par.nthread;
 end
 
