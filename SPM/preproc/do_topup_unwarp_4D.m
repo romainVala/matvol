@@ -93,6 +93,8 @@ for subj=1:nrSubject
     % working directory
     topup_outdir = r_mkdir(subjectName,par.subdir);
     
+    clear fmean
+    
     for run = 1:length(runList)
         
         % if realign & reslice runList is 'rf' volume whereas the mean is meanf
