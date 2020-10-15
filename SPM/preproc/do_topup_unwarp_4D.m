@@ -204,13 +204,6 @@ if obj && par.auto_add_obj && (par.run || par.sge)
     
     volumeArray = volumeArray.removeEmpty;
     
-    switch par.fsl_output_format
-        case 'NIFTI'
-            ext = '.*.nii';
-        case 'NIFTI_GZ'
-            ext = '.*.nii.gz';
-    end
-    
     for iVol = 1 : length(volumeArray)
         
         % Shortcut
@@ -221,6 +214,13 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         
         if par.run
             
+            switch par.fsl_output_format
+                case 'NIFTI'
+                    ext = '.*.nii';
+                case 'NIFTI_GZ'
+                    ext = '.*.nii.gz';
+            end
+            
             ser.addVolume(sub, ['^ut'     tag ext],['ut'     tag],1)
             
             if strcmp(tag(1),'r')
@@ -229,6 +229,13 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             ser.addVolume(sub, ['^utmean' tag ext],['utmean' tag],1)
             
         elseif par.sge
+            
+           switch par.fsl_output_format
+                case 'NIFTI'
+                    ext = '.nii';
+                case 'NIFTI_GZ'
+                    ext = '.nii.gz';
+            end
             
             [pathstr, name, ~] = fileparts(vol.path);
             [~      , name, ~] = fileparts(name); % make sure to have the name, in case of 2 extension .nii.gz
