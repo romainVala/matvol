@@ -4,7 +4,7 @@ function examArray = getExam( serieArray )
 examArray = exam.empty;
 
 for i = 1 : numel(serieArray)
-    examArray(i) = serieArray.exam; % !!! this is a pointer copy, not a deep copy
+    examArray(i) = serieArray(i).exam; % !!! this is a pointer copy, not a deep copy
 end
 
 examArray = reshape(examArray, size(serieArray));
