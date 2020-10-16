@@ -216,9 +216,9 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             
             switch par.fsl_output_format
                 case 'NIFTI'
-                    ext = '.*.nii';
+                    ext = '.*.nii$';
                 case 'NIFTI_GZ'
-                    ext = '.*.nii.gz';
+                    ext = '.*.nii.gz$';
             end
             
             ser.addVolume(sub, ['^ut'     tag ext],['ut'     tag],1)
