@@ -10,6 +10,8 @@ end
 
 %% defpar
 
+defpar.write_residuals = 0;
+
 defpar.jobname  = 'spm_glm_est';
 defpar.walltime = '11:00:00';
 
@@ -34,7 +36,7 @@ for idx = 1:length(fspm)
     end
     
     jobs{idx}.spm.stats.fmri_est.spmmat = fspm(idx) ; %#ok<*AGROW>
-    jobs{idx}.spm.stats.fmri_est.write_residuals = 0;
+    jobs{idx}.spm.stats.fmri_est.write_residuals = par.write_residuals;
     jobs{idx}.spm.stats.fmri_est.method.Classical = 1;
     
 end
