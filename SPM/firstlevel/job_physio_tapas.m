@@ -21,6 +21,12 @@ function jobs = job_physio_tapas( par )
 %
 %
 %----------------------------------------------------------------------------------------------------------------------------------------------------
+% Optional
+%----------------------------------------------------------------------------------------------------------------------------------------------------
+%    .output_filename = 'multiple_regressors.txt'
+%
+%
+%----------------------------------------------------------------------------------------------------------------------------------------------------
 % Physio
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 %
@@ -100,6 +106,10 @@ defpar.physio   = 0;
 defpar.noiseROI = 0;
 defpar.rp       = 0;
 
+%----------------------------------------------------------------------------------------------------------------------------------------------------
+% ALWAYS MANDATORY
+%----------------------------------------------------------------------------------------------------------------------------------------------------
+defpar.output_filename = multiple_regressors.txt;
 
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 % Physio
@@ -204,7 +214,7 @@ for iVol = 1:nVol
     
     jobs{iVol}.spm.tools.physio.save_dir = cellstr(par.outdir{iVol});
     
-    outputfile = fullfile(char(par.outdir{iVol}),'multiple_regressors.txt');
+    outputfile = fullfile(char(par.outdir{iVol}),par.output_filename);
     if ~par.redo && exist(outputfile,'file')
         skip = [skip iVol]; %#ok<AGROW>
         fprintf('[%s]: skiping iSubj %d because %s exist \n',mfilename,iVol,outputfile);
@@ -264,7 +274,7 @@ for iVol = 1:nVol
     jobs{iVol}.spm.tools.physio.preproc.cardiac.initial_cpulse_select.auto_matched.min = 0.4;
     jobs{iVol}.spm.tools.physio.preproc.cardiac.initial_cpulse_select.auto_matched.file = 'initial_cpulse_kRpeakfile.mat';
     jobs{iVol}.spm.tools.physio.preproc.cardiac.posthoc_cpulse_select.off = struct([]);
-    jobs{iVol}.spm.tools.physio.model.output_multiple_regressors = 'multiple_regressors.txt';
+    jobs{iVol}.spm.tools.physio.model.output_multiple_regressors = par.output_filename;
     jobs{iVol}.spm.tools.physio.model.output_physio = 'physio.mat';
     jobs{iVol}.spm.tools.physio.model.orthogonalise = 'none';
     
