@@ -42,8 +42,8 @@ function jobs = job_physio_tapas( par )
 %    .physio_HRV       (1 or 0)
 %    .physio_RVT       (1 or 0)
 %    .physio_logfiles_vendor  = 'Siemens_Tics'; % Siemens CMRR multiband sequence, only this one is coded yet
-%    .par.logfiles_align_scan = 'last';         % 'last' / 'first'
-%    .par.slice_to_realign    = 'middle';       % 'first' / 'middle' / 'last' / sliceNumber (integer)
+%    .physio_logfiles_align_scan = 'last';         % 'last' / 'first'
+%    .physio_slice_to_realign    = 'middle';       % 'first' / 'middle' / 'last' / sliceNumber (integer)
 %
 %
 %----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -225,14 +225,14 @@ for iVol = 1:nVol
         
         % Physio files ----------------------------------------------------
         
-        if ~strcmp(par.logfiles_vendor,'Siemens_Tics')
+        if ~strcmp(par.physio_logfiles_vendor,'Siemens_Tics')
             error('[%s] only "%s" is coded yet', mfilename, 'Siemens_Tics' )
         end
         
-        jobs{iVol}.spm.tools.physio.log_files.vendor      = par.logfiles_vendor;
-        jobs{iVol}.spm.tools.physio.log_files.cardiac     = cellstr(par.physio_PULSE{iVol});
-        jobs{iVol}.spm.tools.physio.log_files.respiration = cellstr(par.physio_RESP {iVol});
-        jobs{iVol}.spm.tools.physio.log_files.scan_timing = cellstr(par.physio_Info {iVol});
+        jobs{iVol}.spm.tools.physio.log_files.vendor      = par.physio_logfiles_vendor;
+        jobs{iVol}.spm.tools.physio.log_files.cardiac     = cellstr(par.physio_PULS{iVol});
+        jobs{iVol}.spm.tools.physio.log_files.respiration = cellstr(par.physio_RESP{iVol});
+        jobs{iVol}.spm.tools.physio.log_files.scan_timing = cellstr(par.physio_Info{iVol});
         jobs{iVol}.spm.tools.physio.log_files.sampling_interval          = [];
         jobs{iVol}.spm.tools.physio.log_files.relative_start_acquisition = 0;
         jobs{iVol}.spm.tools.physio.log_files.align_scan                 = 'last';
