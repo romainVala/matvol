@@ -253,19 +253,21 @@ if obj && par.auto_add_obj && (par.run || par.sge)
     
     for iSubj = 1 : length(meinfo_.data)
         for iRun = 1 : length(meinfo_.data{iSubj})
+            
+            % Shortcut
+            echo = meinfo_.data{iSubj}{iRun}(1); % use first echo because all echos are in the same dir
+            
+            % Fetch the good serie
+            % In case of empty element in in_obj, this "weird" strategy is very robust.
+            serie = in_obj(iSubj,:).getVolume( echo.pth ,'path').removeEmpty.getOne.serie;
+            
             for iEcho = 1 : length(meinfo_.data{iSubj}{iRun})
                 
-                % Shortcut
-                echo = meinfo_.data{iSubj}{iRun}(iEcho);
-                
-                % Fetch the good serie
-                % In case of empty element in in_obj, this "weird" strategy is very robust.
-                serie = in_obj.getVolume( echo.pth ,'path').removeEmpty.getOne.serie;
-                
-                if par.run     % use the normal method
+                if     par.run % use the normal method
                     serie.addVolume( ['^' echo.outname echo.ext '$'] , sprintf('e%d',iEcho), 1 );
                 elseif par.sge % add the new volume in the object manually, because the file is not created yet
-                    serie.volume(end + 1) = volume( echo.fname, sprintf('e%d',iEcho), serie.exam, serie );
+                    % serie.volume(end + 1) = volume( echo.fname, sprintf('e%d',iEcho), serie.exam, serie );
+                    serie.addVolume('root', echo.fname, sprintf('e%d',iEcho))
                 end
                 
             end % iEcho
@@ -273,6 +275,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
     end % iSubj
     
     meinfo_.volume = in_obj.getVolume('^e\d+$');
+    
     
 end
 

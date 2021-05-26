@@ -23,7 +23,7 @@ skip = [];
 for vol = 1 : numel(volumes)
     
     if par.redo
-        jobs{vol} = sprintf(                         'gzip -f -k "%s"; fi \n',                   path_withoutGZ{vol});
+        jobs{vol} = sprintf(                         'gzip -f -k "%s"; \n',                   path_withoutGZ{vol});
         
     else
         if ~exist(path_withGZ{vol},'file') % i know its redontant, but it makes faster boths SGE=0 & SGE=1

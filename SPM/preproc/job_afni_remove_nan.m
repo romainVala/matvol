@@ -105,7 +105,7 @@ if obj && par.auto_add_obj && par.run
         ext = '.*.nii';
         sub = vol.subdir;
         
-        ser.addVolume( sub, ['^' par.prefix tag{iVol} ext], [par.prefix tag{iVol}] )
+        ser.addVolume( sub, ['^' par.prefix tag ext], [par.prefix tag] )
         
     end
     

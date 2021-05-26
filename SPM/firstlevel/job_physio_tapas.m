@@ -21,6 +21,12 @@ function jobs = job_physio_tapas( par )
 %
 %
 %----------------------------------------------------------------------------------------------------------------------------------------------------
+% Optional
+%----------------------------------------------------------------------------------------------------------------------------------------------------
+%    .output_filename = 'multiple_regressors.txt'
+%
+%
+%----------------------------------------------------------------------------------------------------------------------------------------------------
 % Physio
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 %
@@ -36,8 +42,8 @@ function jobs = job_physio_tapas( par )
 %    .physio_HRV       (1 or 0)
 %    .physio_RVT       (1 or 0)
 %    .physio_logfiles_vendor  = 'Siemens_Tics'; % Siemens CMRR multiband sequence, only this one is coded yet
-%    .par.logfiles_align_scan = 'last';         % 'last' / 'first'
-%    .par.slice_to_realign    = 'middle';       % 'first' / 'middle' / 'last' / sliceNumber (integer)
+%    .physio_logfiles_align_scan = 'last';         % 'last' / 'first'
+%    .physio_slice_to_realign    = 'middle';       % 'first' / 'middle' / 'last' / sliceNumber (integer)
 %
 %
 %----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -100,6 +106,10 @@ defpar.physio   = 0;
 defpar.noiseROI = 0;
 defpar.rp       = 0;
 
+%----------------------------------------------------------------------------------------------------------------------------------------------------
+% ALWAYS MANDATORY
+%----------------------------------------------------------------------------------------------------------------------------------------------------
+defpar.output_filename = 'multiple_regressors.txt';
 
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 % Physio
@@ -204,7 +214,7 @@ for iVol = 1:nVol
     
     jobs{iVol}.spm.tools.physio.save_dir = cellstr(par.outdir{iVol});
     
-    outputfile = fullfile(char(par.outdir{iVol}),'multiple_regressors.txt');
+    outputfile = fullfile(char(par.outdir{iVol}),par.output_filename);
     if ~par.redo && exist(outputfile,'file')
         skip = [skip iVol]; %#ok<AGROW>
         fprintf('[%s]: skiping iSubj %d because %s exist \n',mfilename,iVol,outputfile);
@@ -215,14 +225,14 @@ for iVol = 1:nVol
         
         % Physio files ----------------------------------------------------
         
-        if ~strcmp(par.logfiles_vendor,'Siemens_Tics')
+        if ~strcmp(par.physio_logfiles_vendor,'Siemens_Tics')
             error('[%s] only "%s" is coded yet', mfilename, 'Siemens_Tics' )
         end
         
-        jobs{iVol}.spm.tools.physio.log_files.vendor      = par.logfiles_vendor;
-        jobs{iVol}.spm.tools.physio.log_files.cardiac     = cellstr(par.physio_PULSE{iVol});
-        jobs{iVol}.spm.tools.physio.log_files.respiration = cellstr(par.physio_RESP {iVol});
-        jobs{iVol}.spm.tools.physio.log_files.scan_timing = cellstr(par.physio_Info {iVol});
+        jobs{iVol}.spm.tools.physio.log_files.vendor      = par.physio_logfiles_vendor;
+        jobs{iVol}.spm.tools.physio.log_files.cardiac     = cellstr(par.physio_PULS{iVol});
+        jobs{iVol}.spm.tools.physio.log_files.respiration = cellstr(par.physio_RESP{iVol});
+        jobs{iVol}.spm.tools.physio.log_files.scan_timing = cellstr(par.physio_Info{iVol});
         jobs{iVol}.spm.tools.physio.log_files.sampling_interval          = [];
         jobs{iVol}.spm.tools.physio.log_files.relative_start_acquisition = 0;
         jobs{iVol}.spm.tools.physio.log_files.align_scan                 = 'last';
@@ -264,7 +274,7 @@ for iVol = 1:nVol
     jobs{iVol}.spm.tools.physio.preproc.cardiac.initial_cpulse_select.auto_matched.min = 0.4;
     jobs{iVol}.spm.tools.physio.preproc.cardiac.initial_cpulse_select.auto_matched.file = 'initial_cpulse_kRpeakfile.mat';
     jobs{iVol}.spm.tools.physio.preproc.cardiac.posthoc_cpulse_select.off = struct([]);
-    jobs{iVol}.spm.tools.physio.model.output_multiple_regressors = 'multiple_regressors.txt';
+    jobs{iVol}.spm.tools.physio.model.output_multiple_regressors = par.output_filename;
     jobs{iVol}.spm.tools.physio.model.output_physio = 'physio.mat';
     jobs{iVol}.spm.tools.physio.model.orthogonalise = 'none';
     

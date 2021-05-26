@@ -288,15 +288,20 @@ if obj && par.auto_add_obj && (par.run || par.sge)
     
     for iSubj = 1 : length(meinfo.data)
         for iRun = 1 : length(meinfo.data{iSubj})
+            
+            % Shortcut
+            echo = meinfo.data{iSubj}{iRun}(1); % use first echo because all echos are in the same dir
+            
+            % Fetch the good serie
+            % In case of empty element in in_obj, this "weird" strategy is very robust.
+            if par.seperate
+                serie  = meinfo.volume(iSubj,1,1).serie;
+            else
+                series = [in_obj(iSubj,:,1).serie]';
+                serie  = series.getVolume(echo.pth ,'path').removeEmpty.getOne.serie;
+            end            
+            
             for iEcho = 1 : length(meinfo.data{iSubj}{iRun})
-                
-                % Shortcut
-                echo = meinfo.data{iSubj}{iRun}(iEcho);
-                
-                % Fetch the good serie
-                % In case of empty element in in_obj, this "weird" strategy is very robust.
-                series = [in_obj.serie]';
-                serie = series.getVolume(echo.pth ,'path').removeEmpty.getOne.serie;
                 
                 if     par.run % use the normal method
                     serie.addVolume( ['^' prefix echo.outname echo.ext '$']          , sprintf('%se%d',prefix,iEcho), 1 );
