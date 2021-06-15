@@ -211,6 +211,7 @@ if par.do_denoise
     fodti=fodti{1};
     par.sge = choose_sge;
 else
+    fodti = addsuffixtofilenames(fodti,'.nii.gz');
     job = jobappend;
 end
     
