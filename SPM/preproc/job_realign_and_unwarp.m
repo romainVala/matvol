@@ -30,7 +30,7 @@ end
 
 % SPM:Spatial:Realign:Estimate & Reslice
 defpar.prefix      = 'r';
-defpar.file_reg    = '^f.*nii';
+defpar.file_reg    = '^[vf].*nii';
 defpar.which_write = [2 1]; %all + mean
 
 % cluster
@@ -108,7 +108,7 @@ for subj = 1:nrSubject
         end
         
         %echo time diff from field map magnetude
-        json = gfile(fmdir{subj}{1},'json')
+        json = gfile(fmdir{subj}{1},'dic.*json')
         json=cellstr(char(json))
         res = get_string_from_json(json, {'EchoTime'}, {'num'});
         fm_TE(1) = min(res{1}{1}, res{2}{1});
