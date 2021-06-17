@@ -54,7 +54,7 @@ for k=1:length(fi_4D)
                 fi_4D{k},fbvec{k},fbval{k},fo4D{k},fo4D{k},fo{k});
             
         else
-            cmd{k} = sprintf('LD_LIBRARY_PATH=;dwiextract %s - -fslgrad %s %s -bzero | mrmath - mean %s -axis 3\n',...
+            cmd{k} = sprintf('LD_LIBRARY_PATH=;dwiextract %s - -fslgrad %s %s -bzero | mrmath -force - mean %s -axis 3\n',...
                 fi_4D{k},fbvec{k},fbval{k},fo{k});
         end
     end
