@@ -45,7 +45,7 @@ defpar.redo         = 0;
 defpar.auto_add_obj = 1;
 defpar.mask = 1;
 defpar.mask_vdm = 1;
-defpar.use_JSON_regex = 'json';
+defpar.use_JSON_regex = '(^stack.*json|^dic.*json)';
 defpar.fanat = '';
 
 par = complet_struct(par,defpar);
@@ -108,7 +108,7 @@ for subj = 1:nrSubject
         end
         
         %echo time diff from field map magnetude
-        json = gfile(fmdir{subj}{1},'dic.*json')
+        json = gfile(fmdir{subj}{1},par.use_JSON_regex)
         json=cellstr(char(json))
         res = get_string_from_json(json, {'EchoTime'}, {'num'});
         fm_TE(1) = min(res{1}{1}, res{2}{1});
