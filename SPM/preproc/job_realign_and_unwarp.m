@@ -111,9 +111,15 @@ for subj = 1:nrSubject
         json = gfile(fmdir{subj}{1},par.use_JSON_regex)
         json=cellstr(char(json))
         res = get_string_from_json(json, {'EchoTime'}, {'num'});
-        fm_TE(1) = min(res{1}{1}, res{2}{1});
-        fm_TE(2) = max(res{1}{1}, res{2}{1});
-        
+        if isempty(res{1}{1}) %xnat json is different ... ? so easier (but longger) way
+             j=loadjson(json{1});
+             echotime=j.time.samples.EchoTime;
+             fm_TE(1) = min(echotime);
+             fm_TE(2) = max(echotime);
+        else
+            fm_TE(1) = min(res{1}{1}, res{2}{1});
+            fm_TE(2) = max(res{1}{1}, res{2}{1});
+        end
         
         %skip if last one exist
         lastrun_filenames_cellstr = addprefixtofilenames(currentRun(end),par.prefix);
@@ -130,8 +136,8 @@ for subj = 1:nrSubject
             else
                 allVolumes = currentRun;
             end
-            fphase = gfile(fmdir{subj}{2},'^s_S.*nii',1);
-            fmag   = gfile(fmdir{subj}{1},'^s_S.*nii',2);
+            fphase = gfile(fmdir{subj}{2},'(^v_.*nii|^s_S.*nii)',1);
+            fmag   = gfile(fmdir{subj}{1},'(^v_.*nii|^s_S.*nii)',2);
             fmag = {deblank(fmag{1}(1,:))};
             
             fphase = unzip_volume(fphase);
