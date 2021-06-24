@@ -9,7 +9,7 @@ fi=cellstr(char(fi));
 for nbs=1:length(fi)
     [pp ff ] = fileparts(fi{nbs});
     try
-        fdic = get_subdir_regex_files(pp,'^dic.*json') ;
+        fdic = get_subdir_regex_files(pp,'(^stack.*json|^dic.*json)') ;
         fdic{1} = deblank(fdic{1}(1,:) );
         
     catch
