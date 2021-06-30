@@ -121,7 +121,7 @@ end
 
 %% Fetch exam, fill series, volumes ans jsons
 
-examArray = exam(baseDir, par.exam_regex); % add all subdir as @exam objects
+examArray = exam(fullfile( baseDir, 'arc001' ), par.exam_regex); % add all subdir as @exam objects
 N = numel(examArray);
 error_log = cell(size(examArray));
 
@@ -251,7 +251,7 @@ for idx = 1 : size(SequenceCategory, 1)
         % add series in the exam object smartly, so there is an auto-increment when multiple series
         [unique_name,~,table_name] = unique(name,'stable');
         for n = 1 : length(unique_name)
-            EXAM.addSerie('SCANS', strcat('^',SeriesNumber(table_name == n),'$'), 'NIFTI',unique_name{n}) % add the @serie, with BIDS tag
+            EXAM.addSerie('SCANS', strcat('^',SeriesNumber(table_name == n),'$'), 'NIFTI', unique_name{n}) % add the @serie, with BIDS tag
             flag_add = 1;
             exam_SequenceData(where(table_name == n),end) = unique_name(n);
         end
@@ -518,7 +518,7 @@ for idx = 1 : size(SequenceCategory, 1)
         % add series in the exam object smartly, so there is an auto-increment when multiple series
         [unique_name,~,table_name] = unique(name,'stable');
         for n = 1 : length(unique_name)
-            EXAM.addSerie(upper_dir_name(table_name == n),unique_name{n}) % add the @serie, with BIDS tag
+            EXAM.addSerie('SCANS', strcat('^',SeriesNumber(table_name == n),'$'), 'NIFTI', unique_name{n}) % add the @serie, with BIDS tag
             flag_add = 1;
             exam_SequenceData(where(table_name == n),end) = unique_name(n);
         end
@@ -528,7 +528,7 @@ for idx = 1 : size(SequenceCategory, 1)
         % other ?
         %------------------------------------------------------------------
     else
-        EXAM.addSerie(upper_dir_name,SequenceCategory{idx,2}) % add the @serie, with BIDS tag
+        EXAM.addSerie('SCANS', strcat('^',SeriesNumber,'$'), 'NIFTI', SequenceCategory{idx,2}) % add the @serie, with BIDS tag
         flag_add = 1;
         exam_SequenceData(where,end) = SequenceCategory(idx,2);
     end
