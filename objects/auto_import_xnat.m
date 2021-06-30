@@ -157,7 +157,7 @@ if par.verbose > 0
 end
 
 % Fetch all series dir
-subdir = gdir(EXAM.path, 'SCANS','\d+','NIFTI');
+subdir = gdir(EXAM.path, 'SCANS',par.serie_regex,'NIFTI');
 if isempty(subdir)
     error_log = log(error_log,warning( 'empty dir' ), 1);
     return
@@ -203,8 +203,8 @@ for idx = 1 : size(SequenceCategory, 1)
         continue
     end
     
-    upper_dir_name = exam_SequenceData(:,hdr.SeriesDescription);
-    SeriesNumber   = exam_SequenceData(:,hdr.SeriesNumber     );
+    upper_dir_name = exam_SequenceData(where,hdr.SeriesDescription);
+    SeriesNumber   = exam_SequenceData(where,hdr.SeriesNumber     );
     SeriesNumber   = cellfun(@num2str,SeriesNumber,'UniformOutput',0);
     
     
@@ -342,9 +342,9 @@ for idx = 1 : size(SequenceCategory, 1)
                 if any( loca ), exam_SequenceData(where( loca ),end) = {'discard'}; end % don't add the serie, just discard it
                 fl                = logical(fl - loca);
                 
-                type_   = exam_SequenceData(where,hdr.ImageType); % mag or phase
-                type = split_(type_);
-                type = type(:,3);
+                type_  = exam_SequenceData(where,hdr.ImageType); % mag or phase
+                type   = split_(type_);
+                type   = type(:,3);
                 type_M = strcmp(type,'M'); fl_mag = fl & type_M;
                 type_P = strcmp(type,'P'); fl_pha = fl & type_P;
                 
@@ -357,7 +357,48 @@ for idx = 1 : size(SequenceCategory, 1)
             if any( tse ), EXAM.addSerie('SCANS', strcat('^',SeriesNumber(tse),'$'), 'NIFTI','anat_TSE'), exam_SequenceData(where( tse ),end) = {'anat_TSE'}; flag_add = 1; end
             
             ep2d_se = ~isemptyCELL(strfind(SequenceFileName, 'ep2d_se'));
-            if any( ep2d_se ), EXAM.addSerie('SCANS', strcat('^',SeriesNumber(ep2d_se),'$'), 'NIFTI','anat_ep2d_se'), exam_SequenceData(where( ep2d_se ),end) = {'anat_ep2d_se'}; flag_add = 1; end
+            if any( ep2d_se )
+                
+                % type of image (mag, phase, sbref)
+                type_ = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
+                type = split_(type_);
+                type = type(:,3);
+                name = exam_SequenceData(where,hdr.SeriesDescription); % serie name
+                
+                type_SBRef = ~isemptyCELL(regexp(name,'SBRef$'));
+                
+                type_M = strcmp(type,'M');
+                type_P = strcmp(type,'P');
+                
+                type_M = logical( type_M - type_SBRef );
+                
+                type_name = cell(size(type));
+                type_name(type_SBRef) = {'anat_ep2d_se_sbref'};
+                type_name(type_M    ) = {'anat_ep2d_se_mag'  };
+                type_name(type_P    ) = {'anat_ep2d_se_phase'};
+                
+                type_empty = isemptyCELL(type_name); % error managment
+                type_name(type_empty) = {'anat_ep2d_se_UNKNOWN'};
+                
+                % phase dir
+                bids_dir = exam_SequenceData(where,hdr.PhaseEncodingDirection);
+                bids_dir(strcmp(bids_dir, 'j' )) = {'PA'};
+                bids_dir(strcmp(bids_dir, 'j-')) = {'AP'};
+                bids_dir(strcmp(bids_dir, 'i' )) = {'LR'};
+                bids_dir(strcmp(bids_dir, 'i-')) = {'RL'};
+                
+                % contatenate the type and the phase dir
+                name = strcat( type_name, '_', bids_dir );
+                
+                % add series in the exam object smartly, so there is an auto-increment when multiple series
+                [unique_name,~,table_name] = unique(name,'stable');
+                for n = 1 : length(unique_name)
+                    EXAM.addSerie('SCANS', strcat('^',SeriesNumber(table_name == n),'$'), 'NIFTI',unique_name{n}) % add the @serie, with BIDS tag
+                    flag_add = 1;
+                    exam_SequenceData(where(table_name == n),end) = unique_name(n);
+                end
+                
+            end % ep2d_se
             
         end
         
@@ -495,7 +536,7 @@ for idx = 1 : size(SequenceCategory, 1)
     % Add volume & json
     if flag_add
         EXAM.getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
-        EXAM.getSerie(SequenceCategory{idx,2}).addJson('json$',SequenceCategory{idx,5});
+        EXAM.getSerie(SequenceCategory{idx,2}).addJson('^v_.*json$',SequenceCategory{idx,5});
     end
     
 end % categ
