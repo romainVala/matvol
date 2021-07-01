@@ -121,7 +121,7 @@ end
 
 %% Fetch exam, fill series, volumes ans jsons
 
-examArray = exam(fullfile( baseDir, 'arc001' ), par.exam_regex); % add all subdir as @exam objects
+examArray = exam( baseDir , par.exam_regex ); % add all subdir as @exam objects
 N = numel(examArray);
 error_log = cell(size(examArray));
 
