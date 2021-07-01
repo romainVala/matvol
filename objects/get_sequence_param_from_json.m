@@ -247,7 +247,9 @@ for j = 1 : size(json_filename,1)
                     warning('wtf ? InPlanePhaseEncodingDirection')
                     phase_dir = '';
             end
-            if PhaseEncodingDirectionPositive
+            if isnan(PhaseEncodingDirectionPositive)
+                phase_dir = '';
+            elseif PhaseEncodingDirectionPositive
                 phase_dir = [phase_dir '-']; %#ok<AGROW>
             end
             data_file.PhaseEncodingDirection = phase_dir;
