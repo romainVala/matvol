@@ -114,8 +114,10 @@ SequenceCategory = {
 
 to_discard = {'haste'};
 
+% put the to_discard on the TOP, not useful now, but maybe latter...
+SequenceCategory = [repmat(cell(1,size(SequenceCategory,2)),[length(to_discard) 1]) ; SequenceCategory];
 for d = 1 : length(to_discard)
-    SequenceCategory(end+1,[1 2]) = [to_discard(d) {'discard'}]; %#ok<AGROW>
+    SequenceCategory(d,[1 2]) = [to_discard(d) {'discard'}];
 end
 
 
@@ -171,6 +173,13 @@ json = gfile(subdir,'^stack_.*json$',struct('verbose',0));
 if isempty(json)
     EXAM.is_incomplete = 1;
     return
+end
+
+for j = 1 : length(json)
+    if size(json{j},1) > 1 % several lines (several json files in this serie)
+        res = regexp(cellstr(json{j}),'\-\d{3}\.json'); % elimenate the -00x.json files, it messes ImagePosition
+        json{j} = json{j}(~isemptyCELL(res),:);
+    end
 end
 
 % Extract all parameters
@@ -469,6 +478,13 @@ for idx = 1 : size(SequenceCategory, 1)
         % dwi
         %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'dwi')
+        
+        % Only keep ORIGINAL
+        type_     = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
+        type      = split_(type_);
+        type      = type(:,1);
+        type_ORIG = strcmp(type,'ORIGINAL');
+        where = where(type_ORIG);
         
         % DiffDirections
         DiffDirections = exam_SequenceData(where,hdr.DiffDirections);
