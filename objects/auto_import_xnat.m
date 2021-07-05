@@ -178,7 +178,7 @@ end
 for j = 1 : length(json)
     if size(json{j},1) > 1 % several lines (several json files in this serie)
         res = regexp(cellstr(json{j}),'\-\d{3}\.json'); % elimenate the -00x.json files, it messes ImagePosition
-        json{j} = json{j}(~isemptyCELL(res),:);
+        json{j} = json{j}(isemptyCELL(res),:);
     end
 end
 
@@ -479,12 +479,13 @@ for idx = 1 : size(SequenceCategory, 1)
         %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'dwi')
         
-        % Only keep ORIGINAL
+        % Only keep ORIGINAL & magnitude
         type_     = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
         type      = split_(type_);
-        type      = type(:,1);
-        type_ORIG = strcmp(type,'ORIGINAL');
-        where = where(type_ORIG);
+        
+        type_ORIG = strcmp(type(:,1),'ORIGINAL');
+        type_M    = strcmp(type(:,3),'M');
+        where = where(type_ORIG & type_M);
         
         % DiffDirections
         DiffDirections = exam_SequenceData(where,hdr.DiffDirections);

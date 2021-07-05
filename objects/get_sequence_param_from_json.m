@@ -188,8 +188,12 @@ for j = 1 : size(json_filename,1)
             case '2D'
                 data_file.ImagePositionPatient = cellfun( @str2double, get_field_mul     ( content, 'ImagePositionPatient'    ,0 ) );
             case '3D'
-                ImagePositionPatient                    =              get_field_mul_vect( content, 'ImagePositionPatient'       )  ;
-                data_file.ImagePositionPatient          = ImagePositionPatient(:,1);
+                try
+                    ImagePositionPatient                    =              get_field_mul_vect( content, 'ImagePositionPatient'       )  ;
+                    data_file.ImagePositionPatient          = ImagePositionPatient(:,1);
+                catch
+                    data_file.ImagePositionPatient = cellfun( @str2double, get_field_mul     ( content, 'ImagePositionPatient'    ,0 ) );
+                end
                 %data_file.ImagePositionPatient2         = ImagePositionPatient(:,2); %need of the same field in 2D
                 %data_file.ImagePositionPatient_nbslice = size(ImagePositionPatient,2);
         end
