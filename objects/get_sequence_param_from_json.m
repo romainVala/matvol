@@ -102,7 +102,7 @@ for j = 1 : size(json_filename,1)
         SequenceName = get_field_one(content, 'SequenceName'); % '*tfl3d1_ns'
         data_file.SequenceName = SequenceName;
         
-        data_file.EchoTime          = str2double( get_field_one( content, 'EchoTime'          ) ) / 1000; % second
+        data_file.EchoTime          = unique(str2double(strsplit(get_field_mul( content, 'EchoTime'), '_'))) / 1000; % second
         data_file.FlipAngle         = str2double( get_field_one( content, 'FlipAngle'         ) )       ; % degre
         data_file.InversionTime     = str2double( get_field_one( content, 'InversionTime'     ) ) / 1000; % second
         
@@ -180,14 +180,20 @@ for j = 1 : size(json_filename,1)
         %------------------------------------------------------------------
         % Image
         %------------------------------------------------------------------
-        data_file.ImageType                    =                       get_field_mul     ( content, '"ImageType'                  )  ; % M' / 'P' / ... % Magnitude ? Phase ? ...
+        ImageType = get_field_mul( content, '"ImageType' );
+        if strcmp(ImageType(1:2), '[_'), ImageType(1:2) = []; end % in case of 4D data, the ImageType is reapeated for each volume, need to clean a bit
+        data_file.ImageType                    = ImageType; % M' / 'P' / ... % Magnitude ? Phase ? ...
         data_file.ImageOrientationPatient      = cellfun( @str2double, get_field_mul     ( content, 'ImageOrientationPatient' ,0 ) );
         switch data_file.MRAcquisitionType
             case '2D'
                 data_file.ImagePositionPatient = cellfun( @str2double, get_field_mul     ( content, 'ImagePositionPatient'    ,0 ) );
             case '3D'
-                ImagePositionPatient                    =              get_field_mul_vect( content, 'ImagePositionPatient'       )  ;
-                data_file.ImagePositionPatient          = ImagePositionPatient(:,1);
+                try
+                    ImagePositionPatient                    =              get_field_mul_vect( content, 'ImagePositionPatient'       )  ;
+                    data_file.ImagePositionPatient          = ImagePositionPatient(:,1);
+                catch
+                    data_file.ImagePositionPatient = cellfun( @str2double, get_field_mul     ( content, 'ImagePositionPatient'    ,0 ) );
+                end
                 %data_file.ImagePositionPatient2         = ImagePositionPatient(:,2); %need of the same field in 2D
                 %data_file.ImagePositionPatient_nbslice = size(ImagePositionPatient,2);
         end
@@ -245,7 +251,9 @@ for j = 1 : size(json_filename,1)
                     warning('wtf ? InPlanePhaseEncodingDirection')
                     phase_dir = '';
             end
-            if PhaseEncodingDirectionPositive
+            if isnan(PhaseEncodingDirectionPositive)
+                phase_dir = '';
+            elseif PhaseEncodingDirectionPositive
                 phase_dir = [phase_dir '-']; %#ok<AGROW>
             end
             data_file.PhaseEncodingDirection = phase_dir;
