@@ -600,6 +600,11 @@ end
 EXAM.other.SequenceData     = exam_SequenceData;
 EXAM.other.SequenceData_hdr = hdr;
 
+% on xnat, the last dir containing the volume is 'NIFTI', so I rename it using SeriesDescription
+for ser = 1 : length(EXAM.serie)
+        EXAM.serie(ser).name = EXAM.serie(ser).sequence.SeriesDescription;
+end % ser
+
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
