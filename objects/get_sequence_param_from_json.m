@@ -153,6 +153,7 @@ for j = 1 : size(json_filename,1)
         %------------------------------------------------------------------
         % Date / Time
         %------------------------------------------------------------------
+        data_file.OperatorsName   =             get_field_one( content, 'OperatorsName'   )   ;
         data_file.AcquisitionDate = str2double( get_field_one( content, 'AcquisitionDate' ) ) ;
         data_file.StudyDate       = str2double( get_field_one( content, 'StudyDate'       ) ) ;
         data_file.StudyTime       = str2double( get_field_one( content, 'StudyTime'       ) ) ;
