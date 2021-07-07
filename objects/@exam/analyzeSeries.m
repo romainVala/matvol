@@ -21,7 +21,7 @@ defpar.param_list  = '';   % use default list from seq2str
 defpar.N           = 1;    % keep N best groups
 defpar.only_best   = 0;    % perform the analysis only on the best group : usefull if you have very large examArray
 
-defpar.verbose     = 1;
+defpar.verbose     = 1;    % 0 : nothing displayed, 1 : groups, 2 : groups+subjects, 3 : groups+subjects+more/less
 defpar.pct         = 0;    % Parallel Computing Toolbox
 defpar.redo        = 0;    % read again the json files & update @serie.sequence
 
@@ -83,9 +83,9 @@ for iGroup = nGroups : -1 : nGroups-N+1
         for seq = 1 : length(list_sequence_best)
             index = TableSer.(list_sequence_best{seq}) > summary_best{counter}.N(seq);
             list_more = list_exam_name(index);
-            if par.verbose > 1
+            if par.verbose > 2
                 cprintf('key','Exam with '), cprintf('_key','more '), cprintf('*key','%s ',list_sequence_best{seq}), cprintf('key',', N = %d (%d %%)\n',sum(index), round(100*sum(index)/length(examArray)))
-                if par.verbose > 1
+                if par.verbose > 2
                     fprintf('%s\n',list_more{:})
                 end
                 fprintf('\n')
@@ -103,9 +103,9 @@ for iGroup = nGroups : -1 : nGroups-N+1
         for seq = 1 : length(list_sequence_best)
             index = TableSer.(list_sequence_best{seq}) < summary_best{counter}.N(seq);
             list_less = list_exam_name(index);
-            if par.verbose > 1
+            if par.verbose > 2
                 cprintf('err','Exam with '), cprintf('_err','less '), cprintf('*err','%s ',list_sequence_best{seq}), cprintf('err',', N = %d (%d %%)\n',sum(index), round(100*sum(index)/length(examArray)))
-                if par.verbose > 1
+                if par.verbose > 2
                     fprintf('%s\n',list_less{:})
                 end
                 fprintf('\n')
@@ -126,9 +126,9 @@ for iGroup = nGroups : -1 : nGroups-N+1
         for seq = 1 : length(list_out_sequence)
             index = TableSer.(list_out_sequence{seq}); index = logical(index);
             list_out = list_exam_name(index);
-            if par.verbose > 1
+            if par.verbose > 2
                 cprintf('magenta','Exam with '), cprintf('*magenta','%s ',list_out_sequence{seq}), cprintf('magenta',', N = %d (%d %%)\n',sum(index), round(100*sum(index)/length(examArray)))
-                if par.verbose > 1
+                if par.verbose > 2
                     fprintf('%s\n',list_out{:})
                 end
                 fprintf('\n')
