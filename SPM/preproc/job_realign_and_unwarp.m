@@ -113,7 +113,14 @@ for subj = 1:nrSubject
         res = get_string_from_json(json, {'EchoTime'}, {'num'});
         if isempty(res{1}{1}) %xnat json is different ... ? so easier (but longger) way
              j=loadjson(json{1});
-             echotime=j.time.samples.EchoTime;
+             if isfield(j, 'time')
+                 echotime=j.time.samples.EchoTime;
+             elseif isfield(j,'global') %older version of dcmstack ... ? 
+                 echotime = j.global.slices.EchoTime;
+             else
+                 error('check the json %s could not find Echotime', json{1})
+             end
+
              fm_TE(1) = min(echotime);
              fm_TE(2) = max(echotime);
         else
