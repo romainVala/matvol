@@ -1,9 +1,9 @@
-classdef json < mvFile
+classdef rp < mvFile
     % Use @mvFile as base
     
     methods
         
-        function self = json(varargin)
+        function self = rp(varargin)
             
             self = self@mvFile(varargin{:});
             

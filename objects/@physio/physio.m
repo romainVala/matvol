@@ -1,9 +1,9 @@
-classdef json < mvFile
+classdef physio < mvFile
     % Use @mvFile as base
     
     methods
         
-        function self = json(varargin)
+        function self = physio(varargin)
             
             self = self@mvFile(varargin{:});
             
