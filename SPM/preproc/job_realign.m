@@ -165,10 +165,12 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             ext  = '.*.nii';
             
             ser.addVolume(sub, ['^' par.prefix tag ext],[par.prefix tag],1)
+            ser.addRP    (sub, ['^rp_.*' tag '.*.txt$'],'rp_spm'        ,1)
             
         elseif par.sge
             
             ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix),[par.prefix tag],1)
+            ser.addVolume('root', addprefixtofilenames(vol.path,'rp_'     ),'rp_spm'        ,1)
             
         end
         
