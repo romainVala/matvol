@@ -1,5 +1,6 @@
 function [ pathArray ] = changePath( mvArray, oldpath, newpath )
-%CHANGEPATH
+%CHANGEPATH change a part of the path in objects, useful when data moved
+
 
 %% Check input
 
@@ -37,11 +38,17 @@ for idx = 1 : numel( mvArray )
             case 'serie'
                 mvArray(idx).volume.changePath( oldpath, newpath );
                 mvArray(idx).stim  .changePath( oldpath, newpath );
+                mvArray(idx).rp    .changePath( oldpath, newpath );
+                mvArray(idx).physio.changePath( oldpath, newpath );
             case 'model'
                 % pass
             case 'volume'
                 % pass
             case 'stim'
+                % pass
+            case 'rp'
+                % pass
+            case 'physio'
                 % pass
             otherwise
                 warning('non-coded routine for the object')
