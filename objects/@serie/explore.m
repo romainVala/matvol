@@ -7,6 +7,8 @@ for idx = 1 : numel(obj)
     obj(idx).volume.explore;
     obj(idx).stim.explore;
     obj(idx).json.explore;
+    obj(idx).rp.explore;
+    obj(idx).physio.explore;
 end
 
 end % function
