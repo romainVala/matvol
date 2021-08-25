@@ -1,6 +1,6 @@
-function volumeArray = getJson( serieArray, varargin )
+function jsonArray = getJson( serieArray, varargin )
 % See also @serie/getFile
 
-volumeArray = serieArray.getFile('json',varargin{:});
+jsonArray = serieArray.getFile('json',varargin{:});
 
 end % function

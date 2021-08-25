@@ -1,6 +1,6 @@
-function volumeArray = getPhysio( serieArray, varargin )
+function physioArray = getPhysio( serieArray, varargin )
 % See also @serie/getFile
 
-volumeArray = serieArray.getFile('physio',varargin{:});
+physioArray = serieArray.getFile('physio',varargin{:});
 
 end % function

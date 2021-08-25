@@ -1,6 +1,6 @@
-function volumeArray = getRP( serieArray, varargin )
+function rpArray = getRP( serieArray, varargin )
 % See also @serie/getFile
 
-volumeArray = serieArray.getFile('rp',varargin{:});
+rpArray = serieArray.getFile('rp',varargin{:});
 
 end % function

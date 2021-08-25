@@ -1,4 +1,4 @@
-function [ mvArray ] = getFile( serieArray, target, regex, type, verbose )
+function [ mvFileArray ] = getFile( serieArray, target, regex, type, verbose )
 % Syntax  : fetch the <target> corresponfing to the regex, scanning the defined property.
 % Example : run_volumes     = serieArray.get<target>('f'                );
 %           run1_rf_volumes = serieArray.get<target>('^rf'              );
@@ -37,7 +37,7 @@ assert( isprop(obj,type) && ischar(obj.(type) ), 'type must refer to a char prop
 %% get<target> from @serie
 
 % "empty" array but with the right dimension
-mvArray =  obj.empty([size(serieArray) 0]);
+mvFileArray =  obj.empty([size(serieArray) 0]);
 
 for ex = 1 : size(serieArray,1)
     
@@ -55,7 +55,7 @@ for ex = 1 : size(serieArray,1)
                 % It could also work if we scan over a cellstr, but the management would bring other problems : which line to take into account ?
                 
                 counter = counter + 1;
-                mvArray(ex,ser,counter) = serieArray(ex,ser).(target)(vol);
+                mvFileArray(ex,ser,counter) = serieArray(ex,ser).(target)(vol);
                 
             end
             
@@ -68,7 +68,7 @@ end % exam
 
 %% Error if nothing found
 
-if verbose && isempty(mvArray)
+if verbose && isempty(mvFileArray)
     warning('No @%s.%s found for regex [ %s ]', target, type, regex )
 end
 
