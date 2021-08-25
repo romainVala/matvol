@@ -4,6 +4,7 @@ function varargout = addFile( serieArray, target, varargin )
 % Find all files available, regardlesss of how many they are :
 % Syntax  : serieArray.add<target>( 'file_regex', 'tag' )
 % Example : serieArray.add<target>( '^f.*nii'   , 'f'   )
+%
 % Find exactly nTarget, or return an error :
 % Syntax  : serieArray.add<target>( 'file_regex'       , 'tag'        , nTarget )
 % Example : serieArray.add<target>( '^c[123456].*nii'  , 'compartment', 6         )
