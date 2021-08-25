@@ -11,9 +11,11 @@ function jobs = job_physio_tapas( par )
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 %    .TR       (seconds)
 %    .nSlice   (int    )
-%    .volume   (cellstr) such as par.volume{iVol} = '/path/to/volume.nii'
-%                        the volume will be used to fetch Nscans (number of time points == TRs)
-%                        it can the the same as .noiseROI_volume
+%    .volume   (cellstr/@volume) such as par.volume{iVol} = '/path/to/volume.nii'
+%                                the volume will be used to fetch Nscans (number of time points == TRs)
+%                                it can be the the same as .noiseROI_volume
+%                                OR
+%                                a @volume object from matvol
 %    .outdir   (cellstr) such as par.outdir{iVol} = '/path/to/outdir/'
 %    .physio   (0 or 1)  RETROICOR, HRV, RVT
 %    .noiseROI (0 or 1)  aCompCor (PCA on WM and CSF)
@@ -32,16 +34,16 @@ function jobs = job_physio_tapas( par )
 %
 % Mandatory
 %
-%    .physio_Info (cellstr) such as par.physio_Info{iVol} = '/path/to/*_Info.log'
-%    .physio_PULS (cellstr) such as par.physio_PULS{iVol} = '/path/to/*_PULS.log'
-%    .physio_RESP (cellstr) such as par.physio_RESP{iVol} = '/path/to/*_RESP.log'
+%    .physio_Info (cellstr/@physio) such as par.physio_Info{iVol} = '/path/to/*_Info.log' OR a @physio object from matvol
+%    .physio_PULS (cellstr/@physio) such as par.physio_PULS{iVol} = '/path/to/*_PULS.log' OR a @physio object from matvol
+%    .physio_RESP (cellstr/@physio) such as par.physio_RESP{iVol} = '/path/to/*_RESP.log' OR a @physio object from matvol
 %
 % Optional
 %
 %    .physio_RETROICOR (1 or 0)
 %    .physio_HRV       (1 or 0)
 %    .physio_RVT       (1 or 0)
-%    .physio_logfiles_vendor  = 'Siemens_Tics'; % Siemens CMRR multiband sequence, only this one is coded yet
+%    .physio_logfiles_vendor     = 'Siemens_Tics'; % Siemens CMRR multiband sequence, only this one is coded yet
 %    .physio_logfiles_align_scan = 'last';         % 'last' / 'first'
 %    .physio_slice_to_realign    = 'middle';       % 'first' / 'middle' / 'last' / sliceNumber (integer)
 %
@@ -52,15 +54,16 @@ function jobs = job_physio_tapas( par )
 %
 % Mandatory
 %
-%    .noiseROI_mask   (cellstr)         par.noiseROI_mask{iVol} can be a cellstr or a char array
-%                               such as par.noiseROI_mask{iVol}{iMask} = '/path/to/mask.nii'
-%                               or
-%                                       par.noiseROI_mask{iVol}(iMask,:) = '/path/to/mask.nii'
-%                               you can enter severa masks, such as WM and CSF
-%                               for faster job computation, masks should already be Coregister:Estimate&Reslice to the functionnal volume
-%    .noiseROI_volume (cellstr) such as par.noiseROI_volume{iVol} = '/path/to/volume.nii'
-%                               use 4D volumes (.nii)
-%                               functionnal volume, should be in the final space (closest to the model) but **not smoothed**
+%    .noiseROI_mask   (cellstr/@volume)  par.noiseROI_mask{iVol} can be a cellstr or a char array
+%                                        such as par.noiseROI_mask{iVol}{iMask} = '/path/to/mask.nii'
+%                               OR       par.noiseROI_mask{iVol}(iMask,:) = '/path/to/mask.nii'
+%                               OR       a @volume object from matvol
+%                                        you can enter severa masks, such as WM and CSF
+%                                        for faster job computation, masks should already be Coregister:Estimate&Reslice to the functionnal volume
+%    .noiseROI_volume (cellstr/@volume ) such as par.noiseROI_volume{iVol} = '/path/to/volume.nii'
+%                               OR       a @volume object from matvol
+%                                        use 4D volumes (.nii)
+%                                        functionnal volume, should be in the final space (closest to the model) but **not smoothed**
 %
 % Optional
 %
@@ -75,7 +78,8 @@ function jobs = job_physio_tapas( par )
 %
 % Mandatory
 %
-%    .rp_file (cellstr) such as par.rp_file{iVol} = '/path/to/rp*.txt'
+%    .rp_file (cellstr/@rp) such as par.rp_file{iVol} = '/path/to/rp*.txt'
+%                       OR  a @rp object from matvol
 %
 % Optional
 %
@@ -169,22 +173,43 @@ par = complet_struct(par,defpar);
 nVol = nan(4,1);
 
 if par.physio
-    nVol_physio_Info = length(par.physio_Info);
-    nVol_physio_PULS = length(par.physio_PULS);
-    nVol_physio_RESP = length(par.physio_RESP);
+    if isa(par.physio_Info,'physio')
+        physio_Info = par.physio_Info.getPath();
+        physio_PULS = par.physio_PULS.getPath();
+        physio_RESP = par.physio_RESP.getPath();
+    else
+        physio_Info = par.physio_Info;
+        physio_PULS = par.physio_PULS;
+        physio_RESP = par.physio_RESP;
+    end
+    nVol_physio_Info = length(physio_Info);
+    nVol_physio_PULS = length(physio_PULS);
+    nVol_physio_RESP = length(physio_RESP);
     assert( nVol_physio_Info==nVol_physio_PULS  &&  nVol_physio_PULS==nVol_physio_RESP, 'pb with physio Info/PULS/RESP' )
     nVol(1) = nVol_physio_Info;
 end
 
 if par.noiseROI
-    nVol_noiseROI_mask   = length(par.noiseROI_mask  );
-    nVol_noiseROI_volume = length(par.noiseROI_volume);
+    if isa(par.noiseROI_mask,'volume')
+        noiseROI_mask   = par.noiseROI_mask.getPath();
+        noiseROI_volume = par.noiseROI_volume.getPath();
+    else
+        noiseROI_mask   = par.noiseROI_mask;
+        noiseROI_volume = par.noiseROI_volume;
+    end
+    nVol_noiseROI_mask   = length(noiseROI_mask  );
+    nVol_noiseROI_volume = length(noiseROI_volume);
     assert( nVol_noiseROI_mask==nVol_noiseROI_volume , 'pb with noiseROI mask/volume' )
     nVol(2) = nVol_noiseROI_mask;
 end
 
 if par.rp
-    nVol(3) = length(par.rp_file);
+    if isa(par.noiseROI_mask,'rp')
+        rp_file = par.rp_file.getPath();
+    else
+        rp_file = par.rp_file;
+    end
+    nVol(3) = length(rp_file);
 end
 
 nVol(4) = length(par.outdir);
@@ -230,9 +255,9 @@ for iVol = 1:nVol
         end
         
         jobs{iVol}.spm.tools.physio.log_files.vendor      = par.physio_logfiles_vendor;
-        jobs{iVol}.spm.tools.physio.log_files.cardiac     = cellstr(par.physio_PULS{iVol});
-        jobs{iVol}.spm.tools.physio.log_files.respiration = cellstr(par.physio_RESP{iVol});
-        jobs{iVol}.spm.tools.physio.log_files.scan_timing = cellstr(par.physio_Info{iVol});
+        jobs{iVol}.spm.tools.physio.log_files.cardiac     = cellstr(physio_PULS{iVol});
+        jobs{iVol}.spm.tools.physio.log_files.respiration = cellstr(physio_RESP{iVol});
+        jobs{iVol}.spm.tools.physio.log_files.scan_timing = cellstr(physio_Info{iVol});
         jobs{iVol}.spm.tools.physio.log_files.sampling_interval          = [];
         jobs{iVol}.spm.tools.physio.log_files.relative_start_acquisition = 0;
         jobs{iVol}.spm.tools.physio.log_files.align_scan                 = 'last';
@@ -304,8 +329,8 @@ for iVol = 1:nVol
     
     if par.noiseROI
         
-        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.fmri_files       = cellstr(par.noiseROI_volume{iVol}); % requires 4D volume
-        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.roi_files        = cellstr(par.noiseROI_mask  {iVol});       % all masks
+        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.fmri_files       = cellstr(noiseROI_volume{iVol}); % requires 4D volume
+        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.roi_files        = cellstr(noiseROI_mask  {iVol});       % all masks
         jobs{iVol}.spm.tools.physio.model.noise_rois.yes.force_coregister = 'No';
         jobs{iVol}.spm.tools.physio.model.noise_rois.yes.thresholds       = par.noiseROI_thresholds;
         jobs{iVol}.spm.tools.physio.model.noise_rois.yes.n_voxel_crop     = par.noiseROI_n_voxel_crop;
@@ -321,7 +346,7 @@ for iVol = 1:nVol
     
     if par.rp
         
-        jobs{iVol}.spm.tools.physio.model.movement.yes.file_realignment_parameters = cellstr(par.rp_file{iVol});
+        jobs{iVol}.spm.tools.physio.model.movement.yes.file_realignment_parameters = cellstr(rp_file{iVol});
         jobs{iVol}.spm.tools.physio.model.movement.yes.order                       = par.rp_order;
         jobs{iVol}.spm.tools.physio.model.movement.yes.censoring_method            = par.rp_method;
         jobs{iVol}.spm.tools.physio.model.movement.yes.censoring_threshold         = par.rp_threshold;

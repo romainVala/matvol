@@ -1,55 +1,14 @@
-classdef volume < mvObject
-    % VOLUME object construction is encapsulated inside [ exam.addVolume ] or [ serie.addVolume ].
-    % VOLUME can have multiples elements in path, for multiple files
-    
-    properties
-        
-        exam   = exam.empty  % exam   associated with this serie (See @serie object)
-        serie  = serie.empty % series associated with this exam  (See @exam  object)
-        
-        subdir = ''          % name of the subdir, in regards of the @serie that contains this @volume
-        
-    end
+classdef volume < mvFile
+    % Use @mvFile as base
     
     methods
         
-        % --- Constructor -------------------------------------------------
-        function self = volume(inputPath, tag, examObj, serieObj, subdir)
-            %
+        function self = volume(varargin)
             
-            % Input args ?
-            if nargin > 0
-                
-                [pathstr,name, ~] = get_parent_path(inputPath);
-                self.name = name;                                               % name of the file
-                self.path = [pathstr repmat(filesep,[size(pathstr,1) 1]) name]; % path of the file
-                self.tag  = tag;                                                % tag of the volume : s, wms, f, rf, swrf, ...
-                
-                % If an @exam object is presented as input argument,
-                % incorporate it's pointer inside the created @volume
-                % object.
-                if exist('examObj','var')
-                    self.exam = examObj;
-                end
-                
-                % If an @serie object is presented as input argument,
-                % incorporate it's pointer inside the created @volume
-                % object.
-                if exist('serieObj','var')
-                    self.serie = serieObj;
-                end
-                
-                % Subdir ?
-                if exist('subdir','var')
-                    self.subdir = subdir;
-                end
-                
-            end
+            self = self@mvFile(varargin{:});
             
-        end % ctor
-        % -----------------------------------------------------------------
+        end % function
         
-        
-    end
+    end % methods
     
 end % classdef

@@ -19,6 +19,10 @@ if nargin < 2
             flag = 0;
         case 'json'
             flag = 0;
+        case 'rp'
+            flag = 0;
+        case 'physio'
+            flag = 0;
         otherwise
             error('Unknown object class. Is it really an mvObject ?')
     end
