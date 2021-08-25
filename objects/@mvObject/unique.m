@@ -1,4 +1,5 @@
 function [C,IA,IC] = unique( in_mvArray )
+% UNIQUE performs 'unique' built-in function on .path field
 
 in_path = in_mvArray.getPath;
 
