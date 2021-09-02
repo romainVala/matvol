@@ -339,6 +339,12 @@ for e = 1:nrExam
     % func
     
     FUNC_IN__serie  = EXAM.getSerie( par.regextag_func_serie, 'tag', 0 );
+    % Remove non 4D data (like verif fov EPI)
+    %----------------------------------------
+    FUNC_IN__seq    = [FUNC_IN__serie.sequence];
+    nRepetitions    = [FUNC_IN__seq.Repetitions];
+    FUNC_IN__serie  = FUNC_IN__serie(~isnan(nRepetitions));
+    %----------------------------------------
     subjob_func     = cell(numel(FUNC_IN__serie),1);
     
     if ~isempty(FUNC_IN__serie)
@@ -850,7 +856,29 @@ job = [ {job_header} ; job ];
 % Run CPU, run !
 parSGE = par;
 parSGE.verbose = par.sge_verbose; % too much display in do_cmd_sge
-job = do_cmd_sge(job, parSGE);
+
+% if job{i} is too long, split it, otherwise matlab wont run it (buffer size)
+split_job = cell(0); % make a copy
+max_char = 131071;
+for j = 1 : length(job)
+    if length(job{j}) > max_char %  2^17-1
+        njobs = ceil( length(job{j}) / max_char );
+        lines = strsplit(job{j}, sprintf('\n\n'))';
+        nlines= ceil(length(lines)/njobs);
+        for ijob = 1 : njobs
+            if ijob ~= njobs
+                tmp_lines = lines( (1 + (ijob-1)*nlines) : ijob*nlines );
+            else
+                tmp_lines = lines( (1 + (ijob-1)*nlines) : end );
+            end
+            split_job{end+1} = sprintf( '%s \n', tmp_lines{:} ); % re-assemble lines into single char
+        end
+    else
+        split_job(end+1) = job(j);
+    end
+    
+end
+job = do_cmd_sge(split_job, parSGE);
 
 
 if par.verbose > 0
