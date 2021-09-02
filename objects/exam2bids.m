@@ -33,28 +33,28 @@ assert( ischar(bidsDir)         , 'bidsDir must be a char'                 )
 
 % anat
 defpar.regextag_anat_serie  = 'anat';
-defpar.regextag_anat_volume = '^s';
-defpar.regextag_anat_json   = '.*';
+defpar.regextag_anat_volume = '^v';
+defpar.regextag_anat_json   = '^j';
 
 % func
 defpar.regextag_func_serie  = 'func';
-defpar.regextag_func_volume = '^f';
-defpar.regextag_func_json   = '.*';
+defpar.regextag_func_volume = '^v';
+defpar.regextag_func_json   = '^j';
 
 % dwi
 defpar.regextag_dwi_serie   = 'dwi';
-defpar.regextag_dwi_volume  = '^f';
-defpar.regextag_dwi_json    = '.*';
+defpar.regextag_dwi_volume  = '^v';
+defpar.regextag_dwi_json    = '^j';
 
 % fmap
 defpar.regextag_fmap_serie  = 'fmap';
-defpar.regextag_fmap_volume = '^s';
-defpar.regextag_fmap_json   = '.*';
+defpar.regextag_fmap_volume = '^v';
+defpar.regextag_fmap_json   = '^j';
 
 % swi
 defpar.regextag_swi_serie  = 'swi';
-defpar.regextag_swi_volume = '^s';
-defpar.regextag_swi_json   = '.*';
+defpar.regextag_swi_volume = '^v';
+defpar.regextag_swi_json   = '^j';
 
 % Other options :
 defpar.copytype    = 'link'; % can be 'link' or 'copy'
