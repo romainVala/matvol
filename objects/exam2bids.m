@@ -98,8 +98,6 @@ bidsignore = {
     '*boldphase*'
     '*inv-1*'
     '*inv-2*'
-    '*T1map*'
-    '*_part-*' % FLASH  : mag / pahse, SWI : mag / phase
     'swi'
     };
 
@@ -123,7 +121,13 @@ study_path = fileparts(study_path);
 dataset_description.Name = study_path; % dir of the study, such as /export/dataCENIR/dicom/nifti_raw/PRISMA_CENIR_DEV
 
 % BIDSVersion
-dataset_description.BIDSVersion = '1.1.1';
+dataset_description.BIDSVersion = '1.6.0';
+
+% HEDVersion
+dataset_description.HEDVersion = '';
+
+% DatasetType
+dataset_description.DatasetType = 'raw'; % 'raw' or 'derivative', raw is the default
 
 % License
 dataset_description.License = 'PDDL';
@@ -136,6 +140,9 @@ dataset_description.Acknowledgements = '';
 
 % HowToAcknowledge
 dataset_description.HowToAcknowledge = '';
+
+% EthicsApprovals
+dataset_description.EthicsApprovals = {''};
 
 % Funding
 dataset_description.Funding = {''};
@@ -151,6 +158,15 @@ job_header = sprintf('## dataset_description.json ## \n');
 if ~exist(fullfile(bidsDir,'dataset_description.json'),'file')
     job_header = jobcmd_write_json_bids( job_header, json_dataset_description, fullfile(bidsDir,'dataset_description.json') );
 end
+
+
+% %% README
+%
+% job_header = [ job_header sprintf('## README ## \n') ];
+% if ~exist(fullfile(bidsDir,'README'),'file')
+%     job_header = [ job_header sprintf('touch %s \n', fullfile(bidsDir,'README')) ];
+% end
+
 
 %% Main loop
 
@@ -203,9 +219,10 @@ for e = 1:nrExam
     % anat
     
     ANAT_IN__serie  = EXAM.getSerie( par.regextag_anat_serie, 'tag', 0 );
-    subjob_anat     = cell(numel(ANAT_IN__serie),1);
     
     if ~isempty(ANAT_IN__serie)
+        
+        subjob_anat     = cell(numel(ANAT_IN__serie),1);
         
         if length(ANAT_IN__serie)==1 && isempty(ANAT_IN__serie.path)
             % pass, this in exeption
@@ -223,7 +240,7 @@ for e = 1:nrExam
                 % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
                 if     strfind(ANAT_IN__serie(A).tag,'_INV1'       ), suffix_anat = 'inv-1'; to_remove   = length(del_('_INV1'      )); % mp2rage
                 elseif strfind(ANAT_IN__serie(A).tag,'_INV2'       ), suffix_anat = 'inv-2'; to_remove   = length(del_('_INV2'      )); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images' ), suffix_anat = 'T1w'  ; to_remove   = length(del_('_UNI_Images')); % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images' ), suffix_anat = 'UNIT1'; to_remove   = length(del_('_UNI_Images')); % mp2rage
                 elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images'  ), suffix_anat = 'T1map'; to_remove   = length(del_('_T1_Images' )); % mp2rage
                 elseif strfind(ANAT_IN__serie(A).tag,'_T1w'        ), suffix_anat = 'T1w'  ; to_remove   = 0                          ; % mprage
                 elseif strfind(ANAT_IN__serie(A).tag,'_T2w'        ), suffix_anat = 'T2w'  ; to_remove   = 0                          ;
@@ -339,15 +356,16 @@ for e = 1:nrExam
     % func
     
     FUNC_IN__serie  = EXAM.getSerie( par.regextag_func_serie, 'tag', 0 );
-    % Remove non 4D data (like verif fov EPI)
-    %----------------------------------------
-    FUNC_IN__seq    = [FUNC_IN__serie.sequence];
-    nRepetitions    = [FUNC_IN__seq.Repetitions];
-    FUNC_IN__serie  = FUNC_IN__serie(~isnan(nRepetitions));
-    %----------------------------------------
-    subjob_func     = cell(numel(FUNC_IN__serie),1);
     
     if ~isempty(FUNC_IN__serie)
+        
+        % Remove non 4D data (like verif fov EPI)
+        %----------------------------------------
+        FUNC_IN__seq    = [FUNC_IN__serie.sequence];
+        nRepetitions    = [FUNC_IN__seq.Repetitions];
+        FUNC_IN__serie  = FUNC_IN__serie(~isnan(nRepetitions));
+        %----------------------------------------
+        subjob_func     = cell(numel(FUNC_IN__serie),1);
         
         if length(FUNC_IN__serie)==1 && isempty(FUNC_IN__serie.path)
             % pass, this in exeption
@@ -464,9 +482,10 @@ for e = 1:nrExam
     % dwi
     
     DWI_IN__serie  = EXAM.getSerie( par.regextag_dwi_serie, 'tag', 0 );
-    subjob_dwi     = cell(numel(DWI_IN__serie),1);
     
     if ~isempty(DWI_IN__serie)
+        
+        subjob_dwi     = cell(numel(DWI_IN__serie),1);
         
         if length(DWI_IN__serie)==1 && isempty(DWI_IN__serie.path)
             % pass, this in exeption
@@ -510,7 +529,7 @@ for e = 1:nrExam
                     
                     % bval ------------------------------------------------
                     dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
-                    dwi_IN___bval_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvals');
+                    dwi_IN___bval_path = spm_file( dwi_IN___vol_path, 'ext', '.bval' );
                     if ~(exist(dwi_IN___bval_path,'file')==2)
                         if isfield(DWI_IN__serie(D).sequence,'B_value') && ~isempty(DWI_IN__serie(D).sequence.B_value)
                             B_value = DWI_IN__serie(D).sequence.B_value;
@@ -527,7 +546,7 @@ for e = 1:nrExam
                     
                     % bvec ------------------------------------------------
                     dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
-                    dwi_IN___bvec_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvecs');
+                    dwi_IN___bvec_path = spm_file( dwi_IN___vol_path, 'ext', '.bvec' );
                     if ~(exist(dwi_IN___bvec_path,'file')==2)
                         if isfield(DWI_IN__serie(D).sequence,'B_vect') && ~isempty(DWI_IN__serie(D).sequence.B_vect)
                             B_vect = DWI_IN__serie(D).sequence.B_vect;
@@ -574,9 +593,10 @@ for e = 1:nrExam
     % fmap
     
     FMAP_IN__serie  = EXAM.getSerie( par.regextag_fmap_serie, 'tag', 0 );
-    subjob_fmap     = cell(numel(FMAP_IN__serie),1);
     
     if ~isempty(FMAP_IN__serie)
+        
+        subjob_fmap     = cell(numel(FMAP_IN__serie),1);
         
         if length(FMAP_IN__serie)==1 && isempty(FMAP_IN__serie.path)
             % pass, this in exeption
@@ -691,9 +711,10 @@ for e = 1:nrExam
     % swi
     
     SWI_IN__serie  = EXAM.getSerie( par.regextag_swi_serie, 'tag', 0 );
-    subjob_swi     = cell(numel(SWI_IN__serie),1);
     
     if ~isempty(SWI_IN__serie)
+        
+        subjob_swi     = cell(numel(SWI_IN__serie),1);
         
         if length(SWI_IN__serie)==1 && isempty(SWI_IN__serie.path)
             % pass, this in exeption
@@ -947,7 +968,7 @@ if any(n)
 else
     names3 = names2;
 end
-    
+
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
