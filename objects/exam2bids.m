@@ -283,6 +283,7 @@ for e = 1:nrExam
                         % Volume ------------------------------------------
                         
                         anat_OUT__name     = anat_run_name{A}(1:end-to_remove);
+                        anat_OUT__name     = makeValidName(anat_OUT__name);
                         anat_OUT__name     = sprintf('acq-%s_run-%d_%s', anat_OUT__name, anat_run_number(A), suffix_anat);
                         anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
                         anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
@@ -314,6 +315,7 @@ for e = 1:nrExam
                             % Volume ------------------------------------------
                             
                             anat_OUT__name     = anat_run_name{A}(1:end-to_remove);
+                            anat_OUT__name     = makeValidName(anat_OUT__name);
                             anat_OUT__name     = sprintf('acq-%s_run-%d_echo-%0.2d_part-%s_%s', anat_OUT__name, anat_run_number(A), echo, part, suffix_anat);
                             anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
                             anat_IN___vol_ext  = file_ext( deblank(ANAT_IN___vol.path(orderTE(echo),:)) );
@@ -405,6 +407,7 @@ for e = 1:nrExam
                         func_IN___vol_path = deblank  (FUNC_IN___vol.path);
                         func_IN___vol_ext  = file_ext (func_IN___vol_path);
                         func_OUT__vol_name = func_run_name{F};
+                        func_OUT__vol_name = makeValidName(func_OUT__vol_name);
                         func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d_%s', sub_name, ses_name, func_OUT__vol_name, func_run_number(F), suffix_func) );
                         func_OUT__vol_path = [ func_OUT__vol_base func_IN___vol_ext ];
                         subjob_func{F}     = link_or_copy(subjob_func{F}, FUNC_IN___vol.path, func_OUT__vol_path, par.copytype);
@@ -428,6 +431,7 @@ for e = 1:nrExam
                         % Volume ------------------------------------------
                         
                         func_OUT__vol_name = func_run_name{F};
+                        func_OUT__vol_name = makeValidName(func_OUT__vol_name);
                         func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d', sub_name, ses_name, func_OUT__vol_name, func_run_number(F)) );
                         
                         % Fetch volume corrsponding to the echo
@@ -516,6 +520,7 @@ for e = 1:nrExam
                     dwi_IN___vol_path = deblank  (DWI_IN___vol.path);
                     dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
                     dwi_OUT__vol_name = dwi_run_name{D};
+                    dwi_OUT__vol_name = makeValidName(dwi_OUT__vol_name);
                     dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D)) );
                     dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
                     subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
@@ -631,6 +636,7 @@ for e = 1:nrExam
                             % Volume --------------------------------------
                             
                             fmap_OUT__name     = fmap_run_name{FM};
+                            fmap_OUT__name     = makeValidName(fmap_OUT__name);
                             fmap_OUT__name     = sprintf('acq-%s_run-%d_%s%d', fmap_OUT__name, fmap_run_number(FM), suffix_fmap, echo);
                             fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
                             fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path(echo,:)) );
@@ -661,6 +667,7 @@ for e = 1:nrExam
                         % Volume ------------------------------------------
                         
                         fmap_OUT__name     = fmap_run_name{FM};
+                        fmap_OUT__name     = makeValidName(fmap_OUT__name);
                         fmap_OUT__name     = sprintf('acq-%s_run-%d_%s', fmap_OUT__name, fmap_run_number(FM), suffix_fmap);
                         fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
                         fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path) );
@@ -996,6 +1003,14 @@ end % function
 % end
 %
 % end % function
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function out = makeValidName(in)
+
+out = matlab.lang.makeValidName(in);
+out = del_(out);
+
+end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function out = del_(in)
