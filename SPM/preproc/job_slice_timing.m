@@ -178,9 +178,14 @@ for subj=1:nSubj
             TR = V(1).private.timing.tspace;
         end
         
-        parameters.slicetiming.slice_order = par.slice_order;
-        parameters.slicetiming.reference_slice = par.reference_slice;
-        
+        if isfield(par, 'user_slice_order')
+		parameters.slicetiming.user_slice_order = par.user_slice_order;
+		parameters.slicetiming.user_reference_slice = par.user_reference_slice;
+	else
+		parameters.slicetiming.slice_order = par.slice_order;
+        	parameters.slicetiming.reference_slice = par.reference_slice;
+	end
+
         [slice_order,ref_slice] = get_slice_order(parameters,nrSlices);
         
         jobs{subj}.spm.temporal.st.so = slice_order;
