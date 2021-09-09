@@ -564,8 +564,8 @@ for idx = 1 : size(SequenceCategory, 1)
     % Add volume & json
     if flag_add
         EXAM.getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
-        EXAM.getSerie(SequenceCategory{idx,2}).addJson(    '^v_.*json$',SequenceCategory{idx,5});
-        EXAM.getSerie(SequenceCategory{idx,2}).addJson('^stack_.*json$',SequenceCategory{idx,6});
+        EXAM.getSerie(SequenceCategory{idx,2}).addJson('^stack_.*json$',SequenceCategory{idx,5});
+        EXAM.getSerie(SequenceCategory{idx,2}).addJson(    '^v_.*json$',SequenceCategory{idx,6});
     end
     
 end % categ
