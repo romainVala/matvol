@@ -494,6 +494,9 @@ for idx = 1 : size(SequenceCategory, 1)
         %         type_M    = strcmp(type(:,3),'M');
         %         where = where(type_ORIG & type_M);
         where = where(type_ORIG);
+        if numel(where)==0
+            continue
+        end
         
         % DiffDirections
         DiffDirections = exam_SequenceData(where,hdr.DiffDirections);
