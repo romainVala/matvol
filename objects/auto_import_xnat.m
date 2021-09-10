@@ -496,6 +496,9 @@ for idx = 1 : size(SequenceCategory, 1)
         where = where(type_ORIG);
         if numel(where)==0
             continue
+        else % update the list of series because we might have removed some of them
+            SeriesNumber = exam_SequenceData(where,hdr.SeriesNumber     );
+            SeriesNumber = cellfun(@num2str,SeriesNumber,'UniformOutput',0);
         end
         
         % DiffDirections
