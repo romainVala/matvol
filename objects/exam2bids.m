@@ -1038,9 +1038,9 @@ function job_subj = link_or_copy(job_subj, IN_path, OUT_path, type)
 
 switch type
     case 'link'
-        job_subj   = [ job_subj sprintf('ln -sf %s %s \n\n', IN_path, OUT_path) ];
+        job_subj   = [ job_subj sprintf('ln -sf "%s" "%s" \n\n', IN_path, OUT_path) ];
     case 'copy'
-        job_subj   = [ job_subj sprintf( 'cp -f %s %s \n\n', IN_path, OUT_path) ];
+        job_subj   = [ job_subj sprintf( 'cp -f "%s" "%s" \n\n', IN_path, OUT_path) ];
 end
 
 end % function
