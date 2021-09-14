@@ -502,8 +502,12 @@ for e = 1:nrExam
             
             for D = 1 : numel(DWI_IN__serie)
                 
+                if     strfind(DWI_IN__serie(D).tag,'_sbref' ), suffix_dwi = 'sbref';
+                else                                          , suffix_dwi = 'dwi'  ;
+                end
+                
                 [ DWI_IN___vol , error_flag_dwi_vol  ] = CHECK( DWI_IN__serie(D), 'volume', par.regextag_dwi_volume );
-                [ DWI_IN__json , error_flag_dwi_json ] = CHECK( DWI_IN__serie(D), 'json', par.regextag_dwi_json );
+                [ DWI_IN__json , error_flag_dwi_json ] = CHECK( DWI_IN__serie(D), 'json'  , par.regextag_dwi_json   );
                 
                 error_flag_dwi = error_flag_dwi_vol && error_flag_dwi_json;
                 
@@ -520,7 +524,7 @@ for e = 1:nrExam
                     dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
                     dwi_OUT__vol_name = dwi_run_name{D};
                     dwi_OUT__vol_name = makeValidName(dwi_OUT__vol_name);
-                    dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D)) );
+                    dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_%s', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D), suffix_dwi) );
                     dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
                     subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
                     
@@ -531,42 +535,46 @@ for e = 1:nrExam
                     json_dwi_str       = struct2jsonSTR( json_dwi_struct );
                     subjob_dwi{D}      = jobcmd_write_json_bids( subjob_dwi{D}, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path );
                     
-                    % bval ------------------------------------------------
-                    dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
-                    dwi_IN___bval_path = spm_file( dwi_IN___vol_path, 'ext', '.bval' );
-                    if ~(exist(dwi_IN___bval_path,'file')==2)
-                        if isfield(DWI_IN__serie(D).sequence,'B_value') && ~isempty(DWI_IN__serie(D).sequence.B_value)
-                            B_value = DWI_IN__serie(D).sequence.B_value;
-                            B_value = num2str(B_value);
-                            subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_value, dwi_OUT__bval_path) ];
-                        else
-                            errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bval_path);
-                            log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                            error_flag_dwi  = 1;
-                        end
-                    else
-                        subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bval_path, dwi_OUT__bval_path, par.copytype);
-                    end
-                    
-                    % bvec ------------------------------------------------
-                    dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
-                    dwi_IN___bvec_path = spm_file( dwi_IN___vol_path, 'ext', '.bvec' );
-                    if ~(exist(dwi_IN___bvec_path,'file')==2)
-                        if isfield(DWI_IN__serie(D).sequence,'B_vect') && ~isempty(DWI_IN__serie(D).sequence.B_vect)
-                            B_vect = DWI_IN__serie(D).sequence.B_vect;
-                            B_vect = num2str(B_vect);
-                            B_vect_str = '';
-                            for line = 1 : 3
-                                B_vect_str = [ B_vect_str B_vect(line,:) sprintf('\n') ] ;
+                    if strcmp(suffix_dwi, 'dwi')
+                        
+                        % bval ------------------------------------------------
+                        dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
+                        dwi_IN___bval_path = spm_file( dwi_IN___vol_path, 'ext', '.bval' );
+                        if ~(exist(dwi_IN___bval_path,'file')==2)
+                            if isfield(DWI_IN__serie(D).sequence,'B_value') && ~isempty(DWI_IN__serie(D).sequence.B_value)
+                                B_value = DWI_IN__serie(D).sequence.B_value;
+                                B_value = num2str(B_value);
+                                subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_value, dwi_OUT__bval_path) ];
+                            else
+                                errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bval_path);
+                                log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                                error_flag_dwi  = 1;
                             end
-                            subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_vect_str, dwi_OUT__bvec_path) ];
                         else
-                            errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bvec_path);
-                            log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                            error_flag_dwi  = 1;
+                            subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bval_path, dwi_OUT__bval_path, par.copytype);
                         end
-                    else
-                        subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bvec_path, dwi_OUT__bvec_path, par.copytype);
+                        
+                        % bvec ------------------------------------------------
+                        dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
+                        dwi_IN___bvec_path = spm_file( dwi_IN___vol_path, 'ext', '.bvec' );
+                        if ~(exist(dwi_IN___bvec_path,'file')==2)
+                            if isfield(DWI_IN__serie(D).sequence,'B_vect') && ~isempty(DWI_IN__serie(D).sequence.B_vect)
+                                B_vect = DWI_IN__serie(D).sequence.B_vect;
+                                B_vect = num2str(B_vect);
+                                B_vect_str = '';
+                                for line = 1 : 3
+                                    B_vect_str = [ B_vect_str B_vect(line,:) sprintf('\n') ] ;
+                                end
+                                subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_vect_str, dwi_OUT__bvec_path) ];
+                            else
+                                errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bvec_path);
+                                log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                                error_flag_dwi  = 1;
+                            end
+                        else
+                            subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bvec_path, dwi_OUT__bvec_path, par.copytype);
+                        end
+                        
                     end
                     
                 end

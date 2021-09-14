@@ -486,13 +486,40 @@ for idx = 1 : size(SequenceCategory, 1)
         %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'dwi')
         
-        % Only keep ORIGINAL & magnitude
-        type_     = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
-        type      = split_(type_);
+        % SBRef ?
+        name = exam_SequenceData(where,hdr.SeriesDescription); % serie name
+        type_SBRef = ~isemptyCELL(regexp(name,'SBRef$'));
+        if any(type_SBRef)
+            
+            where_sbref = where(type_SBRef);
+            
+            % phase dir
+            bids_dir = exam_SequenceData(where_sbref,hdr.PhaseEncodingDirection);
+            bids_dir(strcmp(bids_dir, 'j' )) = {'PA'};
+            bids_dir(strcmp(bids_dir, 'j-')) = {'AP'};
+            bids_dir(strcmp(bids_dir, 'i' )) = {'LR'};
+            bids_dir(strcmp(bids_dir, 'i-')) = {'RL'};
+            
+            % concat dwi + bvals + bvects + phase dir
+            name_sbref = strcat('dwi_sbref_', bids_dir );
+            
+            % add series in the exam object smartly, so there is an auto-increment when multiple series
+            [unique_name_sbref,~,table_name_sbref] = unique(name_sbref,'stable');
+            for n = 1 : length(unique_name_sbref)
+                EXAM.addSerie('SCANS', strcat('^',SeriesNumber(table_name_sbref == n),'$'), 'NIFTI', unique_name_sbref{n}) % add the @serie, with BIDS tag
+                exam_SequenceData(where_sbref(table_name_sbref == n),end) = unique_name_sbref(n);
+            end
+            flag_add = 1;
+            where(type_SBRef) = [];
+            
+        end
         
-        type_ORIG = strcmp(type(:,1),'ORIGINAL');
-        %         type_M    = strcmp(type(:,3),'M');
-        %         where = where(type_ORIG & type_M);
+        
+        % Only keep ORIGINAL
+        ImageType_ = exam_SequenceData(where,hdr.ImageType); % mag or phase
+        ImageType  = split_(ImageType_);
+        type_ORIG = strcmp(ImageType(:,1),'ORIGINAL');
+        
         where = where(type_ORIG);
         if numel(where)==0
             continue
@@ -583,7 +610,7 @@ for ser = 1 : size(exam_SequenceData,1)
             % pass
         else
             
-            Serie_obj      = EXAM.getSerie(exam_SequenceData{ser,end});
+            Serie_obj = EXAM.getSerie(exam_SequenceData{ser,end});
             if ~isempty( Serie_obj )
                 SeqData_struct = param_struct( ~isemptyCELL( regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end}) ) );
                 for s = 1 : length(Serie_obj)
