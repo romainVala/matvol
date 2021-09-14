@@ -489,14 +489,13 @@ for e = 1:nrExam
     
     if ~isempty(DWI_IN__serie)
         
-        subjob_dwi     = cell(numel(DWI_IN__serie),1);
+        subjob_dwi = cell(numel(DWI_IN__serie),1);
         
         if length(DWI_IN__serie)==1 && isempty(DWI_IN__serie.path)
             % pass, this in exeption
         else
             
             dwi_OUT__dir = fullfile( ses_path, 'dwi' );
-            
             
             % Compute the run number of each acquisition
             [ dwi_run_number, dwi_run_name ] = interprete_run_number({DWI_IN__serie.name}');
@@ -938,9 +937,7 @@ if numel(TARGET)~=1
     errorSTR   = warning('Found %d/1 @%s for [ %s ] in : %s', numel(TARGET), target_class, target_regex, SERIE.path );
     log_subj   = [ log_subj errorSTR sprintf('\n') ];
     error_flag(1) = 1;
-end
-
-if nrVolume==1 && size(TARGET.path,1)>1
+elseif nrVolume==1 && size(TARGET.path,1)>1
     errorSTR   = warning('Found %d/1 @%s.path for [ %s ] in : %s', size(TARGET.path,1), target_class, target_regex, SERIE.path );
     log_subj   = [ log_subj errorSTR sprintf('\n') ];
     error_flag(2) = 1;
