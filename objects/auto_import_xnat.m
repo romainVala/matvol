@@ -38,39 +38,46 @@ defpar.serie_regex = '.*';
 % BIDS names :
 
 % anat
-defpar.anat_regex_volume   = '^v_.*nii$';
-defpar.anat_tag_volume     = 'v';
-defpar.anat_tag_json       = 'j';
+defpar.anat_regex_volume      = '^v_.*nii$';
+defpar.anat_tag_volume        = 'v';
+defpar.anat_tag_json_dcmstack = 'j_dcmstack';
+defpar.anat_tag_json_dcm2niix = 'j_dcm2niix';
 
 % dwi
-defpar.dwi_regex_volume    = '^v_.*nii$';
-defpar.dwi_tag_volume      = 'v';
-defpar.dwi_tag_json        = 'j';
+defpar.dwi_regex_volume      = '^v_.*nii$';
+defpar.dwi_tag_volume        = 'v';
+defpar.dwi_tag_json_dcmstack = 'j_dcmstack';
+defpar.dwi_tag_json_dcm2niix = 'j_dcm2niix';
 
 % func
-defpar.func_regex_volume   = '^v_.*nii$';
-defpar.func_tag_volume     = 'v';
-defpar.func_tag_json       = 'j';
+defpar.func_regex_volume      = '^v_.*nii$';
+defpar.func_tag_volume        = 'v';
+defpar.func_tag_json_dcmstack = 'j_dcmstack';
+defpar.func_tag_json_dcm2niix = 'j_dcm2niix';
 
 % fmap
-defpar.fmap_regex_volume   = '^v_.*nii$';
-defpar.fmap_tag_volume     = 'v';
-defpar.fmap_tag_json       = 'j';
+defpar.fmap_regex_volume      = '^v_.*nii$';
+defpar.fmap_tag_volume        = 'v';
+defpar.fmap_tag_json_dcmstack = 'j_dcmstack';
+defpar.fmap_tag_json_dcm2niix = 'j_dcm2niix';
 
 % swi
-defpar.swi_regex_volume    = '^v_.*nii$';
-defpar.swi_tag_volume      = 'v';
-defpar.swi_tag_json        = 'j';
+defpar.swi_regex_volume      = '^v_.*nii$';
+defpar.swi_tag_volume        = 'v';
+defpar.swi_tag_json_dcmstack = 'j_dcmstack';
+defpar.swi_tag_json_dcm2niix = 'j_dcm2niix';
 
 % asl
-defpar.asl_regex_volume    = '^v_.*nii$';
-defpar.asl_tag_volume      = 'v';
-defpar.asl_tag_json        = 'j';
+defpar.asl_regex_volume      = '^v_.*nii$';
+defpar.asl_tag_volume        = 'v';
+defpar.asl_tag_json_dcmstack = 'j_dcmstack';
+defpar.asl_tag_json_dcm2niix = 'j_dcm2niix';
 
 % medic
-defpar.medic_regex_volume  = '^v_.*nii$';
-defpar.medic_tag_volume    = 'v';
-defpar.medic_tag_json      = 'j';
+defpar.medic_regex_volume      = '^v_.*nii$';
+defpar.medic_tag_volume        = 'v';
+defpar.medic_tag_json_dcmstack = 'j_dcmstack';
+defpar.medic_tag_json_dcm2niix = 'j_dcm2niix';
 
 %--------------------------------------------------------------------------
 
@@ -95,20 +102,20 @@ par = complet_struct(par,defpar);
 % 4 : volume tag
 % 5 : json   tag
 SequenceCategory = {
-    'tfl'                          'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json % 3DT1 mprage & mp2rage
-    'mp2rage'                      'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json % some mp2rage WIP
-    'tse_vfl'                      'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json % 3DT2 space & 3DFLAIR space_ir
-    'diff'                         'dwi'   par.  dwi_regex_volume  par.  dwi_tag_volume  par.  dwi_tag_json % diffusion
-    'PtkSmsVB13ADwDualSpinEchoEpi' 'dwi'   par.  dwi_regex_volume  par.  dwi_tag_volume  par.  dwi_tag_json % diffusion from Trio
-    '(bold)|(pace)'                'func'  par. func_regex_volume  par. func_tag_volume  par. func_tag_json % bold fmri
-    'gre_field_mapping'            'fmap'  par. fmap_regex_volume  par. fmap_tag_volume  par. fmap_tag_json % gre_field_mapping
-    '^gre$'                        'swi'   par.  swi_regex_volume  par.  swi_tag_volume  par.  swi_tag_json % gre SWI
-    '^gre$'                        'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json % gre FLASH
-    '^tse$'                        'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json % tse, usually AX_2DT1 or AX_2DT2
-    'ep2d_se'                      'anat'  par. func_regex_volume  par. anat_tag_volume  par. anat_tag_json % SpinEcho EPI
-    'pcasl'                        'asl'   par.  asl_regex_volume  par.  asl_tag_volume  par.  asl_tag_json % pCASL
-    'pasl'                         'asl'   par.  asl_regex_volume  par.  asl_tag_volume  par.  asl_tag_json % 3DASL
-    'medic'                        'medic' par.medic_regex_volume  par.medic_tag_volume  par.medic_tag_json % medic
+    'tfl'                          'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % 3DT1 mprage & mp2rage
+    'mp2rage'                      'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % some mp2rage WIP
+    'tse_vfl'                      'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % 3DT2 space & 3DFLAIR space_ir
+    'diff'                         'dwi'   par.  dwi_regex_volume  par.  dwi_tag_volume  par.  dwi_tag_json_dcmstack par.  dwi_tag_json_dcm2niix % diffusion
+    'PtkSmsVB13ADwDualSpinEchoEpi' 'dwi'   par.  dwi_regex_volume  par.  dwi_tag_volume  par.  dwi_tag_json_dcmstack par.  dwi_tag_json_dcm2niix % diffusion from Trio
+    '(bold)|(pace)'                'func'  par. func_regex_volume  par. func_tag_volume  par. func_tag_json_dcmstack par. func_tag_json_dcm2niix % bold fmri
+    'gre_field_mapping'            'fmap'  par. fmap_regex_volume  par. fmap_tag_volume  par. fmap_tag_json_dcmstack par. fmap_tag_json_dcm2niix % gre_field_mapping
+    '^gre$'                        'swi'   par.  swi_regex_volume  par.  swi_tag_volume  par.  swi_tag_json_dcmstack par.  swi_tag_json_dcm2niix % gre SWI
+    '^gre$'                        'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % gre FLASH
+    '^tse$'                        'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % tse, usually AX_2DT1 or AX_2DT2
+    'ep2d_se'                      'anat'  par. func_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % SpinEcho EPI
+    'pcasl'                        'asl'   par.  asl_regex_volume  par.  asl_tag_volume  par.  asl_tag_json_dcmstack par.  asl_tag_json_dcm2niix % pCASL
+    'pasl'                         'asl'   par.  asl_regex_volume  par.  asl_tag_volume  par.  asl_tag_json_dcmstack par.  asl_tag_json_dcm2niix % 3DASL
+    'medic'                        'medic' par.medic_regex_volume  par.medic_tag_volume  par.medic_tag_json_dcmstack par.medic_tag_json_dcm2niix % medic
     };
 
 
@@ -487,6 +494,12 @@ for idx = 1 : size(SequenceCategory, 1)
         %         type_M    = strcmp(type(:,3),'M');
         %         where = where(type_ORIG & type_M);
         where = where(type_ORIG);
+        if numel(where)==0
+            continue
+        else % update the list of series because we might have removed some of them
+            SeriesNumber = exam_SequenceData(where,hdr.SeriesNumber     );
+            SeriesNumber = cellfun(@num2str,SeriesNumber,'UniformOutput',0);
+        end
         
         % DiffDirections
         DiffDirections = exam_SequenceData(where,hdr.DiffDirections);
@@ -554,7 +567,8 @@ for idx = 1 : size(SequenceCategory, 1)
     % Add volume & json
     if flag_add
         EXAM.getSerie(SequenceCategory{idx,2}).addVolume(SequenceCategory{idx,3},SequenceCategory{idx,4});
-        EXAM.getSerie(SequenceCategory{idx,2}).addJson('^v_.*json$',SequenceCategory{idx,5});
+        EXAM.getSerie(SequenceCategory{idx,2}).addJson('^stack_.*json$',SequenceCategory{idx,5});
+        EXAM.getSerie(SequenceCategory{idx,2}).addJson(    '^v_.*json$',SequenceCategory{idx,6});
     end
     
 end % categ
