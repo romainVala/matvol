@@ -381,10 +381,10 @@ for e = 1:nrExam
                 
                 subjob_func{F} = '';
                 
-                if     strfind(FUNC_IN__serie(F).tag,'_mag'  ), suffix_func = 'bold'     ;
-                elseif strfind(FUNC_IN__serie(F).tag,'_phase'), suffix_func = 'boldphase';
-                elseif strfind(FUNC_IN__serie(F).tag,'_sbref'), suffix_func = 'sbref'    ;
-                else                                          , suffix_func = 'bold'     ;
+                if     strfind(FUNC_IN__serie(F).tag,'_mag'  ), suffix_func = 'bold' ;
+                elseif strfind(FUNC_IN__serie(F).tag,'_phase'), suffix_func = 'phase';
+                elseif strfind(FUNC_IN__serie(F).tag,'_sbref'), suffix_func = 'sbref';
+                else                                          , suffix_func = 'bold' ;
                 end
                 
                 [ FUNC_IN___vol , error_flag_func_vol  ] = CHECK( FUNC_IN__serie(F), 'volume', par.regextag_func_volume, Inf );
