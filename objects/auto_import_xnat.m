@@ -328,7 +328,8 @@ for idx = 1 : size(SequenceCategory, 1)
                 flag_add = 1;
                 exam_SequenceData(where(where_sc),end) = {strcat('anat', subcategory{sc})};
                 upper_dir_name(where_sc) = []; % remove them from the list
-                where(where_sc) = [];
+                SeriesNumber  (where_sc) = [];
+                where         (where_sc) = [];
             end
             
         end

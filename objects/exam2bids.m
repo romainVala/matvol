@@ -484,7 +484,7 @@ for e = 1:nrExam
     %% ####################################################################
     % dwi
     
-    DWI_IN__serie  = EXAM.getSerie( par.regextag_dwi_serie, 'tag', 0 );
+    DWI_IN__serie = EXAM.getSerie( par.regextag_dwi_serie, 'tag', 0 );
     
     if ~isempty(DWI_IN__serie)
         
