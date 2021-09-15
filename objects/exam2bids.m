@@ -95,7 +95,6 @@ end
 % For BIDS Validator @ https://incf.github.io/bids-validator/ , ignore some non-official patterns
 
 bidsignore = {
-    '*boldphase*'
     '*inv-1*'
     '*inv-2*'
     'swi'
@@ -238,15 +237,15 @@ for e = 1:nrExam
                 
                 % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
                 % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
-                if     strfind(ANAT_IN__serie(A).tag,'_INV1'       ), suffix_anat = 'inv-1'; to_remove   = length(del_('_INV1'      )); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_INV2'       ), suffix_anat = 'inv-2'; to_remove   = length(del_('_INV2'      )); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images' ), suffix_anat = 'UNIT1'; to_remove   = length(del_('_UNI_Images')); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images'  ), suffix_anat = 'T1map'; to_remove   = length(del_('_T1_Images' )); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T1w'        ), suffix_anat = 'T1w'  ; to_remove   = 0                          ; % mprage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T2w'        ), suffix_anat = 'T2w'  ; to_remove   = 0                          ;
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR'      ), suffix_anat = 'FLAIR'; to_remove   = 0                          ;
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_mag'  ), suffix_anat = 'FLASH'; to_remove   = 0                          ; part = 'mag'  ;
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_phase'), suffix_anat = 'FLASH'; to_remove   = length(del_('_phase'     )); part = 'phase';
+                if     strfind(ANAT_IN__serie(A).tag,'_INV1'       ), suffix_anat = 'inv-1'  ; to_remove = length(del_('_INV1'      )) ; % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_INV2'       ), suffix_anat = 'inv-2'  ; to_remove = length(del_('_INV2'      )) ; % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images' ), suffix_anat = 'UNIT1'  ; to_remove = length(del_('_UNI_Images')) ; % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images'  ), suffix_anat = 'T1map'  ; to_remove = length(del_('_T1_Images' )) ; % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1w'        ), suffix_anat = 'T1w'    ; to_remove = 0                           ; % mprage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T2w'        ), suffix_anat = 'T2w'    ; to_remove = 0                           ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR'      ), suffix_anat = 'FLAIR'  ; to_remove = 0                           ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_mag'  ), suffix_anat = 'T2starw'; to_remove = length(del_('_FLASH_mag'  )); part = 'mag'  ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_phase'), suffix_anat = 'T2starw'; to_remove = length(del_('_FLASH_phase')); part = 'phase';
                 elseif strfind(ANAT_IN__serie(A).tag,'_TSE'        ), continue % skip
                 elseif strfind(ANAT_IN__serie(A).tag,'_ep2d_se'    ), continue % skip
                     
@@ -258,7 +257,7 @@ for e = 1:nrExam
                 end
                 
                 % FLASH can have multiple echos, but not the other ones (exept mp2rage, but they will apear in different series)
-                if strcmp(suffix_anat, 'FLASH')
+                if strcmp(suffix_anat, 'T2starw')
                     nrVolume = Inf;
                 else
                     nrVolume = 1;
@@ -518,7 +517,7 @@ for e = 1:nrExam
                         fprintf('[%s]: Preparing DWI : %s \n', mfilename, DWI_IN___vol.path );
                     end
                     
-                    % Volume --------------------------------------------------
+                    % Volume ----------------------------------------------
                     
                     dwi_IN___vol_path = deblank  (DWI_IN___vol.path);
                     dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
@@ -528,7 +527,7 @@ for e = 1:nrExam
                     dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
                     subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
                     
-                    % Json ----------------------------------------------------
+                    % Json ------------------------------------------------
                     
                     dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
                     json_dwi_struct    = getJSON_params_EPI( DWI_IN__json, dwi_OUT__vol_name, par ); % Get data from the Json that we will append on the to, to match BIDS architecture
@@ -537,7 +536,7 @@ for e = 1:nrExam
                     
                     if strcmp(suffix_dwi, 'dwi')
                         
-                        % bval ------------------------------------------------
+                        % bval --------------------------------------------
                         dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
                         dwi_IN___bval_path = spm_file( dwi_IN___vol_path, 'ext', '.bval' );
                         if ~(exist(dwi_IN___bval_path,'file')==2)
@@ -554,7 +553,7 @@ for e = 1:nrExam
                             subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bval_path, dwi_OUT__bval_path, par.copytype);
                         end
                         
-                        % bvec ------------------------------------------------
+                        % bvec --------------------------------------------
                         dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
                         dwi_IN___bvec_path = spm_file( dwi_IN___vol_path, 'ext', '.bvec' );
                         if ~(exist(dwi_IN___bvec_path,'file')==2)

@@ -111,6 +111,7 @@ SequenceCategory = {
     'gre_field_mapping'            'fmap'  par. fmap_regex_volume  par. fmap_tag_volume  par. fmap_tag_json_dcmstack par. fmap_tag_json_dcm2niix % gre_field_mapping
     '^gre$'                        'swi'   par.  swi_regex_volume  par.  swi_tag_volume  par.  swi_tag_json_dcmstack par.  swi_tag_json_dcm2niix % gre SWI
     '^gre$'                        'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % gre FLASH
+    '^icm_gre$'                    'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % gre FLASH ICM
     '^tse$'                        'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % tse, usually AX_2DT1 or AX_2DT2
     'ep2d_se'                      'anat'  par. func_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % SpinEcho EPI
     'pcasl'                        'asl'   par.  asl_regex_volume  par.  asl_tag_volume  par.  asl_tag_json_dcmstack par.  asl_tag_json_dcm2niix % pCASL
@@ -347,7 +348,7 @@ for idx = 1 : size(SequenceCategory, 1)
                 spc   = ~isemptyCELL(strfind(SequenceName, 'spc'  )); if any( spc   ), EXAM.addSerie('SCANS', strcat('^',SeriesNumber(spc),'$'), 'NIFTI','anat_T2w'  ), exam_SequenceData(where( spc   ),end) = {'anat_T2w'  }; flag_add = 1; end
             end
             
-            gre = strcmp(SequenceFileName, 'gre');
+            gre = strcmp(SequenceFileName, 'gre') | strcmp(SequenceFileName, 'icm_gre');
             if any( gre )
                 
                 fl = ~isemptyCELL(strfind(SequenceName, 'fl'));
