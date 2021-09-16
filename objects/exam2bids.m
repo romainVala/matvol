@@ -33,28 +33,28 @@ assert( ischar(bidsDir)         , 'bidsDir must be a char'                 )
 
 % anat
 defpar.regextag_anat_serie  = 'anat';
-defpar.regextag_anat_volume = '^s';
-defpar.regextag_anat_json   = '.*';
+defpar.regextag_anat_volume = '^v';
+defpar.regextag_anat_json   = '^j_dcm2niix';
 
 % func
 defpar.regextag_func_serie  = 'func';
-defpar.regextag_func_volume = '^f';
-defpar.regextag_func_json   = '.*';
+defpar.regextag_func_volume = '^v';
+defpar.regextag_func_json   = '^j_dcm2niix';
 
 % dwi
 defpar.regextag_dwi_serie   = 'dwi';
-defpar.regextag_dwi_volume  = '^f';
-defpar.regextag_dwi_json    = '.*';
+defpar.regextag_dwi_volume  = '^v';
+defpar.regextag_dwi_json    = '^j_dcm2niix';
 
 % fmap
 defpar.regextag_fmap_serie  = 'fmap';
-defpar.regextag_fmap_volume = '^s';
-defpar.regextag_fmap_json   = '.*';
+defpar.regextag_fmap_volume = '^v';
+defpar.regextag_fmap_json   = '^j_dcm2niix';
 
 % swi
 defpar.regextag_swi_serie  = 'swi';
-defpar.regextag_swi_volume = '^s';
-defpar.regextag_swi_json   = '.*';
+defpar.regextag_swi_volume = '^v';
+defpar.regextag_swi_json   = '^j_dcm2niix';
 
 % Other options :
 defpar.copytype    = 'link'; % can be 'link' or 'copy'
@@ -95,11 +95,8 @@ end
 % For BIDS Validator @ https://incf.github.io/bids-validator/ , ignore some non-official patterns
 
 bidsignore = {
-    '*boldphase*'
     '*inv-1*'
     '*inv-2*'
-    '*T1map*'
-    '*_part-*' % FLASH  : mag / pahse, SWI : mag / phase
     'swi'
     };
 
@@ -123,7 +120,13 @@ study_path = fileparts(study_path);
 dataset_description.Name = study_path; % dir of the study, such as /export/dataCENIR/dicom/nifti_raw/PRISMA_CENIR_DEV
 
 % BIDSVersion
-dataset_description.BIDSVersion = '1.1.1';
+dataset_description.BIDSVersion = '1.6.0';
+
+% HEDVersion
+dataset_description.HEDVersion = '';
+
+% DatasetType
+dataset_description.DatasetType = 'raw'; % 'raw' or 'derivative', raw is the default
 
 % License
 dataset_description.License = 'PDDL';
@@ -136,6 +139,9 @@ dataset_description.Acknowledgements = '';
 
 % HowToAcknowledge
 dataset_description.HowToAcknowledge = '';
+
+% EthicsApprovals
+dataset_description.EthicsApprovals = {''};
 
 % Funding
 dataset_description.Funding = {''};
@@ -151,6 +157,15 @@ job_header = sprintf('## dataset_description.json ## \n');
 if ~exist(fullfile(bidsDir,'dataset_description.json'),'file')
     job_header = jobcmd_write_json_bids( job_header, json_dataset_description, fullfile(bidsDir,'dataset_description.json') );
 end
+
+
+% %% README
+%
+% job_header = [ job_header sprintf('## README ## \n') ];
+% if ~exist(fullfile(bidsDir,'README'),'file')
+%     job_header = [ job_header sprintf('touch %s \n', fullfile(bidsDir,'README')) ];
+% end
+
 
 %% Main loop
 
@@ -203,9 +218,10 @@ for e = 1:nrExam
     % anat
     
     ANAT_IN__serie  = EXAM.getSerie( par.regextag_anat_serie, 'tag', 0 );
-    subjob_anat     = cell(numel(ANAT_IN__serie),1);
     
     if ~isempty(ANAT_IN__serie)
+        
+        subjob_anat     = cell(numel(ANAT_IN__serie),1);
         
         if length(ANAT_IN__serie)==1 && isempty(ANAT_IN__serie.path)
             % pass, this in exeption
@@ -221,15 +237,15 @@ for e = 1:nrExam
                 
                 % https://neurostars.org/t/mp2rage-in-bids-and-fmriprep/2008/4
                 % https://docs.google.com/document/d/1QwfHyBzOyFWOLO4u_kkojLpUhW0-4_M7Ubafu9Gf4Gg/edit#
-                if     strfind(ANAT_IN__serie(A).tag,'_INV1'       ), suffix_anat = 'inv-1'; to_remove   = length(del_('_INV1'      )); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_INV2'       ), suffix_anat = 'inv-2'; to_remove   = length(del_('_INV2'      )); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images' ), suffix_anat = 'T1w'  ; to_remove   = length(del_('_UNI_Images')); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images'  ), suffix_anat = 'T1map'; to_remove   = length(del_('_T1_Images' )); % mp2rage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T1w'        ), suffix_anat = 'T1w'  ; to_remove   = 0                          ; % mprage
-                elseif strfind(ANAT_IN__serie(A).tag,'_T2w'        ), suffix_anat = 'T2w'  ; to_remove   = 0                          ;
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR'      ), suffix_anat = 'FLAIR'; to_remove   = 0                          ;
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_mag'  ), suffix_anat = 'FLASH'; to_remove   = 0                          ; part = 'mag'  ;
-                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_phase'), suffix_anat = 'FLASH'; to_remove   = length(del_('_phase'     )); part = 'phase';
+                if     strfind(ANAT_IN__serie(A).tag,'_INV1'       ), suffix_anat = 'inv-1'  ; to_remove = length(del_('_INV1'      )) ; % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_INV2'       ), suffix_anat = 'inv-2'  ; to_remove = length(del_('_INV2'      )) ; % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_UNI_Images' ), suffix_anat = 'UNIT1'  ; to_remove = length(del_('_UNI_Images')) ; % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1_Images'  ), suffix_anat = 'T1map'  ; to_remove = length(del_('_T1_Images' )) ; % mp2rage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T1w'        ), suffix_anat = 'T1w'    ; to_remove = 0                           ; % mprage
+                elseif strfind(ANAT_IN__serie(A).tag,'_T2w'        ), suffix_anat = 'T2w'    ; to_remove = 0                           ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLAIR'      ), suffix_anat = 'FLAIR'  ; to_remove = 0                           ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_mag'  ), suffix_anat = 'T2starw'; to_remove = length(del_('_FLASH_mag'  )); part = 'mag'  ;
+                elseif strfind(ANAT_IN__serie(A).tag,'_FLASH_phase'), suffix_anat = 'T2starw'; to_remove = length(del_('_FLASH_phase')); part = 'phase';
                 elseif strfind(ANAT_IN__serie(A).tag,'_TSE'        ), continue % skip
                 elseif strfind(ANAT_IN__serie(A).tag,'_ep2d_se'    ), continue % skip
                     
@@ -241,7 +257,7 @@ for e = 1:nrExam
                 end
                 
                 % FLASH can have multiple echos, but not the other ones (exept mp2rage, but they will apear in different series)
-                if strcmp(suffix_anat, 'FLASH')
+                if strcmp(suffix_anat, 'T2starw')
                     nrVolume = Inf;
                 else
                     nrVolume = 1;
@@ -266,6 +282,7 @@ for e = 1:nrExam
                         % Volume ------------------------------------------
                         
                         anat_OUT__name     = anat_run_name{A}(1:end-to_remove);
+                        anat_OUT__name     = makeValidName(anat_OUT__name);
                         anat_OUT__name     = sprintf('acq-%s_run-%d_%s', anat_OUT__name, anat_run_number(A), suffix_anat);
                         anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
                         anat_IN___vol_ext  = file_ext( ANAT_IN___vol.path);
@@ -297,6 +314,7 @@ for e = 1:nrExam
                             % Volume ------------------------------------------
                             
                             anat_OUT__name     = anat_run_name{A}(1:end-to_remove);
+                            anat_OUT__name     = makeValidName(anat_OUT__name);
                             anat_OUT__name     = sprintf('acq-%s_run-%d_echo-%0.2d_part-%s_%s', anat_OUT__name, anat_run_number(A), echo, part, suffix_anat);
                             anat_OUT__base     = fullfile( anat_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, anat_OUT__name) );
                             anat_IN___vol_ext  = file_ext( deblank(ANAT_IN___vol.path(orderTE(echo),:)) );
@@ -339,9 +357,16 @@ for e = 1:nrExam
     % func
     
     FUNC_IN__serie  = EXAM.getSerie( par.regextag_func_serie, 'tag', 0 );
-    subjob_func     = cell(numel(FUNC_IN__serie),1);
     
     if ~isempty(FUNC_IN__serie)
+        
+        % Remove non 4D data (like verif fov EPI)
+        %----------------------------------------
+        FUNC_IN__seq    = [FUNC_IN__serie.sequence];
+        nRepetitions    = [FUNC_IN__seq.Repetitions];
+        FUNC_IN__serie  = FUNC_IN__serie(~isnan(nRepetitions));
+        %----------------------------------------
+        subjob_func     = cell(numel(FUNC_IN__serie),1);
         
         if length(FUNC_IN__serie)==1 && isempty(FUNC_IN__serie.path)
             % pass, this in exeption
@@ -356,10 +381,10 @@ for e = 1:nrExam
                 
                 subjob_func{F} = '';
                 
-                if     strfind(FUNC_IN__serie(F).tag,'_mag'  ), suffix_func = 'bold'     ;
-                elseif strfind(FUNC_IN__serie(F).tag,'_phase'), suffix_func = 'boldphase';
-                elseif strfind(FUNC_IN__serie(F).tag,'_sbref'), suffix_func = 'sbref'    ;
-                else                                          , suffix_func = 'bold'     ;
+                if     strfind(FUNC_IN__serie(F).tag,'_mag'  ), suffix_func = 'bold' ;
+                elseif strfind(FUNC_IN__serie(F).tag,'_phase'), suffix_func = 'phase';
+                elseif strfind(FUNC_IN__serie(F).tag,'_sbref'), suffix_func = 'sbref';
+                else                                          , suffix_func = 'bold' ;
                 end
                 
                 [ FUNC_IN___vol , error_flag_func_vol  ] = CHECK( FUNC_IN__serie(F), 'volume', par.regextag_func_volume, Inf );
@@ -381,6 +406,7 @@ for e = 1:nrExam
                         func_IN___vol_path = deblank  (FUNC_IN___vol.path);
                         func_IN___vol_ext  = file_ext (func_IN___vol_path);
                         func_OUT__vol_name = func_run_name{F};
+                        func_OUT__vol_name = makeValidName(func_OUT__vol_name);
                         func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d_%s', sub_name, ses_name, func_OUT__vol_name, func_run_number(F), suffix_func) );
                         func_OUT__vol_path = [ func_OUT__vol_base func_IN___vol_ext ];
                         subjob_func{F}     = link_or_copy(subjob_func{F}, FUNC_IN___vol.path, func_OUT__vol_path, par.copytype);
@@ -404,6 +430,7 @@ for e = 1:nrExam
                         % Volume ------------------------------------------
                         
                         func_OUT__vol_name = func_run_name{F};
+                        func_OUT__vol_name = makeValidName(func_OUT__vol_name);
                         func_OUT__vol_base = fullfile( func_OUT__dir, sprintf('%s_%s_task-%s_run-%d', sub_name, ses_name, func_OUT__vol_name, func_run_number(F)) );
                         
                         % Fetch volume corrsponding to the echo
@@ -457,10 +484,11 @@ for e = 1:nrExam
     %% ####################################################################
     % dwi
     
-    DWI_IN__serie  = EXAM.getSerie( par.regextag_dwi_serie, 'tag', 0 );
-    subjob_dwi     = cell(numel(DWI_IN__serie),1);
+    DWI_IN__serie = EXAM.getSerie( par.regextag_dwi_serie, 'tag', 0 );
     
     if ~isempty(DWI_IN__serie)
+        
+        subjob_dwi = cell(numel(DWI_IN__serie),1);
         
         if length(DWI_IN__serie)==1 && isempty(DWI_IN__serie.path)
             % pass, this in exeption
@@ -468,14 +496,17 @@ for e = 1:nrExam
             
             dwi_OUT__dir = fullfile( ses_path, 'dwi' );
             
-            
             % Compute the run number of each acquisition
             [ dwi_run_number, dwi_run_name ] = interprete_run_number({DWI_IN__serie.name}');
             
             for D = 1 : numel(DWI_IN__serie)
                 
+                if     strfind(DWI_IN__serie(D).tag,'_sbref' ), suffix_dwi = 'sbref';
+                else                                          , suffix_dwi = 'dwi'  ;
+                end
+                
                 [ DWI_IN___vol , error_flag_dwi_vol  ] = CHECK( DWI_IN__serie(D), 'volume', par.regextag_dwi_volume );
-                [ DWI_IN__json , error_flag_dwi_json ] = CHECK( DWI_IN__serie(D), 'json', par.regextag_dwi_json );
+                [ DWI_IN__json , error_flag_dwi_json ] = CHECK( DWI_IN__serie(D), 'json'  , par.regextag_dwi_json   );
                 
                 error_flag_dwi = error_flag_dwi_vol && error_flag_dwi_json;
                 
@@ -486,58 +517,63 @@ for e = 1:nrExam
                         fprintf('[%s]: Preparing DWI : %s \n', mfilename, DWI_IN___vol.path );
                     end
                     
-                    % Volume --------------------------------------------------
+                    % Volume ----------------------------------------------
                     
                     dwi_IN___vol_path = deblank  (DWI_IN___vol.path);
                     dwi_IN___vol_ext  = file_ext (dwi_IN___vol_path);
                     dwi_OUT__vol_name = dwi_run_name{D};
-                    dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_dwi', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D)) );
+                    dwi_OUT__vol_name = makeValidName(dwi_OUT__vol_name);
+                    dwi_OUT__vol_base = fullfile( dwi_OUT__dir, sprintf('%s_%s_acq-%s_run-%d_%s', sub_name, ses_name, dwi_OUT__vol_name, dwi_run_number(D), suffix_dwi) );
                     dwi_OUT__vol_path = [ dwi_OUT__vol_base dwi_IN___vol_ext ];
                     subjob_dwi{D}     = link_or_copy(subjob_dwi{D}, DWI_IN___vol.path, dwi_OUT__vol_path, par.copytype);
                     
-                    % Json ----------------------------------------------------
+                    % Json ------------------------------------------------
                     
                     dwi_OUT__json_path = [ dwi_OUT__vol_base '.json' ];
                     json_dwi_struct    = getJSON_params_EPI( DWI_IN__json, dwi_OUT__vol_name, par ); % Get data from the Json that we will append on the to, to match BIDS architecture
                     json_dwi_str       = struct2jsonSTR( json_dwi_struct );
                     subjob_dwi{D}      = jobcmd_write_json_bids( subjob_dwi{D}, json_dwi_str, dwi_OUT__json_path, DWI_IN__json.path );
                     
-                    % bval ------------------------------------------------
-                    dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
-                    dwi_IN___bval_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvals');
-                    if ~(exist(dwi_IN___bval_path,'file')==2)
-                        if isfield(DWI_IN__serie(D).sequence,'B_value') && ~isempty(DWI_IN__serie(D).sequence.B_value)
-                            B_value = DWI_IN__serie(D).sequence.B_value;
-                            B_value = num2str(B_value);
-                            subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_value, dwi_OUT__bval_path) ];
-                        else
-                            errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bval_path);
-                            log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                            error_flag_dwi  = 1;
-                        end
-                    else
-                        subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bval_path, dwi_OUT__bval_path, par.copytype);
-                    end
-                    
-                    % bvec ------------------------------------------------
-                    dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
-                    dwi_IN___bvec_path = fullfile(DWI_IN__serie(D).path,'diffusion_dir.bvecs');
-                    if ~(exist(dwi_IN___bvec_path,'file')==2)
-                        if isfield(DWI_IN__serie(D).sequence,'B_vect') && ~isempty(DWI_IN__serie(D).sequence.B_vect)
-                            B_vect = DWI_IN__serie(D).sequence.B_vect;
-                            B_vect = num2str(B_vect);
-                            B_vect_str = '';
-                            for line = 1 : 3
-                                B_vect_str = [ B_vect_str B_vect(line,:) sprintf('\n') ] ;
+                    if strcmp(suffix_dwi, 'dwi')
+                        
+                        % bval --------------------------------------------
+                        dwi_OUT__bval_path = [ dwi_OUT__vol_base '.bval' ];
+                        dwi_IN___bval_path = spm_file( dwi_IN___vol_path, 'ext', '.bval' );
+                        if ~(exist(dwi_IN___bval_path,'file')==2)
+                            if isfield(DWI_IN__serie(D).sequence,'B_value') && ~isempty(DWI_IN__serie(D).sequence.B_value)
+                                B_value = DWI_IN__serie(D).sequence.B_value;
+                                B_value = num2str(B_value);
+                                subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_value, dwi_OUT__bval_path) ];
+                            else
+                                errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bval_path);
+                                log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                                error_flag_dwi  = 1;
                             end
-                            subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_vect_str, dwi_OUT__bvec_path) ];
                         else
-                            errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bvec_path);
-                            log_subj        = [ log_subj errorSTR sprintf('\n') ];
-                            error_flag_dwi  = 1;
+                            subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bval_path, dwi_OUT__bval_path, par.copytype);
                         end
-                    else
-                        subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bvec_path, dwi_OUT__bvec_path, par.copytype);
+                        
+                        % bvec --------------------------------------------
+                        dwi_OUT__bvec_path = [ dwi_OUT__vol_base '.bvec' ];
+                        dwi_IN___bvec_path = spm_file( dwi_IN___vol_path, 'ext', '.bvec' );
+                        if ~(exist(dwi_IN___bvec_path,'file')==2)
+                            if isfield(DWI_IN__serie(D).sequence,'B_vect') && ~isempty(DWI_IN__serie(D).sequence.B_vect)
+                                B_vect = DWI_IN__serie(D).sequence.B_vect;
+                                B_vect = num2str(B_vect);
+                                B_vect_str = '';
+                                for line = 1 : 3
+                                    B_vect_str = [ B_vect_str B_vect(line,:) sprintf('\n') ] ;
+                                end
+                                subjob_dwi{D} = [ subjob_dwi{D} sprintf('echo ''%s''>> %s \n\n', B_vect_str, dwi_OUT__bvec_path) ];
+                            else
+                                errorSTR = warning('Found  0/1 file in : %s', dwi_IN___bvec_path);
+                                log_subj        = [ log_subj errorSTR sprintf('\n') ];
+                                error_flag_dwi  = 1;
+                            end
+                        else
+                            subjob_dwi{D} = link_or_copy(subjob_dwi{D} , dwi_IN___bvec_path, dwi_OUT__bvec_path, par.copytype);
+                        end
+                        
                     end
                     
                 end
@@ -568,9 +604,10 @@ for e = 1:nrExam
     % fmap
     
     FMAP_IN__serie  = EXAM.getSerie( par.regextag_fmap_serie, 'tag', 0 );
-    subjob_fmap     = cell(numel(FMAP_IN__serie),1);
     
     if ~isempty(FMAP_IN__serie)
+        
+        subjob_fmap     = cell(numel(FMAP_IN__serie),1);
         
         if length(FMAP_IN__serie)==1 && isempty(FMAP_IN__serie.path)
             % pass, this in exeption
@@ -605,6 +642,7 @@ for e = 1:nrExam
                             % Volume --------------------------------------
                             
                             fmap_OUT__name     = fmap_run_name{FM};
+                            fmap_OUT__name     = makeValidName(fmap_OUT__name);
                             fmap_OUT__name     = sprintf('acq-%s_run-%d_%s%d', fmap_OUT__name, fmap_run_number(FM), suffix_fmap, echo);
                             fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
                             fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path(echo,:)) );
@@ -635,6 +673,7 @@ for e = 1:nrExam
                         % Volume ------------------------------------------
                         
                         fmap_OUT__name     = fmap_run_name{FM};
+                        fmap_OUT__name     = makeValidName(fmap_OUT__name);
                         fmap_OUT__name     = sprintf('acq-%s_run-%d_%s', fmap_OUT__name, fmap_run_number(FM), suffix_fmap);
                         fmap_OUT__base     = fullfile( fmap_OUT__dir_path, sprintf('%s_%s_%s', sub_name, ses_name, fmap_OUT__name) );
                         fmap_IN___vol_ext  = file_ext( deblank(FMAP_IN___vol.path) );
@@ -685,9 +724,10 @@ for e = 1:nrExam
     % swi
     
     SWI_IN__serie  = EXAM.getSerie( par.regextag_swi_serie, 'tag', 0 );
-    subjob_swi     = cell(numel(SWI_IN__serie),1);
     
     if ~isempty(SWI_IN__serie)
+        
+        subjob_swi     = cell(numel(SWI_IN__serie),1);
         
         if length(SWI_IN__serie)==1 && isempty(SWI_IN__serie.path)
             % pass, this in exeption
@@ -850,7 +890,29 @@ job = [ {job_header} ; job ];
 % Run CPU, run !
 parSGE = par;
 parSGE.verbose = par.sge_verbose; % too much display in do_cmd_sge
-job = do_cmd_sge(job, parSGE);
+
+% if job{i} is too long, split it, otherwise matlab wont run it (buffer size)
+split_job = cell(0); % make a copy
+max_char = 131071;
+for j = 1 : length(job)
+    if length(job{j}) > max_char %  2^17-1
+        njobs = ceil( length(job{j}) / max_char );
+        lines = strsplit(job{j}, sprintf('\n\n'))';
+        nlines= ceil(length(lines)/njobs);
+        for ijob = 1 : njobs
+            if ijob ~= njobs
+                tmp_lines = lines( (1 + (ijob-1)*nlines) : ijob*nlines );
+            else
+                tmp_lines = lines( (1 + (ijob-1)*nlines) : end );
+            end
+            split_job{end+1} = sprintf( '%s \n', tmp_lines{:} ); % re-assemble lines into single char
+        end
+    else
+        split_job(end+1) = job(j);
+    end
+    
+end
+job = do_cmd_sge(split_job, parSGE);
 
 
 if par.verbose > 0
@@ -882,9 +944,7 @@ if numel(TARGET)~=1
     errorSTR   = warning('Found %d/1 @%s for [ %s ] in : %s', numel(TARGET), target_class, target_regex, SERIE.path );
     log_subj   = [ log_subj errorSTR sprintf('\n') ];
     error_flag(1) = 1;
-end
-
-if nrVolume==1 && size(TARGET.path,1)>1
+elseif nrVolume==1 && size(TARGET.path,1)>1
     errorSTR   = warning('Found %d/1 @%s.path for [ %s ] in : %s', size(TARGET.path,1), target_class, target_regex, SERIE.path );
     log_subj   = [ log_subj errorSTR sprintf('\n') ];
     error_flag(2) = 1;
@@ -919,7 +979,7 @@ if any(n)
 else
     names3 = names2;
 end
-    
+
 end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -949,6 +1009,14 @@ end % function
 % end % function
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function out = makeValidName(in)
+
+out = matlab.lang.makeValidName(in);
+out = del_(out);
+
+end % function
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function out = del_(in)
 
 out = strrep(in,'_','');
@@ -974,9 +1042,9 @@ function job_subj = link_or_copy(job_subj, IN_path, OUT_path, type)
 
 switch type
     case 'link'
-        job_subj   = [ job_subj sprintf('ln -sf %s %s \n\n', IN_path, OUT_path) ];
+        job_subj   = [ job_subj sprintf('ln -sf "%s" "%s" \n\n', IN_path, OUT_path) ];
     case 'copy'
-        job_subj   = [ job_subj sprintf( 'cp -f %s %s \n\n', IN_path, OUT_path) ];
+        job_subj   = [ job_subj sprintf( 'cp -f "%s" "%s" \n\n', IN_path, OUT_path) ];
 end
 
 end % function

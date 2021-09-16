@@ -111,6 +111,7 @@ SequenceCategory = {
     'gre_field_mapping'            'fmap'  par. fmap_regex_volume  par. fmap_tag_volume  par. fmap_tag_json_dcmstack par. fmap_tag_json_dcm2niix % gre_field_mapping
     '^gre$'                        'swi'   par.  swi_regex_volume  par.  swi_tag_volume  par.  swi_tag_json_dcmstack par.  swi_tag_json_dcm2niix % gre SWI
     '^gre$'                        'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % gre FLASH
+    '^icm_gre$'                    'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % gre FLASH ICM
     '^tse$'                        'anat'  par. anat_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % tse, usually AX_2DT1 or AX_2DT2
     'ep2d_se'                      'anat'  par. func_regex_volume  par. anat_tag_volume  par. anat_tag_json_dcmstack par. anat_tag_json_dcm2niix % SpinEcho EPI
     'pcasl'                        'asl'   par.  asl_regex_volume  par.  asl_tag_volume  par.  asl_tag_json_dcmstack par.  asl_tag_json_dcm2niix % pCASL
@@ -327,7 +328,8 @@ for idx = 1 : size(SequenceCategory, 1)
                 flag_add = 1;
                 exam_SequenceData(where(where_sc),end) = {strcat('anat', subcategory{sc})};
                 upper_dir_name(where_sc) = []; % remove them from the list
-                where(where_sc) = [];
+                SeriesNumber  (where_sc) = [];
+                where         (where_sc) = [];
             end
             
         end
@@ -347,7 +349,7 @@ for idx = 1 : size(SequenceCategory, 1)
                 spc   = ~isemptyCELL(strfind(SequenceName, 'spc'  )); if any( spc   ), EXAM.addSerie('SCANS', strcat('^',SeriesNumber(spc),'$'), 'NIFTI','anat_T2w'  ), exam_SequenceData(where( spc   ),end) = {'anat_T2w'  }; flag_add = 1; end
             end
             
-            gre = strcmp(SequenceFileName, 'gre');
+            gre = strcmp(SequenceFileName, 'gre') | strcmp(SequenceFileName, 'icm_gre');
             if any( gre )
                 
                 fl = ~isemptyCELL(strfind(SequenceName, 'fl'));
@@ -486,13 +488,40 @@ for idx = 1 : size(SequenceCategory, 1)
         %------------------------------------------------------------------
     elseif strcmp(SequenceCategory{idx,2},'dwi')
         
-        % Only keep ORIGINAL & magnitude
-        type_     = exam_SequenceData(where,hdr.ImageType        ); % mag or phase
-        type      = split_(type_);
+        % SBRef ?
+        name = exam_SequenceData(where,hdr.SeriesDescription); % serie name
+        type_SBRef = ~isemptyCELL(regexp(name,'SBRef$'));
+        if any(type_SBRef)
+            
+            where_sbref = where(type_SBRef);
+            
+            % phase dir
+            bids_dir = exam_SequenceData(where_sbref,hdr.PhaseEncodingDirection);
+            bids_dir(strcmp(bids_dir, 'j' )) = {'PA'};
+            bids_dir(strcmp(bids_dir, 'j-')) = {'AP'};
+            bids_dir(strcmp(bids_dir, 'i' )) = {'LR'};
+            bids_dir(strcmp(bids_dir, 'i-')) = {'RL'};
+            
+            % concat dwi + bvals + bvects + phase dir
+            name_sbref = strcat('dwi_sbref_', bids_dir );
+            
+            % add series in the exam object smartly, so there is an auto-increment when multiple series
+            [unique_name_sbref,~,table_name_sbref] = unique(name_sbref,'stable');
+            for n = 1 : length(unique_name_sbref)
+                EXAM.addSerie('SCANS', strcat('^',SeriesNumber(table_name_sbref == n),'$'), 'NIFTI', unique_name_sbref{n}) % add the @serie, with BIDS tag
+                exam_SequenceData(where_sbref(table_name_sbref == n),end) = unique_name_sbref(n);
+            end
+            flag_add = 1;
+            where(type_SBRef) = [];
+            
+        end
         
-        type_ORIG = strcmp(type(:,1),'ORIGINAL');
-        %         type_M    = strcmp(type(:,3),'M');
-        %         where = where(type_ORIG & type_M);
+        
+        % Only keep ORIGINAL
+        ImageType_ = exam_SequenceData(where,hdr.ImageType); % mag or phase
+        ImageType  = split_(ImageType_);
+        type_ORIG = strcmp(ImageType(:,1),'ORIGINAL');
+        
         where = where(type_ORIG);
         if numel(where)==0
             continue
@@ -583,7 +612,7 @@ for ser = 1 : size(exam_SequenceData,1)
             % pass
         else
             
-            Serie_obj      = EXAM.getSerie(exam_SequenceData{ser,end});
+            Serie_obj = EXAM.getSerie(exam_SequenceData{ser,end});
             if ~isempty( Serie_obj )
                 SeqData_struct = param_struct( ~isemptyCELL( regexp(exam_SequenceData(:,end),exam_SequenceData{ser,end}) ) );
                 for s = 1 : length(Serie_obj)
