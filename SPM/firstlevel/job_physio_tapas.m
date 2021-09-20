@@ -172,6 +172,10 @@ par = complet_struct(par,defpar);
 
 nVol = nan(4,1);
 
+if isa(par.volume,'volume')
+    par.volume = par.volume.getPath();
+end
+
 if par.physio
     if isa(par.physio_Info,'physio')
         physio_Info = par.physio_Info.getPath();
@@ -204,7 +208,7 @@ if par.noiseROI
 end
 
 if par.rp
-    if isa(par.noiseROI_mask,'rp')
+    if isa(par.rp_file ,'rp')
         rp_file = par.rp_file.getPath();
     else
         rp_file = par.rp_file;
