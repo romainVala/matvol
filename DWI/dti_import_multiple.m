@@ -1,4 +1,4 @@
-function dti_import_multiple(dti_spm_dir,outdir,par)
+function dti_import_multiple_new(dti_spm_dir,outdir,par)
 
 if ~exist('par')
     par='';
@@ -22,6 +22,8 @@ defpar.do_qc = 1;
 defpar.bvec = 'bvec';
 defpar.bval = 'bval';
 defpar.json = '(^dic.*json|^stack.*json)';
+defpar.use_topup = 1;
+defpar.acqp = '0 1 0 0.05';
 
 par = complet_struct(par,defpar);
 choose_sge=par.sge;
@@ -86,7 +88,9 @@ bval(bval<50) = 0;
 
 %copy the json, since b0 are now in the outputdir
 dicjson=get_subdir_regex_files(dti_spm_dir,par.json);
-if isempty(dicjson)
+
+if isempty(dicjson) && par.use_topup  % need acquition infos with use topup
+        
     %try to get in in /export/dataCENIR/dicom/nifti_raw
     dicparam = get_subdir_regex_files(dti_spm_dir,'dicom_info.mat',1);
     for nn=1:length(dicparam)
@@ -95,7 +99,7 @@ if isempty(dicjson)
         dirdicom = get_subdir_regex('/export/dataCENIR/dicom/nifti_raw',ed,pd,sd);
         dicjson(nn)  = get_subdir_regex_files(dirdicom,'^dic.*json',1);
     end
-    
+        
 end
 
 
@@ -104,10 +108,14 @@ if ~exist(outdir,'dir')
     mkdir(outdir);
 end
 
+if ~isempty(dicjson)
 dicjson = r_movefile(dicjson,outdir,'copy');
-
+end
 %check if eddy may be apply after topup
 %acqp=topup_param_from_nifti_cenir(dti_files);
+
+if par.use_topup % get acquitions informatios from json
+    
 [acqp,session]=topup_param_from_json_cenir(dti_files,'',dicjson,bvalalls);
 [B bi bj ]=unique(acqp,'rows');
 
@@ -137,11 +145,12 @@ else %there is more than 2 phase orientation
         if length(find(bj==kk))>maxdir, maxdir=length(find(bj==kk)); inddir=kk;end
     end
     opo_ind = find(bj~=inddir);
-end
+
 
 if (par.include_all) %added for case of bad acquisition for instance 1 serie AP 1 RL
     opo_ind=[]
 end
+
 
 ind=find(bval>50);
 %should change to write in outdir with serie name
@@ -161,8 +170,12 @@ ind_series_toremove= unique(session(opo_ind));
 
 dti_files(ind_series_toremove) = [];
 bvec(:,opo_ind)=[];  bval(:,opo_ind)=[];
-
-
+end
+else
+    B = [0,0];  % fix B 
+    par.force_eddy = 1;  
+end
+    
 %DO MERGE
 par.sge=-1; jobappend ='';
 
@@ -263,7 +276,7 @@ if size(B,1) == 1
         %let's try eddy without topup
         fid = fopen(fullfile(outdir,'index.txt'),'w');
         fid3 = fopen(fullfile(outdir,'acqp.txt'),'w');
-        fprintf(fid3,'0 1 0 0.05');
+        fprintf(fid3, par.acqp); % use acqp from user 
         ssess = ones(1,length(bval)); fprintf(fid,'%d ',ssess);
         fclose(fid);    fclose(fid3);
 
@@ -280,6 +293,7 @@ if size(B,1) == 1
     end
 else
     
+    %%%%%%%%%%%%%%% ICI %%%%%%%%%%%%%%%%%ù
     topup=r_mkdir({outdir},'topup');
     topup_param_from_json_cenir(fb0,topup,dicjson,bvalzeros);
     fo=fullfile(topup{1},'4D_B0');
