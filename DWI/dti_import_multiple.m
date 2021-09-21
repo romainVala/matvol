@@ -32,11 +32,11 @@ choose_sge=par.sge;
 if iscell(dti_spm_dir{1})
     if par.pct        %do not know why it does not work (hard to debug)
         parfor k=1:length(dti_spm_dir)
-            dti_import_multiple_new(dti_spm_dir{k},outdir{k},par);
+            dti_import_multiple(dti_spm_dir{k},outdir{k},par);
         end        
     else
         for k=1:length(dti_spm_dir)
-            dti_import_multiple_new(dti_spm_dir{k},outdir{k},par);
+            dti_import_multiple(dti_spm_dir{k},outdir{k},par);
         end
     end
     return
