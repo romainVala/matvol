@@ -189,6 +189,9 @@ for kk=2:length(dti_files)
         [bb, jobappend] = do_fsl_coreg_reslice(dti_files(kk),dti_files(1),parr,jobappend);
         
         dti_files(kk)=bb;
+        par.bvec = bvec_f;
+        par.bval = bval_f;
+        
     end
 end
 
