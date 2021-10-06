@@ -263,6 +263,8 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             
             for iEcho = 1 : length(meinfo_.data{iSubj}{iRun})
                 
+                echo = meinfo_.data{iSubj}{iRun}(iEcho);
+                
                 if     par.run % use the normal method
                     serie.addVolume( ['^' echo.outname echo.ext '$'] , sprintf('e%d',iEcho), 1 );
                 elseif par.sge % add the new volume in the object manually, because the file is not created yet
