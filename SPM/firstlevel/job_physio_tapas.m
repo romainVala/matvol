@@ -333,8 +333,8 @@ for iVol = 1:nVol
     
     if par.noiseROI
         
-        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.fmri_files       = cellstr(noiseROI_volume{iVol}); % requires 4D volume
-        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.roi_files        = cellstr(noiseROI_mask  {iVol});       % all masks
+        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.fmri_files       = cellstr(noiseROI_volume{iVol}  ); % requires 4D volume
+        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.roi_files        = cellstr(noiseROI_mask  (iVol,:)); % all masks
         jobs{iVol}.spm.tools.physio.model.noise_rois.yes.force_coregister = 'No';
         jobs{iVol}.spm.tools.physio.model.noise_rois.yes.thresholds       = par.noiseROI_thresholds;
         jobs{iVol}.spm.tools.physio.model.noise_rois.yes.n_voxel_crop     = par.noiseROI_n_voxel_crop;
