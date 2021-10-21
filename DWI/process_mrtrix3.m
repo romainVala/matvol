@@ -12,6 +12,7 @@ defpar.bval = 'bval';
 defpar.fsl_mask = '';  %if define, copy it to mrtrix subdir
 defpar.sf_mask = '';
 defpar.mask='mask_mrtrix.nii.gz';
+defpar.version_path='module load MRtrix3/3.0.2';
 
 defpar.grad_file = 'grad.b';
 defpar.csd_name = 'CSD.nii';
@@ -41,6 +42,14 @@ cwd=pwd; job={};
 
 copy_sf_mask=1
 if isempty(par.sf_mask), par.sf_mask = par.mask; copy_sf_mask=0; end
+
+if par.version_path == 'module load MRtrix3/3.0.2'
+    algo = 'ants';
+else 
+    algo ='-ants';
+end 
+
+
 
 for nbsuj = 1:length(V4D)
     
@@ -115,8 +124,11 @@ for nbsuj = 1:length(V4D)
         end
         
         
-        cmd = sprintf('cd %s\n',dti_dir)
-                
+        cmd = sprintf('%s\n', par.version_path)
+        
+        
+        cmd = sprintf('%scd %s\n',cmd,dti_dir)
+               
         % Creation du masque if needed
         if isempty(par.fsl_mask)
             
@@ -126,8 +138,8 @@ for nbsuj = 1:length(V4D)
         
         if par.bias_correct
             
-            cmd = sprintf('%s\n dwibiascorrect -ants %s bc_%s  -mask %s  -grad grad.b ', ...
-                cmd,the4D,the4D,par.mask);
+            cmd = sprintf('%s\n dwibiascorrect %s %s bc_%s  -mask %s  -grad grad.b ', ...
+                cmd,algo,the4D,the4D,par.mask);
             
             the4D = addprefixtofilenames(the4D,'bc_')
         end
