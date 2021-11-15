@@ -33,7 +33,7 @@ for k=1:length(fref)
     %-----------------------------------------------------------------------
     jobs{k}.spm.spatial.coreg.write.ref = fref(k);
     
-    jobs{k}.spm.spatial.coreg.write.source = ffs';
+    jobs{k}.spm.spatial.coreg.write.source = ffs; %
     
     jobs{k}.spm.spatial.coreg.write.roptions.interp = par.interp;
     jobs{k}.spm.spatial.coreg.write.roptions.wrap = [0 0 0];
