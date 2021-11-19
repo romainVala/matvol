@@ -14,7 +14,7 @@ for ex = 1 : size(rpArray,1)
             rp_file = rp_in_exam(ser).path;
             current_rp = load(rp_file);
             if ser > 1
-                rp = [ rp ; rp(end,:) + current_rp ]; %#ok<*AGROW>
+                rp = [ rp ; current_rp + ( rp(end,:) - current_rp(1,:) ) ]; %#ok<*AGROW>
             else
                 rp = [ rp ; current_rp ];
             end
