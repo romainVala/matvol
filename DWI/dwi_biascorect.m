@@ -34,11 +34,14 @@ fbval = get_subdir_regex_files(dti_dir,par.bval,1);
 for k=1:length(fi_4D)
     cmd{k} = sprintf('dwibiascorrect ');
     
+    cmd{k} = sprintf('%s %s  %s %s -fslgrad %s %s ', cmd{k},...
+        par.method,fi_4D{k},fo{k},fbvec{k},fbval{k});
+
     if ~isempty(par.mask)
-        cmd{k} = sprintf('%s -mask %s', cmd{k}, par.mask);
+        cmd{k} = sprintf('%s -mask %s \n', cmd{k}, par.mask{k});
+    else
+        cmd{k} = sprintf('%s  \n', cmd{k});
     end
-    cmd{k} = sprintf('%s -%s -fslgrad %s %s  %s %s \n', cmd{k},...
-        par.method,fbvec{k},fbval{k},fi_4D{k},fo{k});
     
 end
 
