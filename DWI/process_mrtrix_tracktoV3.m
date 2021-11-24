@@ -23,6 +23,9 @@ defpar.option = '';
 defpar.seed_dynamic=0;
 defpar.cutoff = '';
 defpar.maxlength='';
+defpar.minlength='';
+defpar.power='';
+defpar.angle='';
 
 defpar.sge = 1;
 defpar.jobname = 'mrtrix_trackto';
@@ -66,6 +69,17 @@ for nbsuj = 1:length(sdata)
     
     if ~isempty(par.maxlength)
         cmd = sprintf('%s -maxlength %d',cmd, par.maxlength);
+    end
+        
+    if ~isempty(par.minlength)
+        cmd = sprintf('%s -minlenth %d',cmd, par.minlength);
+    end
+        
+    if ~isempty(par.power)
+        cmd = sprintf('%s -power %f',cmd, par.power);
+    end
+    if ~isempty(par.angle)
+        cmd = sprintf('%s -angle %f',cmd, par.angle);
     end
         
     if ~isempty(par.act)
