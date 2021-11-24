@@ -202,6 +202,8 @@ par.do4D=0;
 [~, filename] = get_parent_path(dti_files); 
 par.fout = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(filename,'meanB0_'));
 fb0 = concat_cell_str(repmat({outdir},size(filename)),'/',addprefixtofilenames(filename,'B0_4D')); par.fout4D=fb0;
+
+par.bval = bval_f; par.bvec = bvec_f;
 [~, jobs] = extract_B0_from_4D(dti_files,par);
 
 %make it one job if several B0 to extracts
