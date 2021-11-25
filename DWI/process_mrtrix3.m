@@ -126,7 +126,7 @@ for nbsuj = 1:length(V4D)
         
         if par.bias_correct
             
-            cmd = sprintf('%s\n dwibiascorrect -ants %s bc_%s  -mask %s  -grad grad.b ', ...
+            cmd = sprintf('%s\n dwibiascorrect ants %s bc_%s  -mask %s  -grad grad.b ', ...
                 cmd,the4D,the4D,par.mask);
             
             the4D = addprefixtofilenames(the4D,'bc_')
