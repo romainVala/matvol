@@ -47,6 +47,8 @@ end
 % TEDANA recomandations : tshift, volreg
 % MEICA pipeline        : despike, tshift, align, volreg
 % robust for TEDANA     : despike, tshift, volreg & par.seperate = 1
+%
+% personal block        : blip
 
 defpar.blocks   = {'despike','tshift','volreg'}; % now codded : despike, tshift, align, volreg
 defpar.seperate = 0;                             % each volume is treated seperatly : useful when runs have different orientations
@@ -55,6 +57,12 @@ defpar.execute  = 1;                             % execute afni_proc.py generate
 defpar.write_nifti = 1;                          % convert afni_proc outputs .BRIK .HEAD to .nii .nii.gz
 
 defpar.OMP_NUM_THREADS = 0;                      % number of CPU threads : 0 means all CPUs available
+
+defpar.blip = [];                                % (cellstr/@volume)  par.blip.forward{iSubj} can be a cellstr such as par.blip.forward{iSubj} = '/path/to/blip_AP.nii'
+%                                                            OR       a @volume object from matvol
+%                                                                     par.blip.reverse{iSubj} <= same thing
+%                                                                     par.seperate=0 : you provide 1 for all runs, and it will be used for all of them
+%                                                            OR       par.seperate=1 : you provide 1 for all run, and it will be 'replicated' for each run
 
 % cluster
 defpar.sge      = 0;
@@ -77,6 +85,22 @@ if par.sge || par.pct
 end
 
 
+%% blip ?
+
+blip = 0;
+if any(strcmp(par.blocks,'blip'))
+    blip = 1;
+    
+    if isa(par.blip.forward,'volume')
+        forward_obj = par.blip.forward;
+        reverse_obj = par.blip.reverse;
+        par.blip.forward = forward_obj.toJob();
+        par.blip.reverse = reverse_obj.toJob();
+    end
+    
+end
+
+
 %% Seperate ? then we need to reformat meinfo
 
 if par.seperate
@@ -87,16 +111,35 @@ if par.seperate
     
     meinfo_new = struct;
     
+    if blip
+        blip_forward = par.blip.forward;
+        blip_reverse = par.blip.reverse;
+        par.blip.forward = [];
+        par.blip.reverse = [];
+    end
+    
     for iSubj =  1 : size(meinfo.data,1)
-        for iRun = 1 : length(meinfo.data{iSubj})
+        
+        nRun = length(meinfo.data{iSubj});
+        
+        for iRun = 1 : nRun
             
             j = j + 1;
             
             meinfo_new.data{j,1}{1} = meinfo_orig.data{iSubj}{iRun};
             if isfield(meinfo_orig,'volume'), meinfo_new.volume(j,1,:) = meinfo_orig.volume(iSubj,iRun,:); end
             
+            if blip
+                par.blip.forward{j,1} = blip_forward{iSubj};
+                par.blip.reverse{j,1} = blip_reverse{iSubj};
+            end
+            
         end % iRun
-        if isfield(meinfo_orig,'anat'  ), meinfo_new.anat   = meinfo_orig.anat  ; end
+        
+        if isfield(meinfo_orig,'anat')
+            meinfo_new.anat = meinfo_orig.anat;
+        end
+        
     end % iSubj
     
     meinfo = meinfo_new; % swap
@@ -125,6 +168,8 @@ skip  = [];
 
 for iSubj = 1 : nSubj
     
+    nRun = length(meinfo.data{iSubj});
+    
     %----------------------------------------------------------------------
     % Prepare job
     %----------------------------------------------------------------------
@@ -144,6 +189,8 @@ for iSubj = 1 : nSubj
         real_path       = subj_path;
     end
     
+    subj_name = [prefix '__' subj_name]; %#ok<AGROW>
+    
     if ~par.redo  &&  exist(working_dir,'dir')==7
         fprintf('[%s]: skiping %d/%d because %s exist \n', mfilename, iSubj, nSubj, working_dir);
         job{iSubj,1} = '';
@@ -160,14 +207,14 @@ for iSubj = 1 : nSubj
     % afni_proc.py basics
     %----------------------------------------------------------------------
     
-    cmd     = sprintf('%s export OMP_NUM_THREADS=%d;   \n', cmd, par.OMP_NUM_THREADS); % multi CPU option
+    cmd = sprintf('%s export OMP_NUM_THREADS=%d;       \n', cmd, par.OMP_NUM_THREADS); % multi CPU option
     cmd = sprintf('%s cd %s;                           \n', cmd, real_path   );        % go to subj dir so afni_proc tcsh script is written there
     cmd = sprintf('%s afni_proc.py -subj_id %s     \\\\\n', cmd, subj_name  );         % subj_id is almost mendatory with afni
     cmd = sprintf('%s -out_dir %s                  \\\\\n', cmd, working_dir);         % afni working dir
-    cmd     = sprintf('%s -scr_overwrite           \\\\\n', cmd);                      % overwrite previous afni_proc tcsh script, if exists
+    cmd = sprintf('%s -scr_overwrite               \\\\\n', cmd);                      % overwrite previous afni_proc tcsh script, if exists
     
     % add ME datasets
-    for iRun = 1 : length(meinfo.data{iSubj})
+    for iRun = 1 : nRun
         run_path = meinfo.data{iSubj}{iRun}(1).pth;
         ext      = meinfo.data{iSubj}{iRun}(1).ext;
         cmd = sprintf('%s -dsets_me_run %s \\\\\n',cmd, fullfile(run_path,['e*' ext]));
@@ -194,16 +241,9 @@ for iSubj = 1 : nSubj
         cmd    = sprintf('%s -tshift_interp -heptic \\\\\n', cmd);
         
         % TR & slice onsets
-        sliceonsets = meinfo.data{iSubj}{iRun}(1).sliceonsets / 1000; % millisecond -> second;
-        TR =  meinfo.data{iSubj}{iRun}(1).TR / 1000;
-        tpattern = fullfile(subj_path,'sliceonsets.txt'); % destination file
-        fileID = fopen( tpattern , 'w' , 'n' , 'UTF-8' );
-        if fileID < 0
-            warning('[%s]: Could not open %s', mfilename, filename)
-        end
-        fprintf(fileID, '%f\n', sliceonsets ); % in seconds
-        fclose(fileID);
-        cmd = sprintf('%s -tshift_opts_ts -TR %g -tpattern @%s \\\\\n', cmd, TR, tpattern);
+        TR =  meinfo.data{iSubj}{iRun}(1).TR; % millisecond
+        tpattern = meinfo.data{iSubj}{iRun}.tpattern; % path of the file (unit is ms)
+        cmd = sprintf('%s -tshift_opts_ts -TR %gms -tpattern @%s \\\\\n', cmd, TR, tpattern);
         
     end
     
@@ -213,6 +253,13 @@ for iSubj = 1 : nSubj
         cmd = sprintf('%s -copy_anat %s                                              \\\\\n', cmd, anat{iSubj});
         cmd = sprintf('%s -volreg_align_e2a                                          \\\\\n', cmd             );
         cmd = sprintf('%s -align_opts_aea -ginormous_move -cost lpc+ZZ -resample off \\\\\n', cmd             );
+    end
+    
+    % blip !! personal block
+    if blip
+        nBlock = nBlock + 1;
+        cmd= sprintf('%s -blip_forward_dset %s  \\\\\n', cmd, par.blip.forward{iSubj}(1,:));
+        cmd= sprintf('%s -blip_reverse_dset %s  \\\\\n', cmd, par.blip.reverse{iSubj}(1,:));
     end
     
     % volreg
@@ -242,7 +289,7 @@ for iSubj = 1 : nSubj
     
     if par.write_nifti
         
-        for iRun = 1 : length(meinfo.data{iSubj})
+        for iRun = 1 : nRun
             for echo = 1 : length( meinfo.data{iSubj}{iRun} )
                 in  = fullfile(working_dir, sprintf('pb%0.2d.%s.r%0.2d.e%0.2d.%s+orig', nBlock, subj_name, iRun, echo, par.blocks{end}) );
                 out = addprefixtofilenames( meinfo.data{iSubj}{iRun}(echo).fname, prefix);
@@ -287,7 +334,10 @@ job = do_cmd_sge(job, par);
 if obj && par.auto_add_obj && (par.run || par.sge)
     
     for iSubj = 1 : length(meinfo.data)
-        for iRun = 1 : length(meinfo.data{iSubj})
+        
+        nRun = length(meinfo.data{iSubj});
+        
+        for iRun = 1 : nRun
             
             % Shortcut
             echo = meinfo.data{iSubj}{iRun}(1); % use first echo because all echos are in the same dir
