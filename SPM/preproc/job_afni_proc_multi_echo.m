@@ -194,16 +194,9 @@ for iSubj = 1 : nSubj
         cmd    = sprintf('%s -tshift_interp -heptic \\\\\n', cmd);
         
         % TR & slice onsets
-        sliceonsets = meinfo.data{iSubj}{iRun}(1).sliceonsets / 1000; % millisecond -> second;
-        TR =  meinfo.data{iSubj}{iRun}(1).TR / 1000;
-        tpattern = fullfile(subj_path,'sliceonsets.txt'); % destination file
-        fileID = fopen( tpattern , 'w' , 'n' , 'UTF-8' );
-        if fileID < 0
-            warning('[%s]: Could not open %s', mfilename, filename)
-        end
-        fprintf(fileID, '%f\n', sliceonsets ); % in seconds
-        fclose(fileID);
-        cmd = sprintf('%s -tshift_opts_ts -TR %g -tpattern @%s \\\\\n', cmd, TR, tpattern);
+        TR =  meinfo.data{iSubj}{iRun}(1).TR; % millisecond
+        tpattern = meinfo.data{iSubj}{iRun}.tpattern; % path of the file (unit is ms)
+        cmd = sprintf('%s -tshift_opts_ts -TR %gms -tpattern @%s \\\\\n', cmd, TR, tpattern);
         
     end
     

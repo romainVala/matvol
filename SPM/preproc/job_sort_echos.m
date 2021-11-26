@@ -216,8 +216,21 @@ for iSubj = 1 : nSubj
             meinfo_.data{iSubj}{iRun,1}(echo).outname     = sprintf('e%d',echo);
             meinfo_.data{iSubj}{iRun,1}(echo).TE          = sortedTE(echo);
             meinfo_.data{iSubj}{iRun,1}(echo).fname       = fullfile( pth, sprintf('e%d%s',echo,ext) );
-            meinfo_.data{iSubj}{iRun,1}(echo).TR          = TR;
-            meinfo_.data{iSubj}{iRun,1}(echo).sliceonsets = sliceonsets;
+            meinfo_.data{iSubj}{iRun,1}(echo).TR          = TR;          % ms
+            meinfo_.data{iSubj}{iRun,1}(echo).sliceonsets = sliceonsets; % ms
+            
+            if echo == 1
+                tpattern = fullfile(pth,'sliceonsets.txt'); % destination file
+                if ~exist(tpattern, 'file') || par.redo==1
+                    fileID = fopen( tpattern , 'w' , 'n' , 'UTF-8' );
+                    if fileID < 0
+                        warning('[%s]: Could not open %s', mfilename, filename)
+                    end
+                    fprintf(fileID, '%f\n', sliceonsets );
+                    fclose(fileID);
+                end
+            end
+            meinfo_.data{iSubj}{iRun,1}(echo).tpattern = tpattern;
             
             E_dst{echo} = fullfile(run_path,filename);
             [ ~ , job_tmp ] = r_movefile(E_src{echo}, E_dst{echo}, 'linkn', par);
