@@ -12,7 +12,7 @@ for iFile = 1 : nFile
     
     dcmfile = dcmfilelist{iFile};
     
-    [pathstr, name, ext] = fileparts(dcmfile);
+    [pathstr] = fileparts(dcmfile);
     
     infofile = gfile(pathstr, '_Info.log$', struct('verbose',0));
     
