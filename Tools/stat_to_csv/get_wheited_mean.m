@@ -4,6 +4,7 @@ if ~exist('par'),par ='';end
 
 defpar.seuil = 0;
 defpar.mask = '';
+defpar.omit = 0;
 
 par = complet_struct(par,defpar);
 
@@ -24,7 +25,7 @@ for i=1:length(fa)
     
     [FAimg,dimes,vox]=read_avw(fa{i});
     [Conimg,dimes,vox]=read_avw(fcon{i});
-    if par.mask
+    if ~isempty(par.mask)
         [MASKimg,dimes,vox]=read_avw(par.mask{i});
         FAimg = FAimg(MASKimg>0);
         Conimg = Conimg(MASKimg>0);
@@ -34,12 +35,19 @@ for i=1:length(fa)
     FAimg(isnan(FAimg))=0;
     
     for kk =1:length(seuil)
-        tt(kk) = sum(FAimg(Conimg>seuil(kk)).*Conimg(Conimg>seuil(kk)))./sum(Conimg(Conimg>seuil(kk)));
+         if par.omit
+            tt(kk) = sum(FAimg(Conimg>seuil(kk)).*Conimg(Conimg>seuil(kk)),'omitnan')./sum(Conimg(Conimg>seuil(kk)),'omitnan');
+        else
+            tt(kk) = sum(FAimg(Conimg>seuil(kk)).*Conimg(Conimg>seuil(kk)))./sum(Conimg(Conimg>seuil(kk)));
+        end
     end
     Y(i,:) = tt;
     if nargout>1
+        Nw = length(Conimg(Conimg>seuil(1))>0)
         %fprintf('comput std\n')
-        Ystd(i) = std(FAimg(Conimg>seuil(1)));
+        %Ystd(i) = std(FAimg(Conimg>seuil(1)));
+        Ystd(i) =sqrt(sum(Conimg(Conimg>seuil(1)).*((FAimg(Conimg>seuil(1))-tt(1)).^2))/(sum(Conimg(Conimg>seuil(1))))*(Nw-1)/Nw)
+       
     end
     if nargout>2
         %fprintf('comput std\n')
