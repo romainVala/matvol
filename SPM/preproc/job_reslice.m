@@ -6,7 +6,7 @@ end
 defpar.prefix = 'r';
 defpar.interp=4;
 defpar.sge = 0;
-defpar.run = 1;
+defpar.run = 0;
 defpar.display=0;
 defpar.jobname='spm_reslice';
 defpar.walltime = '01:00:00';
@@ -24,6 +24,7 @@ for k=1:length(fref)
         for kk=1:length(V)
             ffs{kk} = sprintf('%s,%d',ffsession{1},kk);
         end
+        ffs = ffs' % 
     else
         ffs = ffsession;
     end
