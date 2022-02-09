@@ -21,12 +21,11 @@ defpar.jobname = 'antsNL';
 defpar.walltime = '12:00:00';
 defpar.prefix = 'aw_';
 defpar.mask = '';
-defpar.method = 's'; %   r: rigid        a: rigid + affine        s: rigid + affine + deformable syn
-                     %    b: rigid + affine + deformable b-spline syn
+
 defpar.do_rigid = 1;
 defpar.do_affine = 1;
 defpar.do_NL = 1;
-
+defpar.interpolation = 'Linear';
 defpar.ra_convergence ='[1000x500x250x100,1e-6,10]';
 defpar.ra_shrink_factors = '12x8x4x2';
 defpar.ra_smoothing_sigmas = '4x3x2x1vox'; 
@@ -66,7 +65,7 @@ for k=1:length(fmov)
     cmd = sprintf('%s export ITK_GLOBAL_DEFAULT_NUMBER_OF_THREADS=%d\n',cmd,par.nb_thread);
     
     cmd = sprintf('%s antsRegistration --dimensionality 3 --float 0 ',cmd);
-    cmd = sprintf('%s --interpolation Linear --winsorize-image-intensities [0.005,0.995] ',cmd);
+    cmd = sprintf('%s --interpolation %s --winsorize-image-intensities [0.005,0.995] ',cmd, par.interpolation);
     cmd = sprintf('%s --output [y%s,%sWarped.nii.gz] ',cmd,transform,transform);
     cmd = sprintf('%s --use-histogram-matching %d ',cmd,par.histo);
     cmd = sprintf('%s --initial-moving-transform [%s,%s,1] ',cmd,fref{k},fname_mov{k});
