@@ -80,10 +80,6 @@ defpar.auto_add_obj = 1;                         % works with par.sge=1 for work
 
 par = complet_struct(par,defpar);
 
-if par.sge || par.pct
-    par.OMP_NUM_THREADS = 1; % in case of parallelization, only use 1 thread per job
-end
-
 
 %% blip ?
 
@@ -316,14 +312,6 @@ job(skip) = [];
 % Fetch origial parameters, because all jobs are prepared
 par.sge     = parsge;
 par.verbose = parverbose;
-
-% Prepare Cluster job optimization
-if par.sge
-    if par.OMP_NUM_THREADS == 0
-        par.OMP_NUM_THREADS = 1; % on the cluster, each node have 28 cores and 128Go of RAM
-    end
-    par.sge_nb_coeur = par.OMP_NUM_THREADS;
-end
 
 % Run CPU, run !
 job = do_cmd_sge(job, par);
