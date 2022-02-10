@@ -22,8 +22,8 @@ end
 obj = 0;
 if isa(dfile,'rp')
     obj = 1;
-    rp_obj = dfile;
-    dfile = rp_obj.to_job();
+    rpArray = dfile;
+    dfile = rpArray.toJob();
 end
 
 
@@ -74,3 +74,24 @@ for i = 1 : N
     fprintf('[%s]: saving file (%d,%d) : %s \n', mfilename, i, N, output_file{i})
     
 end
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj && (par.run || par.sge)
+    
+    for iRP = 1 : length(rpArray)
+        
+        % Shortcut
+        rp  = rpArray(iRP);
+        ser = rp.serie;
+        
+        ser.addRP('root', output_file{iRP}, 'rp_spm')
+        
+    end % iVol
+    
+end % obj
+
+
+end % function
+
