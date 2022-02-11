@@ -4,7 +4,7 @@ function extract( physioArray )
 assert( exist('extractCMRRPhysio','file')>0 , '[%s]: "extractCMRRPhysio" not detected. Download it here : https://github.com/CMRR-C2P/MB', mfilename )
 
 % get path of files
-dcmfilelist = physioArray.removeEmpty.getPath();
+dcmfilelist = physioArray.removeEmpty().getPath();
 
 nFile = length(dcmfilelist);
 
@@ -29,5 +29,10 @@ for iFile = 1 : nFile
     
 end
 
+% auto add obj
+serieArray = physioArray.removeEmpty().getSerie();
+serieArray.addPhysio('Info.log$','physio_info',1)
+serieArray.addPhysio('PULS.log$','physio_puls',1)
+serieArray.addPhysio('RESP.log$','physio_resp',1)
 
 end % function
