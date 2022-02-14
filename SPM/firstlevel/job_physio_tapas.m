@@ -176,6 +176,7 @@ nVol = nan(4,1);
 obj = 0;
 if isa(par.volume,'volume')
     obj = 1;
+    volumeArray = par.volume;
     par.volume = par.volume.getPath();
 end
 
@@ -377,6 +378,8 @@ end % iVol
 
 %% Add outputs objects
 
+[~, output_filename, ~] = fileparts( par.output_filename );
+
 if obj && par.auto_add_obj && (par.run || par.sge)
     
     for iVol = 1 : length(volumeArray)
@@ -389,11 +392,11 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         
         if par.run
                         
-            ser.addRP(sub, ['^' par.output_filename '$'],[par.prefix tag],1)
+            ser.addRP(sub, ['^' par.output_filename '$'], output_filename, 1)
             
         elseif par.sge
             
-            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix),[par.prefix tag])
+            ser.addVolume('root', fullfile(par.outdir{iVol}, par.output_filename), output_filename)
             
         end
         
