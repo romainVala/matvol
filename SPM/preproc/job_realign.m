@@ -164,13 +164,23 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             
             ext  = '.*.nii';
             
-            ser.addVolume(sub, ['^' par.prefix tag ext],[par.prefix tag],1)
-            ser.addRP    (sub, ['^rp_.*' tag '.*.txt$'],'rp_spm'        ,1)
+            switch par.type
+                case 'estimate'
+                    % pass, no file written, just header change
+                case 'estimate_and_reslice'
+                    ser.addVolume(sub, ['^' par.prefix tag ext], [par.prefix tag], 1)
+            end
+            ser.addRP(sub, ['^rp_.*' tag '.*.txt$'],'rp_spm',1)
             
         elseif par.sge
             
-            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix),[par.prefix tag],1)
-            ser.addVolume('root', addprefixtofilenames(vol.path,'rp_'     ),'rp_spm'        ,1)
+            switch par.type
+                case 'estimate'
+                    % pass, no file written, just header change
+                case 'estimate_and_reslice'
+                    ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix), [par.prefix tag], 1)
+            end
+            ser.addVolume('root', addprefixtofilenames(vol.path,'rp_'), 'rp_spm', 1)
             
         end
         
