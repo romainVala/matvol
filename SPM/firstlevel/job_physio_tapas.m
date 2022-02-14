@@ -387,7 +387,6 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         % Shortcut
         vol = volumeArray(iVol);
         ser = vol.serie;
-        tag = vol.tag;
         sub = vol.subdir;
         
         if par.run
