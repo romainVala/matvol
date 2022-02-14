@@ -155,9 +155,10 @@ defpar.rp_threshold = 0.5;  % Threshold above which a stick regressor is created
 defpar.print_figures = 1; % 0 , 1 , 2 , 3
 
 % classic matvol
-defpar.run      = 1;
-defpar.display  = 0;
-defpar.redo     = 0;
+defpar.run          = 1;
+defpar.display      = 0;
+defpar.redo         = 0;
+defpar.auto_add_obj = 1;
 
 % cluster
 defpar.jobname  = 'spm_physio';
@@ -172,7 +173,10 @@ par = complet_struct(par,defpar);
 
 nVol = nan(4,1);
 
+obj = 0;
 if isa(par.volume,'volume')
+    obj = 1;
+    volumeArray = par.volume;
     par.volume = par.volume.getPath();
 end
 
@@ -370,6 +374,34 @@ end % iVol
 %% Other routines
 
 [ jobs ] = job_ending_rountines( jobs, skip, par );
+
+
+%% Add outputs objects
+
+[~, output_filename, ~] = fileparts( par.output_filename );
+
+if obj && par.auto_add_obj && (par.run || par.sge)
+    
+    for iVol = 1 : length(volumeArray)
+        
+        % Shortcut
+        vol = volumeArray(iVol);
+        ser = vol.serie;
+        sub = vol.subdir;
+        
+        if par.run
+                        
+            ser.addRP(sub, ['^' par.output_filename '$'], output_filename, 1)
+            
+        elseif par.sge
+            
+            ser.addVolume('root', fullfile(par.outdir{iVol}, par.output_filename), output_filename)
+            
+        end
+        
+    end % iVol
+    
+end % obj
 
 
 end % function

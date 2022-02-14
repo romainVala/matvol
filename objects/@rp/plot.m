@@ -7,6 +7,11 @@ for ex = 1 : size(rpArray,1)
     
     rp = zeros(0,6);
     
+    vbar_x    = zeros(2,length(rp_in_exam));
+    vbar_y_TR =  ones(2,length(rp_in_exam));
+    vbar_y_FD =  ones(2,length(rp_in_exam));
+    vbar_y_FD(1,:) = 0;
+    
     % Fetch rp data
     for ser = 1 : length(rp_in_exam)
         
@@ -18,6 +23,8 @@ for ex = 1 : size(rpArray,1)
             else
                 rp = [ rp ; current_rp ];
             end
+            
+            vbar_x(:,ser) = size(rp,1);
             
         catch
             % When volumes are not found
@@ -38,22 +45,29 @@ for ex = 1 : size(rpArray,1)
         
         % translation
         subplot(3,1,1);
+        hold on
         plot(rp(:,1:3))
         axis tight
         ylabel('translation in mm')
         xlabel('image')
-        legend('x','y','z','location','best')
+        lim = ylim;
+        plot(vbar_x, vbar_y_TR.*lim', 'black')
+        legend({'x','y','z'},'location','best')
         
         % rotation
         subplot(3,1,2);
+        hold on
         plot(rp(:,4:6)*180/pi)
         axis tight
         ylabel('rotation in °')
         xlabel('image')
-        legend('pitch','roll','yaw','location','best')
+        lim = ylim;
+        plot(vbar_x, vbar_y_TR.*lim', 'black')
+        legend({'pitch','roll','yaw'},'location','best')
         
         % FD
         subplot(3,1,3);
+        hold on
         rHead  = 50; % mm
         drp    = diff(rp);
         drp_mm = [drp(:,1:3) drp(:,4:6)*pi/360*rHead];
@@ -62,6 +76,8 @@ for ex = 1 : size(rpArray,1)
         axis tight
         ylabel('FD (mm)')
         xlabel('image')
+        lim = ylim;
+        plot(vbar_x, vbar_y_FD.*lim', 'black')
         
     end
     

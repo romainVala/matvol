@@ -80,10 +80,6 @@ defpar.auto_add_obj = 1;                         % works with par.sge=1 for work
 
 par = complet_struct(par,defpar);
 
-if par.sge || par.pct
-    par.OMP_NUM_THREADS = 1; % in case of parallelization, only use 1 thread per job
-end
-
 
 %% blip ?
 
@@ -317,14 +313,6 @@ job(skip) = [];
 par.sge     = parsge;
 par.verbose = parverbose;
 
-% Prepare Cluster job optimization
-if par.sge
-    if par.OMP_NUM_THREADS == 0
-        par.OMP_NUM_THREADS = 1; % on the cluster, each node have 28 cores and 128Go of RAM
-    end
-    par.sge_nb_coeur = par.OMP_NUM_THREADS;
-end
-
 % Run CPU, run !
 job = do_cmd_sge(job, par);
 
@@ -349,12 +337,22 @@ if obj && par.auto_add_obj && (par.run || par.sge)
             else
                 series = [in_obj(iSubj,:,1).serie]';
                 serie  = series.getVolume(echo.pth ,'path').removeEmpty.getOne.serie;
-            end            
+            end
+            
+            % rp
+            if strfind(strjoin(par.blocks,' '), 'volreg')
+                if     par.run % use the normal method
+                    serie.addRP( par.subdir, sprintf('dfile.r%0.2d.1D', iRun), sprintf('rp_%s_%0.2d', par.subdir, iRun), 1);
+                elseif par.sge % add the new volume in the object manually, because the file is not created yet
+                    serie.addRP( 'root' , fullfile(serie.path, par.subdir, sprintf('dfile.r%0.2d.1D', iRun)), sprintf('rp_%s_%0.2d', par.subdir, iRun));
+                end
+            end
             
             for iEcho = 1 : length(meinfo.data{iSubj}{iRun})
                 
                 echo = meinfo.data{iSubj}{iRun}(iEcho);
                 
+                % nifti
                 if     par.run % use the normal method
                     serie.addVolume( ['^' prefix echo.outname echo.ext '$']          , sprintf('%se%d',prefix,iEcho), 1 );
                 elseif par.sge % add the new volume in the object manually, because the file is not created yet
