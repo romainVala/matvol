@@ -196,17 +196,11 @@ for iSubj = 1 : nSubj
             error('pb with the json files, please check the files and the code of this function')
         end
         
-        
-        
         % Make symbolic link of the echo in the working directory
-        E_src = cell(length(allEchos),1);
-        E_dst = cell(length(allEchos),1);
         for echo = 1 : length(allEchos)
             
-            E_src{echo} = allEchos{echo};
-            
-            [pth,nam,~] = spm_fileparts(E_src{echo});
-            ext = file_ext(E_src{echo});
+            [pth,nam,~] = spm_fileparts(allEchos{echo});
+            ext = file_ext(allEchos{echo});
             
             filename = sprintf('e%d%s',echo,ext);
             
@@ -232,11 +226,13 @@ for iSubj = 1 : nSubj
             end
             meinfo_.data{iSubj}{iRun,1}(echo).tpattern = tpattern;
             
-            E_dst{echo} = fullfile(run_path,filename);
-            [ ~ , job_tmp ] = r_movefile(E_src{echo}, E_dst{echo}, 'linkn', par);
-            job_subj = [job_subj char(job_tmp)];
-            
-            E_dst{echo} = filename;
+            % symlink for reordering echos (local path, not absolute)
+            cmd = sprintf('if [ -e "%s" ];\nthen \n cd "%s" \n ln -sf "%s" "%s" \nfi \n',...
+                allEchos{echo},...
+                run_path,...
+                [nam ext],...
+                filename);
+            job_subj = [job_subj cmd];
             
         end % echo
         
@@ -281,7 +277,6 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 if     par.run % use the normal method
                     serie.addVolume( ['^' echo.outname echo.ext '$'] , sprintf('e%d',iEcho), 1 );
                 elseif par.sge % add the new volume in the object manually, because the file is not created yet
-                    % serie.volume(end + 1) = volume( echo.fname, sprintf('e%d',iEcho), serie.exam, serie );
                     serie.addVolume('root', echo.fname, sprintf('e%d',iEcho))
                 end
                 
