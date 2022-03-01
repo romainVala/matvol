@@ -244,10 +244,10 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         if par.run % use the normal method
             
             if ~isempty(outdir) && ischar(outdir)
-                ser.addVolume(outdir, [   '^ts_OC' ext '$'],    'ts_OC', 1 );
-                ser.addVolume(outdir, ['^dn_ts_OC' ext '$'], 'dn_ts_OC', 1 );
-                ser.addVolume(outdir, [     '^s0v' ext '$'],      's0v', 1 );
-                ser.addVolume(outdir, [    '^t2sv' ext '$'],     't2sv', 1 );
+                ser.addVolume(['^' outdir '$'], [   '^ts_OC' ext '$'],    'ts_OC', 1 );
+                ser.addVolume(['^' outdir '$'], ['^dn_ts_OC' ext '$'], 'dn_ts_OC', 1 );
+                ser.addVolume(['^' outdir '$'], [     '^s0v' ext '$'],      's0v', 1 );
+                ser.addVolume(['^' outdir '$'], [    '^t2sv' ext '$'],     't2sv', 1 );
             elseif ~isempty(outdir) && iscellstr(outdir)
                 error('not coded yet')
             else
