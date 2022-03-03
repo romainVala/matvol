@@ -68,7 +68,7 @@ for k=1:length(fmov)
     end
     
     if ~isempty(par.mask)
-        cmd = sprintf('%s -rmask %s ',cmd,par.mask{k})
+        cmd = sprintf('%s -fmask %s ',cmd,par.mask{k})
     end    
 
     job{k} = sprintf('%s\n',cmd);
