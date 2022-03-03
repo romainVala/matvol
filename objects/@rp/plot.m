@@ -1,5 +1,9 @@
-function plot( rpArray )
+function plot( rpArray, maxFD )
 % plots the realignment paramters for EPI sequences
+
+if nargin < 2
+    maxFD = 0.5; % mm
+end
 
 for ex = 1 : size(rpArray,1)
     
@@ -24,7 +28,7 @@ for ex = 1 : size(rpArray,1)
                 rp = [ rp ; current_rp ];
             end
             
-            vbar_x(:,ser) = size(rp,1);
+            vbar_x(:,ser) = size(rp,1) + 1 ;
             
         catch
             % When volumes are not found
@@ -36,11 +40,24 @@ for ex = 1 : size(rpArray,1)
     
     if size(rp,1) > 0
         
+        % FD
+        rHead  = 50; % mm
+        drp    = diff(rp);
+        drp    = [zeros(1,size(rp,2)); drp];
+        FD     = sum(abs(drp(:,1:3)),2) + rHead*sum(abs(drp(:,4:6)),2);
+        outlier = FD > maxFD;
+        
         % Plot
         figure('Name',rp_in_exam(ser).exam.name,'NumberTitle','off')
         fprintf(    '[plotRealign]: Plotting %s \n', rp_in_exam(ser).exam.name)
+        fprintf(    '[plotRealign]:     maxFD = %4.1f mm \n', maxFD)
         for ser = 1 : length(rp_in_exam)
-            fprintf('[plotRealign]:          %s \n', rp_in_exam(ser).name)
+            if ser ~= 1
+                n_outliser = sum( outlier(vbar_x(1, ser-1) : (vbar_x(1, ser)-1)) );
+            else
+                n_outliser = sum( outlier(               1 : (vbar_x(1, ser)-1)) );
+            end
+            fprintf('[plotRealign]:     n_outlier = %3d   //   %s \n', n_outliser, rp_in_exam(ser).serie.name)
         end
         
         % translation
@@ -68,16 +85,14 @@ for ex = 1 : size(rpArray,1)
         % FD
         subplot(3,1,3);
         hold on
-        rHead  = 50; % mm
-        drp    = diff(rp);
-        drp_mm = [drp(:,1:3) drp(:,4:6)*pi/360*rHead];
-        FD     = sum(abs(drp_mm),2);
         plot(FD)
         axis tight
         ylabel('FD (mm)')
         xlabel('image')
         lim = ylim;
+        plot(ones(1,length(FD))*maxFD, ':red')
         plot(vbar_x, vbar_y_FD.*lim', 'black')
+        legend({'FD', 'maxFD'},'location','best')
         
     end
     
