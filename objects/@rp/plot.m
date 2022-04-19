@@ -5,6 +5,8 @@ if nargin < 2
     maxFD = 0.5; % mm
 end
 
+fcn_name = 'rp.plot';
+
 for ex = 1 : size(rpArray,1)
     
     rp_in_exam = rpArray(ex,:).removeEmpty;
@@ -15,6 +17,8 @@ for ex = 1 : size(rpArray,1)
     vbar_y_TR =  ones(2,length(rp_in_exam));
     vbar_y_FD =  ones(2,length(rp_in_exam));
     vbar_y_FD(1,:) = 0;
+    
+    nVol = zeros(1,length(rp_in_exam));
     
     % Fetch rp data
     for ser = 1 : length(rp_in_exam)
@@ -29,6 +33,8 @@ for ex = 1 : size(rpArray,1)
             end
             
             vbar_x(:,ser) = size(rp,1) + 1 ;
+            
+            nVol(ser) = size(current_rp,1);
             
         catch
             % When volumes are not found
@@ -49,15 +55,16 @@ for ex = 1 : size(rpArray,1)
         
         % Plot
         figure('Name',rp_in_exam(ser).exam.name,'NumberTitle','off')
-        fprintf(    '[plotRealign]: Plotting %s \n', rp_in_exam(ser).exam.name)
-        fprintf(    '[plotRealign]:     maxFD = %4.1f mm \n', maxFD)
+        fprintf(    '[%s]: Plotting %s \n', fcn_name, rp_in_exam(ser).exam.name)
+        fprintf(    '[%s]:     maxFD = %4.1f mm \n', fcn_name, maxFD)
         for ser = 1 : length(rp_in_exam)
             if ser ~= 1
                 n_outliser = sum( outlier(vbar_x(1, ser-1) : (vbar_x(1, ser)-1)) );
             else
                 n_outliser = sum( outlier(               1 : (vbar_x(1, ser)-1)) );
             end
-            fprintf('[plotRealign]:     n_outlier = %3d   //   %s \n', n_outliser, rp_in_exam(ser).serie.name)
+            pct_outliser = round(100 * n_outliser/nVol(ser));
+            fprintf('[%s]:     n_outlier = %4d/%4d  (%2d%%)  //   %s \n', fcn_name, n_outliser, nVol(ser), pct_outliser, rp_in_exam(ser).serie.name)
         end
         
         % translation
