@@ -199,8 +199,15 @@ end
 
 if par.noiseROI
     if isa(par.noiseROI_mask,'volume')
-        noiseROI_mask   = par.noiseROI_mask.getPath();
         noiseROI_volume = par.noiseROI_volume.getPath();
+        % special case (bug fix) when nSubj=1 & nRun=1 & nMask > 1
+        sz = size(par.noiseROI_mask);
+        if sz(1)==1 && sz(2)==1 && sz(3)>1
+            par.noiseROI_mask = reshape(par.noiseROI_mask, [1 sz(3)]);
+        elseif sz(1)>1 && sz(2)==1
+            par.noiseROI_mask = reshape(par.noiseROI_mask, [sz(1) sz(3)]);
+        end
+        noiseROI_mask = par.noiseROI_mask.toJob();
     else
         noiseROI_mask   = par.noiseROI_mask;
         noiseROI_volume = par.noiseROI_volume;
@@ -337,8 +344,8 @@ for iVol = 1:nVol
     
     if par.noiseROI
         
-        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.fmri_files       = cellstr(noiseROI_volume{iVol}   ); % requires 4D volume
-        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.roi_files        = cellstr(noiseROI_mask  (iVol,:)'); % all masks
+        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.fmri_files       = cellstr(noiseROI_volume{iVol}); % requires 4D volume
+        jobs{iVol}.spm.tools.physio.model.noise_rois.yes.roi_files        = cellstr(noiseROI_mask  {iVol}); % all masks
         jobs{iVol}.spm.tools.physio.model.noise_rois.yes.force_coregister = 'No';
         jobs{iVol}.spm.tools.physio.model.noise_rois.yes.thresholds       = par.noiseROI_thresholds;
         jobs{iVol}.spm.tools.physio.model.noise_rois.yes.n_voxel_crop     = par.noiseROI_n_voxel_crop;
@@ -390,7 +397,7 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         sub = vol.subdir;
         
         if par.run
-                        
+            
             ser.addRP(sub, ['^' par.output_filename '$'], output_filename, 1)
             
         elseif par.sge
