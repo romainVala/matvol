@@ -38,6 +38,7 @@ vol.dim = [nx ny nz];
 rawData = fft3s(image_original);
 
 nT = size(rawData,2);
+%nT = size(rawData,3);
 
 
 while ( image_corr>minCor && nb_attempt < maxAttemp )
@@ -78,6 +79,7 @@ while ( image_corr>minCor && nb_attempt < maxAttemp )
     
     % use the recon function just to extract the nufft 'object' st:
     [~, st] = applyRetroMC_nufft(rawData,fitMats,alignDim,alignIndices,11,hostVoxDim_mm,Hxyz,kspaceCentre_xyz,-1);
+    %[~, st] = applyRetroMC_nufft(rawData,fitMats,alignDim,alignIndices,0,hostVoxDim_mm,Hxyz,kspaceCentre_xyz,-1);
     % and use the nufft rather than the nufft_adj function to simulate the rotations:
     image_simRotOnly = ifft3s(reshape(nufft(ifft3s(rawData),st),size(rawData)));
     % then apply just the translations:
