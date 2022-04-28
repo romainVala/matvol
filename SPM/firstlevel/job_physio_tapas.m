@@ -202,10 +202,12 @@ if par.noiseROI
         noiseROI_volume = par.noiseROI_volume.getPath();
         % special case (bug fix) when nSubj=1 & nRun=1 & nMask > 1
         sz = size(par.noiseROI_mask);
-        if sz(1)==1 && sz(2)==1 && sz(3)>1
-            par.noiseROI_mask = reshape(par.noiseROI_mask, [1 sz(3)]);
-        elseif sz(1)>1 && sz(2)==1
-            par.noiseROI_mask = reshape(par.noiseROI_mask, [sz(1) sz(3)]);
+        if length(sz) > 2
+            if sz(1)==1 && sz(2)==1 && sz(3)>1
+                par.noiseROI_mask = reshape(par.noiseROI_mask, [1 sz(3)]);
+            elseif sz(1)>1 && sz(2)==1
+                par.noiseROI_mask = reshape(par.noiseROI_mask, [sz(1) sz(3)]);
+            end
         end
         noiseROI_mask = par.noiseROI_mask.toJob();
     else
