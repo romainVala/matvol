@@ -234,7 +234,7 @@ nVol(4) = length(par.outdir);
 
 nVol = nVol( ~isnan(nVol) );
 assert( ~isempty(nVol) , 'at least one method is required : physio/noiseROI/rp')
-assert( range(nVol)==0, 'different number of subjects on physio/noiseROI/rp')
+assert( all(nVol(1)==nVol), 'different number of subjects on physio/noiseROI/rp')
 nVol = nVol(1);
 
 if ~par.physio
