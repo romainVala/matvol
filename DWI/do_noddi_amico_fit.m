@@ -94,8 +94,8 @@ do_cmd_sge(cmd,struct('sge',0))
 fsche=get_subdir_regex_files(dti,'camino.sheme$',1);
 
 if ~exist('AMICO_Setup.m','file')
-    addpath('/network/lustre/iss01/cenir/software/irm/matlab_toolbox/AMICO/matlab');
-    addpath(genpath('/network/lustre/iss01/cenir/software/irm/matlab_toolbox/NODDI_toolbox_v0.9'))
+    addpath('/network/lustre/iss02/cenir/software/irm/matlab_toolbox/AMICO/matlab');
+    addpath(genpath('/network/lustre/iss02/cenir/software/irm/matlab_toolbox/NODDI_toolbox_v0.9'))
 end
 
 
