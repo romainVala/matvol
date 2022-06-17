@@ -89,6 +89,7 @@ for nb_dir = 1:length(indir)
     for d = 1:length(dir_content)
         if ( strcmp(dir_content(d).name, '.') | strcmp(dir_content(d).name, '..'))
             continue
+        end
         for nb_reg = 1:length(reg_ex)
             
             % Trick : recognized a dir, but do not include it in the output list
