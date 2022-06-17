@@ -81,12 +81,14 @@ if ~iscell(reg_ex), reg_ex={reg_ex};end
 for nb_dir = 1:length(indir)
     
     dir_content = dir(indir{nb_dir}); % fetch dir content
-    dir_content = dir_content(3:end); % the first two elements are always "." and ".."
+    %dir_content = dir_content(3:end); % the first two elements are always "." and ".."
+    % not always : in a dir with a file calles -V this ones comes first
     
     found_subdir = 0;
     
     for d = 1:length(dir_content)
-        
+        if ( strcmp(dir_content(d).name, '.') | strcmp(dir_content(d).name, '..'))
+            continue
         for nb_reg = 1:length(reg_ex)
             
             % Trick : recognized a dir, but do not include it in the output list
