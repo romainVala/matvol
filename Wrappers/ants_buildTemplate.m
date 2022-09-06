@@ -14,6 +14,7 @@ end
 defpar.sge=1;
 defpar.jobname = 'antsBT';
 defpar.walltime = '00:10:00';
+defpar.copy = 'link' % or "copy"
 
 par = complet_struct(par,defpar);
 
@@ -35,7 +36,7 @@ for k=1:length(outdir)
         
         fo{kk} = fullfile(od,sprintf('Suj%.2d%s%s',kk,ext2,ext));    
     end
-    r_movefile(cellstr(char(fin(k)))',fo,'link');
+    r_movefile(cellstr(char(fin(k)))',fo,par.copy);
     
     cmd{k}  =  sprintf('cd %s \n buildtemplateparallel.sh -c0 -d 3 -o ants_ Suj* \n',od);
     
