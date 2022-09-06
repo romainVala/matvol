@@ -14,7 +14,7 @@ end
 defpar.sge=1;
 defpar.jobname = 'antsBT';
 defpar.walltime = '00:10:00';
-defpar.copy = 'link' % or "copy"
+defpar.copy = 'link'; % or "copy"
 
 par = complet_struct(par,defpar);
 
