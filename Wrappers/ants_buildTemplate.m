@@ -15,6 +15,9 @@ defpar.sge=1;
 defpar.jobname = 'antsBT';
 defpar.walltime = '00:10:00';
 defpar.copy = 'link'; % or "copy"
+defpar.nbthread = 1 ;
+defpar.extra_args = '';
+
 
 par = complet_struct(par,defpar);
 
@@ -34,13 +37,19 @@ for k=1:length(outdir)
         [pp ff ext] = fileparts(fin{k}(kk,:));
         [pp ff ext2] = fileparts(ff);
         
-        fo{kk} = fullfile(od,sprintf('Suj%.2d%s%s',kk,ext2,ext));    
+        fo{kk} = fullfile(od,sprintf('Suj%.2d%s%s',kk,ext2,ext));
     end
     r_movefile(cellstr(char(fin(k)))',fo,par.copy);
     
-    cmd{k}  =  sprintf('cd %s \n buildtemplateparallel.sh -c0 -d 3 -o ants_ Suj* \n',od);
+    if par.nbthread>1
+        extra_args = sprintf('%s -c2 -j %d',par.extra_args, par.nbthread)
+    else
+        extra_args = sprintf('%s -c0 ', par.extra_args)
+    end
     
-    
+    cmd{k}  =  sprintf('cd %s \n buildtemplateparallel.sh %s -d 3 -o ants_ Suj* \n',od, extra_args);
+
+   
 end
 
 
