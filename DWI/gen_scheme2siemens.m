@@ -153,7 +153,7 @@ fprintf('[directions=%d]\n', sum(ndir))
 fprintf('CoordinateSystem = xyz\n')
 fprintf('Normalisation = none\n')
 for d = 1 : sum(ndir)
-    fprintf('Vector[%d] = ( %g, %g, %g )\n', d-1, xs(d), ys(d), ys(d) )
+    fprintf('Vector[%d] = ( %g, %g, %g )\n', d-1, xs(d), ys(d), zs(d) )
 end
 fprintf('********** to here **********\n')
 
