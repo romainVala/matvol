@@ -71,9 +71,9 @@ fprintf('total = %d\n', sum(ndir))
 
 max_b = max(b);
 
-xs = x.*b/max_b;
-ys = y.*b/max_b;
-zs = z.*b/max_b;
+xs = x.*sqrt(b/max_b);
+ys = y.*sqrt(b/max_b);
+zs = z.*sqrt(b/max_b);
 
 
 %% split by shell for better plot
