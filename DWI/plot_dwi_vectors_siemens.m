@@ -143,8 +143,8 @@ for iset = 1 : length(set)
             hist_y(j) = sum( unique_NORM(j)==NORM );
         end
         fprintf('[directions=%d]\n', set(iset).directions)
-        fprintf('bval unique (approx b=+-100) = %s \n', num2str(hist_x','%g\t'))
-        fprintf('bval ucount (approx b=+-100) = %s \n', num2str(hist_y','%d\t'))
+        fprintf('norm unique (approx b=+-100) = %s \n', num2str(hist_x','%g\t'))
+        fprintf('norm ucount (approx b=+-100) = %s \n', num2str(hist_y','%d\t'))
         
         fprintf('\n')
         
