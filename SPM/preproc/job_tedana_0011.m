@@ -108,19 +108,18 @@ par.verbose = 0; % don't print anything yet
 % Strip down the echo data
 echos = cat(1,meinfo.data{:});
 echos = echos(:);
-echos = cell2mat(echos);
 
 % path of serie
 pth = cell(size(echos,1),1);
 for e = 1 : size(echos,1)
-    pth{e} = {echos(e,:).fname};
+    pth{e} = {echos{e,:}.fname};
     pth{e} = addprefixtofilenames(pth{e},prefix);
 end
 
 % TEs associated
 TE = cell(size(echos,1),1);
 for e = 1 : size(echos,1)
-    TE{e} = [echos(e,:).TE];
+    TE{e} = [echos{e,:}.TE];
 end
 
 
