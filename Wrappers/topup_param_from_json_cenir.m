@@ -70,6 +70,28 @@ for k = 1:length(finii)
             'double'
             };
         [ out ] = get_string_from_json( fdic{k} , field_to_get , field_type );
+        
+        if isempty(out{2})
+            %get infor from dcm2nixx json
+            field_to_get={
+                'SeriesNumber'
+                'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0\].dInPlaneRot' %not exist
+                'InPlanePhaseEncodingDirectionDICOM'
+                'PhaseEncodingDirection' %  j- or j
+                'BandwidthPerPixelPhaseEncode'
+                };
+            field_type={'double', 'double', 'char', 'char','double'  };
+
+            [ out ] = get_string_from_json( fdic{k} , field_to_get , field_type );
+            %change encoding direction to phase sign
+            if length(out{4})>1
+                out{4} = 1
+            else
+                out{4} = 0;
+            end
+            
+        end
+            
     end
     
     for nbf=1:nbline
