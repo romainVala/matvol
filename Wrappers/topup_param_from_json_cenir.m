@@ -71,7 +71,7 @@ for k = 1:length(finii)
             };
         [ out ] = get_string_from_json( fdic{k} , field_to_get , field_type );
         
-        if isempty(out{2})
+        if isempty(out{3})
             %get infor from dcm2nixx json
             field_to_get={
                 'SeriesNumber'
