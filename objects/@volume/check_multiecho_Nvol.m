@@ -1,8 +1,6 @@
 function check_multiecho_Nvol( volumeArray )
 % check_multiecho_Nvol will check the number of volumes in all echos of
-% each run, then propose the fix if necessary. WARNING : this step is very
-% IO intensive, it is recomanded to do it once, as a sanity check, then to
-% comment it in the main script
+% each run, then propose the fix if necessary.
 
 nVol = numel(volumeArray);
 
@@ -12,8 +10,16 @@ for iVol = 1 : nVol
     nEcho = size(volume.path,1);
 
     % already trimmed ?
-    orig_dir = fullfile(volume_dir,'orig_me');
+    orig_dir = fullfile(volume_dir,'Nvol_notOK_orig_files');
     if exist(orig_dir,'dir') > 0
+        % fprintf('[%s] trimmed : %s \n', mfilename, volume_dir)
+        continue
+    end
+    
+    % already checked ?
+    check_file = fullfile(volume_dir,'Nvol_OK.txt');
+    if exist(check_file,'file') > 0
+        % fprintf('[%s] OK : %s \n', mfilename, volume_dir)
         continue
     end
 
@@ -23,7 +29,6 @@ for iVol = 1 : nVol
         data(iEcho).header = spm_vol(deblank(volume.path(iEcho,:)));
         data(iEcho).Nvol   = length(data(iEcho).header);
     end
-
 
     Nvol = [data.Nvol]';
 
@@ -59,9 +64,14 @@ for iVol = 1 : nVol
         end
         fprintf('[%s]: ... trimming to %d volumes done \n', mfilename, min_Nvol)
 
+    else
+        
+        % just write the file
+        fprintf('[%s] checked : %s \n', mfilename, volume_dir)
+        fid = fopen(check_file,'w'); fclose(fid);
+        
     end
 
-    fprintf('\n')
 
 end % iVol
 
