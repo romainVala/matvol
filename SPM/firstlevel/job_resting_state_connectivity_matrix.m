@@ -178,7 +178,8 @@ for iVol = 1:nVol
         % converto to 2D array == timeseries,
         mask_1D = mask_3D(:); % [x*y*z 1]
         size_volume_4D = size(cleaned_volume_4D);
-        size_volume_2D = [prod(size_volume_4D(1:3)) size_volume_4D(4)];
+        nVoxel = prod(size_volume_4D(1:3));
+        size_volume_2D = [nVoxel nT];
         cleaned_volume_2D = reshape(cleaned_volume_4D, size_volume_2D); % [x*y*z t]
         cleaned_volume_2D(~mask_1D,:) = []; % [mask(x*y*z) t];
         
@@ -194,10 +195,38 @@ for iVol = 1:nVol
             freq = (1/TR) * (0 : (nT/2-1)) / nT;
             freq = [freq fliplr(freq)];
         end
-        bp_freq = ones(size(freq));
+        bp_freq = true(size(freq));
         bp_freq(freq < par.bandpass(1)) = false;
         bp_freq(freq > par.bandpass(2)) = false;
         bp = real(ifft( mag.*bp_freq .* exp(1i*pha), [], 2)); % [mask(x*y*z) t];
+        
+        % ALFF
+        ALFF = mean(sqrt(mag(:,bp_freq)),2);
+        ALFF_2D = NaN(nVoxel,1); % [x*y*z]
+        ALFF_2D(mask_1D>0,:) = ALFF;
+        ALFF_3D = reshape(ALFF_2D, size_volume_4D(1:3)); % [x y z]
+        V_ALFF = struct;
+        V_ALFF.fname = fullfile(outdir_path,'ALFF.nii');
+        V_ALFF.dim =     cleaned_volume_header(1).dim;
+        V_ALFF.dt =       cleaned_volume_header(1).dt;
+        V_ALFF.mat =      cleaned_volume_header(1).mat;
+        V_ALFF.pinfo =    cleaned_volume_header(1).pinfo;
+        V_ALFF.descrip =  sprintf('ALFF [%g %g]', par.bandpass(1), par.bandpass(2));
+        spm_write_vol(V_ALFF,ALFF_3D);
+        
+        % fALFF
+        fALFF = sum(mag(:,bp_freq),2) ./ sum(mag(:,~bp_freq),2);
+        fALFF_2D = NaN(nVoxel,1); % [x*y*z]
+        fALFF_2D(mask_1D>0,:) = fALFF;
+        fALFF_3D = reshape(fALFF_2D, size_volume_4D(1:3)); % [x y z]
+        V_fALFF = struct;
+        V_fALFF.fname = fullfile(outdir_path,'fALFF.nii');
+        V_fALFF.dim =     cleaned_volume_header(1).dim;
+        V_fALFF.dt =       cleaned_volume_header(1).dt;
+        V_fALFF.mat =      cleaned_volume_header(1).mat;
+        V_fALFF.pinfo =    cleaned_volume_header(1).pinfo;
+        V_fALFF.descrip =  sprintf('fALFF [%g %g]', par.bandpass(1), par.bandpass(2));
+        spm_write_vol(V_fALFF,fALFF_3D);
         
         % write bandpass volume
         bp_2D = NaN(size_volume_2D); % [x*y*z t]
@@ -218,6 +247,7 @@ for iVol = 1:nVol
         mask_3D = spm_read_vols(mask_header); % [x y z]
         mask_1D = mask_3D(:); % [x*y*z 1]
         bp_2D = reshape(bp_4D, size_volume_2D);
+        
     end
     
     %----------------------------------------------------------------------
