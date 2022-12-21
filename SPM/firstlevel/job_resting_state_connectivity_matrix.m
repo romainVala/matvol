@@ -326,6 +326,7 @@ for iVol = 1:nVol
         bp_4D = reshape(bp_2D, size_volume_4D); % [x y z t]
         bp_nifti = cleaned_volume_header(1).private;
         bp_nifti.dat.fname = bp_volume_path;
+        bp_nifti.descrip = sprintf('bandpass [%g %g]', par.bandpass(1), par.bandpass(2));
         create(bp_nifti)
         bp_nifti.dat(:,:,:,:) = bp_4D;
     
