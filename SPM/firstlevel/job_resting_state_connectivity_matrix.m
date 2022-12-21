@@ -1,4 +1,4 @@
-function output_mat_file = job_resting_state_connectivity_matrix(par)
+function output_struct = job_resting_state_connectivity_matrix(par)
 %JOB_RESTING_STATE_CONNECTIVITY_MATRIX
 % 1. Please check atlas list bellow
 % 2. If you already alled this function but you want to add another atlas,
@@ -136,7 +136,7 @@ nVol = nVol(1);
 
 %% Main
 
-output_mat_file = struct;
+output_struct = struct;
 
 for iVol = 1:nVol
     
@@ -145,13 +145,19 @@ for iVol = 1:nVol
     fprintf('[%s]: volume %d/%d : %s \n', mfilename, iVol, nVol, char(volume_path))
     outdir_path = fullfile(get_parent_path(char(volume_path)), 'RS_connectivity_matrix');
     
+    % output_struct
+    output_struct(iVol).volume   = char(par.volume  (iVol));
+    output_struct(iVol).confound = char(par.confound(iVol));
+    output_struct(iVol).outdir   = outdir_path;
+    output_struct(iVol).bandpass = par.bandpass;
+    
     atlas_idx_list = true(nAtlas, 1);
     for atlas_idx = 1 : nAtlas
         
         % prepare output atlas connectivity
         atlas_name = par.atlas_name{atlas_idx};
         atlas_connectivity_path = fullfile(outdir_path,sprintf('connectivity_%s.mat', atlas_name));
-        output_mat_file(iVol).(atlas_name) = atlas_connectivity_path;
+        output_struct(iVol).(atlas_name) = atlas_connectivity_path;
         
         if exist(atlas_connectivity_path, 'file') && ~par.redo
             fprintf('[%s]:          atlas done : %s \n', mfilename, atlas_name)
@@ -163,7 +169,7 @@ for iVol = 1:nVol
     
     % if all atlas are done, just skip everything
     if all(~atlas_idx_list) && ~par.redo
-            continue
+        continue
     end
     
     cleaned_volume_path = fullfile(outdir_path, '4D.nii');
