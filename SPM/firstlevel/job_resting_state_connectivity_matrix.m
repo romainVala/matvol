@@ -1,13 +1,13 @@
 function output_struct = job_resting_state_connectivity_matrix(par)
 %JOB_RESTING_STATE_CONNECTIVITY_MATRIX
-% 1. Please check atlas list bellow
-% 2. If you already alled this function but you want to add another atlas,
+% 1. Please check atlas list bellow (from CAT12)
+% 2. If you already runned this function but you want to add another atlas,
 %    no worries, unecessary steps will be skipped
 %
 % SYNTAX
 %   JOB_RESTING_STATE_CONNECTIVITY_MATRIX(par)
 %
-% "par" is a structure, where each field is described bellow :
+% "par" is a structure, where each field is described here :
 %
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 % MANDATORY
@@ -79,6 +79,9 @@ defpar.atlas_name     = {'aal3', 'lpba40'};
 defpar.write_ALFF     = true;
 defpar.write_fALFF    = true;
 
+defpar.subdir         = 'rsfc';
+defpar.clean4D_name   = 'clean.nii';
+
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 % Other
 %----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -114,7 +117,6 @@ end
 nVol(1) = numel(par.volume);
 
 if isa(par.confound,'rp')
-    counfondArray = par.confound;
     par.confound = par.confound.getPath();
 end
 nVol(2) = numel(par.confound);
@@ -123,7 +125,6 @@ use_mask = 0;
 if isfield(par, 'mask')
     use_mask = 1;
     if isa(par.mask,'volume')
-        maskArray = par.mask;
         par.mask = par.mask.getPath();
     end
     nVol(3) = numel(par.mask);
@@ -143,7 +144,7 @@ for iVol = 1:nVol
     % prepare output dir path
     volume_path = par.volume(iVol);
     fprintf('[%s]: volume %d/%d : %s \n', mfilename, iVol, nVol, char(volume_path))
-    outdir_path = fullfile(get_parent_path(char(volume_path)), 'RS_connectivity_matrix');
+    outdir_path = fullfile(get_parent_path(char(volume_path)), par.subdir);
     
     % output_struct
     output_struct(iVol).volume   = char(par.volume  (iVol));
@@ -172,7 +173,7 @@ for iVol = 1:nVol
         continue
     end
     
-    cleaned_volume_path = fullfile(outdir_path, '4D.nii');
+    cleaned_volume_path = fullfile(outdir_path, par.clean4D_name);
     
     if ~exist(cleaned_volume_path, 'file') || par.redo
             
@@ -213,7 +214,7 @@ for iVol = 1:nVol
         matlabbatch{2}.spm.stats.fmri_est.write_residuals  = 1;
         matlabbatch{2}.spm.stats.fmri_est.method.Classical = 1;
         matlabbatch{3}.spm.util.cat.vols(1) = cfg_dep('Model estimation: Residual Images', substruct('.','val', '{}',{2}, '.','val', '{}',{1}, '.','val', '{}',{1}), substruct('.','res'));
-        matlabbatch{3}.spm.util.cat.name    = '4D.nii';
+        matlabbatch{3}.spm.util.cat.name    = par.clean4D_name;
         matlabbatch{3}.spm.util.cat.dtype   = 0;
         matlabbatch{3}.spm.util.cat.RT      = TR; %%%%
     
@@ -259,12 +260,12 @@ for iVol = 1:nVol
         
         % generate freq vector
         if mod(nTR,2) == 1
-            freq = (1/TR) * (0 : (nTR/2)) / nTR;
-            freq = [freq fliplr(freq)];
+            freq_left = (1/TR) * (0 : (nTR/2)) / nTR;
+            freq = [freq_left fliplr(freq_left)];
             freq(end) = [];
         else
-            freq = (1/TR) * (0 : (nTR/2-1)) / nTR;
-            freq = [freq fliplr(freq)];
+            freq_left = (1/TR) * (0 : (nTR/2-1)) / nTR;
+            freq = [freq_left fliplr(freq_left)];
         end
         
         % generate frequency "mask"
@@ -288,7 +289,7 @@ for iVol = 1:nVol
             
             % write volume
             V_ALFF = struct;
-            V_ALFF.fname   = fullfile(outdir_path,'ALFF.nii');
+            V_ALFF.fname   = addprefixtofilenames(cleaned_volume_path,'ALFF_');
             V_ALFF.dim     = cleaned_volume_header(1).dim;
             V_ALFF.dt      = cleaned_volume_header(1).dt;
             V_ALFF.mat     = cleaned_volume_header(1).mat;
@@ -310,7 +311,7 @@ for iVol = 1:nVol
             
             % write volume
             V_fALFF = struct;
-            V_fALFF.fname   = fullfile(outdir_path,'fALFF.nii');
+            V_fALFF.fname   = addprefixtofilenames(cleaned_volume_path,'fALFF_');
             V_fALFF.dim     = cleaned_volume_header(1).dim;
             V_fALFF.dt      = cleaned_volume_header(1).dt;
             V_fALFF.mat     = cleaned_volume_header(1).mat;
@@ -420,19 +421,19 @@ for iVol = 1:nVol
             y = masked_bp_2D';
             [m,n]   = size(y);
             if m > n
-                [v,s,v] = svd(y'*y);
+                [~,s,v] = svd(y'*y);
                 s       = diag(s);
                 v       = v(:,1);
                 u       = y*v/sqrt(s(1));
             else
-                [u,s,u] = svd(y*y');
+                [~,s,u] = svd(y*y');
                 s       = diag(s);
                 u       = u(:,1);
                 v       = y'*u/sqrt(s(1));
             end
             d       = sign(sum(v));
             u       = u*d;
-            v       = v*d;
+            % v       = v*d; % unused
             Y       = u*sqrt(s(1)/n);
             
             timeseries(:,iROI) = Y;
@@ -452,6 +453,38 @@ for iVol = 1:nVol
     end
     
 end % iVol
+
+
+%% Add outputs objects
+
+if obj && par.auto_add_obj && (par.run || par.sge)
+    
+    for iVol = 1 : length(volumeArray)
+        
+        % Shortcut
+        vol = volumeArray(iVol);
+        ser = vol.serie;
+        sub = vol.subdir;
+        
+        if par.run
+            
+            ser.addVolume(sub, ['^' par.subdir '$'], [      '^' par.clean4D_name '$'],       'clean', 1)
+            ser.addVolume(sub, ['^' par.subdir '$'], [   '^bp_' par.clean4D_name '$'],    'bp_clean', 1)
+            ser.addVolume(sub, ['^' par.subdir '$'], [ '^ALFF_' par.clean4D_name '$'],  'ALFF_clean', 1)
+            ser.addVolume(sub, ['^' par.subdir '$'], ['^fALFF_' par.clean4D_name '$'], 'fALFF_clean', 1)
+            
+        elseif par.sge
+            
+            ser.addVolume('root', fullfile(fileparts(vol.path), par.subdir,            par.clean4D_name ),       'clean')
+            ser.addVolume('root', fullfile(fileparts(vol.path), par.subdir, [   'bp_'  par.clean4D_name]),    'bp_clean')
+            ser.addVolume('root', fullfile(fileparts(vol.path), par.subdir, [ 'ALFF_'  par.clean4D_name]),  'ALFF_clean')
+            ser.addVolume('root', fullfile(fileparts(vol.path), par.subdir, ['fALFF_'  par.clean4D_name]), 'fALFF_clean')
+            
+        end
+        
+    end % iVol
+    
+end % obj
 
 
 end % function
