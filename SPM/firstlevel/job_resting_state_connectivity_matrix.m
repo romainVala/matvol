@@ -51,6 +51,7 @@ function output_struct = job_resting_state_connectivity_matrix(par)
 %    .write_fALFF (bool)           fraction of Apmlitude of Low Frequency Fluctuations
 %                                  is the sum of Fourier coefficients inside the low frequency band (defined by .bandpass) devided the sum of the remaining frequencies
 %
+% See also plot_resting_state_connectivity_matrix
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
@@ -147,10 +148,11 @@ for iVol = 1:nVol
     outdir_path = fullfile(get_parent_path(char(volume_path)), par.subdir);
     
     % output_struct
-    output_struct(iVol).volume   = char(par.volume  (iVol));
-    output_struct(iVol).confound = char(par.confound(iVol));
-    output_struct(iVol).outdir   = outdir_path;
-    output_struct(iVol).bandpass = par.bandpass;
+    output_struct(iVol).volume     = char(par.volume  (iVol));
+    output_struct(iVol).confound   = char(par.confound(iVol));
+    output_struct(iVol).outdir     = outdir_path;
+    output_struct(iVol).bandpass   = par.bandpass;
+    output_struct(iVol).atlas_name = par.atlas_name;
     
     atlas_idx_list = true(nAtlas, 1);
     for atlas_idx = 1 : nAtlas
