@@ -151,6 +151,11 @@ for iJob = 1 : nJobs
     else
         outdir_path = working_dir;
     end
+    
+    if ~exist(outdir_path, 'dir')
+        mkdir(outdir_path);
+    end
+    
     if ~isempty(mask)
         switch class(mask)
             case 'char'
