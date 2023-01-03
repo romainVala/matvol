@@ -32,8 +32,19 @@ if isa(input4D,'volume')
     input4D      = input4D_obj.toJob(); % .toJob converts to cellstr
     
     mask_obj     = mask;
-    mask         = mask_obj   .toJob();   
+    mask         = mask_obj   .toJob();
+    
+    try
+        json_list = input4D_obj(:,1).getSerie().getJson().toJob();
+    catch ME
+        warining('could not find any @json in the @serie')
+    end
+    
 end
+
+% specific paramters
+defpar.TE   = []; % try to fetch it (objects) or let the user fill it
+defpar.json = []; % use json to fetch TE
 
 % I/O
 defpar.prefix_T2s  =  'T2s_';
@@ -55,6 +66,21 @@ par = complet_struct(par,defpar);
 % retrocompatibility
 if par.redo
     par.skip = 0;
+end
+
+% check TE source
+if isempty(par.TE)
+    if isempty(par.json)
+        if exist('json_list','var')
+            par.json = json_list;
+        else
+            error('no par.TE, no par.json, no @json(objects) found')
+        end
+    else
+        % pass, load TE later...
+    end
+else
+    TE = par.TE(:)'; % force line vector
 end
 
 
@@ -86,6 +112,18 @@ for iFile = 1 : nFile
         fprintf('[%s]: %d/%d => working on %s \n', mfilename, iFile, nFile, in(1,:))
     end
     
+    % fetch TE values
+    if isempty(par.TE) && ~isempty(par.json)
+        json_file = cellstr(char(par.json{iFile}));
+        nTE = length(json_file);
+        TE = zeros(1,nTE);
+        for iJson = 1 : nTE
+            content = spm_jsonread(json_file{iJson});
+            assert(isfield(content,'ConversionSoftware'), 'json file come from dcm2niix conversion')
+            TE(iJson) = 1000 * content.EchoTime; % second -> millisecond
+        end % iJson
+    end
+
     % load mask
     Vm = spm_vol(mask{iFile});
     Ym = spm_read_vols(Vm);
@@ -97,12 +135,6 @@ for iFile = 1 : nFile
     [nTR, nTE] = size(Vi);
     size3D = Vi(1).dim;
     nVoxel = prod(size3D);
-    
-    % fetch TE values
-    descrip = {Vi(1,:).descrip};
-    res = regexp(descrip, 'TE=(\d+|\d+e[+-]\d+);', 'tokens'); % 'TE=(\d+|\d+e[+-]\d+);'
-    TE = cellfun(@(x) x{1}, res);
-    TE = str2double(TE);
     
     % Y dimentions are : X Y Z T E
     Y = NaN([size3D nTR nTE]);
@@ -152,7 +184,7 @@ for iFile = 1 : nFile
     T2s = NaN([nVoxel nTR]);
     S0  = NaN([nVoxel nTR]);
     
-    R2s(Ym(:)>0,:) =   r2s;
+    R2s(Ym(:)>0,:) =    r2s*1000;
     T2s(Ym(:)>0,:) = 1./r2s;
     S0 (Ym(:)>0,:) =    s0;
     
@@ -169,13 +201,13 @@ for iFile = 1 : nFile
     fprintf('[%s]: writing outputs... ', mfilename)
     t0 = tic;
     
-    write_4D( R2s, Vi(1), out_R2s{iFile}, 'log-lin R2s')
-    write_4D( T2s, Vi(1), out_T2s{iFile}, 'log-lin T2s')
-    write_4D( S0 , Vi(1), out_S0 {iFile} , 'log-lin S0')
+    write_4D( R2s, Vi(1), out_R2s{iFile}, 'log-lin R2s  (s)')
+    write_4D( T2s, Vi(1), out_T2s{iFile}, 'log-lin T2s (ms)')
+    write_4D( S0 , Vi(1), out_S0 {iFile}, 'log-lin S0'      )
     
-    write_3D( mean(R2s,4), Vi(1), out_mean_R2s{iFile}, 'mean log-lin R2s')
-    write_3D( mean(T2s,4), Vi(1), out_mean_T2s{iFile}, 'mean log-lin T2s')
-    write_3D( mean(S0 ,4), Vi(1), out_mean_S0 {iFile}, 'mean log-lin S0')
+    write_3D( mean(R2s,4), Vi(1), out_mean_R2s{iFile}, 'mean log-lin R2s  (s)')
+    write_3D( mean(T2s,4), Vi(1), out_mean_T2s{iFile}, 'mean log-lin T2s (ms)')
+    write_3D( mean(S0 ,4), Vi(1), out_mean_S0 {iFile}, 'mean log-lin S0'      )
     fprintf('done in %gs \n', toc(t0));
     
     clear R2s T2s S0; % we need to save memory...
