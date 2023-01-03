@@ -190,8 +190,12 @@ for iFile = 1 : nFile
     
     clear r2s s0; % we need to save memory...
     
+    lim = 1000; % 1/s
+    R2s(R2s>lim) = lim;
+    R2s(R2s<0  ) = 0;
+    
     lim = 200; % ms
-    T2s(T2s>lim) = lim; % threshold it (only for nice visu when mrview auto-scale the range)
+    T2s(T2s>lim) = lim;
     T2s(T2s<0  ) = 0;
     
     R2s = reshape(R2s, [size3D nTR]);
