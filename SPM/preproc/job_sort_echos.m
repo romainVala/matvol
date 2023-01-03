@@ -197,13 +197,13 @@ for iSubj = 1 : nSubj
             error('pb with the json files, please check the files and the code of this function')
         end
         
-        % Make symbolic link of the echo in the working directory
+        % Make symbolic link of the echo (and nifti) in the working directory
         for echo = 1 : length(allEchos)
             
             [pth,nam,~] = spm_fileparts(allEchos{echo});
             ext = file_ext(allEchos{echo});
             
-            filename = sprintf('e%d%s',echo,ext);
+            niftiname = sprintf('e%d%s',echo,ext);
             
             meinfo_.data{iSubj}{iRun,1}(echo).pth         = pth;
             meinfo_.data{iSubj}{iRun,1}(echo).ext         = ext;
@@ -219,7 +219,7 @@ for iSubj = 1 : nSubj
                 if ~exist(tpattern, 'file') || par.redo==1
                     fileID = fopen( tpattern , 'w' , 'n' , 'UTF-8' );
                     if fileID < 0
-                        warning('[%s]: Could not open %s', mfilename, filename)
+                        warning('[%s]: Could not open %s', mfilename, niftiname)
                     end
                     fprintf(fileID, '%f\n', sliceonsets );
                     fclose(fileID);
@@ -228,12 +228,19 @@ for iSubj = 1 : nSubj
             meinfo_.data{iSubj}{iRun,1}(echo).tpattern = tpattern;
             
             % symlink for reordering echos (local path, not absolute)
-            cmd = sprintf('if [ -e "%s" ];\nthen \n cd "%s" \n ln -sf "%s" "%s" \nfi \n',...
+            cmd1 = sprintf('if [ -e "%s" ];\nthen \n cd "%s" \n ln -sf "%s" "%s" \nfi \n',...
                 allEchos{echo},...
                 run_path,...
                 [nam ext],...
-                filename);
-            job_subj = [job_subj cmd];
+                niftiname);
+            
+            cmd2 = sprintf('if [ -e "%s" ];\nthen \n cd "%s" \n ln -sf "%s" "%s" \nfi \n',...
+                allEchos{echo},...
+                run_path,...
+                [nam '.json'],...
+                sprintf('e%d%s',echo,'.json'));
+            
+            job_subj = [job_subj cmd1 cmd2];
             
         end % echo
         
@@ -277,8 +284,10 @@ if obj && par.auto_add_obj && (par.run || par.sge)
                 
                 if     par.run % use the normal method
                     serie.addVolume( ['^' echo.outname echo.ext '$'] , sprintf('e%d',iEcho), 1 );
+                    serie.addJson  ( ['^' echo.outname  '.json' '$'] , sprintf('e%d',iEcho), 1 );
                 elseif par.sge % add the new volume in the object manually, because the file is not created yet
-                    serie.addVolume('root', echo.fname, sprintf('e%d',iEcho))
+                    serie.addVolume('root',                       echo.fname,         sprintf('e%d',iEcho))
+                    serie.addVolume('root', change_file_extension(echo.fname,'.nii'), sprintf('e%d',iEcho))
                 end
                 
             end % iEcho
