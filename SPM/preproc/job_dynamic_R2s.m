@@ -1,16 +1,30 @@
 function job_dynamic_R2s(input4D, mask, par)
-%JOB_DYNAMIC_R2S
+% JOB_DYNAMIC_R2S compute { R2s, T2s = 1/R2s, S0, ERR } for each TR of each voxel.
+% A temporal mean of each 3D will aslo be computed
+% Input data must be multi-echo.
+% Designed ot work on 4D data (fMRI) but it also works on 3D data.
 %
-% job_dynamic_R2s will use 3dTstat with options -mean, -stdev, -tsnr
+% SYNTAX
+%   job_dynamic_R2s(input4D, mask)
+%   job_dynamic_R2s(input4D, mask, par)
 %
-% SYNTAX :
+% INPUTS
+% - input4D : single-level cellstr of file names
+%        OR : @volume array
+%             -> it works on 3D data, such as multi-echo 3D GRE for QSM
 %
-% EXAMPLE
+% - mask    : single-level cellstr of file names
+%        OR : @volume array
 %
-% INPUTS :
-% - fin : single-level cellstr of file names
-% OR
-% - fin : @volume array
+% - par     : standard matlavol structure => check parameters bellow, in the 'defpar' section
+% 
+% NOTES
+%   There is several ways to fetch the TEs, they are performed <<< in this order >>> :
+%   - give it using par.TE = [15 30 45]
+%     WARNING : in this case, only this single TE vector will be used for each input volumes. It does not work with 3 TE + 5 echos
+%   - give a list of dcm2niix .json files with using par.json = {'/pth/to/e1.json','/pth/to/e2.json',...}
+%   - if you use @volume array as input, it will try to find the @json in the same @serie
+%
 %
 % See also get_subdir_regex_files exam exam.AddSerie serie.addVolume exam.getSerie serie.getVolume
 
@@ -22,7 +36,7 @@ narginchk(2,3)
 %% Check input arguments
 
 if ~exist('par'      ,'var'), par       = ''; end
-if ~exist('jobappend','var'), jobappend = ''; end
+% if ~exist('jobappend','var'), jobappend = ''; end
 
 obj = 0;
 if isa(input4D,'volume')
@@ -36,7 +50,7 @@ if isa(input4D,'volume')
     
     try
         json_list = input4D_obj(:,1).getSerie().getJson().toJob();
-    catch ME
+    catch ME %#ok<NASGU> 
         warining('could not find any @json in the @serie')
     end
     
@@ -53,10 +67,12 @@ defpar.prefix_S0   =   'S0_';
 defpar.prefix_ERR  =  'ERR_';
 defpar.prefix_mean = 'mean_'; % will be concatenated // ex : mean_T2s_<input.nii>
 
+% cluster
 defpar.sge               = 0;
 defpar.jobname           = 'job_dynamic_R2s';
 defpar.mem               = '16G'; % ????
 
+% matvol classics
 defpar.run               = 1;
 defpar.redo              = 0;
 defpar.verbose           = 1;
@@ -69,7 +85,9 @@ if par.redo
     par.skip = 0;
 end
 
-% check TE source
+
+%% check TE source
+
 if isempty(par.TE)
     if isempty(par.json)
         if exist('json_list','var')
@@ -132,7 +150,7 @@ for iFile = 1 : nFile
     % load mask
     Vm = spm_vol(mask{iFile});
     Ym = spm_read_vols(Vm);
-    nMoxel = sum(Ym(:));
+    nMoxel = sum(Ym(:)); % nMoxel = number of voxel in mask
     
     % load input volumes
     Vi = spm_vol(cellstr(in));
@@ -141,25 +159,25 @@ for iFile = 1 : nFile
     size3D = Vi(1).dim;
     nVoxel = prod(size3D);
     
-    % Y dimentions are : X Y Z T E
+    % Y dimentions are : [X Y Z T E]
     Y = NaN([size3D nTR nTE]);
     fprintf('[%s]: loading input4D... ', mfilename)
     t0 = tic;
     for iVol = 1:nTE
-        Y(:,:,:,:,iVol) = spm_read_vols(Vi(:,iVol));
+        Y(:,:,:,:,iVol) = spm_read_vols(Vi(:,iVol)); % (I/O intensive)
     end
     fprintf('done in %gs \n', toc(t0))
     
-    % X Y Z T E -> X*Y*Z T E
-    Y = reshape(Y, [nVoxel nTR, nTE]);
+    % [X Y Z T E] -> [X*Y*Z T E] (prepare for masking)
+    Y = reshape(Y, [nVoxel nTR nTE]);
     
-    % keep voxels in mask
+    % keep voxels in mask : [X*Y*Z T E] -> [mask(X*Y*Z) T E] 
     Y(~Ym(:),:,:) = [];
     
-    % apply log
+    % apply log (for log-linear fit)
     Y = log(Y);
     
-    % pre-allocate outputs : *Y*Z T E
+    % pre-allocate outputs : [mask(X*Y*Z) T]
     r2s = NaN([nMoxel nTR]);
     s0  = NaN([nMoxel nTR]);
     err = NaN([nMoxel nTR]);
@@ -168,7 +186,6 @@ for iFile = 1 : nFile
     fprintf('[%s]: start fit... ', mfilename)
     t0 = tic;
     for iTR = 1 : nTR
-        %         fprintf('TR = %d \n', iTR)
         % https://fr.mathworks.com/help/curvefit/least-squares-fitting.html
         b1 = ...
             ( nTE * sum( TE .* squeeze(Y(:,iTR,:)), 2 )   -   sum(TE).*sum(squeeze(Y(:,iTR,:)), 2 ) ) / ...
@@ -177,6 +194,7 @@ for iFile = 1 : nFile
         r2s(:, iTR) =    -b1;
         s0 (:, iTR) = exp(b2);
         err(:, iTR) = sum( ( squeeze(Y(:,iTR,:)) - (b1.*TE + b2) ).^2 , 2 );
+        % !!! forget about polyfit, it's not in vectorized, so it's very slow... but the result is exactly the same !!!
         %         parfor iMoxel = 1 : nMoxel
         %             p = polyfit(TE,Y(iMoxel, iTR,:),1);
         %             R2s(iMoxel, iTR) =    -p(1);
@@ -187,43 +205,42 @@ for iFile = 1 : nFile
     
     clear b1 b2 Y; % save memory
     
-    R2s = NaN([nVoxel nTR]);
-    T2s = NaN([nVoxel nTR]);
-    S0  = NaN([nVoxel nTR]);
-    ERR = NaN([nVoxel nTR]);
-    
+    % [mask(X*Y*Z) T] -> [X*Y*Z T] -> [X Y Z T]
+    R2s            = NaN([nVoxel nTR]);
+    T2s            = NaN([nVoxel nTR]);
+    S0             = NaN([nVoxel nTR]);
+    ERR            = NaN([nVoxel nTR]);
     R2s(Ym(:)>0,:) =    r2s*1000;
     T2s(Ym(:)>0,:) = 1./r2s;
     S0 (Ym(:)>0,:) =     s0;
     ERR(Ym(:)>0,:) =    err;
+    R2s            = reshape(R2s, [size3D nTR]);
+    T2s            = reshape(T2s, [size3D nTR]);
+    S0             = reshape(S0 , [size3D nTR]);
+    ERR            = reshape(ERR, [size3D nTR]);
     
     clear r2s s0 err; % save memory
     
-    lim = 1000; % 1/s
-    R2s(R2s>lim) = lim;
-    R2s(R2s<0  ) = 0;
+    % threshold, mostly for auto-range detection at visualization
+    limR2s            = 1000; % 1/s
+    R2s(R2s  > limR2s) = limR2s;
+    R2s(R2s  <      0) = 0;
+    limT2s            = 200; % ms
+    T2s(T2s  > limT2s) = limT2s;
+    T2s(T2s  <      0) = 0;
+    T2s(R2s <=      0) = limT2s; % this a special case because of 1/0 problem
     
-    lim = 200; % ms
-    T2s(T2s>lim) = lim;
-    T2s(T2s<0  ) = 0;
-    
-    R2s = reshape(R2s, [size3D nTR]);
-    T2s = reshape(T2s, [size3D nTR]);
-    S0  = reshape(S0 , [size3D nTR]);    
-    ERR = reshape(ERR, [size3D nTR]);  
-    
+    % write output files (I/O intensive)
     fprintf('[%s]: writing outputs... ', mfilename)
     t0 = tic;
-    
-    write_4D( R2s, Vi(1), out_R2s{iFile}, 'log-lin R2s  (s)')
-    write_4D( T2s, Vi(1), out_T2s{iFile}, 'log-lin T2s (ms)')
-    write_4D( S0 , Vi(1), out_S0 {iFile}, 'log-lin S0'      )
-    write_4D( ERR, Vi(1), out_ERR{iFile}, 'log-lin ERR'     )
-    
-    write_3D( mean(R2s,4, 'omitnan'), Vi(1), out_mean_R2s{iFile}, 'mean log-lin R2s  (s)')
-    write_3D( mean(T2s,4, 'omitnan'), Vi(1), out_mean_T2s{iFile}, 'mean log-lin T2s (ms)')
-    write_3D( mean(S0 ,4, 'omitnan'), Vi(1), out_mean_S0 {iFile}, 'mean log-lin S0'      )
-    write_3D( mean(ERR,4, 'omitnan'), Vi(1), out_mean_ERR{iFile}, 'mean log-lin ERR'     )
+    write_4D(      R2s              , Vi(1),      out_R2s{iFile},      'log-lin R2s (1/s)')
+    write_4D(      T2s              , Vi(1),      out_T2s{iFile},      'log-lin T2s  (ms)')
+    write_4D(       S0              , Vi(1),      out_S0 {iFile},      'log-lin S0'       )
+    write_4D(      ERR              , Vi(1),      out_ERR{iFile},      'log-lin ERR'      )
+    write_3D( mean(R2s,4, 'omitnan'), Vi(1), out_mean_R2s{iFile}, 'mean log-lin R2s (1/s)')
+    write_3D( mean(T2s,4, 'omitnan'), Vi(1), out_mean_T2s{iFile}, 'mean log-lin T2s  (ms)')
+    write_3D( mean(S0 ,4, 'omitnan'), Vi(1), out_mean_S0 {iFile}, 'mean log-lin S0'       )
+    write_3D( mean(ERR,4, 'omitnan'), Vi(1), out_mean_ERR{iFile}, 'mean log-lin ERR'      )
     fprintf('done in %gs \n', toc(t0));
     
     clear R2s T2s S0 ERR; % save memory
@@ -248,29 +265,24 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         sub = vol.subdir;
         
         if par.run
-            
             ext  = '.*.nii';
-            
-            ser.addVolume(sub, ['^'                 par.prefix_T2s tag ext],[                par.prefix_T2s tag],1)
-            ser.addVolume(sub, ['^'                 par.prefix_R2s tag ext],[                par.prefix_R2s tag],1)
-            ser.addVolume(sub, ['^'                 par.prefix_S0  tag ext],[                par.prefix_S0  tag],1)
-            ser.addVolume(sub, ['^'                 par.prefix_ERR tag ext],[                par.prefix_ERR tag],1)
-            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_T2s tag ext],[par.prefix_mean par.prefix_T2s tag],1)
-            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_R2s tag ext],[par.prefix_mean par.prefix_R2s tag],1)
-            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_S0  tag ext],[par.prefix_mean par.prefix_S0  tag],1)
-            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_ERR tag ext],[par.prefix_mean par.prefix_ERR tag],1)
-            
+            ser.addVolume(sub, ['^'                 par.prefix_T2s tag ext], [                par.prefix_T2s tag], 1)
+            ser.addVolume(sub, ['^'                 par.prefix_R2s tag ext], [                par.prefix_R2s tag], 1)
+            ser.addVolume(sub, ['^'                 par.prefix_S0  tag ext], [                par.prefix_S0  tag], 1)
+            ser.addVolume(sub, ['^'                 par.prefix_ERR tag ext], [                par.prefix_ERR tag], 1)
+            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_T2s tag ext], [par.prefix_mean par.prefix_T2s tag], 1)
+            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_R2s tag ext], [par.prefix_mean par.prefix_R2s tag], 1)
+            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_S0  tag ext], [par.prefix_mean par.prefix_S0  tag], 1)
+            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_ERR tag ext], [par.prefix_mean par.prefix_ERR tag], 1)
         elseif par.sge
-            
-            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix_T2s),[par.prefix_T2s tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix_R2s),[par.prefix_R2s tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix_S0 ),[par.prefix_S0  tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,par.prefix_ERR),[par.prefix_ERR tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_T2s]),[par.prefix_mean par.prefix_T2s tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_R2s]),[par.prefix_mean par.prefix_R2s tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_S0 ]),[par.prefix_mean par.prefix_S0  tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_ERR]),[par.prefix_mean par.prefix_ERR tag])
-            
+            ser.addVolume('root', addprefixtofilenames(vol.path,                 par.prefix_T2s ), [                par.prefix_T2s tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,                 par.prefix_R2s ), [                par.prefix_R2s tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,                 par.prefix_S0  ), [                par.prefix_S0  tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,                 par.prefix_ERR ), [                par.prefix_ERR tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_T2s]), [par.prefix_mean par.prefix_T2s tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_R2s]), [par.prefix_mean par.prefix_R2s tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_S0 ]), [par.prefix_mean par.prefix_S0  tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_ERR]), [par.prefix_mean par.prefix_ERR tag])
         end
         
     end % iVol
@@ -281,18 +293,20 @@ end % obj
 end % function
 
 function write_4D(mx, header, name, descrip)
-    new = header.private;
-    new.dat.fname = name;
-    new.dat.dtype = 'FLOAT64';
-    new.descrip   = descrip;
-    create(new);
-    new.dat(:,:,:,:) = mx;
+assert(~strcmp(header.fname,name))
+new = header.private;
+new.dat.fname = name;
+new.dat.dtype = 'FLOAT32';
+new.descrip   = descrip;
+create(new);
+new.dat(:,:,:,:) = mx;
 end % function
 
 function write_3D(mx, header, name, descrip)
-    new = header;
-    new.fname   = name;
-    new.dt(1)   = spm_type('float32');
-    new.descrip = descrip;
-    spm_write_vol(new,mx);
+assert(~strcmp(header.fname,name))
+new = header;
+new.fname   = name;
+new.dt(1)   = spm_type('float32');
+new.descrip = descrip;
+spm_write_vol(new,mx);
 end % function
