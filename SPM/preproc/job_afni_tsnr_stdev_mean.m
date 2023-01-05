@@ -1,7 +1,7 @@
 function [job] = job_afni_tsnr_stdev_mean(input4D, par)
 %JOB_AFNI_TSNR_STDEV_MEAN
 %
-% job_afni_tsnr_stdev_mean will use 3dTstat with options -mean, -stdev, -tsnr
+% job_afni_tsnr_stdev_mean will use 3dTstat from AFNI with options -mean, -stdev, -tsnr
 %
 % SYNTAX :
 %           job_afni_tsnr_stdev_mean( input4D );

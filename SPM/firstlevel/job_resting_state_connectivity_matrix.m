@@ -93,12 +93,17 @@ defpar.redo         = 0;
 defpar.auto_add_obj = 1;
 
 % cluster
-defpar.jobname  = mfilename;
-defpar.walltime = '04:00:00';
-defpar.mem      = '4G';
 defpar.sge      = 0;
+defpar.mem      = '4G';
+defpar.walltime = '04:00:00';
+defpar.jobname  = mfilename;
 
 par = complet_struct(par,defpar);
+
+
+%% Lmitations
+
+assert(~par.sge, 'par.sge=1 not working with this purely matlab code')
 
 
 %% Some checks

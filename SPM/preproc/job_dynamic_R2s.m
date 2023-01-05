@@ -4,6 +4,11 @@ function job_dynamic_R2s(input4D, mask, par)
 % Input data must be multi-echo.
 % Designed ot work on 4D data (fMRI) but it also works on 3D data.
 %
+% MODEL
+%   Use log-linear leat-square estimation of R2s and S0 parameters
+%   The computation of paramters R2s and S0 is bellow 1 second on a modern CPU, due to MATLAB vectorized computation.
+%   -> All voxels R2s and S0 of each TR are compited in one single opreration.
+%
 % SYNTAX
 %   job_dynamic_R2s(input4D, mask)
 %   job_dynamic_R2s(input4D, mask, par)
@@ -61,22 +66,23 @@ defpar.TE   = []; % try to fetch it (objects) or let the user fill it
 defpar.json = []; % use json to fetch TE
 
 % I/O
-defpar.prefix_T2s  =  'T2s_';
-defpar.prefix_R2s  =  'R2s_';
-defpar.prefix_S0   =   'S0_';
-defpar.prefix_ERR  =  'ERR_';
-defpar.prefix_mean = 'mean_'; % will be concatenated // ex : mean_T2s_<input.nii>
+defpar.prefix_T2s   =  'T2s_';
+defpar.prefix_R2s   =  'R2s_';
+defpar.prefix_S0    =   'S0_';
+defpar.prefix_ERR   =  'ERR_';
+defpar.prefix_mean  = 'mean_'; % will be concatenated // ex : mean_T2s_<input.nii>
 
 % cluster
-defpar.sge               = 0;
-defpar.jobname           = 'job_dynamic_R2s';
-defpar.mem               = '16G'; % ????
+defpar.sge          = 0;
+defpar.jobname      = mfilename;
+defpar.mem          = '16G'; % ????
+defpar.walltime     = '04:00:00';
 
 % matvol classics
-defpar.run               = 1;
-defpar.redo              = 0;
-defpar.verbose           = 1;
-defpar.auto_add_obj      = 1;
+defpar.run          = 1;
+defpar.redo         = 0;
+defpar.verbose      = 1;
+defpar.auto_add_obj = 1;
 
 par = complet_struct(par,defpar);
 
@@ -84,6 +90,11 @@ par = complet_struct(par,defpar);
 if par.redo
     par.skip = 0;
 end
+
+
+%% Lmitations
+
+assert(~par.sge, 'par.sge=1 not working with this purely matlab code')
 
 
 %% check TE source
