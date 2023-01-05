@@ -1,13 +1,19 @@
 function job_dynamic_R2s(input4D, mask, par)
-% JOB_DYNAMIC_R2S compute { R2s, T2s = 1/R2s, S0, ERR } for each TR of each voxel.
-% A temporal mean of each 3D will aslo be computed
-% Input data must be multi-echo.
+% JOB_DYNAMIC_R2S computes { R2s, T2s = 1/R2s, S0, ERR } for each TR of each voxel. A temporal mean of each 4D will aslo be computed
+% Input data must be multi-echo GRE : the model is multi-TE mono-exponential decay.
 % Designed ot work on 4D data (fMRI) but it also works on 3D data.
 %
 % MODEL
 %   Use log-linear leat-square estimation of R2s and S0 parameters
-%   The computation of paramters R2s and S0 is bellow 1 second on a modern CPU, due to MATLAB vectorized computation.
-%   -> All voxels R2s and S0 of each TR are compited in one single opreration.
+%
+%       S(x,y,z,t,TE)  =     S0(x,y,z,t)  * exp(-R2s(x,y,z,t,TE)*TE)  =>  R2s exponential decay
+%   log(S(x,y,z,t,TE)) = log(S0(x,y,z,t)) -      R2s(x,y,z,t,TE)*TE   =>  when log transformed, the equation becomes linear
+%
+%   R2s and S0 are estimated using a least-square estimation
+%   https://mathworks.com/help/curvefit/least-squares-fitting.html
+%
+%   The computation time of paramters R2s and S0 is bellow 1 second on a modern CPU, due to MATLAB vectorized (internally parallel) computation.
+%   -> All voxels R2s and S0 of each TR are computed in one single opreration.
 %
 % SYNTAX
 %   job_dynamic_R2s(input4D, mask)
@@ -197,7 +203,7 @@ for iFile = 1 : nFile
     fprintf('[%s]: start fit... ', mfilename)
     t0 = tic;
     for iTR = 1 : nTR
-        % https://fr.mathworks.com/help/curvefit/least-squares-fitting.html
+        % https://mathworks.com/help/curvefit/least-squares-fitting.html
         b1 = ...
             ( nTE * sum( TE .* squeeze(Y(:,iTR,:)), 2 )   -   sum(TE).*sum(squeeze(Y(:,iTR,:)), 2 ) ) / ...
             ( nTE * sum( TE.^2 )    -    sum( TE )^2 );
