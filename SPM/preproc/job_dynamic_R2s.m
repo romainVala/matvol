@@ -145,8 +145,8 @@ for iFile = 1 : nFile
     out_mean_S0 {iFile} = addprefixtofilenames(out_S0 {iFile}, par.prefix_mean);
     out_mean_ERR{iFile} = addprefixtofilenames(out_ERR{iFile}, par.prefix_mean);
     
-    if exist(out_mean_ERR{iFile},'file') && ~par.redo
-        fprintf('[%s]: %d/%d => skip, output file exists %s \n', mfilename, iFile, nFile, out_mean_ERR{iFile})
+    if exist(out_R2s{iFile},'file') && ~par.redo
+        fprintf('[%s]: %d/%d => skip, output file exists %s \n', mfilename, iFile, nFile, out_R2s{iFile})
         continue
     else
         fprintf('[%s]: %d/%d => working on %s \n', mfilename, iFile, nFile, in(1,:))
@@ -250,14 +250,16 @@ for iFile = 1 : nFile
     % write output files (I/O intensive)
     fprintf('[%s]: writing outputs... ', mfilename)
     t0 = tic;
-    write_4D(      R2s              , Vi(1),      out_R2s{iFile},      'log-lin R2s (1/s)')
-    write_4D(      T2s              , Vi(1),      out_T2s{iFile},      'log-lin T2s  (ms)')
-    write_4D(       S0              , Vi(1),      out_S0 {iFile},      'log-lin S0'       )
-    write_4D(      ERR              , Vi(1),      out_ERR{iFile},      'log-lin ERR'      )
-    write_3D( mean(R2s,4, 'omitnan'), Vi(1), out_mean_R2s{iFile}, 'mean log-lin R2s (1/s)')
-    write_3D( mean(T2s,4, 'omitnan'), Vi(1), out_mean_T2s{iFile}, 'mean log-lin T2s  (ms)')
-    write_3D( mean(S0 ,4, 'omitnan'), Vi(1), out_mean_S0 {iFile}, 'mean log-lin S0'       )
-    write_3D( mean(ERR,4, 'omitnan'), Vi(1), out_mean_ERR{iFile}, 'mean log-lin ERR'      )
+    write_4D(          R2s              , Vi(1),      out_R2s{iFile},      'log-lin R2s (1/s)')
+    write_4D(          T2s              , Vi(1),      out_T2s{iFile},      'log-lin T2s  (ms)')
+    write_4D(           S0              , Vi(1),      out_S0 {iFile},      'log-lin S0'       )
+    write_4D(          ERR              , Vi(1),      out_ERR{iFile},      'log-lin ERR'      )
+    if nTR > 1
+        write_3D( mean(R2s,4, 'omitnan'), Vi(1), out_mean_R2s{iFile}, 'mean log-lin R2s (1/s)')
+        write_3D( mean(T2s,4, 'omitnan'), Vi(1), out_mean_T2s{iFile}, 'mean log-lin T2s  (ms)')
+        write_3D( mean(S0 ,4, 'omitnan'), Vi(1), out_mean_S0 {iFile}, 'mean log-lin S0'       )
+        write_3D( mean(ERR,4, 'omitnan'), Vi(1), out_mean_ERR{iFile}, 'mean log-lin ERR'      )
+    end
     fprintf('done in %gs \n', toc(t0));
     
     clear R2s T2s S0 ERR; % save memory
@@ -283,23 +285,27 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         
         if par.run
             ext  = '.*.nii';
-            ser.addVolume(sub, ['^'                 par.prefix_T2s tag ext], [                par.prefix_T2s tag], 1)
-            ser.addVolume(sub, ['^'                 par.prefix_R2s tag ext], [                par.prefix_R2s tag], 1)
-            ser.addVolume(sub, ['^'                 par.prefix_S0  tag ext], [                par.prefix_S0  tag], 1)
-            ser.addVolume(sub, ['^'                 par.prefix_ERR tag ext], [                par.prefix_ERR tag], 1)
-            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_T2s tag ext], [par.prefix_mean par.prefix_T2s tag], 1)
-            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_R2s tag ext], [par.prefix_mean par.prefix_R2s tag], 1)
-            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_S0  tag ext], [par.prefix_mean par.prefix_S0  tag], 1)
-            ser.addVolume(sub, ['^' par.prefix_mean par.prefix_ERR tag ext], [par.prefix_mean par.prefix_ERR tag], 1)
+            ser.addVolume(sub, ['^'                     par.prefix_T2s tag ext], [                par.prefix_T2s tag], 1)
+            ser.addVolume(sub, ['^'                     par.prefix_R2s tag ext], [                par.prefix_R2s tag], 1)
+            ser.addVolume(sub, ['^'                     par.prefix_S0  tag ext], [                par.prefix_S0  tag], 1)
+            ser.addVolume(sub, ['^'                     par.prefix_ERR tag ext], [                par.prefix_ERR tag], 1)
+            if nTR > 1
+                ser.addVolume(sub, ['^' par.prefix_mean par.prefix_T2s tag ext], [par.prefix_mean par.prefix_T2s tag], 1)
+                ser.addVolume(sub, ['^' par.prefix_mean par.prefix_R2s tag ext], [par.prefix_mean par.prefix_R2s tag], 1)
+                ser.addVolume(sub, ['^' par.prefix_mean par.prefix_S0  tag ext], [par.prefix_mean par.prefix_S0  tag], 1)
+                ser.addVolume(sub, ['^' par.prefix_mean par.prefix_ERR tag ext], [par.prefix_mean par.prefix_ERR tag], 1)
+            end
         elseif par.sge
-            ser.addVolume('root', addprefixtofilenames(vol.path,                 par.prefix_T2s ), [                par.prefix_T2s tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,                 par.prefix_R2s ), [                par.prefix_R2s tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,                 par.prefix_S0  ), [                par.prefix_S0  tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,                 par.prefix_ERR ), [                par.prefix_ERR tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_T2s]), [par.prefix_mean par.prefix_T2s tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_R2s]), [par.prefix_mean par.prefix_R2s tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_S0 ]), [par.prefix_mean par.prefix_S0  tag])
-            ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_ERR]), [par.prefix_mean par.prefix_ERR tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,                     par.prefix_T2s ), [                par.prefix_T2s tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,                     par.prefix_R2s ), [                par.prefix_R2s tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,                     par.prefix_S0  ), [                par.prefix_S0  tag])
+            ser.addVolume('root', addprefixtofilenames(vol.path,                     par.prefix_ERR ), [                par.prefix_ERR tag])
+            if nTR > 1
+                ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_T2s]), [par.prefix_mean par.prefix_T2s tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_R2s]), [par.prefix_mean par.prefix_R2s tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_S0 ]), [par.prefix_mean par.prefix_S0  tag])
+                ser.addVolume('root', addprefixtofilenames(vol.path,[par.prefix_mean par.prefix_ERR]), [par.prefix_mean par.prefix_ERR tag])
+            end
         end
         
     end % iVol
