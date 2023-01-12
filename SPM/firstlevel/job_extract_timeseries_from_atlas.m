@@ -1,11 +1,20 @@
-function output_struct = job_resting_state_connectivity_matrix(par)
-%JOB_RESTING_STATE_CONNECTIVITY_MATRIX
+function TS_struct = job_extract_timeseries_from_atlas(par)
+%job_extract_timeseries_from_atlas
 % 1. Please check atlas list bellow (from CAT12)
 % 2. If you already runned this function but you want to add another atlas,
 %    no worries, unecessary steps will be skipped
 %
+% WORKFLOW
+%   1. clean volume using confounds : SPM GLM (specify, estimate, convert residuals from 3D to 4D)
+%   2. bandpass cleaned 4D volume using FFT
+%   optional: write ALFF and fALFF from FFT outputs
+%   3. copy atlas from CAT12 in local directory
+%   4. reslice atlas to functionnal (same grid : same matrix & same resolution)
+%   5. extract timeseries using labels in the atlas ( timesries = 1st eigen variate from PCA using SVD )
+%   6. write timeseries
+%
 % SYNTAX
-%   JOB_RESTING_STATE_CONNECTIVITY_MATRIX(par)
+%   job_extract_timeseries_from_atlas(par)
 %
 % "par" is a structure, where each field is described here :
 %
@@ -51,7 +60,7 @@ function output_struct = job_resting_state_connectivity_matrix(par)
 %    .write_fALFF (bool)           fraction of Apmlitude of Low Frequency Fluctuations
 %                                  is the sum of Fourier coefficients inside the low frequency band (defined by .bandpass) devided the sum of the remaining frequencies
 %
-% See also plot_resting_state_connectivity_matrix
+% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network job_timeseries_to_connectivity_seedbased
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
@@ -141,9 +150,9 @@ assert( all(nVol(1)==nVol), 'different number of subjects on volume/confonnd/mas
 nVol = nVol(1);
 
 
-%% Main
+%% main
 
-output_struct = struct;
+TS_struct = struct;
 
 for iVol = 1:nVol
     
@@ -153,21 +162,21 @@ for iVol = 1:nVol
     outdir_path = fullfile(get_parent_path(char(volume_path)), par.subdir);
     
     % output_struct
-    output_struct(iVol).volume     = char(par.volume  (iVol));
-    output_struct(iVol).confound   = char(par.confound(iVol));
-    output_struct(iVol).outdir     = outdir_path;
-    output_struct(iVol).bandpass   = par.bandpass;
-    output_struct(iVol).atlas_name = par.atlas_name;
+    TS_struct(iVol).volume     = char(par.volume  (iVol));
+    TS_struct(iVol).confound   = char(par.confound(iVol));
+    TS_struct(iVol).outdir     = outdir_path;
+    TS_struct(iVol).bandpass   = par.bandpass;
+    TS_struct(iVol).atlas_name = par.atlas_name;
     
     atlas_idx_list = true(nAtlas, 1);
     for atlas_idx = 1 : nAtlas
         
         % prepare output atlas connectivity
         atlas_name = par.atlas_name{atlas_idx};
-        atlas_connectivity_path = fullfile(outdir_path,sprintf('connectivity_%s.mat', atlas_name));
-        output_struct(iVol).(atlas_name) = atlas_connectivity_path;
+        atlas_timeseries_path = fullfile(outdir_path,sprintf('timeseries_%s.mat', atlas_name));
+        TS_struct(iVol).(atlas_name) = atlas_timeseries_path;
         
-        if exist(atlas_connectivity_path, 'file') && ~par.redo
+        if exist(atlas_timeseries_path, 'file') && ~par.redo
             fprintf('[%s]:          atlas done : %s \n', mfilename, atlas_name)
             atlas_idx_list(atlas_idx) = false;
         else
@@ -362,7 +371,7 @@ for iVol = 1:nVol
         
         if atlas_idx_list(atlas_idx)
             atlas_name              = par.atlas_name{atlas_idx};
-            atlas_connectivity_path = fullfile(outdir_path,sprintf('connectivity_%s.mat', atlas_name));
+            atlas_timeseries_path = fullfile(outdir_path,sprintf('timeseries_%s.mat', atlas_name));
         else
             continue
         end
@@ -447,15 +456,10 @@ for iVol = 1:nVol
         end
         
         %------------------------------------------------------------------
-        % correlation matrix
+        % save timeseries info
         %------------------------------------------------------------------
-        connectivity_matrix = corrcoef(timeseries); % Pearson correlation
-        
-        %------------------------------------------------------------------
-        % save connectivity info
-        %------------------------------------------------------------------
-        save(atlas_connectivity_path, 'atlas_table', 'timeseries', 'connectivity_matrix', 'par');
-        fprintf('[%s]:          atlas connectivity saved : %s // %s \n', mfilename, atlas_name, atlas_connectivity_path)
+        save(atlas_timeseries_path, 'atlas_table', 'timeseries', 'par');
+        fprintf('[%s]:          atlas timeseries saved : %s // %s \n', mfilename, atlas_name, atlas_timeseries_path)
         
     end
     

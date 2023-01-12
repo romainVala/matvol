@@ -1,10 +1,10 @@
 function plot_resting_state_connectivity_matrix( conn_result, IDs )
 %PLOT_RESTING_STATE_CONNECTIVITY_MATRIX will plot connectivity matrix using
-%the output of job_resting_state_connectivity_matrix
+%the output of job_timeseries_to_connectivity_matrix
 %
 % SYNTAX
-%   PLOT_RESTING_STATE_CONNECTIVITY_MATRIX( conn_result )
-%   PLOT_RESTING_STATE_CONNECTIVITY_MATRIX( conn_result, IDs )
+%   PLOT_RESTING_STATE_CONNECTIVITY_MATRIX( output_of__job_timeseries_to_connectivity_matrix )
+%   PLOT_RESTING_STATE_CONNECTIVITY_MATRIX( output_of__job_timeseries_to_connectivity_matrix, IDs )
 %
 % IDs is a cellstr that will be used as 'Title' for the tab (1 per volume),
 % typically it is the list of subject name
@@ -49,7 +49,7 @@ for atlas_idx = 1 : nAtlas
         ax(iVol) = axes(tab); %#ok<AGROW,LAXES> 
         axe = ax(iVol); % just a shortcut, for readability
         
-        conn = load(conn_result(iVol).(atlas));
+        conn = load(conn_result(iVol).connectivity.(atlas));
         
         imagesc(axe,conn.connectivity_matrix);
         colormap(axe,jet)
