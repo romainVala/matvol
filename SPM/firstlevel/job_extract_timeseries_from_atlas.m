@@ -192,7 +192,11 @@ for iVol = 1:nVol
     cleaned_volume_path = fullfile(outdir_path, par.clean4D_name);
     
     if ~exist(cleaned_volume_path, 'file') || par.redo
-            
+        
+        if par.redo
+            do_delete(outdir_path,0)
+        end
+        
         % fetch TR and number of timepoints (nTR)
         fprintf('[%s]:      fetch TR and number of timepoints \n', mfilename)
         [TR, nTR, scans] = load_4D_volume_info(volume_path);
@@ -238,7 +242,7 @@ for iVol = 1:nVol
         
     else
         
-        [TR, nTR] = load_4D_volume_info(volume_path);
+        [TR, nTR, scans] = load_4D_volume_info(volume_path);
         
     end
     
@@ -419,7 +423,9 @@ for iVol = 1:nVol
         atlas_table = atlas_table(values_in_atlas_table,:);
         
         nROI = size(atlas_table,1);
-        
+        atlas_table.idx_from_0 = (0:(nROI-1))';              % for visu in 4D, when index start from 0
+        atlas_table.idx_from_1 = atlas_table.idx_from_0 + 1; % for visu in 4D, when index start from 1
+        atlas_table = movevars(atlas_table,'idx_from_0', 'after', 'ROIid');
         
         %------------------------------------------------------------------
         % extract timeseries in ROIs
@@ -458,7 +464,7 @@ for iVol = 1:nVol
         %------------------------------------------------------------------
         % save timeseries info
         %------------------------------------------------------------------
-        save(atlas_timeseries_path, 'atlas_table', 'timeseries', 'par');
+        save(atlas_timeseries_path, 'atlas_table', 'timeseries', 'par', 'TR', 'nTR', 'scans');
         fprintf('[%s]:          atlas timeseries saved : %s // %s \n', mfilename, atlas_name, atlas_timeseries_path)
         
     end
