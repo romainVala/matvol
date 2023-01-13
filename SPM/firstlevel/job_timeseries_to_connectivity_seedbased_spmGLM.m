@@ -12,7 +12,7 @@ function job_timeseries_to_connectivity_seedbased_spmGLM(TS_struct, par)
 % AFTER
 %
 %
-% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network job_timeseries_to_connectivity_seedbased_spmGLM
+% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network
 
 if nargin==0, help(mfilename('fullpath')); return; end
 

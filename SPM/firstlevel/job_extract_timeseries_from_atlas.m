@@ -159,12 +159,16 @@ for iVol = 1:nVol
     % prepare output dir path
     volume_path = par.volume(iVol);
     fprintf('[%s]: volume %d/%d : %s \n', mfilename, iVol, nVol, char(volume_path))
-    outdir_path = fullfile(get_parent_path(char(volume_path)), par.subdir);
+    outdir_path         = fullfile(get_parent_path(char(volume_path)), par.subdir);
+    cleaned_volume_path = fullfile(outdir_path, par.clean4D_name);
+    bp_volume_path      = addprefixtofilenames(cleaned_volume_path,'bp_');
     
     % output_struct
     TS_struct(iVol).volume     = char(par.volume  (iVol));
     TS_struct(iVol).confound   = char(par.confound(iVol));
     TS_struct(iVol).outdir     = outdir_path;
+    TS_struct(iVol).clean      = cleaned_volume_path;
+    TS_struct(iVol).bp_clean   = bp_volume_path;
     TS_struct(iVol).bandpass   = par.bandpass;
     TS_struct(iVol).atlas_name = par.atlas_name;
     
@@ -188,9 +192,7 @@ for iVol = 1:nVol
     if all(~atlas_idx_list) && ~par.redo
         continue
     end
-    
-    cleaned_volume_path = fullfile(outdir_path, par.clean4D_name);
-    
+        
     if ~exist(cleaned_volume_path, 'file') || par.redo
         
         if par.redo
@@ -251,8 +253,6 @@ for iVol = 1:nVol
     %----------------------------------------------------------------------
     % here is also a good occasion to compute ALFF and fALFF since they use Fourier corefficients from the FFT
     
-    bp_volume_path = addprefixtofilenames(cleaned_volume_path,'bp_');
-    
     if ~exist(bp_volume_path, 'file') || par.redo
     
         fprintf('[%s]:      bandpass filtering using FFT \n', mfilename)
@@ -266,7 +266,7 @@ for iVol = 1:nVol
         mask_3D               = spm_read_vols(mask_header                      ); % [x y z]
         
         % convert to 2D array == timeseries [ mask(nVoxel) nTR ]
-        mask_1D                       = mask_3D(:); % [x*y*z 1]
+        mask_1D                       = mask_3D(:);                                 % [x*y*z 1]
         size_volume_4D                = size(cleaned_volume_4D);
         nVoxel                        = prod(size_volume_4D(1:3));
         size_volume_2D                = [nVoxel nTR];
