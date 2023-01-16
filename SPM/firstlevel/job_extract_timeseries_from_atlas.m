@@ -1,11 +1,24 @@
-function output_struct = job_resting_state_connectivity_matrix(par)
-%JOB_RESTING_STATE_CONNECTIVITY_MATRIX
+function TS_struct = job_extract_timeseries_from_atlas(par)
+%job_extract_timeseries_from_atlas
 % 1. Please check atlas list bellow (from CAT12)
 % 2. If you already runned this function but you want to add another atlas,
 %    no worries, unecessary steps will be skipped
 %
+% WORKFLOW
+%   1. clean volume using confounds : SPM GLM (specify, estimate, convert residuals from 3D to 4D)
+%   2. bandpass cleaned 4D volume using FFT
+%   optional: write ALFF and fALFF from FFT outputs
+%   3. copy atlas from CAT12 in local directory
+%   4. reslice atlas to functionnal (same grid : same matrix & same resolution)
+%   5. extract timeseries using labels in the atlas ( timeseries = 1st eigen variate from PCA using SVD )
+%   6. write timeseries
+%
 % SYNTAX
-%   JOB_RESTING_STATE_CONNECTIVITY_MATRIX(par)
+%   TS = job_extract_timeseries_from_atlas(par)
+%
+% AFTER
+%   whole timeseries connectivity matrix : job_timeseries_to_connectivity_matrix + plot_resting_state_connectivity_matrix
+%   whole timeseries seedbased connectivity : job_timeseries_to_connectivity_seedbased
 %
 % "par" is a structure, where each field is described here :
 %
@@ -51,7 +64,7 @@ function output_struct = job_resting_state_connectivity_matrix(par)
 %    .write_fALFF (bool)           fraction of Apmlitude of Low Frequency Fluctuations
 %                                  is the sum of Fourier coefficients inside the low frequency band (defined by .bandpass) devided the sum of the remaining frequencies
 %
-% See also plot_resting_state_connectivity_matrix
+% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network job_timeseries_to_connectivity_seedbased_pearson_zfisher
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
@@ -93,12 +106,17 @@ defpar.redo         = 0;
 defpar.auto_add_obj = 1;
 
 % cluster
-defpar.jobname  = mfilename;
-defpar.walltime = '04:00:00';
-defpar.mem      = '4G';
 defpar.sge      = 0;
+defpar.mem      = '4G';
+defpar.walltime = '04:00:00';
+defpar.jobname  = mfilename;
 
 par = complet_struct(par,defpar);
+
+
+%% Lmitations
+
+assert(~par.sge, 'par.sge=1 not working with this purely matlab code')
 
 
 %% Some checks
@@ -136,33 +154,37 @@ assert( all(nVol(1)==nVol), 'different number of subjects on volume/confonnd/mas
 nVol = nVol(1);
 
 
-%% Main
+%% main
 
-output_struct = struct;
+TS_struct = struct;
 
 for iVol = 1:nVol
     
     % prepare output dir path
     volume_path = par.volume(iVol);
     fprintf('[%s]: volume %d/%d : %s \n', mfilename, iVol, nVol, char(volume_path))
-    outdir_path = fullfile(get_parent_path(char(volume_path)), par.subdir);
+    outdir_path         = fullfile(get_parent_path(char(volume_path)), par.subdir);
+    cleaned_volume_path = fullfile(outdir_path, par.clean4D_name);
+    bp_volume_path      = addprefixtofilenames(cleaned_volume_path,'bp_');
     
     % output_struct
-    output_struct(iVol).volume     = char(par.volume  (iVol));
-    output_struct(iVol).confound   = char(par.confound(iVol));
-    output_struct(iVol).outdir     = outdir_path;
-    output_struct(iVol).bandpass   = par.bandpass;
-    output_struct(iVol).atlas_name = par.atlas_name;
+    TS_struct(iVol).volume     = char(par.volume  (iVol));
+    TS_struct(iVol).confound   = char(par.confound(iVol));
+    TS_struct(iVol).outdir     = outdir_path;
+    TS_struct(iVol).clean      = cleaned_volume_path;
+    TS_struct(iVol).bp_clean   = bp_volume_path;
+    TS_struct(iVol).bandpass   = par.bandpass;
+    TS_struct(iVol).atlas_name = par.atlas_name;
     
     atlas_idx_list = true(nAtlas, 1);
     for atlas_idx = 1 : nAtlas
         
         % prepare output atlas connectivity
         atlas_name = par.atlas_name{atlas_idx};
-        atlas_connectivity_path = fullfile(outdir_path,sprintf('connectivity_%s.mat', atlas_name));
-        output_struct(iVol).(atlas_name) = atlas_connectivity_path;
+        atlas_timeseries_path = fullfile(outdir_path,sprintf('timeseries_%s.mat', atlas_name));
+        TS_struct(iVol).(atlas_name) = atlas_timeseries_path;
         
-        if exist(atlas_connectivity_path, 'file') && ~par.redo
+        if exist(atlas_timeseries_path, 'file') && ~par.redo
             fprintf('[%s]:          atlas done : %s \n', mfilename, atlas_name)
             atlas_idx_list(atlas_idx) = false;
         else
@@ -174,11 +196,13 @@ for iVol = 1:nVol
     if all(~atlas_idx_list) && ~par.redo
         continue
     end
-    
-    cleaned_volume_path = fullfile(outdir_path, par.clean4D_name);
-    
+        
     if ~exist(cleaned_volume_path, 'file') || par.redo
-            
+        
+        if par.redo
+            do_delete(outdir_path,0)
+        end
+        
         % fetch TR and number of timepoints (nTR)
         fprintf('[%s]:      fetch TR and number of timepoints \n', mfilename)
         [TR, nTR, scans] = load_4D_volume_info(volume_path);
@@ -224,7 +248,7 @@ for iVol = 1:nVol
         
     else
         
-        [TR, nTR] = load_4D_volume_info(volume_path);
+        [TR, nTR, scans] = load_4D_volume_info(volume_path);
         
     end
     
@@ -232,8 +256,6 @@ for iVol = 1:nVol
     % get cleaned volume and bandpass it using FFT
     %----------------------------------------------------------------------
     % here is also a good occasion to compute ALFF and fALFF since they use Fourier corefficients from the FFT
-    
-    bp_volume_path = addprefixtofilenames(cleaned_volume_path,'bp_');
     
     if ~exist(bp_volume_path, 'file') || par.redo
     
@@ -248,7 +270,7 @@ for iVol = 1:nVol
         mask_3D               = spm_read_vols(mask_header                      ); % [x y z]
         
         % convert to 2D array == timeseries [ mask(nVoxel) nTR ]
-        mask_1D                       = mask_3D(:); % [x*y*z 1]
+        mask_1D                       = mask_3D(:);                                 % [x*y*z 1]
         size_volume_4D                = size(cleaned_volume_4D);
         nVoxel                        = prod(size_volume_4D(1:3));
         size_volume_2D                = [nVoxel nTR];
@@ -357,7 +379,7 @@ for iVol = 1:nVol
         
         if atlas_idx_list(atlas_idx)
             atlas_name              = par.atlas_name{atlas_idx};
-            atlas_connectivity_path = fullfile(outdir_path,sprintf('connectivity_%s.mat', atlas_name));
+            atlas_timeseries_path = fullfile(outdir_path,sprintf('timeseries_%s.mat', atlas_name));
         else
             continue
         end
@@ -405,7 +427,9 @@ for iVol = 1:nVol
         atlas_table = atlas_table(values_in_atlas_table,:);
         
         nROI = size(atlas_table,1);
-        
+        atlas_table.idx_from_0 = (0:(nROI-1))';              % for visu in 4D, when index start from 0
+        atlas_table.idx_from_1 = atlas_table.idx_from_0 + 1; % for visu in 4D, when index start from 1
+        atlas_table = movevars(atlas_table,'idx_from_0', 'after', 'ROIid');
         
         %------------------------------------------------------------------
         % extract timeseries in ROIs
@@ -442,15 +466,10 @@ for iVol = 1:nVol
         end
         
         %------------------------------------------------------------------
-        % correlation matrix
+        % save timeseries info
         %------------------------------------------------------------------
-        connectivity_matrix = corrcoef(timeseries); % Pearson correlation
-        
-        %------------------------------------------------------------------
-        % save connectivity info
-        %------------------------------------------------------------------
-        save(atlas_connectivity_path, 'atlas_table', 'timeseries', 'connectivity_matrix', 'par');
-        fprintf('[%s]:          atlas connectivity saved : %s // %s \n', mfilename, atlas_name, atlas_connectivity_path)
+        save(atlas_timeseries_path, 'atlas_table', 'timeseries', 'par', 'TR', 'nTR', 'scans');
+        fprintf('[%s]:          atlas timeseries saved : %s // %s \n', mfilename, atlas_name, atlas_timeseries_path)
         
     end
     
