@@ -10,11 +10,15 @@ function TS_struct = job_extract_timeseries_from_atlas(par)
 %   optional: write ALFF and fALFF from FFT outputs
 %   3. copy atlas from CAT12 in local directory
 %   4. reslice atlas to functionnal (same grid : same matrix & same resolution)
-%   5. extract timeseries using labels in the atlas ( timesries = 1st eigen variate from PCA using SVD )
+%   5. extract timeseries using labels in the atlas ( timeseries = 1st eigen variate from PCA using SVD )
 %   6. write timeseries
 %
 % SYNTAX
-%   job_extract_timeseries_from_atlas(par)
+%   TS = job_extract_timeseries_from_atlas(par)
+%
+% AFTER
+%   whole timeseries connectivity matrix : job_timeseries_to_connectivity_matrix + plot_resting_state_connectivity_matrix
+%   whole timeseries seedbased connectivity : job_timeseries_to_connectivity_seedbased
 %
 % "par" is a structure, where each field is described here :
 %
@@ -60,7 +64,7 @@ function TS_struct = job_extract_timeseries_from_atlas(par)
 %    .write_fALFF (bool)           fraction of Apmlitude of Low Frequency Fluctuations
 %                                  is the sum of Fourier coefficients inside the low frequency band (defined by .bandpass) devided the sum of the remaining frequencies
 %
-% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network job_timeseries_to_connectivity_seedbased
+% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network job_timeseries_to_connectivity_seedbased_pearson_zfisher
 
 if nargin==0, help(mfilename('fullpath')); return; end
 

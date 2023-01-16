@@ -3,7 +3,9 @@ function TS_struct = job_timeseries_to_connectivity_matrix(TS_struct, par)
 %
 % WORKFLOW
 %   1. TS = run job_extract_timeseries_from_atlas(...)
-%   2. job_timeseries_to_connectivity_matrix(TS)
+%   2. TS = job_timeseries_to_connectivity_matrix(TS)    <=== this function
+%   The whole timeseries of each region will be used to compute pearson coeeficients
+%   Use plot_resting_state_connectivity_matrix to plot the result
 %
 % SYNTAX
 %   TS = job_timeseries_to_connectivity_matrix(TS)
@@ -48,11 +50,11 @@ for iVol = 1 : nVol
         
         % prepare output file names and paths
         atlas_connectivity_path = addprefixtofilenames(atlas_path,'connectivity_');
-        TS_struct(iVol).connectivity.(atlas_name) = atlas_connectivity_path;
+        TS_struct(iVol).connectivity_matrix.(atlas_name) = atlas_connectivity_path;
         
         % skip ?
         if exist(atlas_connectivity_path, 'file') && ~par.redo
-            fprintf('[%s]: connectivity matrix exists : %d/%d // %s // %s \n', mfilename, iVol, nVol, atlas_name, atlas_connectivity_path)
+            fprintf('[%s]: connectivity matrix exists : %d/%d - %s - %s \n', mfilename, iVol, nVol, atlas_name, atlas_connectivity_path)
             continue
         end
         

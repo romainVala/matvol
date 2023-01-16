@@ -14,6 +14,8 @@ function job_timeseries_to_connectivity_seedbased_spmGLM(TS_struct, par)
 %
 % See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network
 
+warning('please use job_timeseries_to_connectivity_seedbased_pearson_zfisher instead')
+
 if nargin==0, help(mfilename('fullpath')); return; end
 
 
