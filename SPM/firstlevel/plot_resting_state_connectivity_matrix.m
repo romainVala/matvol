@@ -49,7 +49,7 @@ for atlas_idx = 1 : nAtlas
         ax(iVol) = axes(tab); %#ok<AGROW,LAXES> 
         axe = ax(iVol); % just a shortcut, for readability
         
-        conn = load(conn_result(iVol).connectivity.(atlas));
+        conn = load(conn_result(iVol).connectivity_matrix.(atlas));
         
         imagesc(axe,conn.connectivity_matrix);
         colormap(axe,jet)
