@@ -49,7 +49,10 @@ for iVol = 1 : nVol
         % shortucts
         atlas_name = vol_data.atlas_name{atlas_idx};
         atlas_mdl_dir = fullfile(vol_data.outdir, 'seedbased', atlas_name);
-        
+	if ~exist(atlas_mdl_dir,'dir')
+            mkdir(atlas_mdl_dir);
+        end
+
         pearson_path = fullfile(atlas_mdl_dir, 'pearson.nii');
         zfisher_path = fullfile(atlas_mdl_dir, 'zfisher.nii');
         TS_struct(iVol).connectivity_seedbased.(atlas_name).pearson = pearson_path;
