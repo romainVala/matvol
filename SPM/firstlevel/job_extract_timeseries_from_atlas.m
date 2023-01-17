@@ -429,7 +429,7 @@ for iVol = 1:nVol
         nROI = size(atlas_table,1);
         atlas_table.idx_from_0 = (0:(nROI-1))';              % for visu in 4D, when index start from 0
         atlas_table.idx_from_1 = atlas_table.idx_from_0 + 1; % for visu in 4D, when index start from 1
-        atlas_table = movevars(atlas_table,'idx_from_0', 'after', 'ROIid');
+        % atlas_table = movevars(atlas_table,'idx_from_0', 'after', 'ROIid'); % function introduced in R2018a
         
         %------------------------------------------------------------------
         % extract timeseries in ROIs
