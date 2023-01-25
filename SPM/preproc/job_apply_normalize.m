@@ -89,12 +89,20 @@ for subj = 1:length(warp_field)
         jobs{subj}.spm.spatial.normalise.write.subj(1).resample = cellstr(img{subj});
         % Test if exist
         folast = addprefixtofilenames(cellstr(char(img(subj))),par.prefix);
+        vox = par.vox;
         if ~par.redo   &&  exist(folast{end},'file')
             skip = [skip subj];
             fprintf('[%s]: skiping subj %d because %s exist \n',mfilename,subj,folast{1});
+        else
+            if all(isnan(par.vox))
+                V = spm_vol(char(jobs{subj}.spm.spatial.normalise.write.subj(1).resample));
+                vox = sqrt(sum(V(1).mat(1:3,1:3).^2));
+            else
+                vox = par.vox;
+            end
         end
         jobs{subj}.spm.spatial.normalise.write.woptions.bb = par.bb;
-        jobs{subj}.spm.spatial.normalise.write.woptions.vox = par.vox;
+        jobs{subj}.spm.spatial.normalise.write.woptions.vox = vox;
         jobs{subj}.spm.spatial.normalise.write.woptions.interp = par.interp;
         jobs{subj}.spm.spatial.normalise.write.woptions.prefix = par.prefix;
         
