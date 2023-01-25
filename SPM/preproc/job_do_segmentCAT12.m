@@ -81,10 +81,10 @@ defpar.accstr    = 0.5;
 %                                    3 -> Both
 %
 % Values can be :               0,1                                 / 0,1,2                              / 0,1                    / 0,1,2,3
-defpar.GM        = [0 0 1 0]; % warped_space_Unmodulated (wp1*)     / warped_space_modulated (mwp1*)     / native_space (p1*)     / native_space_dartel_import (rp1*)
-defpar.WM        = [0 0 1 0]; %                          (wp2*)     /                        (mwp2*)     /              (p2*)     /                            (rp2*)
-defpar.CSF       = [0 0 1 0]; %                          (wp3*)     /                        (mwp3*)     /              (p3*)     /                            (rp3*)
-defpar.TPMC      = [0 0 1 0]; %                          (wp[456]*) /                        (mwp[456]*) /              (p[456]*) /                            (rp[456]*)
+defpar.GM        = [1 0 1 0]; % warped_space_Unmodulated (wp1*)     / warped_space_modulated (mwp1*)     / native_space (p1*)     / native_space_dartel_import (rp1*)
+defpar.WM        = [1 0 1 0]; %                          (wp2*)     /                        (mwp2*)     /              (p2*)     /                            (rp2*)
+defpar.CSF       = [1 0 1 0]; %                          (wp3*)     /                        (mwp3*)     /              (p3*)     /                            (rp3*)
+defpar.TPMC      = [1 0 1 0]; %                          (wp[456]*) /                        (mwp[456]*) /              (p[456]*) /                            (rp[456]*)
 
 % dartel (rp0*)(rp[456]*)(rms*)      0 -> No
 %                                    1 -> Rigid (SPM12 default)
@@ -92,7 +92,7 @@ defpar.TPMC      = [0 0 1 0]; %                          (wp[456]*) /           
 %                                    3 -> Both
 %
 % Values can be :               0,1           / 0,1               / 0,1,2,3
-defpar.label     = [0 0 0] ;  % native (p0*)  / normalize (wp0*)  / dartel (rp0*)      This will create a label map : p0 = (1 x p1) + (3 x p2) + (1 x p3)
+defpar.label     = [1 1 0] ;  % native (p0*)  / normalize (wp0*)  / dartel (rp0*)      This will create a label map : p0 = (1 x p1) + (3 x p2) + (1 x p3)
 defpar.bias      = [1 1 0] ;  % native (m*)   / normalize (wm*)   / dartel (rm*)       This will save the bias field corrected  + SANLM (global) T1
 defpar.las       = [0 0 0] ;  % native (mi*)  / normalize (wmi*)  / dartel (rmi*)      This will save the bias field corrected  + SANLM (local)  T1
 
@@ -121,7 +121,7 @@ defpar.doSurface = 0;
 % - anatomy
 defpar.doROI     = 0;         % Will compute the volume in each atlas region
 
-defpar.jacobian  = 1;         % Write jacobian determinant in normalize space
+defpar.jacobian  = 0;         % Write jacobian determinant in normalize space
 
 
 %--------------------------------------------------------------------------
