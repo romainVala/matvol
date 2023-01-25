@@ -489,10 +489,17 @@ if obj && par.auto_add_obj && (par.run || par.sge)
         
         if par.run
             
-            ser.addVolume(sub, ['^' par.subdir '$'], [      '^' par.clean4D_name '$'],       'clean', 1)
-            ser.addVolume(sub, ['^' par.subdir '$'], [   '^bp_' par.clean4D_name '$'],    'bp_clean', 1)
-            ser.addVolume(sub, ['^' par.subdir '$'], [ '^ALFF_' par.clean4D_name '$'],  'ALFF_clean', 1)
-            ser.addVolume(sub, ['^' par.subdir '$'], ['^fALFF_' par.clean4D_name '$'], 'fALFF_clean', 1)
+            if ~isempty(sub)
+                ser.addVolume(sub, ['^' par.subdir '$'], [      '^' par.clean4D_name '$'],       'clean', 1)
+                ser.addVolume(sub, ['^' par.subdir '$'], [   '^bp_' par.clean4D_name '$'],    'bp_clean', 1)
+                ser.addVolume(sub, ['^' par.subdir '$'], [ '^ALFF_' par.clean4D_name '$'],  'ALFF_clean', 1)
+                ser.addVolume(sub, ['^' par.subdir '$'], ['^fALFF_' par.clean4D_name '$'], 'fALFF_clean', 1)
+            else
+                ser.addVolume(['^' par.subdir '$'], [      '^' par.clean4D_name '$'],       'clean', 1)
+                ser.addVolume(['^' par.subdir '$'], [   '^bp_' par.clean4D_name '$'],    'bp_clean', 1)
+                ser.addVolume(['^' par.subdir '$'], [ '^ALFF_' par.clean4D_name '$'],  'ALFF_clean', 1)
+                ser.addVolume(['^' par.subdir '$'], ['^fALFF_' par.clean4D_name '$'], 'fALFF_clean', 1)
+            end
             
         elseif par.sge
             
