@@ -3,7 +3,7 @@ function TS_struct = job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS
 %
 % WORKFLOW
 %   1. TS = run job_extract_timeseries_from_atlas(...)
-%   2. job_timeseries_to_connectivity_matrix(TS)   <=== this function
+%   2. job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS)   <=== this function
 %
 % SYNTAX
 %   TS = job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS)
