@@ -60,11 +60,11 @@ for iVol = 1 : nVol
         
         % load timeseries and compute connectivity matrix
         atlas_data = load(atlas_path);
-        connectivity_matrix = corrcoef(atlas_data.timeseries);
+        [connectivity_matrix, confidence_matrix] = corrcoef(atlas_data.timeseries);
         
         % save
         atlas_table = atlas_data.atlas_table;
-        save(atlas_connectivity_path, 'connectivity_matrix', 'atlas_table');
+        save(atlas_connectivity_path, 'connectivity_matrix', 'confidence_matrix', 'atlas_table');
         fprintf('[%s]: connectivity matrix saved : %d/%d // %s // %s \n', mfilename, iVol, nVol, atlas_name, atlas_connectivity_path)
         
     end
