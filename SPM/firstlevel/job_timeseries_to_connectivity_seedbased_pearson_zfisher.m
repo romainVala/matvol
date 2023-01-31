@@ -27,10 +27,13 @@ if ~exist('par','var')
     par = ''; % for defpar
 end
 
+
 %% defpar
 
 % classic matvol
-defpar.redo = 0;
+defpar.run          = 1;
+defpar.redo         = 0;
+defpar.auto_add_obj = 1;
 
 par = complet_struct(par,defpar);
 
@@ -49,7 +52,7 @@ for iVol = 1 : nVol
         % shortucts
         atlas_name = vol_data.atlas_name{atlas_idx};
         atlas_mdl_dir = fullfile(vol_data.outdir, 'seedbased', atlas_name);
-	if ~exist(atlas_mdl_dir,'dir')
+        if ~exist(atlas_mdl_dir,'dir')
             mkdir(atlas_mdl_dir);
         end
 
@@ -74,14 +77,14 @@ for iVol = 1 : nVol
         
         % load volume
         fprintf('[%s]:     loading cleaned bandpassed volume... ', mfilename)
-        bp_clean_header = spm_vol      (vol_data.bp_clean          );
-        bp_clean_4D     = spm_read_vols(bp_clean_header            );                 % [x y z t]
+        bp_clean_header = spm_vol      (vol_data.bp_clean);
+        bp_clean_4D     = spm_read_vols(bp_clean_header   );                          % [x y z t]
         fprintf('done \n')
         
         % load mask
         fprintf('[%s]:     loading mask... ', mfilename)
-        mask_header           = spm_vol      (fullfile(vol_data.outdir, 'mask.nii'));
-        mask_3D               = spm_read_vols(mask_header                          ); % [x y z]
+        mask_header     = spm_vol      (fullfile(vol_data.outdir, 'mask.nii'));
+        mask_3D         = spm_read_vols(mask_header                          );       % [x y z]
         fprintf('done \n')
         
         % convert to 2D array == timeseries [ mask(nVoxel) nTR ]
@@ -129,5 +132,35 @@ for iVol = 1 : nVol
     end
     
 end
+
+
+%% Add outputs objects
+
+for iVol = 1 : nVol
+    
+    vol_data = TS_struct(iVol); % shortcut
+    
+    if vol_data.use_obj && par.auto_add_obj && (par.run || par.sge)
+        
+        % Shortcut
+        vol = vol_data.obj.volume;
+        ser = vol.serie;
+        
+        for atlas_idx = 1 : nAtlas
+            
+            atlas_name = vol_data.atlas_name{atlas_idx};
+            atlas_mdl_dir = fullfile(vol_data.outdir, 'seedbased', atlas_name);
+            pearson_path = fullfile(atlas_mdl_dir, 'pearson.nii');
+            zfisher_path = fullfile(atlas_mdl_dir, 'zfisher.nii');
+            
+            ser.addVolume('root',pearson_path,  [atlas_name '_pearson'])
+            ser.addVolume('root',zfisher_path,  [atlas_name '_zfisher'])
+            
+        end % atlas_idx
+        
+    end % obj
+    
+end % iVol
+
 
 end % function

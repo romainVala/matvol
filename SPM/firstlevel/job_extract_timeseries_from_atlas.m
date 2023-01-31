@@ -175,6 +175,10 @@ for iVol = 1:nVol
     TS_struct(iVol).bp_clean   = bp_volume_path;
     TS_struct(iVol).bandpass   = par.bandpass;
     TS_struct(iVol).atlas_name = par.atlas_name;
+    TS_struct(iVol).use_obj    = obj;
+    if TS_struct(iVol).use_obj
+        TS_struct(iVol).obj.volume = volumeArray(iVol);
+    end
     
     atlas_idx_list = true(nAtlas, 1);
     for atlas_idx = 1 : nAtlas
