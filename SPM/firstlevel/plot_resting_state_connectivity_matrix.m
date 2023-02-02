@@ -131,7 +131,7 @@ handles.(tag) = uitable(handles.uipanel_roi,...
 %--------------------------------------------------------------------------
 %- Prepare Threshold
 
-handles.default_threshold = 0.00;
+handles.default_threshold = 0.00; % from 0 to 1
 
 tag = 'slider_pos';
 handles.slider_pos = uicontrol(handles.uipanel_threshold, 'Style', 'slider',...
@@ -381,17 +381,12 @@ function set_threshold(hObject)
     handles.slider_pos.Visible = visible;
     handles.slider_neg.Visible = visible;
     
-    % in all cases, link sliders (easier to manage)
-    handles.checkbox_link_pos_neg.Value = 1;
-    
-    % use the pos/neg values
+    % update threshold
     if handles.checkbox_use_threshold.Value
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
     else
         threshold_mx(hObject, 0, 0)
     end
-    
-    
     
     guidata(hObject, handles); % need to save stuff
 end
