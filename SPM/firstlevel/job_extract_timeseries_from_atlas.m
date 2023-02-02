@@ -409,7 +409,7 @@ for iVol = 1:nVol
             clear matlabbatch
             matlabbatch{1}.spm.spatial.coreg.write.ref             = volume_path;
             matlabbatch{1}.spm.spatial.coreg.write.source          = {fullfile(outdir_path, [atlas_name '.nii'])};
-            matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 4;
+            matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 0;
             matlabbatch{1}.spm.spatial.coreg.write.roptions.wrap   = [0 0 0];
             matlabbatch{1}.spm.spatial.coreg.write.roptions.mask   = 0;
             matlabbatch{1}.spm.spatial.coreg.write.roptions.prefix = 'r';
