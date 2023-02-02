@@ -1,15 +1,16 @@
-function plot_resting_state_connectivity_matrix( conn_result, IDs )
+function varargout = plot_resting_state_connectivity_matrix( conn_result, IDs )
 %plot_resting_state_connectivity_matrix will plot connectivity matrix using
 %the output of job_timeseries_to_connectivity_matrix
 %
 % SYNTAX
-%   plot_resting_state_connectivity_matrix( output_of__job_timeseries_to_connectivity_matrix )
-%   plot_resting_state_connectivity_matrix( output_of__job_timeseries_to_connectivity_matrix, IDs )
+%             plot_resting_state_connectivity_matrix( output_of__job_timeseries_to_connectivity_matrix      )
+%             plot_resting_state_connectivity_matrix( output_of__job_timeseries_to_connectivity_matrix, IDs )
+%   guidata = plot_resting_state_connectivity_matrix( output_of__job_timeseries_to_connectivity_matrix, IDs )
 %
-% IDs is a cellstr that will be used as 'Title' for the tab (1 per volume),
-% typically it is the list of subject name
+% IDs is a cellstr that will be used as 'Title' (1 per volume), typically
+% it is the list of subject name
 %
-% See also job_resting_state_connectivity_matrix
+% See also job_extract_timeseries_from_atlas job_timeseries_to_connectivity_matrix
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
@@ -67,8 +68,9 @@ handles.conn_result = conn_result;
 %- Prepare panels
 
 panel_pos = [
-    0.00   0.00   0.20   1.00
-    0.20   0.00   0.70   1.00
+    0.00   0.00   0.10   1.00
+    0.10   0.00   0.20   1.00
+    0.30   0.00   0.60   1.00
     0.90   0.00   0.10   1.00
     ];
 
@@ -78,16 +80,22 @@ handles.uipanel_select = uipanel(figHandle,...
     'Position',        panel_pos(1,:),...
     'BackgroundColor', figureBGcolor);
 
-handles.uipanel_plot = uipanel(figHandle,...
-    'Title',          'Selection',...
+handles.uipanel_roi = uipanel(figHandle,...
+    'Title',          'ROI',...
     'Units',          'Normalized',...
     'Position',        panel_pos(2,:),...
     'BackgroundColor', figureBGcolor);
 
-handles.uipanel_threshold = uipanel(figHandle,...
-    'Title',          'Selection',...
+handles.uipanel_plot = uipanel(figHandle,...
+    'Title',          'Plot',...
     'Units',          'Normalized',...
     'Position',        panel_pos(3,:),...
+    'BackgroundColor', figureBGcolor);
+
+handles.uipanel_threshold = uipanel(figHandle,...
+    'Title',          'Threshold',...
+    'Units',          'Normalized',...
+    'Position',        panel_pos(4,:),...
     'BackgroundColor', figureBGcolor);
 
 %--------------------------------------------------------------------------
@@ -111,6 +119,14 @@ handles.(tag) = uicontrol(handles.uipanel_select, 'Style', 'listbox',...
     'Tag',      tag,...
     'Callback', @UPDATE);
 
+%--------------------------------------------------------------------------
+%- Prepare ROI
+
+tag = 'uitable_roi';
+handles.(tag) = uitable(handles.uipanel_roi,...
+    'Units',    'normalized',...
+    'Position', [0.00 0.00 1.00 1.00],...
+    'Tag',      tag);
 
 %--------------------------------------------------------------------------
 %- Prepare Threshold
@@ -192,8 +208,14 @@ imagesc(handles.axes, 0);
 set_axes(figHandle)
 set_mx(figHandle)
 set_axes(figHandle)
-
 set_threshold(figHandle)
+
+% Initialize table
+set_roi(figHandle)
+
+if nargout > 0
+    varargout{1} = handles;
+end
 
 
 end % function
@@ -227,6 +249,16 @@ function set_mx(hObject)
     
     content = get_atlas_content(hObject);
     handles.axes.Children.CData = content.connectivity_matrix;
+    
+    guidata(hObject, handles); % need to save stuff
+end
+
+function set_roi(hObject)
+    handles = guidata(hObject); % retrieve guidata
+    
+    content = get_atlas_content(hObject);
+    handles.uitable_roi.Data = [content.atlas_table.ROIabbr content.atlas_table.ROIname];
+    handles.uitable_roi.ColumnName = {'ROIabbr', 'ROIname'};
     
     guidata(hObject, handles); % need to save stuff
 end
@@ -286,6 +318,7 @@ function UPDATE(hObject,eventData)
             set_axes(hObject)
             set_mx(hObject)
             threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
+            set_roi(hObject)
             
         case 'checkbox_use_threshold'
             set_threshold(hObject)
