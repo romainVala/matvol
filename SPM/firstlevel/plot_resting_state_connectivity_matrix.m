@@ -202,6 +202,7 @@ function set_axes(hObject)
     handles = guidata(hObject); % retrieve guidata
 
     axe = handles.axes;
+    
     content = get_atlas_content(hObject);
     imagesc(axe, content.connectivity_matrix);
     
@@ -225,8 +226,7 @@ function set_mx(hObject)
     handles = guidata(hObject); % retrieve guidata
     
     content = get_atlas_content(hObject);
-    handles.current_mx = content.connectivity_matrix;
-    handles.axes.Children.CData = handles.current_mx;
+    handles.axes.Children.CData = content.connectivity_matrix;
     
     guidata(hObject, handles); % need to save stuff
 end
@@ -234,8 +234,7 @@ end
 function threshold_mx(hObject, pos, neg)
     handles = guidata(hObject); % retrieve guidata
     
-    handles.axes.Children.CData = handles.current_mx;
-    handles.axes.Children.AlphaData = ~(handles.current_mx <= pos & handles.current_mx >= neg);
+    handles.axes.Children.AlphaData = ~(handles.axes.Children.CData <= pos & handles.axes.Children.CData >= neg);
     handles.axes.Children.AlphaData = handles.axes.Children.AlphaData & ~diag(diag(handles.axes.Children.AlphaData));
     
     guidata(hObject, handles); % need to save stuff
@@ -278,6 +277,7 @@ function UPDATE(hObject,eventData)
             if hObject.Value
                 set_neg(handles, handles.slider_pos.Value);
             end
+            threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
             
         case 'listbox_id'
             set_mx(hObject)
@@ -285,9 +285,9 @@ function UPDATE(hObject,eventData)
         case 'listbox_atlas'
             set_axes(hObject)
             set_mx(hObject)
+            threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
             
         case 'checkbox_use_threshold'
-            handles.use_threshold = hObject.Value;
             set_threshold(hObject)
             
         otherwise
