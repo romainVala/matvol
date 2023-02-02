@@ -210,6 +210,9 @@ set_mx(figHandle)
 set_axes(figHandle)
 set_threshold(figHandle)
 
+% assign callback after creation of objects
+handles.axes.Children.ButtonDownFcn = @plot_click; % matrix (image) callback
+
 % Initialize table
 set_roi(figHandle)
 
@@ -387,6 +390,25 @@ function set_threshold(hObject)
     else
         threshold_mx(hObject, 0, 0)
     end
+    
+    guidata(hObject, handles); % need to save stuff
+end
+
+function plot_click(hObject, eventData)
+    handles = guidata(hObject); % retrieve guidata
+    
+    % fetch data point
+    coord = round(eventData.IntersectionPoint(1:2));
+    content = get_atlas_content(hObject);
+    
+    % prepare infos
+    R = content.connectivity_matrix(coord(1), coord(2));
+    roi_1_abbr = content.atlas_table.ROIabbr{coord(1)};
+    roi_2_abbr = content.atlas_table.ROIabbr{coord(2)};
+    roi_1_name = content.atlas_table.ROIname{coord(1)};
+    roi_2_name = content.atlas_table.ROIname{coord(2)};
+    
+    fprintf('R = %+1.3f --- %-11s / %-11s --- %s / %s \n', R, roi_1_abbr, roi_2_abbr, roi_1_name, roi_2_name)
     
     guidata(hObject, handles); % need to save stuff
 end
