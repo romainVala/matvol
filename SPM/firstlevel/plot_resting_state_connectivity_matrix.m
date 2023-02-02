@@ -131,7 +131,7 @@ handles.(tag) = uitable(handles.uipanel_roi,...
 %--------------------------------------------------------------------------
 %- Prepare Threshold
 
-handles.default_threshold = 0.65;
+handles.default_threshold = 0.00;
 
 tag = 'slider_pos';
 handles.slider_pos = uicontrol(handles.uipanel_threshold, 'Style', 'slider',...
@@ -313,6 +313,11 @@ function UPDATE(hObject,eventData)
             
         case 'listbox_id'
             set_mx(hObject)
+            if handles.checkbox_use_threshold.Value
+                threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
+            else
+                threshold_mx(hObject, 0, 0)
+            end
             
         case 'listbox_atlas'
             set_axes(hObject)
@@ -381,14 +386,12 @@ function set_threshold(hObject)
     
     % use the pos/neg values
     if handles.checkbox_use_threshold.Value
-        set_pos(handles, handles.default_threshold)
-        set_neg(handles, handles.default_threshold)
+        threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
     else
-        set_pos(handles, 0)
-        set_neg(handles, 0)
+        threshold_mx(hObject, 0, 0)
     end
     
-    threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
+    
     
     guidata(hObject, handles); % need to save stuff
 end
