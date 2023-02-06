@@ -224,7 +224,7 @@ guidata(figHandle,handles)
 % handles=guidata(hObject)
 
 % Initilization of the plot. I know, this looks weird... but it works, and it's fast enough.
-imagesc(handles.axes, 0);
+image(handles.axes, 0);
 set_axes(figHandle)
 set_mx(figHandle)
 set_axes(figHandle)
@@ -253,6 +253,7 @@ function set_axes(hObject)
     caxis(axe,[-1 +1])
     colorbar(axe);
     
+    axe.TickLabelInterpreter = 'none';
     axe.XTick = 1:size(content.atlas_table,1);
     axe.XTickLabel = content.atlas_table.ROIabbr;
     axe.XTickLabelRotation = 45;
@@ -501,6 +502,6 @@ function str = color2html( rgb, value )
     
     color = sprintf('#%s%s%s',s{:});
     
-    str = ['<html>< <table bgcolor=',color,'>',num2str(value),'</table></html>'];
+    str = ['<html>< <table bgcolor=',color,'>',num2str(value,'%+1.3f'),'</table></html>'];
 
 end % function
