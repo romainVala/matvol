@@ -214,6 +214,9 @@ handles.axes = axes(handles.uipanel_plot);
 %--------------------------------------------------------------------------
 %- Done
 
+% Initialize other variables, for latter usage
+handles.highlight_idx = [];
+
 % IMPORTANT
 guidata(figHandle,handles)
 % After creating the figure, dont forget the line
@@ -230,9 +233,6 @@ set_threshold(figHandle)
 % Initialize table
 set_roi(figHandle)
 
-% Initialize other variables, for latter usage
-handles.highlight_idx = [];
-
 if nargout > 0
     varargout{1} = handles;
 end
@@ -241,6 +241,7 @@ end
 end % function
 
 function set_axes(hObject)
+    % set/reset function of the matrix display
     handles = guidata(hObject); % retrieve guidata
 
     axe = handles.axes;
@@ -260,13 +261,14 @@ function set_axes(hObject)
     
     axe.Color = handles.figureBGcolor;
     
-    axe.Children.ButtonDownFcn = @plot_click; % matrix (image) callback
-    handles.uitable_highlight.CellSelectionCallback = @plot_click;
+    axe.Children.ButtonDownFcn = @print_click; % matrix (image) callback
+    handles.uitable_highlight.CellSelectionCallback = @print_click;
     
     guidata(hObject, handles); % need to save stuff
 end
 
 function set_mx(hObject)
+    % get correlation matrix using GUI info and display it
     handles = guidata(hObject); % retrieve guidata
     
     content = get_atlas_content(hObject);
@@ -276,6 +278,7 @@ function set_mx(hObject)
 end
 
 function set_roi(hObject)
+    % update ROI list
     handles = guidata(hObject); % retrieve guidata
     
     content = get_atlas_content(hObject);
@@ -286,6 +289,7 @@ function set_roi(hObject)
 end
 
 function threshold_mx(hObject, pos, neg)
+    % use the thresholds in the GUI to update the matrix display
     handles = guidata(hObject); % retrieve guidata
     
     handles.axes.Children.AlphaData = ~(handles.axes.Children.CData <= pos & handles.axes.Children.CData >= neg);
@@ -294,7 +298,8 @@ function threshold_mx(hObject, pos, neg)
     guidata(hObject, handles); % need to save stuff
 end
 
-function UPDATE(hObject,eventData)
+function UPDATE(hObject,~)
+    % Entry point for many actions. This is the "main" callback
     handles = guidata(hObject); % retrieve guidata
     
     switch hObject.Tag
@@ -364,6 +369,7 @@ function UPDATE(hObject,eventData)
 end
 
 function set_pos(handles, value)
+    % set positive threshold
     if isnan(value) || value < 0 || value > 1
         value = handles.default_threshold;
     end
@@ -373,6 +379,7 @@ function set_pos(handles, value)
 end
 
 function set_neg(handles, value)
+    % set negative threshold
     if isnan(value) || value < 0 || value > 1
         value = handles.default_threshold;
     end
@@ -386,6 +393,7 @@ function out = round5pct(in)
 end
 
 function content = get_atlas_content(hObject)
+    % retrieve current selected atlas in the GUI
     handles = guidata(hObject); % retrieve guidata
     
     atlas_name = handles.listbox_atlas.String{handles.listbox_atlas.Value};
@@ -395,6 +403,7 @@ function content = get_atlas_content(hObject)
 end
 
 function set_threshold(hObject)
+    % callback to manage the threshold checkbox behaviour
     handles = guidata(hObject); % retrieve guidata
     
     % visibility
@@ -419,7 +428,10 @@ function set_threshold(hObject)
     guidata(hObject, handles); % need to save stuff
 end
 
-function plot_click(hObject, eventData)
+function print_click(hObject, eventData)
+    % callback used when click on :
+    % - a pixel in the Image
+    % - a cell in the highlight table
     handles = guidata(hObject); % retrieve guidata
     
     % fetch data point
@@ -447,6 +459,7 @@ function plot_click(hObject, eventData)
 end
 
 function HIGHLIGHT(hObject, eventData)
+    % callback to update the pearson R in the highlight table
     handles = guidata(hObject); % retrieve guidata
     
     if isempty(eventData.Indices)
@@ -474,6 +487,9 @@ function HIGHLIGHT(hObject, eventData)
 end
 
 function color = pearson2color(pearson, colormap)
+    % peearson : vector of R values, from -1 to +1
+    % colormap : nx3 rgb values, from 0 to 1
+    % color    : corlor triplet for each pearson R
     color = interp1(linspace(-1,+1,size(colormap,1)), colormap, pearson);
 end
 
