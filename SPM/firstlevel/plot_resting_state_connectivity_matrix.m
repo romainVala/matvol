@@ -70,7 +70,8 @@ handles.conn_result = conn_result;
 panel_pos = [
     0.00   0.00   0.10   1.00
     0.10   0.00   0.20   1.00
-    0.30   0.00   0.60   1.00
+    0.30   0.00   0.60   0.10
+    0.30   0.10   0.60   0.90
     0.90   0.00   0.10   1.00
     ];
 
@@ -86,16 +87,22 @@ handles.uipanel_roi = uipanel(figHandle,...
     'Position',        panel_pos(2,:),...
     'BackgroundColor', figureBGcolor);
 
+handles.uipanel_highlight = uipanel(figHandle,...
+    'Title',          'Highlight',...
+    'Units',          'Normalized',...
+    'Position',        panel_pos(3,:),...
+    'BackgroundColor', figureBGcolor);
+
 handles.uipanel_plot = uipanel(figHandle,...
     'Title',          'Plot',...
     'Units',          'Normalized',...
-    'Position',        panel_pos(3,:),...
+    'Position',        panel_pos(4,:),...
     'BackgroundColor', figureBGcolor);
 
 handles.uipanel_threshold = uipanel(figHandle,...
     'Title',          'Threshold',...
     'Units',          'Normalized',...
-    'Position',        panel_pos(4,:),...
+    'Position',        panel_pos(5,:),...
     'BackgroundColor', figureBGcolor);
 
 %--------------------------------------------------------------------------
@@ -124,6 +131,16 @@ handles.(tag) = uicontrol(handles.uipanel_select, 'Style', 'listbox',...
 
 tag = 'uitable_roi';
 handles.(tag) = uitable(handles.uipanel_roi,...
+    'Units',    'normalized',...
+    'Position', [0.00 0.00 1.00 1.00],...
+    'Tag',      tag,...
+    'CellSelectionCallback',@HIGHLIGHT);
+
+%--------------------------------------------------------------------------
+%- Prepare highlight
+
+tag = 'uitable_highlight';
+handles.(tag) = uitable(handles.uipanel_highlight,...
     'Units',    'normalized',...
     'Position', [0.00 0.00 1.00 1.00],...
     'Tag',      tag);
@@ -210,11 +227,11 @@ set_mx(figHandle)
 set_axes(figHandle)
 set_threshold(figHandle)
 
-% assign callback after creation of objects
-handles.axes.Children.ButtonDownFcn = @plot_click; % matrix (image) callback
-
 % Initialize table
 set_roi(figHandle)
+
+% Initialize other variables, for latter usage
+handles.highlight_idx = [];
 
 if nargout > 0
     varargout{1} = handles;
@@ -234,7 +251,6 @@ function set_axes(hObject)
     colormap(axe,jet)
     caxis(axe,[-1 +1])
     colorbar(axe);
-    axis(axe,'equal')
     
     axe.XTick = 1:size(content.atlas_table,1);
     axe.XTickLabel = content.atlas_table.ROIabbr;
@@ -243,6 +259,9 @@ function set_axes(hObject)
     axe.YTickLabel = content.atlas_table.ROIabbr;
     
     axe.Color = handles.figureBGcolor;
+    
+    axe.Children.ButtonDownFcn = @plot_click; % matrix (image) callback
+    handles.uitable_highlight.CellSelectionCallback = @plot_click;
     
     guidata(hObject, handles); % need to save stuff
 end
@@ -321,12 +340,18 @@ function UPDATE(hObject,eventData)
             else
                 threshold_mx(hObject, 0, 0)
             end
+            if handles.highlight_idx
+                evt = struct;
+                evt.Indices = handles.highlight_idx;
+                HIGHLIGHT(hObject, evt);
+            end
             
         case 'listbox_atlas'
             set_axes(hObject)
             set_mx(hObject)
             threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
             set_roi(hObject)
+            handles.highlight_idx = [];
             
         case 'checkbox_use_threshold'
             set_threshold(hObject)
@@ -398,7 +423,15 @@ function plot_click(hObject, eventData)
     handles = guidata(hObject); % retrieve guidata
     
     % fetch data point
-    coord = round(eventData.IntersectionPoint(1:2));
+    switch class(eventData)
+        case 'matlab.graphics.eventdata.Hit'
+            coord = round(eventData.IntersectionPoint(1:2));
+        case 'matlab.ui.eventdata.CellSelectionChangeData'
+            if isempty(eventData.Indices)
+                return
+            end
+            coord = [handles.highlight_idx eventData.Indices(2)];
+    end
     content = get_atlas_content(hObject);
     
     % prepare infos
@@ -412,3 +445,46 @@ function plot_click(hObject, eventData)
     
     guidata(hObject, handles); % need to save stuff
 end
+
+function HIGHLIGHT(hObject, eventData)
+    handles = guidata(hObject); % retrieve guidata
+    
+    if isempty(eventData.Indices)
+        handles.uitable_highlight.Data = [];
+        handles.uitable_highlight.ColumnName = [];
+        return
+    end
+    
+    idx = eventData.Indices(1);
+    handles.highlight_idx = idx; % need to save this variable, since the selection on the uitable is not accessible
+    content = get_atlas_content(hObject);
+    
+    R_num = content.connectivity_matrix(idx,:);
+    rgb_map_num = handles.axes.Colormap;
+    R_rgp_num = pearson2color(R_num, rgb_map_num);
+    R_html = cell(size(R_num));
+    for i = 1 : numel(R_html)
+        R_html{i} = color2html(R_rgp_num(i,:), R_num(i));
+    end
+    
+    handles.uitable_highlight.Data = R_html;
+    handles.uitable_highlight.ColumnName = content.atlas_table.ROIabbr;
+    
+    guidata(hObject, handles); % need to save stuff
+end
+
+function color = pearson2color(pearson, colormap)
+    color = interp1(linspace(-1,+1,size(colormap,1)), colormap, pearson);
+end
+
+function str = color2html( rgb, value )
+    % Transform [R G B] = [0-1 0-1 0-1] into hexadecimal #rrggbb ,
+    % then add it into an html code, with the corresponding value
+    
+    s = cellstr(dec2hex(round(rgb*255)))';
+    
+    color = sprintf('#%s%s%s',s{:});
+    
+    str = ['<html>< <table bgcolor=',color,'>',num2str(value),'</table></html>'];
+
+end % function
