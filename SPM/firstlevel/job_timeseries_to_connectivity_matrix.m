@@ -2,7 +2,7 @@ function TS_struct = job_timeseries_to_connectivity_matrix(TS_struct, par)
 %job_timeseries_to_connectivity_matrix
 %
 % WORKFLOW
-%   1. TS = run job_extract_timeseries_from_atlas(...)
+%   1. TS = run job_extract_timeseries(...)
 %   2. TS = job_timeseries_to_connectivity_matrix(TS)    <=== this function
 %   The whole timeseries of each region will be used to compute pearson coeeficients
 %   Use plot_resting_state_connectivity_matrix to plot the result

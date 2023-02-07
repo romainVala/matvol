@@ -1,5 +1,5 @@
-function TS_struct = job_extract_timeseries_from_atlas(par)
-%job_extract_timeseries_from_atlas
+function TS_struct = job_extract_timeseries(par)
+%job_extract_timeseries
 % 1. Please check atlas list bellow (from CAT12)
 % 2. If you already runned this function but you want to add another atlas,
 %    no worries, unecessary steps will be skipped
@@ -14,11 +14,11 @@ function TS_struct = job_extract_timeseries_from_atlas(par)
 %   6. write timeseries
 %
 % SYNTAX
-%   TS = job_extract_timeseries_from_atlas(par)
+%   TS = job_extract_timeseries(par)
 %
 % AFTER
 %   whole timeseries connectivity matrix : job_timeseries_to_connectivity_matrix + plot_resting_state_connectivity_matrix
-%   whole timeseries seedbased connectivity : job_timeseries_to_connectivity_seedbased
+%   whole timeseries seedbased connectivity : job_timeseries_to_connectivity_seedbased_pearson_zfisher
 %
 % "par" is a structure, where each field is described here :
 %
@@ -36,6 +36,45 @@ function TS_struct = job_extract_timeseries_from_atlas(par)
 %
 %
 %----------------------------------------------------------------------------------------------------------------------------------------------------
+% also MANDATORY, at least one
+%----------------------------------------------------------------------------------------------------------------------------------------------------
+%
+%    .roi_type.atlas_cat12  (char/cellstr)  available atlas in CAT12 are : 
+%                                  * aal3, anatomy3, cobra, hammers, ibsr, julichbrain, lpba40, mori, neuromorphometrics, thalamus
+%                                  * Schaefer2018_100Parcels_17Networks_order
+%                                  * Schaefer2018_200Parcels_17Networks_order
+%                                  * Schaefer2018_400Parcels_17Networks_order
+%                                  * Schaefer2018_600Parcels_17Networks_order
+%                                  check them in : fullfile(spm('dir'), 'toolbox', 'cat12', 'templates_MNI152NLin2009cAsym')
+%                                  it can be a char    such as 'aal3'
+%                                  OR
+%                                  it can be a cellstr such as {'aal3', 'ibsr'}
+%
+%
+%    .roi_type.mask_global  (cell of cell)  such as :
+%                                 par.roi_type.mask_global = {
+%                                     % path                  abbrev     description
+%                                     '/path/to/mask1.nii',  'mask_1',  'my mask region 1'
+%                                     '/path/to/mask2.nii',  'mask_2',  'my mask region 2'
+%                                     };
+%                                 theses masks ar non-volume (subject) specific, each mask from the list will be used on all volumes
+%
+%
+%    (.roi_type.mask_specific !!! not coded yet !!!)
+%
+%
+%    .roi_type.sphere  (cell of cell), such as :
+%                                 par.roi_type.sphere = {
+%                                     % [x y z]mm       radius(mm)   abbrev      fullname
+%                                     [ +10 +20 +30 ],  3,          'sphere_1'  'my sphere region 1'
+%                                     [ -50 -20 +30 ],  6,          'sphere_2'  'my sphere region 2'
+%                                     };
+%
+%
+%    (.roi_type.atlas_freesurfer !!! not coded yet !!!)
+%
+%
+%----------------------------------------------------------------------------------------------------------------------------------------------------
 % Optional
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 %
@@ -46,17 +85,6 @@ function TS_struct = job_extract_timeseries_from_atlas(par)
 %    .mask_threshold = (double)    some value, like 0.8
 %
 %    .bandpass = [fbot ftop]       in Hz
-%
-%    .atlas_name = (char/cellstr)  available atlas in CAT12 are : 
-%                                  * aal3, anatomy3, cobra, hammers, ibsr, julichbrain, lpba40, mori, neuromorphometrics, thalamus
-%                                  * Schaefer2018_100Parcels_17Networks_order
-%                                  * Schaefer2018_200Parcels_17Networks_order
-%                                  * Schaefer2018_400Parcels_17Networks_order
-%                                  * Schaefer2018_600Parcels_17Networks_order
-%                                  check them in : fullfile(spm('dir'), 'toolbox', 'cat12', 'templates_MNI152NLin2009cAsym')
-%                                  it can be a char    such as 'aal3'
-%                                  OR
-%                                  it can be a cellstr such as {'aal3', 'ibsr'}
 %
 %    .write_ALFF (bool)            Apmlitude of Low Frequency Fluctuations
 %                                  is the average square root of Fourier coefficents inside the low frequency band (defined by .bandpass)
@@ -89,7 +117,6 @@ assert(isfield(par,'confound'), 'par.confound is mandatory, check help')
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 defpar.mask_threshold = 0.8;
 defpar.bandpass       = [0.01 0.1]; % Hz
-defpar.atlas_name     = {'aal3', 'lpba40'};
 defpar.write_ALFF     = true;
 defpar.write_fALFF    = true;
 
@@ -119,11 +146,7 @@ par = complet_struct(par,defpar);
 assert(~par.sge, 'par.sge=1 not working with this purely matlab code')
 
 
-%% Some checks
-
-par.atlas_name = cellstr(par.atlas_name);
-nAtlas = length(par.atlas_name);
-cat12_atlas_dir = fullfile(spm('dir'), 'toolbox', 'cat12', 'templates_MNI152NLin2009cAsym');
+%% Check input volumes, confounds, (and masks=
 
 nVol = nan(4,1);
 
@@ -140,9 +163,9 @@ if isa(par.confound,'rp')
 end
 nVol(2) = numel(par.confound);
 
-use_mask = 0;
+use_mask_glm = 0;
 if isfield(par, 'mask')
-    use_mask = 1;
+    use_mask_glm = 1;
     if isa(par.mask,'volume')
         par.mask = par.mask.getPath();
     end
@@ -154,7 +177,55 @@ assert( all(nVol(1)==nVol), 'different number of subjects on volume/confonnd/mas
 nVol = nVol(1);
 
 
+%% Check input ROI
+clc
+% check .roi_type field
+assert(isfield(par, 'roi_type'), 'roi_type must be field in the parameters. Check hehp')
+
+% check .roi_type sub-fields
+allowed_roi_type = {'atlas_cat12', 'mask_global', 'sphere_global'};
+msg_allowed_roi_type = sprintf(repmat('%s, ', [1 length(allowed_roi_type)]), allowed_roi_type{:});
+input_roi_type = fieldnames(par.roi_type);
+for iType = 1 : length(input_roi_type)
+    assert( any(strcmp(input_roi_type{iType},allowed_roi_type)) , '''%s'' is not allowed, allowed list = {%s}', input_roi_type{iType}, msg_allowed_roi_type )
+end
+
+% initialize all flags
+use_atlas         = 0;
+use_atlas_cat12   = 0;
+use_mask          = 0;
+use_mask_global   = 0;
+use_sphere        = 0;
+use_sphere_global = 0;
+
+outname = '';
+
+% check all types
+if isfield(par.roi_type, 'atlas_cat12')
+    use_atlas        = 1;
+    use_atlas_cat12  = 1;
+    atlas_cat12_dir  = fullfile(spm('dir'), 'toolbox', 'cat12', 'templates_MNI152NLin2009cAsym');
+    atlas_cat12_list = cellstr(par.roi_type.atlas_cat12);
+    outname = sprintf('%s%s__', outname, strjoin(atlas_cat12_list,'_'));
+end
+if isfield(par.roi_type, 'mask_global')
+    use_mask         = 1;
+    use_mask_global  = 1;
+    assert( iscell(par.roi_type.mask_global) && ~isempty(par.roi_type.mask_global) , 'par.roi_type.mask_global must be a non-empty cell' )
+    mask_global_list = par.roi_type.mask_global;
+    outname = sprintf('%s%s__', outname, strjoin(mask_global_list(:,2),'_')); % column 2 is abbreviation
+end
+if isfield(par.roi_type, 'sphere_global')
+    use_sphere         = 1;
+    use_sphere_global  = 1;
+    assert( iscell(par.roi_type.sphere_global) && ~isempty(par.roi_type.sphere_global) , 'par.roi_type.sphere_global must be a non-empty cell' )
+    sphere_global_list = par.roi_type.sphere_global;
+        outname = sprintf('%s%s__', outname, strjoin(sphere_global_list(:,3),'_')); % column 3 is abbreviation
+end
+outname = outname(1:end-2); % delete last 2 underscore
+
 %% main
+%% ------------------------------------------------------------------------
 
 TS_struct = struct;
 
@@ -171,36 +242,26 @@ for iVol = 1:nVol
     TS_struct(iVol).volume     = char(par.volume  (iVol));
     TS_struct(iVol).confound   = char(par.confound(iVol));
     TS_struct(iVol).outdir     = outdir_path;
+    TS_struct(iVol).outname    = outname;
     TS_struct(iVol).clean      = cleaned_volume_path;
     TS_struct(iVol).bp_clean   = bp_volume_path;
     TS_struct(iVol).bandpass   = par.bandpass;
-    TS_struct(iVol).atlas_name = par.atlas_name;
+    TS_struct(iVol).roi_type   = par.roi_type;
     TS_struct(iVol).use_obj    = obj;
     if TS_struct(iVol).use_obj
         TS_struct(iVol).obj.volume = volumeArray(iVol);
     end
     
-    atlas_idx_list = true(nAtlas, 1);
-    for atlas_idx = 1 : nAtlas
-        
-        % prepare output atlas connectivity
-        atlas_name = par.atlas_name{atlas_idx};
-        atlas_timeseries_path = fullfile(outdir_path,sprintf('timeseries_%s.mat', atlas_name));
-        TS_struct(iVol).(atlas_name) = atlas_timeseries_path;
-        
-        if exist(atlas_timeseries_path, 'file') && ~par.redo
-            fprintf('[%s]:          atlas done : %s \n', mfilename, atlas_name)
-            atlas_idx_list(atlas_idx) = false;
-        else
-            fprintf('[%s]:          atlas todo : %s \n', mfilename, atlas_name)
-        end
-    end
-    
-    % if all atlas are done, just skip everything
-    if all(~atlas_idx_list) && ~par.redo
+    timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
+    TS_struct(iVol).timeseries_path = timeseries_path;
+    if exist(timeseries_path, 'file') && ~par.redo
+        fprintf('[%s]:          timeseries extract done : %s \n', mfilename, outname)
         continue
     end
-        
+    
+    
+    %% Clean volume and filter it (plus ALFF, fALFF)
+    
     if ~exist(cleaned_volume_path, 'file') || par.redo
         
         if par.redo
@@ -234,7 +295,7 @@ for iVol = 1:nVol
         matlabbatch{1}.spm.stats.fmri_spec.volt             = 1;
         matlabbatch{1}.spm.stats.fmri_spec.global           = 'None';
         matlabbatch{1}.spm.stats.fmri_spec.mthresh  = par.mask_threshold; %%%
-        if use_mask
+        if use_mask_glm
             matlabbatch{1}.spm.stats.fmri_spec.mask = par.mask(iVol); %%%
         else
             matlabbatch{1}.spm.stats.fmri_spec.mask = {''};
@@ -267,11 +328,12 @@ for iVol = 1:nVol
         
         % load volume
         cleaned_volume_header = spm_vol      (cleaned_volume_path              );
-        cleaned_volume_4D     = spm_read_vols(cleaned_volume_header            ); % [x y z t]
+        cleaned_volume_4D     = spm_read_vols(cleaned_volume_header            );   % [x y z t]
         
         % load mask
         mask_header           = spm_vol      (fullfile(outdir_path, 'mask.nii'));
-        mask_3D               = spm_read_vols(mask_header                      ); % [x y z]
+        mask_3D               = spm_read_vols(mask_header                      );   % [x y z]
+        mask_3D               = logical(mask_3D);
         
         % convert to 2D array == timeseries [ mask(nVoxel) nTR ]
         mask_1D                       = mask_3D(:);                                 % [x*y*z 1]
@@ -285,6 +347,7 @@ for iVol = 1:nVol
         FFT = fft(cleaned_volume_2D, [], 2); % [mask(x*y*z) t];
         mag = abs  (FFT);                    % [mask(x*y*z) t];
         pha = angle(FFT);                    % [mask(x*y*z) t];
+        clear cleaned_volume_4D cleaned_volume_2D FFT
         
         % generate freq vector
         if mod(nTR,2) == 1
@@ -302,18 +365,19 @@ for iVol = 1:nVol
         bp_freq(freq > par.bandpass(2)) = false;
         
         % now we bandpass
-        bp = real(ifft( mag.*bp_freq .* exp(1i*pha), [], 2)); % [mask(x*y*z) t];
+        bp = real(ifft( mag.*bp_freq .* exp(1i*pha), [], 2));              % [mask(x*y*z) t];
+        clear pha
         
         % ALFF
         if par.write_ALFF
             fprintf('[%s]:      writing  ALFF \n', mfilename)
             
-            ALFF = mean(sqrt(mag(:,bp_freq)),2);                          % [mask(x*y*z) 1];
+            ALFF = mean(sqrt(mag(:,bp_freq)),2);                           % [mask(x*y*z) 1];
             
             % unmask : [mask(x*y*z) 1 ] ---> [x y z]
-            ALFF_2D              = NaN(nVoxel,1);                         % [x*y*z 1]
-            ALFF_2D(mask_1D>0,:) = ALFF;
-            ALFF_3D              = reshape(ALFF_2D, size_volume_4D(1:3)); % [x y z]
+            ALFF_2D            = NaN(nVoxel,1);                            % [x*y*z 1]
+            ALFF_2D(mask_1D,:) = ALFF;
+            ALFF_3D            = reshape(ALFF_2D, size_volume_4D(1:3));    % [x y z]
             
             % write volume
             V_ALFF = struct;
@@ -324,18 +388,19 @@ for iVol = 1:nVol
             V_ALFF.pinfo   = cleaned_volume_header(1).pinfo;
             V_ALFF.descrip = sprintf('ALFF [%g %g]', par.bandpass(1), par.bandpass(2));
             spm_write_vol(V_ALFF,ALFF_3D);
+            clear ALFF ALFF_2D ALFF_3D
         end
         
         % fALFF
         if par.write_fALFF
             fprintf('[%s]:      writing fALFF \n', mfilename)
             
-            fALFF = sum(mag(:,bp_freq),2) ./ sum(mag(:,~bp_freq),2);        % [mask(x*y*z) 1];
+            fALFF = sum(mag(:,bp_freq),2) ./ sum(mag(:,~bp_freq),2);       % [mask(x*y*z) 1];
             
             % unmask : [mask(x*y*z) 1 ] ---> [x y z]
-            fALFF_2D              = NaN(nVoxel,1);                          % [x*y*z 1]
-            fALFF_2D(mask_1D>0,:) = fALFF;
-            fALFF_3D              = reshape(fALFF_2D, size_volume_4D(1:3)); % [x y z]
+            fALFF_2D            = NaN(nVoxel,1);                           % [x*y*z 1]
+            fALFF_2D(mask_1D,:) = fALFF;
+            fALFF_3D            = reshape(fALFF_2D, size_volume_4D(1:3));  % [x y z]
             
             % write volume
             V_fALFF = struct;
@@ -346,19 +411,23 @@ for iVol = 1:nVol
             V_fALFF.pinfo   = cleaned_volume_header(1).pinfo;
             V_fALFF.descrip = sprintf('fALFF [%g %g]', par.bandpass(1), par.bandpass(2));
             spm_write_vol(V_fALFF,fALFF_3D);
+            clear fALFF fALFF_2D fALFF_3D
         end
+        
+        clear mag pha
         
         % write bandpass volume
         fprintf('[%s]:      writing bandpassed volume \n', mfilename)
         bp_2D = NaN(size_volume_2D); % [x*y*z t]
-        bp_2D(mask_1D>0,:) = bp;
+        bp_2D(mask_1D,:) = bp;
         bp_4D = reshape(bp_2D, size_volume_4D); % [x y z t]
         bp_nifti = cleaned_volume_header(1).private;
         bp_nifti.dat.fname = bp_volume_path;
         bp_nifti.descrip = sprintf('bandpass [%g %g]', par.bandpass(1), par.bandpass(2));
         create(bp_nifti)
         bp_nifti.dat(:,:,:,:) = bp_4D;
-    
+        clear bp bp_4D
+        
     else
         
         fprintf('[%s]:      loading filtered (bandpass) volume \n', mfilename)
@@ -371,111 +440,199 @@ for iVol = 1:nVol
         size_volume_2D = [nVoxel nTR];
         
         bp_2D = reshape(bp_4D, size_volume_2D);    % [ x*y*z  t]
+        clear bp_4D
         
     end
     
+    % final shape : [nTR x*y*z]
+    % each column is a voxel timeseries, for later principal component extraction
+    bp_2D = bp_2D';
+    assert(size(bp_2D,1)==nTR)
+    assert(size(bp_2D,2)==nVoxel)
+    
+    
+    %% Loop over all ROI sources
+    
+    % setup container
+    timeseries = zeros(nTR,0);
+    ts_counter = 0;
+    ts_table_columns = {'id', 'id0', 'abbreviation', 'description', 'type', 'source'};
+    ts_table = array2table(zeros(0,length(ts_table_columns)));
+    ts_table.Properties.VariableNames = ts_table_columns;
     
     %----------------------------------------------------------------------
-    % loop over atlases
+    % loop over cat12 atlases
     %----------------------------------------------------------------------
     
-    for atlas_idx = 1 : nAtlas
+    if use_atlas
         
-        if atlas_idx_list(atlas_idx)
-            atlas_name              = par.atlas_name{atlas_idx};
-            atlas_timeseries_path = fullfile(outdir_path,sprintf('timeseries_%s.mat', atlas_name));
-        else
-            continue
-        end
-        
-        
-        %------------------------------------------------------------------
-        % copy atlas and reslice it at functionnal resolution
-        %------------------------------------------------------------------
-        
-        % copy
-        if ~exist(fullfile(outdir_path, [atlas_name '.nii']), 'file') || par.redo
-            fprintf('[%s]:          copy atlas files : %s \n', mfilename, atlas_name)
-            copyfile(fullfile(cat12_atlas_dir, [atlas_name '.nii']), fullfile(outdir_path, [atlas_name '.nii']))
-            copyfile(fullfile(cat12_atlas_dir, [atlas_name '.csv']), fullfile(outdir_path, [atlas_name '.csv']))
-            copyfile(fullfile(cat12_atlas_dir, [atlas_name '.txt']), fullfile(outdir_path, [atlas_name '.txt']))
-        end
-        
-        % atlas
-        resliced_atlas_path = fullfile(outdir_path, ['r' atlas_name '.nii']);
-        if ~exist(resliced_atlas_path, 'file') || par.redo
-            fprintf('[%s]:          reslice atlas to functional resolution : %s \n', mfilename, atlas_name)
+        if use_atlas_cat12
             
-            clear matlabbatch
-            matlabbatch{1}.spm.spatial.coreg.write.ref             = volume_path;
-            matlabbatch{1}.spm.spatial.coreg.write.source          = {fullfile(outdir_path, [atlas_name '.nii'])};
-            matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 0;
-            matlabbatch{1}.spm.spatial.coreg.write.roptions.wrap   = [0 0 0];
-            matlabbatch{1}.spm.spatial.coreg.write.roptions.mask   = 0;
-            matlabbatch{1}.spm.spatial.coreg.write.roptions.prefix = 'r';
-            spm_jobman('run', matlabbatch)
-        end
-        
-        
-        %----------------------------------------------------------------------
-        % load atlas .nii and .csv
-        %----------------------------------------------------------------------
-        atlas_header = spm_vol      (fullfile(outdir_path, ['r' atlas_name '.nii']));
-        atlas_3D     = spm_read_vols(atlas_header                                  );
-        atlas_table  = readtable    (fullfile(outdir_path, [    atlas_name '.csv']));
-        
-        % we need to make sure that all lines in the csv file correspond to a value in the nifti
-        % for exemple, aal3 misses a few values in the .nii compared to its .csv
-        values_in_atlas_3D = unique(atlas_3D(:));
-        [~,values_in_atlas_table,~] = intersect(atlas_table.ROIid,values_in_atlas_3D);
-        atlas_table = atlas_table(values_in_atlas_table,:);
-        
-        nROI = size(atlas_table,1);
-        atlas_table.idx_from_0 = (0:(nROI-1))';              % for visu in 4D, when index start from 0
-        atlas_table.idx_from_1 = atlas_table.idx_from_0 + 1; % for visu in 4D, when index start from 1
-        % atlas_table = movevars(atlas_table,'idx_from_0', 'after', 'ROIid'); % function introduced in R2018a
-        
-        %------------------------------------------------------------------
-        % extract timeseries in ROIs
-        %------------------------------------------------------------------
-        timeseries = zeros(nTR, nROI);
-        for iROI = 1 : nROI
+            for atlas_cat12_idx = 1 : length(atlas_cat12_list)
+                
+                atlas_cat12_name = atlas_cat12_list{atlas_cat12_idx};
+                
+                %----------------------------------------------------------
+                % copy atlas and reslice it at functionnal resolution
+                %----------------------------------------------------------
+                
+                % copy
+                if ~exist(fullfile(outdir_path, [atlas_cat12_name '.nii']), 'file') || par.redo
+                    fprintf('[%s]:          copy atlas files : %s \n', mfilename, atlas_cat12_name)
+                    copyfile(fullfile(atlas_cat12_dir, [atlas_cat12_name '.nii']), fullfile(outdir_path, [atlas_cat12_name '.nii']))
+                    copyfile(fullfile(atlas_cat12_dir, [atlas_cat12_name '.csv']), fullfile(outdir_path, [atlas_cat12_name '.csv']))
+                    copyfile(fullfile(atlas_cat12_dir, [atlas_cat12_name '.txt']), fullfile(outdir_path, [atlas_cat12_name '.txt']))
+                end
+                
+                % reslice
+                resliced_atlas_path = fullfile(outdir_path, ['r' atlas_cat12_name '.nii']);
+                if ~exist(resliced_atlas_path, 'file') || par.redo
+                    fprintf('[%s]:          reslice atlas to functional resolution : %s \n', mfilename, atlas_cat12_name)
+                    
+                    clear matlabbatch
+                    matlabbatch{1}.spm.spatial.coreg.write.ref             = volume_path;
+                    matlabbatch{1}.spm.spatial.coreg.write.source          = {fullfile(outdir_path, [atlas_cat12_name '.nii'])};
+                    matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 0; % nearest interpolation, to avoid voxel blending
+                    matlabbatch{1}.spm.spatial.coreg.write.roptions.wrap   = [0 0 0];
+                    matlabbatch{1}.spm.spatial.coreg.write.roptions.mask   = 0;
+                    matlabbatch{1}.spm.spatial.coreg.write.roptions.prefix = 'r';
+                    spm_jobman('run', matlabbatch)
+                end
+                
+                
+                %----------------------------------------------------------
+                % load atlas .nii and .csv
+                %----------------------------------------------------------
+                atlas_cat12_header = spm_vol      (fullfile(outdir_path, ['r' atlas_cat12_name '.nii']));
+                atlas_cat12_3D     = spm_read_vols(atlas_cat12_header                                  );
+                atlas_cat12_table  = readtable    (fullfile(outdir_path, [    atlas_cat12_name '.csv']));
+                
+                % we need to make sure that all lines in the csv file correspond to a value in the nifti
+                % for exemple, aal3 misses a few values in the .nii compared to its .csv
+                values_in_atlas_3D = unique(atlas_cat12_3D(:));
+                [~,values_in_atlas_table,~] = intersect(atlas_cat12_table.ROIid,values_in_atlas_3D);
+                atlas_cat12_table = atlas_cat12_table(values_in_atlas_table,:);
+                
+                atlas_cat12_nROI = size(atlas_cat12_table,1);
+                
+                %----------------------------------------------------------
+                % extract timeseries in ROIs
+                %----------------------------------------------------------
+                for iROI = 1 : atlas_cat12_nROI
+                    
+                    % extract voxels in ROI from the bandpassed volume
+                    mask_ROI_3D = atlas_cat12_3D == atlas_cat12_table.ROIid(iROI);
+                    mask_ROI_1D = mask_ROI_3D(:);
+                    masked_bp_2D = bp_2D(:,mask_ROI_1D);
+                    masked_bp_2D(~isfinite(masked_bp_2D)) = 0; % infinite values can appear when the label in the mask does not perfectly overlap with input BOLD data
+                    
+                    % extract ROI timeseries
+                    y = extract_first_eigenvariate(masked_bp_2D);
+                    
+                    % append data
+                    ts_counter = ts_counter + 1;
+                    timeseries(:,ts_counter) = y;
+                    newrow              = struct;
+                    newrow.id           = ts_counter;
+                    newrow.id0          = ts_counter-1;
+                    newrow.abbreviation = atlas_cat12_table.ROIabbr(iROI);
+                    newrow.description  = atlas_cat12_table.ROIname(iROI);
+                    newrow.type         = {'atlas'};
+                    newrow.source       = {'cat12'};
+                    ts_table   = [ts_table;struct2table(newrow)]; %#ok<AGROW> 
+                    
+                end % iROI
+
+            end % atlas_cat12_idx
             
-            % extract voxels in ROI from the bandpassed volume
-            mask_ROI_3D = atlas_3D == atlas_table.ROIid(iROI);
-            mask_ROI_1D = mask_ROI_3D(:);
-            masked_bp_2D = bp_2D(mask_ROI_1D,:);
-            masked_bp_2D(~isfinite(masked_bp_2D)) = 0; % infinite values can appear when the label in the mask does not perfectly overlap with input BOLD data
-            
-            % extract first eigenvariate (PCA using SVD)
-            y = masked_bp_2D';
-            [m,n]   = size(y);
-            if m > n
-                [~,s,v] = svd(y'*y);
-                s       = diag(s);
-                v       = v(:,1);
-                u       = y*v/sqrt(s(1));
-            else
-                [~,s,u] = svd(y*y');
-                s       = diag(s);
-                u       = u(:,1);
-                v       = y'*u/sqrt(s(1));
-            end
-            d       = sign(sum(v));
-            u       = u*d;
-            % v       = v*d; % unused
-            Y       = u*sqrt(s(1)/n);
-            
-            timeseries(:,iROI) = Y;
-        end
+        end % use_atlas_cat12
         
-        %------------------------------------------------------------------
-        % save timeseries info
-        %------------------------------------------------------------------
-        save(atlas_timeseries_path, 'atlas_table', 'timeseries', 'par', 'TR', 'nTR', 'scans');
-        fprintf('[%s]:          atlas timeseries saved : %s // %s \n', mfilename, atlas_name, atlas_timeseries_path)
+    end % use_atlas
+    
+    
+    %----------------------------------------------------------------------
+    % loop over mask global
+    %----------------------------------------------------------------------
+    
+    if use_mask
         
-    end
+        if use_mask_global
+            
+            for mask_global_idx = 1 : size(mask_global_list,1)
+                
+                mask_global_path = mask_global_list{mask_global_idx, 1};
+                
+                %----------------------------------------------------------
+                % copy global mask and reslice it at functionnal resolution
+                %----------------------------------------------------------
+                
+                % copy
+                mask_global_copy_path = spm_file(mask_global_path, 'Path', outdir_path);
+                if ~exist(mask_global_copy_path, 'file') || par.redo
+                    fprintf('[%s]:          copy mask_global files : %s \n', mfilename, mask_global_path)
+                    copyfile(mask_global_path, mask_global_copy_path)
+                end
+                
+                % reslice
+                resliced_atlas_path = spm_file(mask_global_copy_path, 'Prefix', 'r');
+                if ~exist(resliced_atlas_path, 'file') || par.redo
+                    fprintf('[%s]:          reslice mask global to functional resolution : %s \n', mfilename, mask_global_copy_path)
+                    
+                    clear matlabbatch
+                    matlabbatch{1}.spm.spatial.coreg.write.ref             = volume_path;
+                    matlabbatch{1}.spm.spatial.coreg.write.source          = {mask_global_copy_path};
+                    matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 0; % nearest interpolation, to avoid voxel blending
+                    matlabbatch{1}.spm.spatial.coreg.write.roptions.wrap   = [0 0 0];
+                    matlabbatch{1}.spm.spatial.coreg.write.roptions.mask   = 0;
+                    matlabbatch{1}.spm.spatial.coreg.write.roptions.prefix = 'r';
+                    spm_jobman('run', matlabbatch)
+                end
+                
+                %----------------------------------------------------------
+                % load mask global
+                %----------------------------------------------------------
+                mask_global_V = spm_vol      (resliced_atlas_path);
+                mask_global_Y = spm_read_vols(mask_global_V      );
+                mask_global_Y = logical(mask_global_Y);
+                
+                %----------------------------------------------------------
+                % extract timeserie
+                %----------------------------------------------------------
+                masked_bp_2D = bp_2D(:,mask_global_Y(:));
+                masked_bp_2D(~isfinite(masked_bp_2D)) = 0; % infinite values can appear when the label in the mask does not perfectly overlap with input BOLD data
+                
+                % extract ROI timeseries
+                y = extract_first_eigenvariate(masked_bp_2D);
+                
+                % append data
+                ts_counter = ts_counter + 1;
+                timeseries(:,ts_counter) = y;
+                newrow              = struct;
+                newrow.id           = ts_counter;
+                newrow.id0          = ts_counter-1;
+                newrow.abbreviation = mask_global_list(mask_global_idx, 2);
+                newrow.description  = mask_global_list(mask_global_idx, 3);
+                newrow.type         = {'mask'};
+                newrow.source       = {'global'};
+                ts_table   = [ts_table;struct2table(newrow)]; %#ok<AGROW>
+                    
+                
+            end % mask_global_idx
+            
+        end % use_mask_global
+        
+    end % use_mask
+    
+    
+    
+    
+    
+%                 %------------------------------------------------------------------
+%                 % save timeseries info
+%                 %------------------------------------------------------------------
+%                 save(atlas_timeseries_path, 'atlas_cat12_table', 'timeseries', 'par', 'TR', 'nTR', 'scans');
+%                 fprintf('[%s]:          atlas timeseries saved : %s // %s \n', mfilename, atlas_cat12_name, atlas_timeseries_path)
+                
     
 end % iVol
 
@@ -531,4 +688,26 @@ function [TR, nTR, scans] = load_4D_volume_info(volume_path)
         scans{iTR} = sprintf('%s,%d', volume_header(iTR).fname, iTR);
     end
     
+end
+
+function y = extract_first_eigenvariate(Y)
+% "y" size is [nTR nVoxelInMask]
+
+[m,n]   = size(Y);
+if m > n
+    [~,s,v] = svd(Y'*Y);
+    s       = diag(s);
+    v       = v(:,1);
+    u       = Y*v/sqrt(s(1));
+else
+    [~,s,u] = svd(Y*Y');
+    s       = diag(s);
+    u       = u(:,1);
+    v       = Y'*u/sqrt(s(1));
+end
+d       = sign(sum(v));
+u       = u*d;
+% v       = v*d; % unused
+y       = u*sqrt(s(1)/n);
+
 end

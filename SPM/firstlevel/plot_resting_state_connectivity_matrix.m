@@ -10,7 +10,7 @@ function varargout = plot_resting_state_connectivity_matrix( conn_result, IDs )
 % IDs is a cellstr that will be used as 'Title' (1 per volume), typically
 % it is the list of subject name
 %
-% See also job_extract_timeseries_from_atlas job_timeseries_to_connectivity_matrix
+% See also job_extract_timeseries job_timeseries_to_connectivity_matrix
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
@@ -504,7 +504,6 @@ end
 
 handles.uitable_highlight.Data = R_html;
 handles.uitable_highlight.ColumnName = handles.axes.XTickLabel;
-handles.uitable_highlight.RowName = handles.axes.XTickLabel(idx);
 
 guidata(hObject, handles); % need to save stuff
 end

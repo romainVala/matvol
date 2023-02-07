@@ -2,7 +2,7 @@ function TS_struct = job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS
 %job_timeseries_to_connectivity_seedbased_pearson_zfisher
 %
 % WORKFLOW
-%   1. TS = run job_extract_timeseries_from_atlas(...)
+%   1. TS = run job_extract_timeseries(...)
 %   2. job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS)   <=== this function
 %
 % SYNTAX
@@ -10,13 +10,13 @@ function TS_struct = job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS
 %   TS = job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS, par)
 %
 % WROKFLOW
-%   load cleaned bandpassed volume (job_extract_timeseries_from_atlas)
-%   loead timeseries from the regions (job_extract_timeseries_from_atlas)
+%   load cleaned bandpassed volume (job_extract_timeseries)
+%   loead timeseries from the regions (job_extract_timeseries)
 %   compute pearson correlation from each reagion to the whole cleaned bandpassed volume
 %   compute zfisher from pearson
 %   save on disk
 %
-% See also job_extract_timeseries_from_atlas job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network
+% See also job_extract_timeseries job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
