@@ -178,7 +178,7 @@ nVol = nVol(1);
 
 
 %% Check input ROI
-clc
+
 % check .roi_type field
 assert(isfield(par, 'roi_type'), 'roi_type must be field in the parameters. Check hehp')
 
@@ -224,6 +224,7 @@ if isfield(par.roi_type, 'sphere_global')
 end
 outname = outname(1:end-2); % delete last 2 underscore
 
+
 %% main
 %% ------------------------------------------------------------------------
 
@@ -255,7 +256,7 @@ for iVol = 1:nVol
     timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
     TS_struct(iVol).timeseries_path = timeseries_path;
     if exist(timeseries_path, 'file') && ~par.redo
-        fprintf('[%s]:          timeseries extract done : %s \n', mfilename, outname)
+        fprintf('[%s]:          timeseries extraction done : %s \n', mfilename, timeseries_path)
         continue
     end
     
@@ -332,7 +333,7 @@ for iVol = 1:nVol
         
         % load mask
         mask_header           = spm_vol      (fullfile(outdir_path, 'mask.nii'));
-        mask_3D               = spm_read_vols(mask_header                      );   % [x y z]
+        [mask_3D, XYZmm]      = spm_read_vols(mask_header                      );   % [x y z]
         mask_3D               = logical(mask_3D);
         
         % convert to 2D array == timeseries [ mask(nVoxel) nTR ]
@@ -432,14 +433,14 @@ for iVol = 1:nVol
         
         fprintf('[%s]:      loading filtered (bandpass) volume \n', mfilename)
         
-        bp_header = spm_vol      (bp_volume_path);
-        bp_4D     = spm_read_vols(bp_header     ); % [x y z t]
+        bp_header    = spm_vol      (bp_volume_path);
+        [bp_4D,XYZmm]= spm_read_vols(bp_header     );                      % [x y z t]
         
         size_volume_4D = size(bp_4D);
         nVoxel         = prod(size_volume_4D(1:3));
         size_volume_2D = [nVoxel nTR];
         
-        bp_2D = reshape(bp_4D, size_volume_2D);    % [ x*y*z  t]
+        bp_2D = reshape(bp_4D, size_volume_2D);                            % [ x*y*z  t]
         clear bp_4D
         
     end
@@ -456,9 +457,10 @@ for iVol = 1:nVol
     % setup container
     timeseries = zeros(nTR,0);
     ts_counter = 0;
-    ts_table_columns = {'id', 'id0', 'abbreviation', 'description', 'type', 'source'};
+    ts_table_columns = {'id', 'id0', 'abbreviation', 'description', 'nvoxel', 'type', 'source'};
     ts_table = array2table(zeros(0,length(ts_table_columns)));
     ts_table.Properties.VariableNames = ts_table_columns;
+    
     
     %----------------------------------------------------------------------
     % loop over cat12 atlases
@@ -537,12 +539,13 @@ for iVol = 1:nVol
                     newrow.id0          = ts_counter-1;
                     newrow.abbreviation = atlas_cat12_table.ROIabbr(iROI);
                     newrow.description  = atlas_cat12_table.ROIname(iROI);
+                    newrow.nvoxel       = size(masked_bp_2D,2);
                     newrow.type         = {'atlas'};
                     newrow.source       = {'cat12'};
                     ts_table   = [ts_table;struct2table(newrow)]; %#ok<AGROW> 
                     
                 end % iROI
-
+            
             end % atlas_cat12_idx
             
         end % use_atlas_cat12
@@ -612,6 +615,7 @@ for iVol = 1:nVol
                 newrow.id0          = ts_counter-1;
                 newrow.abbreviation = mask_global_list(mask_global_idx, 2);
                 newrow.description  = mask_global_list(mask_global_idx, 3);
+                newrow.nvoxel       = size(masked_bp_2D,2);
                 newrow.type         = {'mask'};
                 newrow.source       = {'global'};
                 ts_table   = [ts_table;struct2table(newrow)]; %#ok<AGROW>
@@ -624,15 +628,82 @@ for iVol = 1:nVol
     end % use_mask
     
     
+    %----------------------------------------------------------------------
+    % loop over sphere global
+    %----------------------------------------------------------------------
     
-    
-    
-%                 %------------------------------------------------------------------
-%                 % save timeseries info
-%                 %------------------------------------------------------------------
-%                 save(atlas_timeseries_path, 'atlas_cat12_table', 'timeseries', 'par', 'TR', 'nTR', 'scans');
-%                 fprintf('[%s]:          atlas timeseries saved : %s // %s \n', mfilename, atlas_cat12_name, atlas_timeseries_path)
+    if use_sphere
+        
+        if use_sphere_global
+            
+            for sphere_global_idx = 1 : size(sphere_global_list,1)
                 
+                center = sphere_global_list{sphere_global_idx,1};
+                radius = sphere_global_list{sphere_global_idx,2};
+                abbrev = sphere_global_list{sphere_global_idx,3};
+                descrip= sphere_global_list{sphere_global_idx,4};
+                
+                sphere_global_path = fullfile(outdir_path, [abbrev '.nii']);
+                
+                %----------------------------------------------------------
+                % create sphere global mask
+                %----------------------------------------------------------
+                if ~exist(sphere_global_path, 'file') || par.redo
+                    fprintf('[%s]:          creating sphere global mask : %s \n', mfilename, sphere_global_path)
+                    
+                    sphere_global_Y = false(size_volume_4D(1:3));
+                    sphere_global_Y(sum((XYZmm - center(:)*ones(1,size(XYZmm,2))).^2) <= radius^2) = true;
+                    
+                    % write sphere global mask
+                    sphere_global_V         = struct;
+                    sphere_global_V.fname   = fullfile(outdir_path, [abbrev '.nii']);
+                    sphere_global_V.dim     = bp_header(1).dim;
+                    sphere_global_V.dt      = [2 bp_header(1).dt(2)];
+                    sphere_global_V.mat     = bp_header(1).mat;
+                    sphere_global_V.pinfo   = bp_header(1).pinfo;
+                    sphere_global_V.descrip = sprintf('sphere : [%g %g %g] %gmm - %s - %s', center(1), center(2), center(3), radius, abbrev, descrip);
+                    spm_write_vol(sphere_global_V,sphere_global_Y);
+                else
+                    sphere_global_V = spm_vol      (sphere_global_path);
+                    sphere_global_Y = spm_read_vols(sphere_global_V   );
+                end
+                sphere_global_Y = logical(sphere_global_Y);
+                
+                %----------------------------------------------------------
+                % extract timeserie
+                %----------------------------------------------------------
+                masked_bp_2D = bp_2D(:,sphere_global_Y(:));
+                masked_bp_2D(~isfinite(masked_bp_2D)) = 0; % infinite values can appear when the label in the mask does not perfectly overlap with input BOLD data
+                
+                % extract ROI timeseries
+                y = extract_first_eigenvariate(masked_bp_2D);
+                
+                % append data
+                ts_counter = ts_counter + 1;
+                timeseries(:,ts_counter) = y;
+                newrow              = struct;
+                newrow.id           = ts_counter;
+                newrow.id0          = ts_counter-1;
+                newrow.abbreviation = {abbrev};
+                newrow.description  = {descrip};
+                newrow.nvoxel       = size(masked_bp_2D,2);
+                newrow.type         = {'sphere'};
+                newrow.source       = {'global'};
+                ts_table   = [ts_table;struct2table(newrow)]; %#ok<AGROW>
+                
+            end % sphere_global_idx
+            
+        end % use_sphere_global
+        
+    end % use_sphere
+    
+    
+    %------------------------------------------------------------------
+    % save timeseries info
+    %------------------------------------------------------------------
+    save(timeseries_path, 'timeseries', 'ts_table', 'par', 'TR', 'nTR', 'scans');
+    fprintf('[%s]:          timeseries saved : %s // %s \n', mfilename, outname, timeseries_path)
+
     
 end % iVol
 
