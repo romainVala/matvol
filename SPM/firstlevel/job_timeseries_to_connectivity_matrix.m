@@ -36,39 +36,27 @@ par = complet_struct(par,defpar);
 %% main
 
 nVol = numel(TS_struct);
-nAtlas = numel(TS_struct(1).atlas_name);
 
 for iVol = 1 : nVol
+        
+    % prepare output file names and paths
+    connectivity_path = addprefixtofilenames(TS_struct(iVol).timeseries_path,'connectivity__');
+    TS_struct(iVol).connectivity_path = connectivity_path;
     
-    vol_data = TS_struct(iVol); % shortcut
-    
-    for atlas_idx = 1 : nAtlas
-        
-        % shortucts
-        atlas_name = vol_data.atlas_name{atlas_idx};
-        atlas_path = vol_data.(atlas_name);
-        
-        % prepare output file names and paths
-        atlas_connectivity_path = addprefixtofilenames(atlas_path,'connectivity_');
-        TS_struct(iVol).connectivity_matrix.(atlas_name) = atlas_connectivity_path;
-        
-        % skip ?
-        if exist(atlas_connectivity_path, 'file') && ~par.redo
-            fprintf('[%s]: connectivity matrix exists : %d/%d - %s - %s \n', mfilename, iVol, nVol, atlas_name, atlas_connectivity_path)
-            continue
-        end
-        
-        % load timeseries and compute connectivity matrix
-        atlas_data = load(atlas_path);
-        [connectivity_matrix, confidence_matrix] = corrcoef(atlas_data.timeseries);
-        
-        % save
-        atlas_table = atlas_data.atlas_table;
-        save(atlas_connectivity_path, 'connectivity_matrix', 'confidence_matrix', 'atlas_table');
-        fprintf('[%s]: connectivity matrix saved : %d/%d // %s // %s \n', mfilename, iVol, nVol, atlas_name, atlas_connectivity_path)
-        
+    % skip ?
+    if exist(connectivity_path, 'file') && ~par.redo
+        fprintf('[%s]: connectivity matrix exists : %d/%d - %s - %s \n', mfilename, iVol, nVol, TS_struct(iVol).outname, connectivity_path)
+        continue
     end
     
-end
+    % load timeseries and compute connectivity matrix
+    ts_data = load(TS_struct(iVol).timeseries_path);
+    [connectivity_matrix, confidence_matrix] = corrcoef(ts_data.timeseries);
+    
+    % save
+    ts_table = ts_data.ts_table;
+    save(connectivity_path, 'connectivity_matrix', 'confidence_matrix', 'ts_table');
+    
+end % iVol
 
 end % function

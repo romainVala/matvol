@@ -28,13 +28,10 @@ end
 
 %% Load data
 
-atlas_name = conn_result(1).atlas_name;
-nAtlas = length(atlas_name);
+outname = conn_result(1).outname;
 
 for iVol = 1 : length(conn_result)
-    for atlas_idx = 1 : nAtlas
-        conn_result(iVol).connectivity_matrix.([atlas_name{atlas_idx} '_content']) = load(conn_result(iVol).connectivity_matrix.(atlas_name{atlas_idx}));
-    end
+    conn_result(iVol).connectivity_content = load(conn_result(iVol).connectivity_path);
 end
 
 
@@ -110,7 +107,7 @@ handles.uipanel_threshold = uipanel(figHandle,...
 
 tag = 'listbox_atlas';
 handles.(tag) = uicontrol(handles.uipanel_select, 'Style', 'listbox',...
-    'String',   atlas_name,...
+    'String',   outname,...
     'Value',    1,...
     'Units',    'normalized',...
     'Position', [0.00 0.90 1.00 0.10],...
@@ -254,11 +251,11 @@ caxis(axe,[-1 +1])
 colorbar(axe);
 
 axe.TickLabelInterpreter = 'none';
-axe.XTick = 1:size(content.atlas_table,1);
-axe.XTickLabel = content.atlas_table.ROIabbr;
+axe.XTick = 1:size(content.ts_table,1);
+axe.XTickLabel = content.ts_table.abbreviation;
 axe.XTickLabelRotation = 45;
-axe.YTick = 1:size(content.atlas_table,1);
-axe.YTickLabel = content.atlas_table.ROIabbr;
+axe.YTick = 1:size(content.ts_table,1);
+axe.YTickLabel = content.ts_table.abbreviation;
 
 axe.Color = handles.figureBGcolor;
 
@@ -285,8 +282,8 @@ function set_roi(hObject)
 handles = guidata(hObject); % retrieve guidata
 
 content = get_atlas_content(hObject);
-handles.uitable_roi.Data = [content.atlas_table.ROIabbr content.atlas_table.ROIname];
-handles.uitable_roi.ColumnName = {'ROIabbr', 'ROIname'};
+handles.uitable_roi.Data = [content.ts_table.abbreviation content.ts_table.description];
+handles.uitable_roi.ColumnName = {'abbreviation', 'description'};
 
 guidata(hObject, handles); % need to save stuff
 end
@@ -407,8 +404,7 @@ function content = get_atlas_content(hObject)
 % retrieve current selected atlas in the GUI
 handles = guidata(hObject); % retrieve guidata
 
-atlas_name = handles.listbox_atlas.String{handles.listbox_atlas.Value};
-content = handles.conn_result(handles.listbox_id.Value).connectivity_matrix.([atlas_name '_content']);
+content = handles.conn_result(handles.listbox_id.Value).connectivity_content;
 
 guidata(hObject, handles); % need to save stuff
 end
@@ -461,10 +457,10 @@ content = get_atlas_content(hObject);
 
 % prepare infos
 R = content.connectivity_matrix(coord(1), coord(2));
-roi_1_abbr = content.atlas_table.ROIabbr{coord(1)};
-roi_2_abbr = content.atlas_table.ROIabbr{coord(2)};
-roi_1_name = content.atlas_table.ROIname{coord(1)};
-roi_2_name = content.atlas_table.ROIname{coord(2)};
+roi_1_abbr = content.ts_table.abbreviation{coord(1)};
+roi_2_abbr = content.ts_table.abbreviation{coord(2)};
+roi_1_name = content.ts_table.description {coord(1)};
+roi_2_name = content.ts_table.description {coord(2)};
 
 fprintf('R = %+1.3f --- %-11s / %-11s --- %s / %s \n', R, roi_1_abbr, roi_2_abbr, roi_1_name, roi_2_name)
 
