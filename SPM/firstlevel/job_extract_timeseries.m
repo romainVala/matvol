@@ -51,7 +51,7 @@ function TS_struct = job_extract_timeseries(par)
 %                                  it can be a cellstr such as {'aal3', 'ibsr'}
 %
 %
-%    .roi_type.mask_global  (cell of cell)  such as :
+%    .roi_type.mask_global  (cellstr)  such as :
 %                                 par.roi_type.mask_global = {
 %                                     % path                  abbrev     description
 %                                     '/path/to/mask1.nii',  'mask_1',  'my mask region 1'
@@ -63,7 +63,7 @@ function TS_struct = job_extract_timeseries(par)
 %    (.roi_type.mask_specific !!! not coded yet !!!)
 %
 %
-%    .roi_type.sphere  (cell of cell), such as :
+%    .roi_type.sphere_global  (cell), such as :
 %                                 par.roi_type.sphere = {
 %                                     % [x y z]mm       radius(mm)   abbrev      fullname
 %                                     [ +10 +20 +30 ],  3,          'sphere_1'  'my sphere region 1'
@@ -225,12 +225,14 @@ end
 outname = outname(1:end-2); % delete last 2 underscore
 
 
+%% ------------------------------------------------------------------------
 %% main
 %% ------------------------------------------------------------------------
 
 TS_struct = struct;
 
 for iVol = 1:nVol
+    %% Preparations
     
     % prepare output dir path
     volume_path = par.volume(iVol);
@@ -253,6 +255,7 @@ for iVol = 1:nVol
         TS_struct(iVol).obj.volume = volumeArray(iVol);
     end
     
+    % skip if final output exists
     timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
     TS_struct(iVol).timeseries_path = timeseries_path;
     if exist(timeseries_path, 'file') && ~par.redo
