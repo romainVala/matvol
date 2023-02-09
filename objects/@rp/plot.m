@@ -59,12 +59,17 @@ for ex = 1 : size(rpArray,1)
         fprintf(    '[%s]:     maxFD = %4.1f mm \n', fcn_name, maxFD)
         for ser = 1 : length(rp_in_exam)
             if ser ~= 1
-                n_outliser = sum( outlier(vbar_x(1, ser-1) : (vbar_x(1, ser)-1)) );
+                idx = vbar_x(1, ser-1) : (vbar_x(1, ser)-1);
             else
-                n_outliser = sum( outlier(               1 : (vbar_x(1, ser)-1)) );
+                idx =                1 : (vbar_x(1, ser)-1);
             end
+            n_outliser = sum( outlier(idx) );
+            if isnan(mean(FD(idx)))
+                0
+            end
+            idx(isnan(FD(idx))) = [];
             pct_outliser = round(100 * n_outliser/nVol(ser));
-            fprintf('[%s]:     n_outlier = %4d/%4d  (%2d%%)  //   %s \n', fcn_name, n_outliser, nVol(ser), pct_outliser, rp_in_exam(ser).serie.name)
+            fprintf('[%s]:     mean/std FD = %1.2f/%1.2f mm    n_outlier = %4d/%4d  (%2d%%)    %s \n', fcn_name, mean(FD(idx)), std(FD(idx)), n_outliser, nVol(ser), pct_outliser, rp_in_exam(ser).serie.name)
         end
         
         % translation

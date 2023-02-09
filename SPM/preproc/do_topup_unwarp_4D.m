@@ -40,6 +40,8 @@ defpar.fsl_output_format  = 'NIFTI';
 defpar.do_apply           = [];
 
 % matvol classics
+defpar.run                = 1;
+defpar.sge                = 0;
 defpar.redo               = 0;
 defpar.pct                = 0;
 defpar.verbose            = 1;
