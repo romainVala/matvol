@@ -53,7 +53,7 @@ end
 %% defpar
 
 % classic matvol
-defpar.redo = 1;
+defpar.redo = 0;
 
 par = complet_struct(defpar,par);
 
@@ -84,7 +84,8 @@ end
 nVol = numel(TS_struct);
 
 for iVol = 1 : nVol
-        
+    clear noetwork conn_network
+    
     % prepare output file names and paths
     if use_network
         connectivity_path = addprefixtofilenames(TS_struct(iVol).timeseries_path,sprintf('connectivity__%s__', strjoin(network_list, '_')));
@@ -113,43 +114,71 @@ for iVol = 1 : nVol
             n.size = numel(n.roi);
             n.ts   = zeros(ts_data.nTR, n.size);
             n.nconn= n.size*(n.size-1)/2;
-            for roi_idx = 1 : n.size
-                roi_id = find( strcmp(ts_data.ts_table.abbreviation, n.roi{roi_idx}) );
-                assert(~isempty(roi_id), 'in network ''%s'' did not find ROI abbreveiation ''%s'' ', n.name, n.roi{roi_idx})
-                n.ts(:,roi_idx) = ts_data.timeseries(:,roi_id);n.mx = corrcoef(n.ts);
+            for roi_idx1 = 1 : n.size
+                roi_id = find( strcmp(ts_data.ts_table.abbreviation, n.roi{roi_idx1}) );
+                assert(~isempty(roi_id), 'in network ''%s'' did not find ROI abbreveiation ''%s'' ', n.name, n.roi{roi_idx1})
+                n.ts(:,roi_idx1) = ts_data.timeseries(:,roi_id);n.mx = corrcoef(n.ts);
             end
             n.mask = triu(true(n.size),+1); % mask to fetch each pair only once
             
             % intra connectivity
-            n.conn_avg = sum(n.mx(:).*n.mask(:)) / n.nconn;
-            n.conn_var = sum( ((n.mx(:) - n.conn_avg).^2).*n.mask(:) ) / n.nconn;
-            n.conn_std = sqrt(n.conn_var);
+            n.avg = sum(n.mx(:).*n.mask(:)) / n.nconn;
+            n.var = sum( ((n.mx(:) - n.avg).^2).*n.mask(:) ) / n.nconn;
+            n.std = sqrt(n.var);
             
             % save
             network(i) = n; %#ok<AGROW> 
         end
         
-        conn_network      = struct;
-        conn_network.name = network_list;
-        conn_network.size = length(network_list);
-        conn_network.avg  = zeros(conn_network.size);
-        conn_network.var  = zeros(conn_network.size);
-        conn_network.std  = zeros(conn_network.size);
-        
         % intra & inter connectivity
         for i = 1 : length(network_list)
             for j = 1 : length(network_list)
+                cn = struct; % current connectivity network struct, storing all infos
+                
+                cn.name1 = network_list{i};
+                cn.name2 = network_list{j};
+                cn.roi1  = network(i).roi;
+                cn.roi2  = network(j).roi;
+                cn.size1 = numel(cn.roi1);
+                cn.size2 = numel(cn.roi2);
                 
                 if i == j
-                    conn_network.avg(i,j) = network(i).conn_avg;
-                    conn_network.var(i,j) = network(i).conn_var;
-                    conn_network.std(i,j) = network(i).conn_std;
+                    cn.type  = 'intra';
+                    cn.nconn = network(i).nconn;
+                    cn.mx    = network(i).mx;
+                    cn.mask  = network(i).mx;
+                    cn.avg   = network(i).avg;
+                    cn.var   = network(i).var;
+                    cn.std   = network(i).std;
                 end
                 
                 if i ~= j
+                    cn.type  = 'inter';
+                    cn.nconn = cn.size1 * cn.size2;
+                    
+                    % fetch timeseries of each network, already extracted a few lines above
+                    ts1 = network(i).ts;
+                    ts2 = network(j).ts;
+                    
+                    % conn matrix : network1 vs network2, the matrix is a rectangle
+                    % where each line   is roi@network1
+                    % and   each column is roi@network2
+                    cn.mx = zeros(cn.size1, cn.size2);
+                    for roi_idx1 = 1 : cn.size1
+                        for roi_idx2 = 1 : cn.size2
+                            r = corrcoef(ts1(:,roi_idx1), ts2(:,roi_idx2)); % this is 2x2 symetric matrix...
+                            cn.mx(roi_idx1, roi_idx2) = r(1,2);
+                        end
+                    end
+                    cn.mask  = true(size(cn.mx)); % keep all
+                    cn.avg   = mean(cn.mx(:));
+                    cn.var   = var (cn.mx(:));
+                    cn.std   = std (cn.mx(:));
                     
                 end
                 
+                % save
+                conn_network(i,j) = cn; %#ok<AGROW> 
             end
         end
         
