@@ -28,10 +28,21 @@ end
 
 %% Load data
 
-outname = conn_result(1).outname;
-
 for iVol = 1 : length(conn_result)
     conn_result(iVol).connectivity_content = load(conn_result(iVol).connectivity_path);
+end
+
+
+
+%% Networks ?
+
+use_network = 0;
+if isfield(conn_result(1), 'network')
+    use_network = 1;
+    network_list = {conn_result(1).connectivity_content.network.name};
+    listbox_name = ['<all>' '_inter_::avg' '_inter_::var' network_list ];
+else
+    listbox_name = {'<all>'};
 end
 
 
@@ -59,6 +70,7 @@ handles.figureBGcolor = figureBGcolor;
 handles.buttonBGcolor = buttonBGcolor;
 handles.editBGcolor   = editBGcolor  ;
 
+handles.use_network = use_network;
 handles.conn_result = conn_result;
 
 %--------------------------------------------------------------------------
@@ -105,12 +117,12 @@ handles.uipanel_threshold = uipanel(figHandle,...
 %--------------------------------------------------------------------------
 %- Prepare Selection
 
-tag = 'listbox_atlas';
+tag = 'listbox_name';
 handles.(tag) = uicontrol(handles.uipanel_select, 'Style', 'listbox',...
-    'String',   outname,...
+    'String',   listbox_name,...
     'Value',    1,...
     'Units',    'normalized',...
-    'Position', [0.00 0.90 1.00 0.10],...
+    'Position', [0.00 0.80 1.00 0.20],...
     'Tag',      tag,...
     'Callback', @UPDATE);
 
@@ -119,7 +131,7 @@ handles.(tag) = uicontrol(handles.uipanel_select, 'Style', 'listbox',...
     'String',   ID_list,...
     'Value',    1,...
     'Units',    'normalized',...
-    'Position', [0.00 0.00 1.00 0.90],...
+    'Position', [0.00 0.00 1.00 0.80],...
     'Tag',      tag,...
     'Callback', @UPDATE);
 
@@ -243,19 +255,19 @@ handles = guidata(hObject); % retrieve guidata
 
 axe = handles.axes;
 
-content = get_atlas_content(hObject);
-imagesc(axe, content.connectivity_matrix);
+[matrix, abbrev_x, abbrev_y] = get_conn_content(hObject);
+imagesc(axe, matrix);
 
 colormap(axe,jet)
 caxis(axe,[-1 +1])
 colorbar(axe);
 
 axe.TickLabelInterpreter = 'none';
-axe.XTick = 1:size(content.ts_table,1);
-axe.XTickLabel = content.ts_table.abbreviation;
+axe.XTick = 1:length(abbrev_x);
+axe.XTickLabel = abbrev_x;
 axe.XTickLabelRotation = 45;
-axe.YTick = 1:size(content.ts_table,1);
-axe.YTickLabel = content.ts_table.abbreviation;
+axe.YTick = 1:length(abbrev_y);
+axe.YTickLabel = abbrev_y;
 
 axe.Color = handles.figureBGcolor;
 
@@ -270,8 +282,8 @@ function set_mx(hObject)
 % get correlation matrix using GUI info and display it
 handles = guidata(hObject); % retrieve guidata
 
-content = get_atlas_content(hObject);
-handles.axes.Children.CData = content.connectivity_matrix;
+matrix = get_conn_content(hObject);
+handles.axes.Children.CData = matrix;
 
 guidata(hObject, handles); % need to save stuff
 end
@@ -281,8 +293,8 @@ function set_roi(hObject)
 % update ROI list
 handles = guidata(hObject); % retrieve guidata
 
-content = get_atlas_content(hObject);
-handles.uitable_roi.Data = [content.ts_table.abbreviation content.ts_table.description];
+[~, abbrev_x, ~, descrip_x, ~] = get_conn_content(hObject);
+handles.uitable_roi.Data = [abbrev_x(:) descrip_x(:)];
 handles.uitable_roi.ColumnName = {'abbreviation', 'description'};
 
 guidata(hObject, handles); % need to save stuff
@@ -293,8 +305,11 @@ function threshold_mx(hObject, pos, neg)
 % use the thresholds in the GUI to update the matrix display
 handles = guidata(hObject); % retrieve guidata
 
-handles.axes.Children.AlphaData = ~(handles.axes.Children.CData <= pos & handles.axes.Children.CData >= neg);
-handles.axes.Children.AlphaData = handles.axes.Children.AlphaData & ~diag(diag(handles.axes.Children.AlphaData));
+if handles.checkbox_use_threshold.Value
+    handles.axes.Children.AlphaData = ~(handles.axes.Children.CData <= pos & handles.axes.Children.CData >= neg);
+else
+    handles.axes.Children.AlphaData = true(size(handles.axes.Children.CData));
+end
 
 guidata(hObject, handles); % need to save stuff
 end
@@ -354,7 +369,7 @@ switch hObject.Tag
         end
         set_highlight(hObject)
         
-    case 'listbox_atlas'
+    case 'listbox_name'
         set_axes(hObject)
         set_mx(hObject)
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
@@ -400,11 +415,49 @@ out = round(in * 20) / 20;
 end
 
 %--------------------------------------------------------------------------
-function content = get_atlas_content(hObject)
+function [matrix, abbrev_x, abbrev_y, descrip_x, descrip_y] = get_conn_content(hObject)
 % retrieve current selected atlas in the GUI
 handles = guidata(hObject); % retrieve guidata
 
-content = handles.conn_result(handles.listbox_id.Value).connectivity_content;
+connn_result = handles.conn_result(handles.listbox_id.Value).connectivity_content;
+
+if handles.use_network
+    label = handles.listbox_name.String{handles.listbox_name.Value}; 
+    if strcmp(label, '<all>')
+        matrix    = connn_result.connectivity_matrix;
+        abbrev_x  = connn_result.ts_table.abbreviation;
+        abbrev_y  = connn_result.ts_table.abbreviation;
+        descrip_x = connn_result.ts_table.description;
+        descrip_y = connn_result.ts_table.description;
+    elseif strcmp(label, '_inter_::avg')
+        matrix    = reshape([connn_result.conn_network.avg], size(connn_result.conn_network));
+        abbrev_x  = {connn_result.network.name};
+        abbrev_y  = {connn_result.network.name};
+        descrip_x = {connn_result.network.name};
+        descrip_y = {connn_result.network.name};
+    elseif strcmp(label, '_inter_::var')
+        matrix    = reshape([connn_result.conn_network.var], size(connn_result.conn_network));
+        abbrev_x  = {connn_result.network.name};
+        abbrev_y  = {connn_result.network.name};
+        descrip_x = {connn_result.network.name};
+        descrip_y = {connn_result.network.name};
+    else
+        res = strsplit(label, '::');
+        network = res{1};
+        network_idx = find(strcmp({connn_result.network.name}, network));
+        matrix    = connn_result.network(network_idx).mx;
+        abbrev_x  = connn_result.network(network_idx).table.abbreviation;
+        abbrev_y  = connn_result.network(network_idx).table.abbreviation;
+        descrip_x = connn_result.network(network_idx).table.description;
+        descrip_y = connn_result.network(network_idx).table.description;
+    end
+else
+    matrix    = connn_result.connectivity_matrix;
+    abbrev_x  = connn_result.ts_table.abbreviation;
+    abbrev_y  = connn_result.ts_table.abbreviation;
+    descrip_x = connn_result.ts_table.description;
+    descrip_y = connn_result.ts_table.description;
+end
 
 guidata(hObject, handles); % need to save stuff
 end
@@ -453,14 +506,14 @@ switch class(eventData)
         end
         coord = [handles.highlight_idx eventData.Indices(2)];
 end
-content = get_atlas_content(hObject);
+[matrix, abbrev_x, abbrev_y, descrip_x, descrip_y] = get_conn_content(hObject);
 
 % prepare infos
-R = content.connectivity_matrix(coord(1), coord(2));
-roi_1_abbr = content.ts_table.abbreviation{coord(1)};
-roi_2_abbr = content.ts_table.abbreviation{coord(2)};
-roi_1_name = content.ts_table.description {coord(1)};
-roi_2_name = content.ts_table.description {coord(2)};
+R = matrix(coord(1), coord(2));
+roi_1_abbr = abbrev_x  {coord(1)};
+roi_2_abbr = abbrev_y  {coord(2)};
+roi_1_name = descrip_x {coord(1)};
+roi_2_name = descrip_y {coord(2)};
 
 fprintf('R = %+1.3f --- %-11s / %-11s --- %s / %s \n', R, roi_1_abbr, roi_2_abbr, roi_1_name, roi_2_name)
 
