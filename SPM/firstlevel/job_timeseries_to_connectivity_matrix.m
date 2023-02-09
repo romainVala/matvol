@@ -114,11 +114,13 @@ for iVol = 1 : nVol
             n.size = numel(n.roi);
             n.ts   = zeros(ts_data.nTR, n.size);
             n.nconn= n.size*(n.size-1)/2;
-            for roi_idx1 = 1 : n.size
-                roi_id = find( strcmp(ts_data.ts_table.abbreviation, n.roi{roi_idx1}) );
-                assert(~isempty(roi_id), 'in network ''%s'' did not find ROI abbreveiation ''%s'' ', n.name, n.roi{roi_idx1})
-                n.ts(:,roi_idx1) = ts_data.timeseries(:,roi_id);n.mx = corrcoef(n.ts);
+            [~,idx_roi_in_netwok,~] = intersect(ts_data.ts_table.abbreviation , n.roi);
+            n.table = ts_data.ts_table(idx_roi_in_netwok,:);
+            assert(length(idx_roi_in_netwok) == n.size, 'in network ''%s'' did not find exactly once each ROI abbreveiation ', n.name)
+            for roi_idx = 1 : n.size
+                n.ts(:,roi_idx) = ts_data.timeseries(:,n.table.id(roi_idx));
             end
+            n.mx   = corrcoef(n.ts);
             n.mask = triu(true(n.size),+1); % mask to fetch each pair only once
             
             % intra connectivity
@@ -135,12 +137,14 @@ for iVol = 1 : nVol
             for j = 1 : length(network_list)
                 cn = struct; % current connectivity network struct, storing all infos
                 
-                cn.name1 = network_list{i};
-                cn.name2 = network_list{j};
-                cn.roi1  = network(i).roi;
-                cn.roi2  = network(j).roi;
-                cn.size1 = numel(cn.roi1);
-                cn.size2 = numel(cn.roi2);
+                cn.name1  = network_list{i};
+                cn.name2  = network_list{j};
+                cn.roi1   = network(i).roi;
+                cn.roi2   = network(j).roi;
+                cn.size1  = numel(cn.roi1);
+                cn.size2  = numel(cn.roi2);
+                cn.table1 = network(i).table;
+                cn.table2 = network(j).table;
                 
                 if i == j
                     cn.type  = 'intra';
