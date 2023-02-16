@@ -121,6 +121,7 @@ defpar.write_ALFF     = true;
 defpar.write_fALFF    = true;
 
 defpar.subdir         = 'rsfc';
+defpar.glmdir         = 'glm';
 defpar.clean4D_name   = 'clean.nii';
 
 %----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -238,13 +239,15 @@ for iVol = 1:nVol
     volume_path = par.volume(iVol);
     fprintf('[%s]: volume %d/%d : %s \n', mfilename, iVol, nVol, char(volume_path))
     outdir_path         = fullfile(get_parent_path(char(volume_path)), par.subdir);
+    glmdir_path         = fullfile(outdir_path, par.glmdir);
     cleaned_volume_path = fullfile(outdir_path, par.clean4D_name);
-    bp_volume_path      = addprefixtofilenames(cleaned_volume_path,'bp_');
+    bp_volume_path      = fullfile(outdir_path, ['bp_' par.clean4D_name]);
     
     % output_struct
     TS_struct(iVol).volume     = char(par.volume  (iVol));
     TS_struct(iVol).confound   = char(par.confound(iVol));
     TS_struct(iVol).outdir     = outdir_path;
+    TS_struct(iVol).glmdir     = glmdir_path;
     TS_struct(iVol).outname    = outname;
     TS_struct(iVol).clean      = cleaned_volume_path;
     TS_struct(iVol).bp_clean   = bp_volume_path;
@@ -283,7 +286,7 @@ for iVol = 1:nVol
         
         clear matlabbatch
         
-        matlabbatch{1}.spm.stats.fmri_spec.dir = {outdir_path}; %%%
+        matlabbatch{1}.spm.stats.fmri_spec.dir = {glmdir_path}; %%%
         matlabbatch{1}.spm.stats.fmri_spec.timing.units   = 'secs';
         matlabbatch{1}.spm.stats.fmri_spec.timing.RT      = TR; %%%
         matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t  = 16;
@@ -315,6 +318,8 @@ for iVol = 1:nVol
     
         spm_jobman('run', matlabbatch)
         
+        symlink(fullfile(glmdir_path, par.clean4D_name), cleaned_volume_path, par.redo);
+        
     else
         
         [TR, nTR, scans] = load_4D_volume_info(volume_path);
@@ -335,7 +340,7 @@ for iVol = 1:nVol
         cleaned_volume_4D     = spm_read_vols(cleaned_volume_header            );   % [x y z t]
         
         % load mask
-        mask_header           = spm_vol      (fullfile(outdir_path, 'mask.nii'));
+        mask_header           = spm_vol      (fullfile(glmdir_path, 'mask.nii'));
         [mask_3D, XYZmm]      = spm_read_vols(mask_header                      );   % [x y z]
         mask_3D               = logical(mask_3D);
         
@@ -385,7 +390,7 @@ for iVol = 1:nVol
             
             % write volume
             V_ALFF = struct;
-            V_ALFF.fname   = addprefixtofilenames(cleaned_volume_path,'ALFF_');
+            V_ALFF.fname   = fullfile(outdir_path, ['ALFF_' par.clean4D_name]);
             V_ALFF.dim     = cleaned_volume_header(1).dim;
             V_ALFF.dt      = cleaned_volume_header(1).dt;
             V_ALFF.mat     = cleaned_volume_header(1).mat;
@@ -408,7 +413,7 @@ for iVol = 1:nVol
             
             % write volume
             V_fALFF = struct;
-            V_fALFF.fname   = addprefixtofilenames(cleaned_volume_path,'fALFF_');
+            V_fALFF.fname   = fullfile(outdir_path, ['fALFF_' par.clean4D_name]);
             V_fALFF.dim     = cleaned_volume_header(1).dim;
             V_fALFF.dt      = cleaned_volume_header(1).dt;
             V_fALFF.mat     = cleaned_volume_header(1).mat;
@@ -425,6 +430,7 @@ for iVol = 1:nVol
         bp_2D = NaN(size_volume_2D); % [x*y*z t]
         bp_2D(mask_1D,:) = bp;
         bp_4D = reshape(bp_2D, size_volume_4D); % [x y z t]
+        bp_header = cleaned_volume_header(1);
         bp_nifti = cleaned_volume_header(1).private;
         bp_nifti.dat.fname = bp_volume_path;
         bp_nifti.descrip = sprintf('bandpass [%g %g]', par.bandpass(1), par.bandpass(2));
@@ -489,19 +495,25 @@ for iVol = 1:nVol
                     copyfile(fullfile(atlas_cat12_dir, [atlas_cat12_name '.txt']), fullfile(outdir_path, [atlas_cat12_name '.txt']))
                 end
                 
-                % reslice
-                resliced_atlas_path = fullfile(outdir_path, ['r' atlas_cat12_name '.nii']);
-                if ~exist(resliced_atlas_path, 'file') || par.redo
-                    fprintf('[%s]:          reslice atlas to functional resolution : %s \n', mfilename, atlas_cat12_name)
-                    
-                    clear matlabbatch
-                    matlabbatch{1}.spm.spatial.coreg.write.ref             = volume_path;
-                    matlabbatch{1}.spm.spatial.coreg.write.source          = {fullfile(outdir_path, [atlas_cat12_name '.nii'])};
-                    matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 0; % nearest interpolation, to avoid voxel blending
-                    matlabbatch{1}.spm.spatial.coreg.write.roptions.wrap   = [0 0 0];
-                    matlabbatch{1}.spm.spatial.coreg.write.roptions.mask   = 0;
-                    matlabbatch{1}.spm.spatial.coreg.write.roptions.prefix = 'r';
-                    spm_jobman('run', matlabbatch)
+                copy_atlas_cat12_path = fullfile(outdir_path, [    atlas_cat12_name '.nii']);
+                resliced_atlas_path   = fullfile(outdir_path, ['r' atlas_cat12_name '.nii']);
+                
+                % reslice ?
+                if spm_check_orientations([bp_header(1), spm_vol(copy_atlas_cat12_path)], false)
+                    symlink(copy_atlas_cat12_path, resliced_atlas_path, par.redo)
+                else
+                    if ~exist(resliced_atlas_path, 'file') || par.redo
+                        fprintf('[%s]:          reslice atlas to functional resolution : %s \n', mfilename, atlas_cat12_name)
+                        
+                        clear matlabbatch
+                        matlabbatch{1}.spm.spatial.coreg.write.ref             = volume_path;
+                        matlabbatch{1}.spm.spatial.coreg.write.source          = {fullfile(outdir_path, [atlas_cat12_name '.nii'])};
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 0; % nearest interpolation, to avoid voxel blending
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.wrap   = [0 0 0];
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.mask   = 0;
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.prefix = 'r';
+                        spm_jobman('run', matlabbatch)
+                    end
                 end
                 
                 
@@ -533,6 +545,7 @@ for iVol = 1:nVol
                     
                     % extract ROI timeseries
                     y = extract_first_eigenvariate(masked_bp_2D);
+                    assert(~any(isnan(y)), 'extracted timeseries contains NaN: %s in %s', atlas_cat12_table.ROIabbr(iROI), atlas_cat12_header.fname)
                     
                     % append data
                     ts_counter = ts_counter + 1;
@@ -579,27 +592,35 @@ for iVol = 1:nVol
                     copyfile(mask_global_path, mask_global_copy_path)
                 end
                 
-                % reslice
-                resliced_atlas_path = spm_file(mask_global_copy_path, 'Prefix', 'r');
-                if ~exist(resliced_atlas_path, 'file') || par.redo
-                    fprintf('[%s]:          reslice mask global to functional resolution : %s \n', mfilename, mask_global_copy_path)
-                    
-                    clear matlabbatch
-                    matlabbatch{1}.spm.spatial.coreg.write.ref             = volume_path;
-                    matlabbatch{1}.spm.spatial.coreg.write.source          = {mask_global_copy_path};
-                    matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 0; % nearest interpolation, to avoid voxel blending
-                    matlabbatch{1}.spm.spatial.coreg.write.roptions.wrap   = [0 0 0];
-                    matlabbatch{1}.spm.spatial.coreg.write.roptions.mask   = 0;
-                    matlabbatch{1}.spm.spatial.coreg.write.roptions.prefix = 'r';
-                    spm_jobman('run', matlabbatch)
+                resliced_mask_global_path = spm_file(mask_global_copy_path, 'Prefix', 'r');
+                
+                % reslice ?
+                if spm_check_orientations([bp_header(1), spm_vol(mask_global_copy_path)], false)
+                    symlink(mask_global_copy_path, resliced_mask_global_path, par.redo)
+                else
+                    if ~exist(resliced_mask_global_path, 'file') || par.redo
+                        fprintf('[%s]:          reslice mask global to functional resolution : %s \n', mfilename, mask_global_copy_path)
+                        
+                        clear matlabbatch
+                        matlabbatch{1}.spm.spatial.coreg.write.ref             = volume_path;
+                        matlabbatch{1}.spm.spatial.coreg.write.source          = {mask_global_copy_path};
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 0; % nearest interpolation, to avoid voxel blending
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.wrap   = [0 0 0];
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.mask   = 0;
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.prefix = 'r';
+                        spm_jobman('run', matlabbatch)
+                    end
                 end
                 
                 %----------------------------------------------------------
                 % load mask global
                 %----------------------------------------------------------
-                mask_global_V = spm_vol      (resliced_atlas_path);
+                mask_global_V = spm_vol      (resliced_mask_global_path);
                 mask_global_Y = spm_read_vols(mask_global_V      );
+                mask_global_Y(~isfinite(mask_global_Y)) = 0;
                 mask_global_Y = logical(mask_global_Y);
+                assert(sum(mask_global_Y(:))>0, 'after minimal cleaning, empty mask : %s', resliced_mask_global_path)
+                
                 
                 %----------------------------------------------------------
                 % extract timeserie
@@ -609,6 +630,7 @@ for iVol = 1:nVol
                 
                 % extract ROI timeseries
                 y = extract_first_eigenvariate(masked_bp_2D);
+                assert(~any(isnan(y)), 'extracted timeseries contains NaN: %s', resliced_mask_global_path)
                 
                 % append data
                 ts_counter = ts_counter + 1;
@@ -656,6 +678,7 @@ for iVol = 1:nVol
                     
                     sphere_global_Y = false(size_volume_4D(1:3));
                     sphere_global_Y(sum((XYZmm - center(:)*ones(1,size(XYZmm,2))).^2) <= radius^2) = true;
+                    assert(sum(sphere_global_Y(:))>0, 'sphere is empty %d', sphere_global_idx)
                     
                     % write sphere global mask
                     sphere_global_V         = struct;
@@ -680,6 +703,7 @@ for iVol = 1:nVol
                 
                 % extract ROI timeseries
                 y = extract_first_eigenvariate(masked_bp_2D);
+                assert(~any(isnan(y)), 'extracted timeseries contains NaN: %s', sphere_global_path)
                 
                 % append data
                 ts_counter = ts_counter + 1;
@@ -754,14 +778,14 @@ end % function
 
 function [TR, nTR, scans] = load_4D_volume_info(volume_path)
 
-    volume_header = spm_vol(char(volume_path));
-    TR = volume_header(1).private.timing.tspace;
-    nTR = length(volume_header);
-    scans = cell(nTR,1);
-    for iTR = 1 : nTR
-        scans{iTR} = sprintf('%s,%d', volume_header(iTR).fname, iTR);
-    end
-    
+volume_header = spm_vol(char(volume_path));
+TR = volume_header(1).private.timing.tspace;
+nTR = length(volume_header);
+scans = cell(nTR,1);
+for iTR = 1 : nTR
+    scans{iTR} = sprintf('%s,%d', volume_header(iTR).fname, iTR);
+end
+
 end
 
 function y = extract_first_eigenvariate(Y)
@@ -784,4 +808,13 @@ u       = u*d;
 % v       = v*d; % unused
 y       = u*sqrt(s(1)/n);
 
+end
+
+function symlink(src, dst, force)
+if force
+    cmd = sprintf('ln -sf %s %s', src, dst);
+else
+    cmd = sprintf('ln -s  %s %s', src, dst);
+end
+unix(cmd);
 end
