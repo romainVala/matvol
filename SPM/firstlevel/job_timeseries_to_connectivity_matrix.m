@@ -55,7 +55,7 @@ end
 % classic matvol
 defpar.redo = 0;
 
-par = complet_struct(defpar,par);
+par = complet_struct(par,defpar);
 
 
 %% check network
@@ -114,7 +114,7 @@ for iVol = 1 : nVol
             n.size = numel(n.roi);
             n.ts   = zeros(ts_data.nTR, n.size);
             n.nconn= n.size*(n.size-1)/2;
-            [~,idx_roi_in_netwok,~] = intersect(ts_data.ts_table.abbreviation , n.roi);
+            [~,~,idx_roi_in_netwok] = intersect(n.roi, ts_data.ts_table.abbreviation, 'stable');
             n.table = ts_data.ts_table(idx_roi_in_netwok,:);
             assert(length(idx_roi_in_netwok) == n.size, 'in network ''%s'' did not find exactly once each ROI abbreveiation ', n.name)
             for roi_idx = 1 : n.size
@@ -196,6 +196,7 @@ for iVol = 1 : nVol
     else
         save(connectivity_path, 'connectivity_matrix', 'ts_table');
     end
+     fprintf('[%s]: connectivity matrix saved : %d/%d - %s - %s \n', mfilename, iVol, nVol, TS_struct(iVol).outname, connectivity_path)
     
 end % iVol
 
