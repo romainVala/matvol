@@ -199,7 +199,8 @@ use_mask_global   = 0;
 use_sphere        = 0;
 use_sphere_global = 0;
 
-outname = '';
+outname1 = '';
+outname2 = '';
 
 % check all types
 if isfield(par.roi_type, 'atlas_cat12')
@@ -207,24 +208,31 @@ if isfield(par.roi_type, 'atlas_cat12')
     use_atlas_cat12  = 1;
     atlas_cat12_dir  = fullfile(spm('dir'), 'toolbox', 'cat12', 'templates_MNI152NLin2009cAsym');
     atlas_cat12_list = cellstr(par.roi_type.atlas_cat12);
-    outname = sprintf('%s%s__', outname, strjoin(atlas_cat12_list,'_'));
+    outname1 = sprintf('%s%s__', outname1, strjoin(atlas_cat12_list,'_'));
+    outname2 = sprintf('%s%s__', outname2, strjoin(atlas_cat12_list,'_'));
 end
 if isfield(par.roi_type, 'mask_global')
     use_mask         = 1;
     use_mask_global  = 1;
     assert( iscell(par.roi_type.mask_global) && ~isempty(par.roi_type.mask_global) , 'par.roi_type.mask_global must be a non-empty cell' )
     mask_global_list = par.roi_type.mask_global;
-    outname = sprintf('%s%s__', outname, strjoin(mask_global_list(:,2),'_')); % column 2 is abbreviation
+    outname1 = sprintf('%s%s__', outname1, strjoin(mask_global_list(:,2),'_')); % column 2 is abbreviation
+    gmsk_abbrev = char(mask_global_list(:,2));
+    gmsk_letter = gmsk_abbrev(:,1);
+    outname2 = sprintf('%s%s__', outname2, gmsk_letter(:)');
 end
 if isfield(par.roi_type, 'sphere_global')
     use_sphere         = 1;
     use_sphere_global  = 1;
     assert( iscell(par.roi_type.sphere_global) && ~isempty(par.roi_type.sphere_global) , 'par.roi_type.sphere_global must be a non-empty cell' )
     sphere_global_list = par.roi_type.sphere_global;
-        outname = sprintf('%s%s__', outname, strjoin(sphere_global_list(:,3),'_')); % column 3 is abbreviation
+    outname1 = sprintf('%s%s__', outname1, strjoin(sphere_global_list(:,3),'_')); % column 3 is abbreviation
+    gsph_abbrev = char(sphere_global_list(:,3));
+    gsph_letter = gsph_abbrev(:,1);
+    outname2 = sprintf('%s%s__', outname2, gsph_letter(:)');
 end
-outname = outname(1:end-2); % delete last 2 underscore
-
+outname1 = outname1(1:end-2); % delete last 2 underscore
+outname2 = outname2(1:end-2); % delete last 2 underscore
 
 %% ------------------------------------------------------------------------
 %% main
@@ -248,7 +256,7 @@ for iVol = 1:nVol
     TS_struct(iVol).confound   = char(par.confound(iVol));
     TS_struct(iVol).outdir     = outdir_path;
     TS_struct(iVol).glmdir     = glmdir_path;
-    TS_struct(iVol).outname    = outname;
+    TS_struct(iVol).outname    = outname1;
     TS_struct(iVol).clean      = cleaned_volume_path;
     TS_struct(iVol).bp_clean   = bp_volume_path;
     TS_struct(iVol).bandpass   = par.bandpass;
@@ -259,7 +267,13 @@ for iVol = 1:nVol
     end
     
     % skip if final output exists
-    timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
+    timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname1));
+    if length(timeseries_path) > 255
+        timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname2));
+    end
+    if length(timeseries_path) > 255
+        warning('filename might be too long...')
+    end
     TS_struct(iVol).timeseries_path = timeseries_path;
     if exist(timeseries_path, 'file') && ~par.redo
         fprintf('[%s]:          timeseries extraction done : %s \n', mfilename, timeseries_path)
@@ -729,7 +743,7 @@ for iVol = 1:nVol
     % save timeseries info
     %------------------------------------------------------------------
     save(timeseries_path, 'timeseries', 'ts_table', 'par', 'TR', 'nTR', 'scans');
-    fprintf('[%s]:          timeseries saved : %s // %s \n', mfilename, outname, timeseries_path)
+    fprintf('[%s]:          timeseries saved : %s // %s \n', mfilename, outname1, timeseries_path)
 
     
 end % iVol
@@ -817,4 +831,12 @@ else
     cmd = sprintf('ln -s  %s %s', src, dst);
 end
 unix(cmd);
+end
+
+function checksum = hash(input_char)
+encoder = java.security.MessageDigest.getInstance('SHA-1');
+encoder.update(uint8(input_char));
+h = typecast(encoder.digest, 'uint8');
+h = lower(dec2hex(h));
+checksum = h(:)';
 end
