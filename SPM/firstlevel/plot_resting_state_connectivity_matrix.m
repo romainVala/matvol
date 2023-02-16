@@ -540,7 +540,7 @@ if handles.checkbox_use_threshold.Value
 else
     R_mask = true(size(R_num));
 end
-rgb_map_num = handles.axes.Colormap;
+rgb_map_num = colormap(handles.axes);
 R_rgp_num = pearson2color(R_num, rgb_map_num);
 R_html = cell(size(R_num));
 for i = 1 : numel(R_html)
