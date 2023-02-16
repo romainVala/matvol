@@ -48,13 +48,10 @@ for iVol = 1 : nVol
             
     % shortucts
     outname = vol_data.outname;
-    outdir = fullfile(vol_data.outdir, 'seedbased', outname);
-    if ~exist(outdir,'dir')
-        mkdir(outdir);
-    end
+    outdir  = vol_data.outdir;
     
-    pearson_path = fullfile(outdir, 'pearson.nii');
-    zfisher_path = fullfile(outdir, 'zfisher.nii');
+    pearson_path = fullfile(outdir, sprintf('seed2voxel_pearson_%s.nii', outname));
+    zfisher_path = fullfile(outdir, sprintf('seed2voxel_zfisher_%s.nii', outname));
     TS_struct(iVol).connectivity_seedbased.(outname).pearson = pearson_path;
     TS_struct(iVol).connectivity_seedbased.(outname).zfisher = zfisher_path;
     
@@ -80,7 +77,7 @@ for iVol = 1 : nVol
     
     % load mask
     fprintf('[%s]:     loading mask... ', mfilename)
-    mask_header     = spm_vol      (fullfile(vol_data.outdir, 'mask.nii'));
+    mask_header     = spm_vol      (fullfile(vol_data.glmdir, 'mask.nii'));
     mask_3D         = spm_read_vols(mask_header                          );       % [x y z]
     fprintf('done \n')
     
