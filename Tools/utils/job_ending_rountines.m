@@ -36,6 +36,8 @@ if isempty(jobs)
     return
 end
 
+% Complete jobs with default paramters : useful for diagnostics and manual completion
+[~, jobs] = spm_jobman('harvest', jobs);
 
 % SGE
 if par.sge
