@@ -75,6 +75,15 @@ function TS_struct = job_extract_timeseries(par)
 %
 %
 %----------------------------------------------------------------------------------------------------------------------------------------------------
+% Mandatory ? it depends...
+%----------------------------------------------------------------------------------------------------------------------------------------------------
+%
+%    .outname  (char)              if set, this paramter will override the automatic outname generation
+%                                  this CAN be mandatory if the automatic outname is too long and so the .mat file cannot be written
+%                                  automatic outname is the contanetation of all input roi names : if you have many masks, this can be very long
+%
+%
+%----------------------------------------------------------------------------------------------------------------------------------------------------
 % Optional
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 %
@@ -256,7 +265,6 @@ for iVol = 1:nVol
     TS_struct(iVol).confound   = char(par.confound(iVol));
     TS_struct(iVol).outdir     = outdir_path;
     TS_struct(iVol).glmdir     = glmdir_path;
-    TS_struct(iVol).outname    = outname1;
     TS_struct(iVol).clean      = cleaned_volume_path;
     TS_struct(iVol).bp_clean   = bp_volume_path;
     TS_struct(iVol).bandpass   = par.bandpass;
@@ -266,15 +274,23 @@ for iVol = 1:nVol
         TS_struct(iVol).obj.volume = volumeArray(iVol);
     end
     
-    % skip if final output exists
-    timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname1));
-    if length(timeseries_path) > 255
-        timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname2));
+    % outname
+    if isfield(par, 'outname') % used defined outname
+        outname = par.outname; timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
+        if length(timeseries_path) > 255
+            error('output filename will too long... reduce size of par.outname')
+        end
+    else % automatic outname
+        outname = outname1; timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
+        if length(timeseries_path) > 255
+            outname = outname2; timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
+            assert(length(timeseries_path) <= 255, 'automatic output filename will be too long... you need to set it manally with par.outname = ''my_rsfc_name'' ')
+        end
     end
-    if length(timeseries_path) > 255
-        warning('filename might be too long...')
-    end
+    TS_struct(iVol).outname         = outname;
     TS_struct(iVol).timeseries_path = timeseries_path;
+    
+    % skip if final output exists
     if exist(timeseries_path, 'file') && ~par.redo
         fprintf('[%s]:          timeseries extraction done : %s \n', mfilename, timeseries_path)
         continue
@@ -293,14 +309,14 @@ for iVol = 1:nVol
         fprintf('[%s]:      fetch TR and number of timepoints \n', mfilename)
         [TR, nTR, scans] = load_4D_volume_info(volume_path);
         
-        %----------------------------------------------------------------------
+        %------------------------------------------------------------------
         % clean input volume from confounds
-        %----------------------------------------------------------------------
+        %------------------------------------------------------------------
         fprintf('[%s]:      cleaning volume from confounds \n', mfilename)
         
         clear matlabbatch
         
-        matlabbatch{1}.spm.stats.fmri_spec.dir = {glmdir_path}; %%%
+        matlabbatch{1}.spm.stats.fmri_spec.dir            = {glmdir_path}; %%%
         matlabbatch{1}.spm.stats.fmri_spec.timing.units   = 'secs';
         matlabbatch{1}.spm.stats.fmri_spec.timing.RT      = TR; %%%
         matlabbatch{1}.spm.stats.fmri_spec.timing.fmri_t  = 16;
@@ -332,7 +348,8 @@ for iVol = 1:nVol
     
         spm_jobman('run', matlabbatch)
         
-        symlink(fullfile(glmdir_path, par.clean4D_name), cleaned_volume_path, par.redo);
+        symlink(fullfile(glmdir_path, par.clean4D_name), cleaned_volume_path                    , par.redo);
+        symlink(fullfile(glmdir_path, 'mask.nii'      ), fullfile(outdir_path, 'mask_clean.nii'), par.redo);
         
     else
         
