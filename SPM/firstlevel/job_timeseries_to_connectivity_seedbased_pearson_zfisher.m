@@ -52,8 +52,8 @@ for iVol = 1 : nVol
     
     pearson_path = fullfile(outdir, sprintf('seed2voxel_pearson_%s.nii', outname));
     zfisher_path = fullfile(outdir, sprintf('seed2voxel_zfisher_%s.nii', outname));
-    TS_struct(iVol).connectivity_seedbased.(outname).pearson = pearson_path;
-    TS_struct(iVol).connectivity_seedbased.(outname).zfisher = zfisher_path;
+    TS_struct(iVol).connectivity_seedbased.pearson = pearson_path;
+    TS_struct(iVol).connectivity_seedbased.zfisher = zfisher_path;
     
     if exist(pearson_path, 'file') && ~par.redo
         fprintf('[%s]: pearson correlation exists :  %d/%d - %s - %s \n', mfilename, iVol, nVol, outname, pearson_path)

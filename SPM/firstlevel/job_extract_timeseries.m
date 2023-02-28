@@ -156,7 +156,7 @@ par = complet_struct(par,defpar);
 assert(~par.sge, 'par.sge=1 not working with this purely matlab code')
 
 
-%% Check input volumes, confounds, (and masks=
+%% Check input volumes, confounds, (and masks)
 
 nVol = nan(4,1);
 
@@ -277,12 +277,12 @@ for iVol = 1:nVol
     % outname
     if isfield(par, 'outname') % used defined outname
         outname = par.outname; timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
-        if length(timeseries_path) > 255
+        if length(timeseries_path) > 255 || length(outname) > 63
             error('output filename will too long... reduce size of par.outname')
         end
     else % automatic outname
         outname = outname1; timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
-        if length(timeseries_path) > 255
+        if length(timeseries_path) > 255 || length(outname) > 63
             outname = outname2; timeseries_path = fullfile(outdir_path,sprintf('timeseries__%s.mat', outname));
             assert(length(timeseries_path) <= 255, 'automatic output filename will be too long... you need to set it manally with par.outname = ''my_rsfc_name'' ')
         end
