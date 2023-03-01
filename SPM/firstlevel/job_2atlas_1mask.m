@@ -10,18 +10,17 @@ function job_2atlas_1mask( par )
 %
 %    .labels  (cell)  such as :
 %                                 par.labels = {
-%                                     % id_atlas1 id_atlas2 operator  outname
-%                                               7         3      '*'  'lSFG'
-%                                               7         4      '*'  'rSFG'
-%                                               7         5      '*'  'lMFG'
-%                                               7         6      '*'  'rMFG'
-%                                               8         7      '+'  'lIFGoperc'
-%                                               8         8      '+'  'rIFGoperc'
-%                                               8         9      '*'  'lIFGtriang'
-%                                               8        10      '*'  'rIFGtriang'
-%                                               9        11      '-'  'lIFGorb'
-%                                               9        12      '-'  'rIFGorb'
+%                                     % id_atlas1  operator  id_atlas2   outname
+%                                           7        'AND'        3       'lSFG'
+%                                           7        'AND'        4       'rSFG'
+%                                           7        'OR'         5       'lMFG'
+%                                           7        'OR'         6       'rMFG'
+%                                           7        'XOR'        7       'lIFGoperc'
+%                                           7        'NAND'       8       'rIFGoperc'
+%                                           7        'NOR'        9       'lIFGtriang'
+%                                           7        'XNOR'      10       'rIFGtriang'
 %                                 };
+%                      'operator' can be logic gates : https://en.wikipedia.org/wiki/Logic_gate
 %
 %
 %----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -92,12 +91,30 @@ if ~exist(subdir_path, 'dir')
 end
 
 % atlas
-atlas1_path          = fullfile(par.outdir,      spm_file(par.atlas1, 'filename') );
-atlas2_path          = fullfile(par.outdir,      spm_file(par.atlas2, 'filename') );
-resliced_atlas2_path = fullfile(par.outdir, ['r' spm_file(par.atlas2, 'filename')]);
+atlas1_name          = spm_file(par.atlas1, 'filename');
+atlas2_name          = spm_file(par.atlas2, 'filename');
+atlas1_path          = fullfile(par.outdir,      atlas1_name );
+atlas2_path          = fullfile(par.outdir,      atlas2_name );
+resliced_atlas2_path = fullfile(par.outdir, ['r' atlas2_name]);
 
 % labels
-label_outname = par.labels(:,4);
+assert(iscell(par.labels), 'par.labels must be cell')
+assert(size(par.labels,2) >=4, 'par.labels must be at lease 4 columns (extra columns for your own usage)' )
+label_id_atlas1 = par.labels(:,1);
+label_operator  = par.labels(:,2);
+label_id_atlas2 = par.labels(:,3);
+label_outname   = par.labels(:,4);
+try
+    label_id_atlas1 = cell2mat(label_id_atlas1);
+catch 
+    error('par.label(:,1) must be only numbers')
+end
+assert(iscellstr(label_operator), 'par.label(:,3) must be cellstr')
+try
+    label_id_atlas2 = cell2mat(label_id_atlas2);
+catch 
+    error('par.label(:,3) must be only numbers')
+end
 unique_label_outname = unique(label_outname);
 assert(length(label_outname) == length(unique_label_outname), 'non-unique label outname !')
 nLabel = length(label_outname);
@@ -158,17 +175,23 @@ mask_4D = zeros([size(Y_atlas1) nLabel]);
 for l = 1 : nLabel
     
     % compute mask
-    mask_atlas1 = Y_atlas1 == par.labels{l, 1};
-    mask_atlas2 = Y_atlas2 == par.labels{l, 2};
-    switch par.labels{l, 3}
-        case '*'
-            Y_mask = mask_atlas1 .* mask_atlas2;
-        case '+'
-            Y_mask = mask_atlas1  + mask_atlas2;
-        case '-'
-            Y_mask = mask_atlas1  - mask_atlas2;
+    mask_atlas1 = Y_atlas1 == label_id_atlas1(l);
+    mask_atlas2 = Y_atlas2 == label_id_atlas2(l);
+    switch label_operator{l}
+        case 'AND'
+            Y_mask =  and(mask_atlas1,mask_atlas2);
+        case 'OR'
+            Y_mask =   or(mask_atlas1,mask_atlas2);
+        case 'XOR'
+            Y_mask =  xor(mask_atlas1,mask_atlas2);
+        case 'NAND'
+            Y_mask = ~and(mask_atlas1,mask_atlas2);
+        case 'NOR'
+            Y_mask =  ~or(mask_atlas1,mask_atlas2);
+        case 'XNOR'
+            Y_mask = ~xor(mask_atlas1,mask_atlas2);
         otherwise
-            error('bad operator')
+            error('bad operator, check help')
     end
     
     mask_4D(:,:,:,l) = l * Y_mask;
@@ -185,7 +208,7 @@ for l = 1 : nLabel
     V_mask.dt      = [2 V_atlas1.dt(2)];
     V_mask.pinfo   = V_atlas1.pinfo;
     V_mask.mat     = V_atlas1.mat;
-    V_mask.descrip = sprintf('%d --- %d --- %s --- %s', par.labels{l, 1}, par.labels{l, 2}, par.labels{l, 3}, par.labels{l, 4});
+    V_mask.descrip = sprintf('%d  %s  %d --- %s', label_id_atlas1(l), label_operator{l}, label_id_atlas2(l), label_outname{l});
     spm_write_vol(V_mask, Y_mask);
     
 end
