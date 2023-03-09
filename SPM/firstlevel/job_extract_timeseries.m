@@ -348,8 +348,8 @@ for iVol = 1:nVol
     
         spm_jobman('run', matlabbatch)
         
-        symlink(fullfile(glmdir_path, par.clean4D_name), cleaned_volume_path                    , par.redo);
-        symlink(fullfile(glmdir_path, 'mask.nii'      ), fullfile(outdir_path, 'mask_clean.nii'), par.redo);
+        symlink(fullfile(glmdir_path, par.clean4D_name), cleaned_volume_path                              , par.redo);
+        symlink(fullfile(glmdir_path, 'mask.nii'      ), fullfile(outdir_path, ['mask_' par.clean4D_name]), par.redo);
         
     else
         
