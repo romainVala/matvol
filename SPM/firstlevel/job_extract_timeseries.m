@@ -151,11 +151,6 @@ defpar.jobname  = mfilename;
 par = complet_struct(par,defpar);
 
 
-%% Lmitations
-
-assert(~par.sge, 'par.sge=1 not working with this purely matlab code')
-
-
 %% Check input volumes, confounds, (and masks)
 
 nVol = nan(4,1);
@@ -243,11 +238,13 @@ end
 outname1 = outname1(1:end-2); % delete last 2 underscore
 outname2 = outname2(1:end-2); % delete last 2 underscore
 
+
 %% ------------------------------------------------------------------------
 %% main
 %% ------------------------------------------------------------------------
 
 TS_struct = struct;
+job_sge   = {};
 
 for iVol = 1:nVol
     %% Preparations
@@ -293,6 +290,24 @@ for iVol = 1:nVol
     % skip if final output exists
     if exist(timeseries_path, 'file') && ~par.redo
         fprintf('[%s]:          timeseries extraction done : %s \n', mfilename, timeseries_path)
+        continue
+    end
+    
+    
+    %% Prepare jobs for the cluster, if needed
+    
+    if par.sge
+        cfg = par; % copy
+        cfg.volume = par.volume(iVol);
+        cfg.confound = par.confound(iVol);
+        if isfield(par,'mask'), cfg.mask = par.mask(iVol); end
+        cfg.sge = 0;
+        cfg.run = 1;
+        code = gencode(cfg, 'par')';
+        code{end+1} = sprintf('%s(par)', mfilename); %#ok<AGROW> 
+        code{end+1} = ''; %#ok<AGROW> 
+        code = strjoin(code, sprintf('\n')); %#ok<SPRINTFN> 
+        job_sge{end+1} = code; %#ok<AGROW> 
         continue
     end
     
@@ -772,6 +787,13 @@ for iVol = 1:nVol
 
     
 end % iVol
+
+
+%% Write jobs for the cluster, if needed
+
+if par.sge
+    do_cmd_matlab_sge(job_sge, par);
+end
 
 
 %% Add outputs objects
