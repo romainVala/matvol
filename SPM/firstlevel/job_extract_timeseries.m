@@ -755,12 +755,20 @@ for iVol = 1:nVol
         
     end % use_sphere
     
+    % WARNING if duplicates
+    [~, uniqueIdx] = unique(ts_table.abbreviation); % Find the indices of the unique strings
+    duplicates = ts_table.abbreviation; % Copy the original into a duplicate array
+    duplicates(uniqueIdx) = []; % remove the unique strings, anything left is a duplicate
+    duplicates = unique(duplicates); % find the unique duplicates
+    if ~isempty(duplicates)
+        warning('duplicates abbreviation : %s', strjoin(duplicates, ' '))
+    end
     
     %------------------------------------------------------------------
     % save timeseries info
     %------------------------------------------------------------------
     save(timeseries_path, 'timeseries', 'ts_table', 'par', 'TR', 'nTR', 'scans');
-    fprintf('[%s]:          timeseries saved : %s // %s \n', mfilename, outname1, timeseries_path)
+    fprintf('[%s]:          timeseries saved : %s // %s \n', mfilename, outname, timeseries_path)
 
     
 end % iVol
