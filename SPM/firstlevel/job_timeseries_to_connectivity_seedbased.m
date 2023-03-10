@@ -81,7 +81,7 @@ for iVol = 1 : nVol
         continue
     end
     
-    fprintf('[%s]: working on %d/%d %s : %s \n', mfilename, iVol, nVol, outname, vol_data.outname)
+    fprintf('[%s]: working on %d/%d %s : %s \n', mfilename, iVol, nVol, outname, vol_data.timeseries_path)
     
     % load timeseries
     fprintf('[%s]:     loading timeseries... ', mfilename)
