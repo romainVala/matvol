@@ -791,7 +791,7 @@ end % iVol
 
 %% Write jobs for the cluster, if needed
 
-if par.sge
+if par.sge && ~isempty(job_sge)
     do_cmd_matlab_sge(job_sge, par);
 end
 
