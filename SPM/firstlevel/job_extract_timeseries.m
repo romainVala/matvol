@@ -101,7 +101,7 @@ function TS_struct = job_extract_timeseries(par)
 %    .write_fALFF (bool)           fraction of Apmlitude of Low Frequency Fluctuations
 %                                  is the sum of Fourier coefficients inside the low frequency band (defined by .bandpass) devided the sum of the remaining frequencies
 %
-% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network job_timeseries_to_connectivity_seedbased_pearson_zfisher
+% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_seedbased
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
@@ -144,8 +144,8 @@ defpar.auto_add_obj = 1;
 
 % cluster
 defpar.sge      = 0;
-defpar.mem      = '4G';
-defpar.walltime = '04:00:00';
+defpar.mem      = '8G';
+defpar.walltime = '02:00:00';
 defpar.jobname  = mfilename;
 
 par = complet_struct(par,defpar);

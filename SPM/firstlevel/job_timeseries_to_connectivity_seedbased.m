@@ -1,13 +1,13 @@
-function TS_struct = job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS_struct, par)
-%job_timeseries_to_connectivity_seedbased_pearson_zfisher
+function TS_struct = job_timeseries_to_connectivity_seedbased(TS_struct, par)
+%job_timeseries_to_connectivity_seedbased
 %
 % WORKFLOW
 %   1. TS = run job_extract_timeseries(...)
-%   2. job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS)   <=== this function
+%   2. job_timeseries_to_connectivity_seedbased(TS)   <=== this function
 %
 % SYNTAX
-%   TS = job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS)
-%   TS = job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS, par)
+%   TS = job_timeseries_to_connectivity_seedbased(TS)
+%   TS = job_timeseries_to_connectivity_seedbased(TS, par)
 %
 % WROKFLOW
 %   load cleaned bandpassed volume (job_extract_timeseries)
@@ -16,7 +16,7 @@ function TS_struct = job_timeseries_to_connectivity_seedbased_pearson_zfisher(TS
 %   compute zfisher from pearson
 %   save on disk
 %
-% See also job_extract_timeseries job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network
+% See also job_extract_timeseries job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
@@ -35,12 +35,19 @@ defpar.run          = 1;
 defpar.redo         = 0;
 defpar.auto_add_obj = 1;
 
+% cluster
+defpar.sge      = 0;
+defpar.mem      = '8G';
+defpar.walltime = '01:00:00';
+defpar.jobname  = mfilename;
+
 par = complet_struct(par,defpar);
 
 
 %% main
 
-nVol = numel(TS_struct);
+nVol    = numel(TS_struct);
+job_sge = {};
 
 for iVol = 1 : nVol
     
@@ -57,6 +64,20 @@ for iVol = 1 : nVol
     
     if exist(pearson_path, 'file') && ~par.redo
         fprintf('[%s]: pearson correlation exists :  %d/%d - %s - %s \n', mfilename, iVol, nVol, outname, pearson_path)
+        continue
+    end
+    
+    if par.sge
+        cfg = vol_data; % copy
+        if isfield(cfg, 'obj')
+            cfg = rmfield(cfg,'obj');
+            cfg.use_obj = 0;
+        end
+        code = gencode(cfg, 'TS')';
+        code{end+1} = sprintf('%s(TS)', mfilename); %#ok<AGROW> 
+        code{end+1} = ''; %#ok<AGROW> 
+        code = strjoin(code, sprintf('\n')); %#ok<SPRINTFN> 
+        job_sge{end+1} = code; %#ok<AGROW> 
         continue
     end
     
@@ -124,6 +145,14 @@ for iVol = 1 : nVol
     fprintf('done \n')
     
 end % iVol
+
+
+%% Write jobs for the cluster, if needed
+
+if par.sge && ~isempty(job_sge)
+    do_cmd_matlab_sge(job_sge, par);
+end
+
 
 
 %% Add outputs objects

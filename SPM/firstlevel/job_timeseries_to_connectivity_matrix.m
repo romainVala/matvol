@@ -39,7 +39,7 @@ function TS_struct = job_timeseries_to_connectivity_matrix(TS_struct, par)
 %       If abbref comes from an atlas, user need to check it's abbreviations
 %
 %
-% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network job_timeseries_to_connectivity_seedbased
+% See also job_extract_timeseries plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_seedbased
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
