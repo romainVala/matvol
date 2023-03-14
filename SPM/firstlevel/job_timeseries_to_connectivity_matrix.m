@@ -146,6 +146,8 @@ for iVol = 1 : nVol
             % save
             network(i) = n; %#ok<AGROW> 
         end
+        network = network(:);
+        
         
         % intra & inter connectivity
         for i = 1 : length(network_list)

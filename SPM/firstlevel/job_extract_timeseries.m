@@ -788,6 +788,8 @@ for iVol = 1:nVol
     
 end % iVol
 
+TS_struct = reshape(TS_struct, size(par.volume));
+
 
 %% Write jobs for the cluster, if needed
 
