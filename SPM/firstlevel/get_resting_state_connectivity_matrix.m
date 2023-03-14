@@ -41,6 +41,8 @@ if nargin==0, help(mfilename('fullpath')); return; end
 
 %% Load data
 
+assert( isfield(conn_result, 'connectivity_path'), '.connectivity_path field is not prensent : please run "job_timeseries_to_connectivity_matrix" first')
+
 for iVol = 1 : length(conn_result)
     conn_result(iVol).connectivity_content = load(conn_result(iVol).connectivity_path);
 end
