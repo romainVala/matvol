@@ -101,7 +101,7 @@ function TS_struct = job_extract_timeseries(par)
 %    .write_fALFF (bool)           fraction of Apmlitude of Low Frequency Fluctuations
 %                                  is the sum of Fourier coefficients inside the low frequency band (defined by .bandpass) devided the sum of the remaining frequencies
 %
-% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network job_timeseries_to_connectivity_seedbased_pearson_zfisher
+% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_seedbased
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
@@ -144,16 +144,11 @@ defpar.auto_add_obj = 1;
 
 % cluster
 defpar.sge      = 0;
-defpar.mem      = '4G';
-defpar.walltime = '04:00:00';
+defpar.mem      = '8G';
+defpar.walltime = '02:00:00';
 defpar.jobname  = mfilename;
 
 par = complet_struct(par,defpar);
-
-
-%% Lmitations
-
-assert(~par.sge, 'par.sge=1 not working with this purely matlab code')
 
 
 %% Check input volumes, confounds, (and masks)
@@ -243,11 +238,13 @@ end
 outname1 = outname1(1:end-2); % delete last 2 underscore
 outname2 = outname2(1:end-2); % delete last 2 underscore
 
+
 %% ------------------------------------------------------------------------
 %% main
 %% ------------------------------------------------------------------------
 
 TS_struct = struct;
+job_sge   = {};
 
 for iVol = 1:nVol
     %% Preparations
@@ -293,6 +290,24 @@ for iVol = 1:nVol
     % skip if final output exists
     if exist(timeseries_path, 'file') && ~par.redo
         fprintf('[%s]:          timeseries extraction done : %s \n', mfilename, timeseries_path)
+        continue
+    end
+    
+    
+    %% Prepare jobs for the cluster, if needed
+    
+    if par.sge
+        cfg = par; % copy
+        cfg.volume = par.volume(iVol);
+        cfg.confound = par.confound(iVol);
+        if isfield(par,'mask'), cfg.mask = par.mask(iVol); end
+        cfg.sge = 0;
+        cfg.run = 1;
+        code = gencode(cfg, 'par')';
+        code{end+1} = sprintf('%s(par)', mfilename); %#ok<AGROW> 
+        code{end+1} = ''; %#ok<AGROW> 
+        code = strjoin(code, sprintf('\n')); %#ok<SPRINTFN> 
+        job_sge{end+1} = code; %#ok<AGROW> 
         continue
     end
     
@@ -348,8 +363,8 @@ for iVol = 1:nVol
     
         spm_jobman('run', matlabbatch)
         
-        symlink(fullfile(glmdir_path, par.clean4D_name), cleaned_volume_path                    , par.redo);
-        symlink(fullfile(glmdir_path, 'mask.nii'      ), fullfile(outdir_path, 'mask_clean.nii'), par.redo);
+        symlink(fullfile(glmdir_path, par.clean4D_name), cleaned_volume_path                              , par.redo);
+        symlink(fullfile(glmdir_path, 'mask.nii'      ), fullfile(outdir_path, ['mask_' par.clean4D_name]), par.redo);
         
     else
         
@@ -755,15 +770,32 @@ for iVol = 1:nVol
         
     end % use_sphere
     
+    % WARNING if duplicates
+    [~, uniqueIdx] = unique(ts_table.abbreviation); % Find the indices of the unique strings
+    duplicates = ts_table.abbreviation; % Copy the original into a duplicate array
+    duplicates(uniqueIdx) = []; % remove the unique strings, anything left is a duplicate
+    duplicates = unique(duplicates); % find the unique duplicates
+    if ~isempty(duplicates)
+        warning('duplicates abbreviation : %s', strjoin(duplicates, ' '))
+    end
     
     %------------------------------------------------------------------
     % save timeseries info
     %------------------------------------------------------------------
     save(timeseries_path, 'timeseries', 'ts_table', 'par', 'TR', 'nTR', 'scans');
-    fprintf('[%s]:          timeseries saved : %s // %s \n', mfilename, outname1, timeseries_path)
+    fprintf('[%s]:          timeseries saved : %s // %s \n', mfilename, outname, timeseries_path)
 
     
 end % iVol
+
+TS_struct = reshape(TS_struct, size(par.volume));
+
+
+%% Write jobs for the cluster, if needed
+
+if par.sge && ~isempty(job_sge)
+    do_cmd_matlab_sge(job_sge, par);
+end
 
 
 %% Add outputs objects

@@ -39,7 +39,7 @@ function TS_struct = job_timeseries_to_connectivity_matrix(TS_struct, par)
 %       If abbref comes from an atlas, user need to check it's abbreviations
 %
 %
-% See also job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_network job_timeseries_to_connectivity_seedbased
+% See also job_extract_timeseries plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_seedbased
 
 if nargin==0, help(mfilename('fullpath')); return; end
 
@@ -107,6 +107,7 @@ for iVol = 1 : nVol
     
     if use_network
         for i = 1 : length(network_list)
+            
             % set network
             n = struct; % current network struct, storing all infos
             n.name = network_list{i};
@@ -114,9 +115,23 @@ for iVol = 1 : nVol
             n.size = numel(n.roi);
             n.ts   = zeros(ts_data.nTR, n.size);
             n.nconn= n.size*(n.size-1)/2;
-            [~,~,idx_roi_in_netwok] = intersect(n.roi, ts_data.ts_table.abbreviation, 'stable');
+            
+            % check network !
+            
+            % absent
+            networkROI_not_in_Table = setdiff(n.roi, ts_data.ts_table.abbreviation, 'stable');
+            assert(isempty(networkROI_not_in_Table), 'roi from ''%s'' network not in extracted timeseries : %s', n.name, strjoin(networkROI_not_in_Table, ' '))
+            
+            % duplicate
+            [~, uniqueIdx] = unique(n.roi); % Find the indices of the unique strings
+            duplicates = n.roi; % Copy the original into a duplicate array
+            duplicates(uniqueIdx) = []; % remove the unique strings, anything left is a duplicate
+            duplicates = unique(duplicates); % find the unique duplicates
+            assert(isempty(duplicates), 'roi from ''%s'' network has duplicates : %s', n.name, strjoin(duplicates, ' '))
+            
+            % extract timeseries
+            [~,~,idx_roi_in_netwok] = intersect(n.roi, ts_data.ts_table.abbreviation, 'stable');            
             n.table = ts_data.ts_table(idx_roi_in_netwok,:);
-            assert(length(idx_roi_in_netwok) == n.size, 'in network ''%s'' did not find exactly once each ROI abbreveiation ', n.name)
             for roi_idx = 1 : n.size
                 n.ts(:,roi_idx) = ts_data.timeseries(:,n.table.id(roi_idx));
             end
@@ -131,6 +146,8 @@ for iVol = 1 : nVol
             % save
             network(i) = n; %#ok<AGROW> 
         end
+        network = network(:);
+        
         
         % intra & inter connectivity
         for i = 1 : length(network_list)

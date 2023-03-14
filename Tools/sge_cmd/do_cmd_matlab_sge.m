@@ -30,7 +30,7 @@ end
 
 job_dir = fullfile(par.jobdir,par.jobname);
 
-if ~exist(job_dir)
+if ~exist(job_dir,'dir')
     mkdir(job_dir);
 end
 
