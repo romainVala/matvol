@@ -52,6 +52,8 @@ pearson_path = {connectivity_seedbased.pearson}';
 zfisher_path = {connectivity_seedbased.zfisher}';
 
 file_list = struct;
+file_list.table = ts_table; % just a copy
+
 for iROI = 1 : nROI
     file_list.pearson.(ts_table.abbreviation{iROI}) = strcat(pearson_path, ',', num2str(iROI));
     file_list.zfisher.(ts_table.abbreviation{iROI}) = strcat(zfisher_path, ',', num2str(iROI));
