@@ -2,9 +2,11 @@ function  job = job_do_dartel_template(frmg,frmb,par)
 % job_do_dartel_template : SPM:Tools:DartelTools:RunDartel(create Templates)
 %
 % inputs :
-%         frmg :  file rc1  (MG native space dartel import image) or rp1
-%         frmb :  file rc2  (MB native space dartel import image) or rp2
-%         par  :  matvol parameters 
+%         frmg : file "rc1.*nii" (MG native space dartel import image) or "rp1.*nii"
+%                can be a cellarray or volume object 
+%         frmb : cellarray of file "rc2.*nii" (MB native space dartel import image) or "rp2.*nii"
+%                can be a cellarray or volume object
+%         par  : matvol parameters 
 %
 % output :
 %         job  : SPM structure (create only  one job)
@@ -14,10 +16,9 @@ function  job = job_do_dartel_template(frmg,frmb,par)
 %                              : (1).addVolume [^Template_6.nii], tag : 'template' (only the first subject)
 %                       
 %
-%
 % generates :
 %         Dartel flow field (u_r*..) for all subjets
-%         in the first forlder the 6 templates 
+%         and templates images in the first forlder the 
 %
 %
 %                                                                          
