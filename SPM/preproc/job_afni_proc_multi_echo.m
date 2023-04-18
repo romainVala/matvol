@@ -50,8 +50,8 @@ end
 %
 % personal block        : blip
 
-defpar.blocks   = {'despike','tshift','volreg'}; % now codded : despike, tshift, align, volreg
-defpar.seperate = 0;                             % each volume is treated seperatly : useful when runs have different orientations
+defpar.blocks   = {'tshift','volreg'};           % now codded : despike, tshift, align, volreg
+defpar.seperate = 1;                             % each volume is treated seperatly : useful when runs have different orientations
 defpar.execute  = 1;                             % execute afni_proc.py generated tcsh script file immidatly after the generation
 
 defpar.write_nifti = 1;                          % convert afni_proc outputs .BRIK .HEAD to .nii .nii.gz
@@ -62,7 +62,7 @@ defpar.blip = [];                                % (cellstr/@volume)  par.blip.f
 %                                                            OR       a @volume object from matvol
 %                                                                     par.blip.reverse{iSubj} <= same thing
 %                                                                     par.seperate=0 : you provide 1 for all runs, and it will be used for all of them
-%                                                            OR       par.seperate=1 : you provide 1 for all run, and it will be 'replicated' for each run
+%                                                            OR       par.seperate=1 : you provide 1 for all runs, and it will be 'replicated' for each run
 
 % cluster
 defpar.sge      = 0;
@@ -112,9 +112,11 @@ if par.seperate
         blip_reverse = par.blip.reverse;
         par.blip.forward = [];
         par.blip.reverse = [];
+        assert(length(blip_forward) == length(blip_reverse), 'must have : length(blip_forward) == length(blip_reverse)')
+        assert(length(meinfo.data) == length(blip_forward), 'must have : length(meinfo.data) == length(blip_forward)')
     end
     
-    for iSubj =  1 : size(meinfo.data,1)
+    for iSubj =  1 : length(meinfo.data)
         
         nRun = length(meinfo.data{iSubj});
         
@@ -126,8 +128,13 @@ if par.seperate
             if isfield(meinfo_orig,'volume'), meinfo_new.volume(j,1,:) = meinfo_orig.volume(iSubj,iRun,:); end
             
             if blip
-                par.blip.forward{j,1} = blip_forward{iSubj};
-                par.blip.reverse{j,1} = blip_reverse{iSubj};
+                if size(blip_forward{iSubj},1) > 1 % 1 forward-reverse per run
+                    par.blip.forward{j,1} = blip_forward{iSubj}(iRun,:);
+                    par.blip.reverse{j,1} = blip_reverse{iSubj}(iRun,:);
+                else % 1 forward-reverse for ALL runs
+                    par.blip.forward{j,1} = blip_forward{iSubj};
+                    par.blip.reverse{j,1} = blip_reverse{iSubj};
+                end
             end
             
         end % iRun
