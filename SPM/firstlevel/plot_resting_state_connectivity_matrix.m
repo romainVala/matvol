@@ -238,7 +238,11 @@ handles.axes = axes(handles.uipanel_plot);
 
 %--------------------------------------------------------------------------
 %- Prepare Dynamic
-handles.dynamic_volume.nVolume = size(conn_result(1).connectivity_content.dynamic_connectivity_matrix,3);
+if handles.use_dynamic
+    handles.dynamic_volume.nVolume = size(conn_result(1).connectivity_content.dynamic_connectivity_matrix,3);
+else
+    handles.dynamic_volume.nVolume = 1;
+end
 handles.dynamic_volume.iVolume = 1;
 tag = 'slider_volume';
 handles.(tag) = uicontrol(handles.uipanel_dynamic, 'Style', 'slider',...
@@ -249,7 +253,8 @@ handles.(tag) = uicontrol(handles.uipanel_dynamic, 'Style', 'slider',...
     'Units',      'normalized',...
     'Position',   [0.00 0.0 1.00 1.00],...
     'Tag',        tag,...
-    'Callback',   @UPDATE);
+    'Callback',   @UPDATE,...
+    'Visible', handles.use_dynamic);
 
 %--------------------------------------------------------------------------
 %- Done
