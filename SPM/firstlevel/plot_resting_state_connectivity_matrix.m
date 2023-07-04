@@ -32,17 +32,24 @@ for iVol = 1 : length(conn_result)
     conn_result(iVol).connectivity_content = load(conn_result(iVol).connectivity_path);
 end
 
+listbox_name = {'<all>'};
 
 
 %% Networks ?
 
-use_network = 0;
+use_network = false;
 if isfield(conn_result(1), 'network')
-    use_network = 1;
+    use_network = true;
     network_list = {conn_result(1).connectivity_content.static_network_data.name};
-    listbox_name = ['<all>' '_inter_::avg' '_inter_::var' network_list ];
-else
-    listbox_name = {'<all>'};
+    listbox_name = [listbox_name '_inter_::avg' '_inter_::var' network_list ];
+end
+
+
+%% Dynamic ?
+
+use_dynamic = false;
+if isfield(conn_result(1), 'dynamic')
+    use_dynamic = true;
 end
 
 
@@ -452,7 +459,7 @@ if handles.use_network
         descrip_y = connn_result.static_network_data(network_idx).table.description;
     end
 else
-    matrix    = connn_result.connectivity_matrix;
+    matrix    = connn_result.static_connectivity_matrix;
     abbrev_x  = connn_result.ts_table.abbreviation;
     abbrev_y  = connn_result.ts_table.abbreviation;
     descrip_x = connn_result.ts_table.description;

@@ -71,10 +71,10 @@ par = complet_struct(par,defpar);
 
 %% check network
 
-use_network = 0;
+use_network = false;
 
 if isfield(par, 'network')
-    use_network = 1;
+    use_network = true;
 
     assert(isstruct(par.network), 'par.network must be a structure. Check help')
 
@@ -92,10 +92,10 @@ end
 
 %% check dynamic
 
-use_dynamic = 0;
+use_dynamic = false;
 
 if isfield(par, 'dynamic')
-    use_dynamic = 1;
+    use_dynamic = true;
 
     assert(isstruct(par.dynamic), 'par.dynamic must be a structure. Check help')
     assert(isfield(par.dynamic,'window_length'), 'par.dynamic.window_length must be a defined. Check help')
@@ -111,13 +111,13 @@ for iVol = 1 : nVol
     clear noetwork conn_network
 
     % prepare output file names and paths
-    connectivity_prefix = 'connectivity__';
+    connectivity_prefix = 'static_conn__';
     if use_network
         connectivity_prefix = sprintf('%s%s__', connectivity_prefix, strjoin(network_list, '_'));
         TS_struct(iVol).network = par.network;
     end
     if use_dynamic
-        connectivity_prefix = sprintf('%s%s__', connectivity_prefix, 'dynamic');
+        connectivity_prefix = sprintf('%s%s__', connectivity_prefix, 'dynamic_conn');
         TS_struct(iVol).dynamic = par.dynamic;
     end
     connectivity_path = addprefixtofilenames(TS_struct(iVol).timeseries_path,connectivity_prefix);
@@ -134,16 +134,28 @@ for iVol = 1 : nVol
     static_connectivity_matrix = corrcoef(ts_data.timeseries);
 
     if use_network
-
         [static_network_data , static_network_connectivity] = timeseries_to_network( ts_data.timeseries, ts_data.ts_table, par.network );
-
+    end
+    
+    if use_dynamic
+        window_length_in_TR = round(par.dynamic.window_length*60 / (ts_data.TR)); % minutes -> number_of_TRs
+        dynamic_ts = timeseries_static_to_dynamic(ts_data.timeseries, window_length_in_TR);
+        
+        dynamic_connectivity_matrix = zeros([size(static_connectivity_matrix) ts_data.nTR]);
+        for idx_TR = 1 : ts_data.nTR
+            dynamic_connectivity_matrix(:,:,idx_TR) = corrcoef(squeeze(dynamic_ts(idx_TR,:,:))');
+        end
     end
 
     % save
     ts_table = ts_data.ts_table;
 
-    if use_network
+    if      use_network && ~use_dynamic
         save(connectivity_path, 'ts_table', 'static_connectivity_matrix', 'static_network_data', 'static_network_connectivity');
+    elseif ~use_network &&  use_dynamic
+        save(connectivity_path, 'ts_table', 'static_connectivity_matrix', 'dynamic_connectivity_matrix');
+    elseif  use_network &&  use_dynamic
+        
     else
         save(connectivity_path, 'ts_table', 'static_connectivity_matrix');
     end
@@ -153,7 +165,25 @@ end % iVol
 
 end % function
 
+%----------------------------------------------------------------------------------------------------------------------------------------------------
+function dynamic_ts = timeseries_static_to_dynamic(timeseries, window_length)
 
+nTR  = size(timeseries,1);
+nROI = size(timeseries,2);
+dynamic_ts = zeros(nTR, nROI, window_length); % pre-allocation
+
+for idx_TR = 1 : nTR
+    mask = round((-window_length/2 : +window_length/2) - idx_TR);
+    mask(mask < 1) = [];
+    mask(mask > nTR) = [];
+    sub_ts = timeseries(mask,:);
+    sub_ts = [sub_ts ; zeros(window_length-length(mask),nROI)]; % padding : happens on the borders
+    dynamic_ts(idx_TR, :, :) = sub_ts';
+end
+
+end % fcn
+
+%----------------------------------------------------------------------------------------------------------------------------------------------------
 function [network_data , network_conn] = timeseries_to_network( timeseries, table, network_struct )
 
 network_list = fieldnames(network_struct);
@@ -256,3 +286,4 @@ for i = 1 : length(network_data)
 end
 
 end % fcn
+
