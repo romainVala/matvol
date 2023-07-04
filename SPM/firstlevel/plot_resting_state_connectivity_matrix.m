@@ -78,17 +78,19 @@ handles.buttonBGcolor = buttonBGcolor;
 handles.editBGcolor   = editBGcolor  ;
 
 handles.use_network = use_network;
+handles.use_dynamic = use_dynamic;
 handles.conn_result = conn_result;
 
 %--------------------------------------------------------------------------
 %- Prepare panels
 
 panel_pos = [
-    0.00   0.00   0.10   1.00
-    0.10   0.00   0.20   1.00
-    0.30   0.00   0.60   0.10
-    0.30   0.10   0.60   0.90
-    0.90   0.00   0.10   1.00
+    0.00   0.05   0.10   0.95
+    0.10   0.05   0.20   0.95
+    0.30   0.05   0.60   0.10
+    0.30   0.15   0.60   0.85
+    0.90   0.05   0.10   0.95
+    0.00   0.00   1.00   0.05
     ];
 
 handles.uipanel_select = uipanel(figHandle,...
@@ -120,6 +122,13 @@ handles.uipanel_threshold = uipanel(figHandle,...
     'Units',          'Normalized',...
     'Position',        panel_pos(5,:),...
     'BackgroundColor', figureBGcolor);
+
+handles.uipanel_dynamic = uipanel(figHandle,...
+    'Title',          'Dynamic',...
+    'Units',          'Normalized',...
+    'Position',        panel_pos(6,:),...
+    'BackgroundColor', figureBGcolor);
+
 
 %--------------------------------------------------------------------------
 %- Prepare Selection
@@ -228,6 +237,21 @@ handles.(tag) = uicontrol(handles.uipanel_threshold, 'Style', 'checkbox',...
 handles.axes = axes(handles.uipanel_plot);
 
 %--------------------------------------------------------------------------
+%- Prepare Dynamic
+handles.dynamic_volume.nVolume = size(conn_result(1).connectivity_content.dynamic_connectivity_matrix,3);
+handles.dynamic_volume.iVolume = 1;
+tag = 'slider_volume';
+handles.(tag) = uicontrol(handles.uipanel_dynamic, 'Style', 'slider',...
+    'Min',        0,...
+    'Max',        handles.dynamic_volume.nVolume,...
+    'Value',      1, ...
+    'SliderStep', [1/handles.dynamic_volume.nVolume 10/handles.dynamic_volume.nVolume],...
+    'Units',      'normalized',...
+    'Position',   [0.00 0.0 1.00 1.00],...
+    'Tag',        tag,...
+    'Callback',   @UPDATE);
+
+%--------------------------------------------------------------------------
 %- Done
 
 % Initialize other variables, for latter usage
@@ -289,6 +313,12 @@ function set_mx(hObject)
 % get correlation matrix using GUI info and display it
 handles = guidata(hObject); % retrieve guidata
 
+if round(handles.slider_volume.Value) ~= handles.slider_volume.Value
+    handles.slider_volume.Value = round(handles.slider_volume.Value);
+end
+handles.dynamic_volume.iVolume = handles.slider_volume.Value;
+guidata(hObject, handles); % need to save stuff
+
 matrix = get_conn_content(hObject);
 handles.axes.Children.CData = matrix;
 
@@ -327,7 +357,7 @@ function UPDATE(hObject,~)
 handles = guidata(hObject); % retrieve guidata
 
 switch hObject.Tag
-    
+
     case 'slider_pos'
         set_pos(handles, hObject.Value);
         if handles.checkbox_link_pos_neg.Value
@@ -335,7 +365,7 @@ switch hObject.Tag
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'edit_pos'
         set_pos(handles, str2double(hObject.String));
         if handles.checkbox_link_pos_neg.Value
@@ -343,7 +373,7 @@ switch hObject.Tag
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'slider_neg'
         set_neg(handles, hObject.Value);
         if handles.checkbox_link_pos_neg.Value
@@ -351,7 +381,7 @@ switch hObject.Tag
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'edit_neg'
         set_neg(handles, -str2double(hObject.String));
         if handles.checkbox_link_pos_neg.Value
@@ -359,14 +389,14 @@ switch hObject.Tag
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'checkbox_link_pos_neg'
         if hObject.Value
             set_neg(handles, handles.slider_pos.Value);
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'listbox_id'
         set_mx(hObject)
         if handles.checkbox_use_threshold.Value
@@ -375,18 +405,21 @@ switch hObject.Tag
             threshold_mx(hObject, 0, 0)
         end
         set_highlight(hObject)
-        
+
     case 'listbox_name'
         set_axes(hObject)
         set_mx(hObject)
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_roi(hObject)
         handles.highlight_idx = [];
-        
+
     case 'checkbox_use_threshold'
         set_threshold(hObject)
         set_highlight(hObject)
-        
+
+    case 'slider_volume'
+        set_mx(hObject)
+
     otherwise
         warning(hObject.Tag)
 end
@@ -428,8 +461,8 @@ handles = guidata(hObject); % retrieve guidata
 
 connn_result = handles.conn_result(handles.listbox_id.Value).connectivity_content;
 
-if handles.use_network
-    label = handles.listbox_name.String{handles.listbox_name.Value}; 
+if handles.use_network && ~handles.use_dynamic
+    label = handles.listbox_name.String{handles.listbox_name.Value};
     if strcmp(label, '<all>')
         matrix    = connn_result.static_connectivity_matrix;
         abbrev_x  = connn_result.ts_table.abbreviation;
@@ -458,6 +491,18 @@ if handles.use_network
         descrip_x = connn_result.static_network_data(network_idx).table.description;
         descrip_y = connn_result.static_network_data(network_idx).table.description;
     end
+elseif ~handles.use_network && handles.use_dynamic
+    if handles.dynamic_volume.iVolume == 0
+        matrix= connn_result.static_connectivity_matrix;
+    else
+        matrix= connn_result.dynamic_connectivity_matrix(:,:,handles.dynamic_volume.iVolume);
+    end
+    abbrev_x  = connn_result.ts_table.abbreviation;
+    abbrev_y  = connn_result.ts_table.abbreviation;
+    descrip_x = connn_result.ts_table.description;
+    descrip_y = connn_result.ts_table.description;
+elseif handles.use_network && handles.use_dynamic
+
 else
     matrix    = connn_result.static_connectivity_matrix;
     abbrev_x  = connn_result.ts_table.abbreviation;

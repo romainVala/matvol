@@ -44,10 +44,10 @@ function TS_struct = job_timeseries_to_connectivity_matrix(TS_struct, par)
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 %
 %   SYNTAX
-%          .dynmaic.window_length = <number of minutes>
+%          .dynmaic.window_length = <number of seconds>
 %
 %   EXEMPLE
-%       par.dynmaic.window_length = 2;
+%       par.dynmaic.window_length = 120;
 %
 %
 % See also job_extract_timeseries plot_resting_state_connectivity_matrix job_timeseries_to_connectivity_seedbased
@@ -136,11 +136,11 @@ for iVol = 1 : nVol
     if use_network
         [static_network_data , static_network_connectivity] = timeseries_to_network( ts_data.timeseries, ts_data.ts_table, par.network );
     end
-    
+
     if use_dynamic
-        window_length_in_TR = round(par.dynamic.window_length*60 / (ts_data.TR)); % minutes -> number_of_TRs
+        window_length_in_TR = round(par.dynamic.window_length / (ts_data.TR)); % seconds -> number_of_TRs
         dynamic_ts = timeseries_static_to_dynamic(ts_data.timeseries, window_length_in_TR);
-        
+
         dynamic_connectivity_matrix = zeros([size(static_connectivity_matrix) ts_data.nTR]);
         for idx_TR = 1 : ts_data.nTR
             dynamic_connectivity_matrix(:,:,idx_TR) = corrcoef(squeeze(dynamic_ts(idx_TR,:,:))');
@@ -155,7 +155,7 @@ for iVol = 1 : nVol
     elseif ~use_network &&  use_dynamic
         save(connectivity_path, 'ts_table', 'static_connectivity_matrix', 'dynamic_connectivity_matrix');
     elseif  use_network &&  use_dynamic
-        
+
     else
         save(connectivity_path, 'ts_table', 'static_connectivity_matrix');
     end
@@ -168,16 +168,25 @@ end % function
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 function dynamic_ts = timeseries_static_to_dynamic(timeseries, window_length)
 
+if mod(window_length,2)==0 % even number
+    half = window_length/2;
+    window_length = window_length+1;
+else % odd  number
+    half = (window_length-1)/2;
+end
+
 nTR  = size(timeseries,1);
 nROI = size(timeseries,2);
 dynamic_ts = zeros(nTR, nROI, window_length); % pre-allocation
 
 for idx_TR = 1 : nTR
-    mask = round((-window_length/2 : +window_length/2) - idx_TR);
+    mask = round(-half : half) + idx_TR;
     mask(mask < 1) = [];
     mask(mask > nTR) = [];
     sub_ts = timeseries(mask,:);
-    sub_ts = [sub_ts ; zeros(window_length-length(mask),nROI)]; % padding : happens on the borders
+    if window_length-length(mask) > 0 % padding : happens on the borders
+        sub_ts = [sub_ts ; zeros(window_length-length(mask),nROI)];
+    end
     dynamic_ts(idx_TR, :, :) = sub_ts';
 end
 
