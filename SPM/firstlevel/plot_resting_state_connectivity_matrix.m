@@ -32,17 +32,24 @@ for iVol = 1 : length(conn_result)
     conn_result(iVol).connectivity_content = load(conn_result(iVol).connectivity_path);
 end
 
+listbox_name = {'<all>'};
 
 
 %% Networks ?
 
-use_network = 0;
+use_network = false;
 if isfield(conn_result(1), 'network')
-    use_network = 1;
-    network_list = {conn_result(1).connectivity_content.network.name};
-    listbox_name = ['<all>' '_inter_::avg' '_inter_::var' network_list ];
-else
-    listbox_name = {'<all>'};
+    use_network = true;
+    network_list = {conn_result(1).connectivity_content.static_network_data.name};
+    listbox_name = [listbox_name '_inter_::avg' '_inter_::var' network_list ];
+end
+
+
+%% Dynamic ?
+
+use_dynamic = false;
+if isfield(conn_result(1), 'dynamic')
+    use_dynamic = true;
 end
 
 
@@ -71,17 +78,19 @@ handles.buttonBGcolor = buttonBGcolor;
 handles.editBGcolor   = editBGcolor  ;
 
 handles.use_network = use_network;
+handles.use_dynamic = use_dynamic;
 handles.conn_result = conn_result;
 
 %--------------------------------------------------------------------------
 %- Prepare panels
 
 panel_pos = [
-    0.00   0.00   0.10   1.00
-    0.10   0.00   0.20   1.00
-    0.30   0.00   0.60   0.10
-    0.30   0.10   0.60   0.90
-    0.90   0.00   0.10   1.00
+    0.00   0.05   0.10   0.95
+    0.10   0.05   0.20   0.95
+    0.30   0.05   0.60   0.10
+    0.30   0.15   0.60   0.85
+    0.90   0.05   0.10   0.95
+    0.00   0.00   1.00   0.05
     ];
 
 handles.uipanel_select = uipanel(figHandle,...
@@ -113,6 +122,13 @@ handles.uipanel_threshold = uipanel(figHandle,...
     'Units',          'Normalized',...
     'Position',        panel_pos(5,:),...
     'BackgroundColor', figureBGcolor);
+
+handles.uipanel_dynamic = uipanel(figHandle,...
+    'Title',          'Dynamic',...
+    'Units',          'Normalized',...
+    'Position',        panel_pos(6,:),...
+    'BackgroundColor', figureBGcolor);
+
 
 %--------------------------------------------------------------------------
 %- Prepare Selection
@@ -221,6 +237,26 @@ handles.(tag) = uicontrol(handles.uipanel_threshold, 'Style', 'checkbox',...
 handles.axes = axes(handles.uipanel_plot);
 
 %--------------------------------------------------------------------------
+%- Prepare Dynamic
+if handles.use_dynamic
+    handles.dynamic_volume.nVolume = size(conn_result(1).connectivity_content.dynamic_connectivity_matrix,3);
+else
+    handles.dynamic_volume.nVolume = 1;
+end
+handles.dynamic_volume.iVolume = 1;
+tag = 'slider_volume';
+handles.(tag) = uicontrol(handles.uipanel_dynamic, 'Style', 'slider',...
+    'Min',        0,...
+    'Max',        handles.dynamic_volume.nVolume,...
+    'Value',      1, ...
+    'SliderStep', [1/handles.dynamic_volume.nVolume 10/handles.dynamic_volume.nVolume],...
+    'Units',      'normalized',...
+    'Position',   [0.00 0.0 1.00 1.00],...
+    'Tag',        tag,...
+    'Callback',   @UPDATE,...
+    'Visible', handles.use_dynamic);
+
+%--------------------------------------------------------------------------
 %- Done
 
 % Initialize other variables, for latter usage
@@ -282,6 +318,14 @@ function set_mx(hObject)
 % get correlation matrix using GUI info and display it
 handles = guidata(hObject); % retrieve guidata
 
+val = handles.slider_volume.Value;
+rval = round(val);
+if val ~= rval
+    handles.slider_volume.Value = rval;
+end
+handles.dynamic_volume.iVolume = rval;
+guidata(hObject, handles); % need to save stuff
+
 matrix = get_conn_content(hObject);
 handles.axes.Children.CData = matrix;
 
@@ -320,7 +364,7 @@ function UPDATE(hObject,~)
 handles = guidata(hObject); % retrieve guidata
 
 switch hObject.Tag
-    
+
     case 'slider_pos'
         set_pos(handles, hObject.Value);
         if handles.checkbox_link_pos_neg.Value
@@ -328,7 +372,7 @@ switch hObject.Tag
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'edit_pos'
         set_pos(handles, str2double(hObject.String));
         if handles.checkbox_link_pos_neg.Value
@@ -336,7 +380,7 @@ switch hObject.Tag
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'slider_neg'
         set_neg(handles, hObject.Value);
         if handles.checkbox_link_pos_neg.Value
@@ -344,7 +388,7 @@ switch hObject.Tag
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'edit_neg'
         set_neg(handles, -str2double(hObject.String));
         if handles.checkbox_link_pos_neg.Value
@@ -352,14 +396,14 @@ switch hObject.Tag
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'checkbox_link_pos_neg'
         if hObject.Value
             set_neg(handles, handles.slider_pos.Value);
         end
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_highlight(hObject)
-        
+
     case 'listbox_id'
         set_mx(hObject)
         if handles.checkbox_use_threshold.Value
@@ -368,21 +412,25 @@ switch hObject.Tag
             threshold_mx(hObject, 0, 0)
         end
         set_highlight(hObject)
-        
+
     case 'listbox_name'
         set_axes(hObject)
         set_mx(hObject)
         threshold_mx(hObject, str2double(handles.edit_pos.String), str2double(handles.edit_neg.String))
         set_roi(hObject)
         handles.highlight_idx = [];
-        
+
     case 'checkbox_use_threshold'
         set_threshold(hObject)
         set_highlight(hObject)
-        
+
+    case 'slider_volume'
+        set_mx(hObject)
+
     otherwise
         warning(hObject.Tag)
 end
+drawnow()
 
 guidata(hObject, handles); % store guidata
 end
@@ -421,38 +469,100 @@ handles = guidata(hObject); % retrieve guidata
 
 connn_result = handles.conn_result(handles.listbox_id.Value).connectivity_content;
 
-if handles.use_network
-    label = handles.listbox_name.String{handles.listbox_name.Value}; 
+if handles.use_network && ~handles.use_dynamic
+
+    label = handles.listbox_name.String{handles.listbox_name.Value};
     if strcmp(label, '<all>')
-        matrix    = connn_result.connectivity_matrix;
+        matrix    = connn_result.static_connectivity_matrix;
         abbrev_x  = connn_result.ts_table.abbreviation;
         abbrev_y  = connn_result.ts_table.abbreviation;
         descrip_x = connn_result.ts_table.description;
         descrip_y = connn_result.ts_table.description;
     elseif strcmp(label, '_inter_::avg')
-        matrix    = reshape([connn_result.conn_network.avg], size(connn_result.conn_network));
-        abbrev_x  = {connn_result.network.name};
-        abbrev_y  = {connn_result.network.name};
-        descrip_x = {connn_result.network.name};
-        descrip_y = {connn_result.network.name};
+        matrix    = reshape([connn_result.static_network_connectivity.avg], size(connn_result.static_network_connectivity));
+        abbrev_x  = {connn_result.static_network_data.name};
+        abbrev_y  = {connn_result.static_network_data.name};
+        descrip_x = {connn_result.static_network_data.name};
+        descrip_y = {connn_result.static_network_data.name};
     elseif strcmp(label, '_inter_::var')
-        matrix    = reshape([connn_result.conn_network.var], size(connn_result.conn_network));
-        abbrev_x  = {connn_result.network.name};
-        abbrev_y  = {connn_result.network.name};
-        descrip_x = {connn_result.network.name};
-        descrip_y = {connn_result.network.name};
+        matrix    = reshape([connn_result.static_network_connectivity.var], size(connn_result.static_network_connectivity));
+        abbrev_x  = {connn_result.static_network_data.name};
+        abbrev_y  = {connn_result.static_network_data.name};
+        descrip_x = {connn_result.static_network_data.name};
+        descrip_y = {connn_result.static_network_data.name};
     else
         res = strsplit(label, '::');
         network = res{1};
-        network_idx = find(strcmp({connn_result.network.name}, network));
-        matrix    = connn_result.network(network_idx).mx;
-        abbrev_x  = connn_result.network(network_idx).table.abbreviation;
-        abbrev_y  = connn_result.network(network_idx).table.abbreviation;
-        descrip_x = connn_result.network(network_idx).table.description;
-        descrip_y = connn_result.network(network_idx).table.description;
+        network_idx = find(strcmp({connn_result.static_network_data.name}, network));
+        matrix    = connn_result.static_network_data(network_idx).mx;
+        abbrev_x  = connn_result.static_network_data(network_idx).abbreviation;
+        abbrev_y  = connn_result.static_network_data(network_idx).abbreviation;
+        descrip_x = connn_result.static_network_data(network_idx).description;
+        descrip_y = connn_result.static_network_data(network_idx).description;
     end
+elseif ~handles.use_network && handles.use_dynamic
+
+    if handles.dynamic_volume.iVolume == 0
+        matrix= connn_result.static_connectivity_matrix;
+    else
+        matrix= connn_result.dynamic_connectivity_matrix(:,:,handles.dynamic_volume.iVolume);
+    end
+    abbrev_x  = connn_result.ts_table.abbreviation;
+    abbrev_y  = connn_result.ts_table.abbreviation;
+    descrip_x = connn_result.ts_table.description;
+    descrip_y = connn_result.ts_table.description;
+
+elseif handles.use_network && handles.use_dynamic
+
+    label = handles.listbox_name.String{handles.listbox_name.Value};
+    if strcmp(label, '<all>')
+        if handles.dynamic_volume.iVolume == 0
+            matrix= connn_result.static_connectivity_matrix;
+        else
+            matrix= connn_result.dynamic_connectivity_matrix(:,:,handles.dynamic_volume.iVolume);
+        end
+        abbrev_x  = connn_result.ts_table.abbreviation;
+        abbrev_y  = connn_result.ts_table.abbreviation;
+        descrip_x = connn_result.ts_table.description;
+        descrip_y = connn_result.ts_table.description;
+    elseif strcmp(label, '_inter_::avg')
+        if handles.dynamic_volume.iVolume == 0
+            matrix    = reshape([connn_result.static_network_connectivity.avg], size(connn_result.static_network_connectivity));
+        else
+            matrix    = reshape([connn_result.dynamic_network_connectivity(:,:,handles.dynamic_volume.iVolume).avg], size(connn_result.dynamic_network_connectivity(:,:,handles.dynamic_volume.iVolume)));
+        end
+        abbrev_x  = {connn_result.static_network_data.name};
+        abbrev_y  = {connn_result.static_network_data.name};
+        descrip_x = {connn_result.static_network_data.name};
+        descrip_y = {connn_result.static_network_data.name};
+    elseif strcmp(label, '_inter_::var')
+        if handles.dynamic_volume.iVolume == 0
+            matrix    = reshape([connn_result.static_network_connectivity.var], size(connn_result.static_network_connectivity));
+        else
+            matrix    = reshape([connn_result.dynamic_network_connectivity(:,:,handles.dynamic_volume.iVolume).var], size(connn_result.dynamic_network_connectivity(:,:,handles.dynamic_volume.iVolume)));
+        end
+        abbrev_x  = {connn_result.static_network_data.name};
+        abbrev_y  = {connn_result.static_network_data.name};
+        descrip_x = {connn_result.static_network_data.name};
+        descrip_y = {connn_result.static_network_data.name};
+    else
+        res = strsplit(label, '::');
+        network = res{1};
+        network_idx = find(strcmp({connn_result.static_network_data.name}, network));
+        if handles.dynamic_volume.iVolume == 0
+            matrix= connn_result.static_network_data(network_idx).mx;
+        else
+            matrix= connn_result.dynamic_network_data(network_idx,handles.dynamic_volume.iVolume).mx;
+        end
+        abbrev_x  = connn_result.static_network_data(network_idx).abbreviation;
+        abbrev_y  = connn_result.static_network_data(network_idx).abbreviation;
+        descrip_x = connn_result.static_network_data(network_idx).description;
+        descrip_y = connn_result.static_network_data(network_idx).description;
+    end
+
 else
-    matrix    = connn_result.connectivity_matrix;
+
+    matrix    = connn_result.static_connectivity_matrix;
     abbrev_x  = connn_result.ts_table.abbreviation;
     abbrev_y  = connn_result.ts_table.abbreviation;
     descrip_x = connn_result.ts_table.description;
