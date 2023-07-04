@@ -230,8 +230,8 @@ for i = 1 : length(network_list)
     [~,~,idx_roi_in_netwok] = intersect(n.roi, table.abbreviation, 'stable');
     %     n.table = table(idx_roi_in_netwok,:); % !!!!! table loading and access is VERY slow => dynamic + network = MANY tables saved !!!!
     t = table(idx_roi_in_netwok,:);
-    n.abbreviation = t.abbreviation;
-    n.description  = t.description;
+    n.abbreviation = t.abbreviation';
+    n.description  = t.description';
     for roi_idx = 1 : n.size
         %         n.ts(:,roi_idx) =timeseries(:,n.table.id(roi_idx));
         n.ts(:,roi_idx) =timeseries(:,t.id(roi_idx));
