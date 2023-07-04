@@ -113,11 +113,11 @@ for iVol = 1 : nVol
     % prepare output file names and paths
     connectivity_prefix = 'static_conn__';
     if use_network
-        connectivity_prefix = sprintf('%s%s__', connectivity_prefix, strjoin(network_list, '_'));
+        connectivity_prefix = sprintf('%s%s__', strjoin(network_list, '_'), connectivity_prefix);
         TS_struct(iVol).network = par.network;
     end
     if use_dynamic
-        connectivity_prefix = sprintf('%s%s__', connectivity_prefix, 'dynamic_conn');
+        connectivity_prefix = sprintf('%s%s__', 'dynamic_conn', connectivity_prefix);
         TS_struct(iVol).dynamic = par.dynamic;
     end
     connectivity_path = addprefixtofilenames(TS_struct(iVol).timeseries_path,connectivity_prefix);
@@ -146,16 +146,22 @@ for iVol = 1 : nVol
             dynamic_connectivity_matrix(:,:,idx_TR) = corrcoef(squeeze(dynamic_ts(idx_TR,:,:))');
         end
     end
+    
+    if use_network && use_dynamic
+        for idx_TR = 1 : ts_data.nTR
+            [dynamic_network_data(:,idx_TR) , dynamic_network_connectivity(:,:,idx_TR)] = timeseries_to_network( squeeze(dynamic_ts(idx_TR,:,:))', ts_data.ts_table, par.network );
+        end
+    end
 
     % save
     ts_table = ts_data.ts_table;
 
     if      use_network && ~use_dynamic
-        save(connectivity_path, 'ts_table', 'static_connectivity_matrix', 'static_network_data', 'static_network_connectivity');
+        save(connectivity_path, 'ts_table', 'static_connectivity_matrix',                                'static_network_data', 'static_network_connectivity');
     elseif ~use_network &&  use_dynamic
         save(connectivity_path, 'ts_table', 'static_connectivity_matrix', 'dynamic_connectivity_matrix');
     elseif  use_network &&  use_dynamic
-
+        save(connectivity_path, 'ts_table', 'static_connectivity_matrix', 'dynamic_connectivity_matrix', 'static_network_data', 'static_network_connectivity', 'dynamic_network_data', 'dynamic_network_connectivity');
     else
         save(connectivity_path, 'ts_table', 'static_connectivity_matrix');
     end

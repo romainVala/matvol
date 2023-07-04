@@ -318,10 +318,12 @@ function set_mx(hObject)
 % get correlation matrix using GUI info and display it
 handles = guidata(hObject); % retrieve guidata
 
-if round(handles.slider_volume.Value) ~= handles.slider_volume.Value
-    handles.slider_volume.Value = round(handles.slider_volume.Value);
+val = handles.slider_volume.Value;
+rval = round(val);
+if val ~= rval
+    handles.slider_volume.Value = rval;
 end
-handles.dynamic_volume.iVolume = handles.slider_volume.Value;
+handles.dynamic_volume.iVolume = rval;
 guidata(hObject, handles); % need to save stuff
 
 matrix = get_conn_content(hObject);
@@ -424,7 +426,6 @@ switch hObject.Tag
 
     case 'slider_volume'
         set_mx(hObject)
-
     otherwise
         warning(hObject.Tag)
 end
@@ -467,6 +468,7 @@ handles = guidata(hObject); % retrieve guidata
 connn_result = handles.conn_result(handles.listbox_id.Value).connectivity_content;
 
 if handles.use_network && ~handles.use_dynamic
+
     label = handles.listbox_name.String{handles.listbox_name.Value};
     if strcmp(label, '<all>')
         matrix    = connn_result.static_connectivity_matrix;
@@ -497,6 +499,7 @@ if handles.use_network && ~handles.use_dynamic
         descrip_y = connn_result.static_network_data(network_idx).table.description;
     end
 elseif ~handles.use_network && handles.use_dynamic
+
     if handles.dynamic_volume.iVolume == 0
         matrix= connn_result.static_connectivity_matrix;
     else
@@ -506,9 +509,57 @@ elseif ~handles.use_network && handles.use_dynamic
     abbrev_y  = connn_result.ts_table.abbreviation;
     descrip_x = connn_result.ts_table.description;
     descrip_y = connn_result.ts_table.description;
+
 elseif handles.use_network && handles.use_dynamic
 
+    label = handles.listbox_name.String{handles.listbox_name.Value};
+    if strcmp(label, '<all>')
+        if handles.dynamic_volume.iVolume == 0
+            matrix= connn_result.static_connectivity_matrix;
+        else
+            matrix= connn_result.dynamic_connectivity_matrix(:,:,handles.dynamic_volume.iVolume);
+        end
+        abbrev_x  = connn_result.ts_table.abbreviation;
+        abbrev_y  = connn_result.ts_table.abbreviation;
+        descrip_x = connn_result.ts_table.description;
+        descrip_y = connn_result.ts_table.description;
+    elseif strcmp(label, '_inter_::avg')
+        if handles.dynamic_volume.iVolume == 0
+            matrix    = reshape([connn_result.static_network_connectivity.avg], size(connn_result.static_network_connectivity));
+        else
+            matrix    = reshape([connn_result.dynamic_network_connectivity(:,:,handles.dynamic_volume.iVolume).avg], size(connn_result.dynamic_network_connectivity(:,:,handles.dynamic_volume.iVolume)));
+        end
+        abbrev_x  = {connn_result.static_network_data.name};
+        abbrev_y  = {connn_result.static_network_data.name};
+        descrip_x = {connn_result.static_network_data.name};
+        descrip_y = {connn_result.static_network_data.name};
+    elseif strcmp(label, '_inter_::var')
+        if handles.dynamic_volume.iVolume == 0
+            matrix    = reshape([connn_result.static_network_connectivity.var], size(connn_result.static_network_connectivity));
+        else
+            matrix    = reshape([connn_result.dynamic_network_connectivity(:,:,handles.dynamic_volume.iVolume).var], size(connn_result.dynamic_network_connectivity(:,:,handles.dynamic_volume.iVolume)));
+        end
+        abbrev_x  = {connn_result.static_network_data.name};
+        abbrev_y  = {connn_result.static_network_data.name};
+        descrip_x = {connn_result.static_network_data.name};
+        descrip_y = {connn_result.static_network_data.name};
+    else
+        res = strsplit(label, '::');
+        network = res{1};
+        network_idx = find(strcmp({connn_result.static_network_data.name}, network));
+        if handles.dynamic_volume.iVolume == 0
+            matrix= connn_result.static_network_data(network_idx).mx;
+        else
+            matrix= connn_result.dynamic_network_data(network_idx,handles.dynamic_volume.iVolume).mx;
+        end
+        abbrev_x  = connn_result.static_network_data(network_idx).table.abbreviation;
+        abbrev_y  = connn_result.static_network_data(network_idx).table.abbreviation;
+        descrip_x = connn_result.static_network_data(network_idx).table.description;
+        descrip_y = connn_result.static_network_data(network_idx).table.description;
+    end
+
 else
+
     matrix    = connn_result.static_connectivity_matrix;
     abbrev_x  = connn_result.ts_table.abbreviation;
     abbrev_y  = connn_result.ts_table.abbreviation;
