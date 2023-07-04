@@ -113,11 +113,11 @@ for iVol = 1 : nVol
     % prepare output file names and paths
     connectivity_prefix = 'static_conn__';
     if use_network
-        connectivity_prefix = sprintf('%s%s__', strjoin(network_list, '_'), connectivity_prefix);
+        connectivity_prefix = sprintf('%s__%s', strjoin(network_list, '_'), connectivity_prefix);
         TS_struct(iVol).network = par.network;
     end
     if use_dynamic
-        connectivity_prefix = sprintf('%s%s__', 'dynamic_conn', connectivity_prefix);
+        connectivity_prefix = sprintf('%s__%s', sprintf('dynamic_%gs_conn',par.dynamic.window_length), connectivity_prefix);
         TS_struct(iVol).dynamic = par.dynamic;
     end
     connectivity_path = addprefixtofilenames(TS_struct(iVol).timeseries_path,connectivity_prefix);
@@ -146,7 +146,7 @@ for iVol = 1 : nVol
             dynamic_connectivity_matrix(:,:,idx_TR) = corrcoef(squeeze(dynamic_ts(idx_TR,:,:))');
         end
     end
-    
+
     if use_network && use_dynamic
         for idx_TR = 1 : ts_data.nTR
             [dynamic_network_data(:,idx_TR) , dynamic_network_connectivity(:,:,idx_TR)] = timeseries_to_network( squeeze(dynamic_ts(idx_TR,:,:))', ts_data.ts_table, par.network );
@@ -228,9 +228,13 @@ for i = 1 : length(network_list)
 
     % extract timeseries
     [~,~,idx_roi_in_netwok] = intersect(n.roi, table.abbreviation, 'stable');
-    n.table = table(idx_roi_in_netwok,:);
+    %     n.table = table(idx_roi_in_netwok,:); % !!!!! table loading and access is VERY slow => dynamic + network = MANY tables saved !!!!
+    t = table(idx_roi_in_netwok,:);
+    n.abbreviation = t.abbreviation;
+    n.description  = t.description;
     for roi_idx = 1 : n.size
-        n.ts(:,roi_idx) =timeseries(:,n.table.id(roi_idx));
+        %         n.ts(:,roi_idx) =timeseries(:,n.table.id(roi_idx));
+        n.ts(:,roi_idx) =timeseries(:,t.id(roi_idx));
     end
     n.mx   = corrcoef(n.ts);
     n.mask = triu(true(n.size),+1); % mask to fetch each pair only once
@@ -257,8 +261,12 @@ for i = 1 : length(network_data)
         cn.roi2   = network_data(j).roi;
         cn.size1  = numel(cn.roi1);
         cn.size2  = numel(cn.roi2);
-        cn.table1 = network_data(i).table;
-        cn.table2 = network_data(j).table;
+        %         cn.table1 = network_data(i).table;
+        %         cn.table2 = network_data(j).table;
+        cn.abbreviation1 = network_data(i).abbreviation;
+        cn.abbreviation2 = network_data(j).abbreviation;
+        cn.description1  = network_data(i).description;
+        cn.description2  = network_data(j).description;
 
         if i == j
             cn.type  = 'intra';

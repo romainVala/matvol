@@ -426,9 +426,11 @@ switch hObject.Tag
 
     case 'slider_volume'
         set_mx(hObject)
+
     otherwise
         warning(hObject.Tag)
 end
+drawnow()
 
 guidata(hObject, handles); % store guidata
 end
@@ -493,10 +495,10 @@ if handles.use_network && ~handles.use_dynamic
         network = res{1};
         network_idx = find(strcmp({connn_result.static_network_data.name}, network));
         matrix    = connn_result.static_network_data(network_idx).mx;
-        abbrev_x  = connn_result.static_network_data(network_idx).table.abbreviation;
-        abbrev_y  = connn_result.static_network_data(network_idx).table.abbreviation;
-        descrip_x = connn_result.static_network_data(network_idx).table.description;
-        descrip_y = connn_result.static_network_data(network_idx).table.description;
+        abbrev_x  = connn_result.static_network_data(network_idx).abbreviation;
+        abbrev_y  = connn_result.static_network_data(network_idx).abbreviation;
+        descrip_x = connn_result.static_network_data(network_idx).description;
+        descrip_y = connn_result.static_network_data(network_idx).description;
     end
 elseif ~handles.use_network && handles.use_dynamic
 
@@ -552,10 +554,10 @@ elseif handles.use_network && handles.use_dynamic
         else
             matrix= connn_result.dynamic_network_data(network_idx,handles.dynamic_volume.iVolume).mx;
         end
-        abbrev_x  = connn_result.static_network_data(network_idx).table.abbreviation;
-        abbrev_y  = connn_result.static_network_data(network_idx).table.abbreviation;
-        descrip_x = connn_result.static_network_data(network_idx).table.description;
-        descrip_y = connn_result.static_network_data(network_idx).table.description;
+        abbrev_x  = connn_result.static_network_data(network_idx).abbreviation;
+        abbrev_y  = connn_result.static_network_data(network_idx).abbreviation;
+        descrip_x = connn_result.static_network_data(network_idx).description;
+        descrip_y = connn_result.static_network_data(network_idx).description;
     end
 
 else
