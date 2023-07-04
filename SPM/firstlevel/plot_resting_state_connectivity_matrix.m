@@ -39,7 +39,7 @@ end
 use_network = 0;
 if isfield(conn_result(1), 'network')
     use_network = 1;
-    network_list = {conn_result(1).connectivity_content.network.name};
+    network_list = {conn_result(1).connectivity_content.static_network_data.name};
     listbox_name = ['<all>' '_inter_::avg' '_inter_::var' network_list ];
 else
     listbox_name = {'<all>'};
@@ -424,32 +424,32 @@ connn_result = handles.conn_result(handles.listbox_id.Value).connectivity_conten
 if handles.use_network
     label = handles.listbox_name.String{handles.listbox_name.Value}; 
     if strcmp(label, '<all>')
-        matrix    = connn_result.connectivity_matrix;
+        matrix    = connn_result.static_connectivity_matrix;
         abbrev_x  = connn_result.ts_table.abbreviation;
         abbrev_y  = connn_result.ts_table.abbreviation;
         descrip_x = connn_result.ts_table.description;
         descrip_y = connn_result.ts_table.description;
     elseif strcmp(label, '_inter_::avg')
-        matrix    = reshape([connn_result.conn_network.avg], size(connn_result.conn_network));
-        abbrev_x  = {connn_result.network.name};
-        abbrev_y  = {connn_result.network.name};
-        descrip_x = {connn_result.network.name};
-        descrip_y = {connn_result.network.name};
+        matrix    = reshape([connn_result.static_network_connectivity.avg], size(connn_result.static_network_connectivity));
+        abbrev_x  = {connn_result.static_network_data.name};
+        abbrev_y  = {connn_result.static_network_data.name};
+        descrip_x = {connn_result.static_network_data.name};
+        descrip_y = {connn_result.static_network_data.name};
     elseif strcmp(label, '_inter_::var')
-        matrix    = reshape([connn_result.conn_network.var], size(connn_result.conn_network));
-        abbrev_x  = {connn_result.network.name};
-        abbrev_y  = {connn_result.network.name};
-        descrip_x = {connn_result.network.name};
-        descrip_y = {connn_result.network.name};
+        matrix    = reshape([connn_result.static_network_connectivity.var], size(connn_result.static_network_connectivity));
+        abbrev_x  = {connn_result.static_network_data.name};
+        abbrev_y  = {connn_result.static_network_data.name};
+        descrip_x = {connn_result.static_network_data.name};
+        descrip_y = {connn_result.static_network_data.name};
     else
         res = strsplit(label, '::');
         network = res{1};
-        network_idx = find(strcmp({connn_result.network.name}, network));
-        matrix    = connn_result.network(network_idx).mx;
-        abbrev_x  = connn_result.network(network_idx).table.abbreviation;
-        abbrev_y  = connn_result.network(network_idx).table.abbreviation;
-        descrip_x = connn_result.network(network_idx).table.description;
-        descrip_y = connn_result.network(network_idx).table.description;
+        network_idx = find(strcmp({connn_result.static_network_data.name}, network));
+        matrix    = connn_result.static_network_data(network_idx).mx;
+        abbrev_x  = connn_result.static_network_data(network_idx).table.abbreviation;
+        abbrev_y  = connn_result.static_network_data(network_idx).table.abbreviation;
+        descrip_x = connn_result.static_network_data(network_idx).table.description;
+        descrip_y = connn_result.static_network_data(network_idx).table.description;
     end
 else
     matrix    = connn_result.connectivity_matrix;
