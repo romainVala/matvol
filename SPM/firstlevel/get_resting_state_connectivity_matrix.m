@@ -13,18 +13,18 @@ function [data, conn_result] = get_resting_state_connectivity_matrix(conn_result
 %       data : Here is a description of the data structure content.
 %              !!! in this exemple, nVolume = 34 (= nSubject) !!!
 %
-%             data = 
-%             
+%             data =
+%
 %               struct with fields:
-%             
+%
 %                   table: [161×7 table]          # just a copy of the table in each output of "job_extract_timeseries"
 %                      mx: [161×161×34 double]    # [nROI nROI nVolume] this is a stack of all connectivity matrix
 %                 network: [1×1 struct]           # this field only appears when par.network is given to "job_timeseries_to_connectivity_matrix"
 %
 %             data.network =                      # in this exemple, there are 2 networks, DMN and MOTOR
-%             
+%
 %               struct with fields:
-%             
+%
 %                    name: {2×2 cell}             # a recall of the networks interactions                       : diagonal terms are INTRA, non-diagonal terms are INTER
 %                     avg: [2×2×34 double]        # average            of network coonectivity for each network : diagonal terms are INTRA, non-diagonal terms are INTER
 %                     var: [2×2×34 double]        # variance           of network coonectivity for each network : diagonal terms are INTRA, non-diagonal terms are INTER
@@ -32,7 +32,7 @@ function [data, conn_result] = get_resting_state_connectivity_matrix(conn_result
 %                 details: [2×2×34 struct]        # a copy of all details from the network measures             : diagonal terms are INTRA, non-diagonal terms are INTER
 %                     DMN: [50×50×34 double]      # connectivity matrix of the network [nROI_in_network nROI_in_network nVolume]
 %                   MOTOR: [48×48×34 double]      # connectivity matrix of the network [nROI_in_network nROI_in_network nVolume]
-%                 
+%
 %
 % See also job_extract_timeseries job_timeseries_to_connectivity_matrix plot_resting_state_connectivity_matrix
 
@@ -50,7 +50,7 @@ end
 
 %% Get data
 
-% Prepare 
+% Prepare
 content = [conn_result.connectivity_content];
 content = reshape(content, size(conn_result));
 
@@ -58,26 +58,45 @@ content = reshape(content, size(conn_result));
 data = struct;
 
 data.table = content(1).ts_table;
-data.mx = cat(3,content.connectivity_matrix);
+data.static_mx = cat(3,content.static_connectivity_matrix);
 
 if isfield(conn_result, 'network')
-    
-    conn_network = cat(3,content.conn_network);
-    name1 = reshape({conn_network(:,:,1).name1}, size(conn_network(:,:,1)));
-    name2 = reshape({conn_network(:,:,1).name2}, size(conn_network(:,:,1)));
-    
-    data.network.name = strcat(name1, '__', name2);
-    data.network.avg = reshape([conn_network.avg], size(conn_network));
-    data.network.var = reshape([conn_network.var], size(conn_network));
-    data.network.std = reshape([conn_network.std], size(conn_network));
-    data.network.details = conn_network;
-    
-    network = cat(2,content.network);
-    for n = 1 : size(network,1)
-        data.network.(network(n,1).name) = cat(3,network(n,:).mx);
+    static_network_connectivity = cat(3,content.static_network_connectivity);
+    name1 = reshape({static_network_connectivity(:,:,1).name1}, size(static_network_connectivity(:,:,1)));
+    name2 = reshape({static_network_connectivity(:,:,1).name2}, size(static_network_connectivity(:,:,1)));
+
+    data.static_network.name = strcat(name1, '__', name2);
+    data.static_network.avg = reshape([static_network_connectivity.avg], size(static_network_connectivity));
+    data.static_network.var = reshape([static_network_connectivity.var], size(static_network_connectivity));
+    data.static_network.std = reshape([static_network_connectivity.std], size(static_network_connectivity));
+    data.static_network.details = static_network_connectivity;
+
+    static_network_data = cat(2,content.static_network_data);
+    for n = 1 : size(static_network_data,1)
+        data.static_network.(static_network_data(n,1).name) = cat(3,static_network_data(n,:).mx);
     end
-    
 end
 
+if isfield(conn_result, 'dynamic')
+    data.dynamic_connectivity_matrix = cat(4,content.dynamic_connectivity_matrix);
+end
+
+if isfield(conn_result, 'network') && isfield(conn_result, 'dynamic')
+    dynamic_network_connectivity = cat(4,content.dynamic_network_connectivity);
+    name1 = reshape({dynamic_network_connectivity(:,:,:,1).name1}, size(dynamic_network_connectivity(:,:,:,1)));
+    name2 = reshape({dynamic_network_connectivity(:,:,:,1).name2}, size(dynamic_network_connectivity(:,:,:,1)));
+
+    data.dynamic_network.name = strcat(name1, '__', name2);
+    data.dynamic_network.avg = reshape([dynamic_network_connectivity.avg], size(dynamic_network_connectivity));
+    data.dynamic_network.var = reshape([dynamic_network_connectivity.var], size(dynamic_network_connectivity));
+    data.dynamic_network.std = reshape([dynamic_network_connectivity.std], size(dynamic_network_connectivity));
+    data.dynamic_network.details = dynamic_network_connectivity;
+
+    dynamic_network_data = cat(3,content.dynamic_network_data);
+    for n = 1 : size(dynamic_network_data,1)
+        network_data = squeeze(dynamic_network_data(n,:,:));
+        data.dynamic_network.(network_data(1).name) = reshape([network_data.mx],[size(network_data(1).mx) size(network_data)]);
+    end
+end
 
 end % function
