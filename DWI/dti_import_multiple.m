@@ -7,7 +7,7 @@ end
 defpar.skip_vol='';
 defpar.sge=1;
 defpar.data4D= '4D_dwi';
-defpar.imgregex = '^[fsv]';
+defpar.imgregex = '^[fsv].*nii';
 defpar.swap=''; %for swap dim for sag par.swap='-y z -x' for coro par.swap='x z -y '
 defpar.skip_if_exist = 1;
 defpar.make_even_number_of_slice=1;
@@ -55,7 +55,7 @@ if exist(fullfile(outdir,'bvecs'),'file') & par.skip_if_exist
     return
 end
 
-dti_files=get_subdir_regex_images(dti_spm_dir,par.imgregex);
+dti_files=gfile(dti_spm_dir,par.imgregex);
 dti_files=cellstr(char(dti_files));
 for k=1:length(dti_spm_dir)
     try
