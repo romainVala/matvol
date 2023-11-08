@@ -591,7 +591,7 @@ for iVol = 1:nVol
                     
                     % extract ROI timeseries
                     y = extract_first_eigenvariate(masked_bp_2D);
-                    assert(~any(isnan(y)), 'extracted timeseries contains NaN: %s in %s', atlas_cat12_table.ROIabbr(iROI), atlas_cat12_header.fname)
+                    assert(~any(isnan(y)), 'extracted timeseries contains NaN: %s in %s', atlas_cat12_table.ROIabbr{iROI}, atlas_cat12_header.fname)
                     
                     % append data
                     ts_counter = ts_counter + 1;
