@@ -140,16 +140,18 @@ defpar.walltime = '04:00:00';
 par = complet_struct(par,defpar);
 
 % subfolder trick : the line bellow will be executed before the spm_jobman(), especially useful for cluster
-defpar.cmd_prepend = sprintf('global cat; cat_defaults; cat.extopts.subfolders=%d;',par.subfolder);
+defpar.cmd_prepend = sprintf('global cat; cat.extopts.expertgui=2; cat.extopts.subfolders=%d;',par.subfolder);
 defpar.matlab_opt  = ' -nodesktop ';
 
 par = complet_struct(par,defpar);
 
+global cat;
+
 % Subdir ?
-global cat; cat_defaults; cat.extopts.subfolders=par.subfolder;
+cat.extopts.subfolders = par.subfolder;
 
 % Check if expertgui is enabeled
-assert(cat.extopts.expertgui==2,'cat.extopts.expertgui = 2 is mandatory. Check cat_defaults.m and reset SPM with spm_jobman(''initcfg'')')
+assert(cat_get_defaults('extopts.expertgui')==2,'cat.extopts.expertgui = 2 is mandatory. Run cat_get_defaults(''extopts.expertgui'', 2) (or modify cat_defaults.m) and reset SPM with spm_jobman(''initcfg'')')
 
 
 %% Prepare job generation
