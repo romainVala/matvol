@@ -23,7 +23,7 @@ roidir = par.roidir;
 
 if isempty(faregex) %guess from volume name
    [ppfa faregex] = get_parent_path(fa(1));
-   faregex = cellstr(char(addprefixtofilenames(faregex,'$')));
+   faregex = cellstr(char(addprefixtofilenames(faregex,'^')));
 end
 
 if isempty(faname) %guess from volume name
@@ -32,7 +32,7 @@ end
 
 if isempty(roiregex) %guess from volume name
    [pproi roiregex] = get_parent_path(froi(1));
-   roiregex = cellstr(char(addprefixtofilenames(roiregex,'$')));
+   roiregex = cellstr(char(addprefixtofilenames(roiregex,'^')));
 end
 
 if isempty(roiname) %guess from volume name
