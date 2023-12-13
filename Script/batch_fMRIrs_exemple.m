@@ -9,7 +9,7 @@
 %
 % This example assumes that you have already done the classic steps: 
 % segmentation T1, slice timing , realign, topup, corregister, normalize and smoth. 
-% To do it, See :"batch_preproc_exemple_new"
+% To do it, See :"batch_preproc_rsfMRI.m or batch_preproc_exemple_new.m"
 %  
 
 
