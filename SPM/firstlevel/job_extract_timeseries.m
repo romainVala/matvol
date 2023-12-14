@@ -60,36 +60,25 @@ function TS_struct = job_extract_timeseries(par)
 %                                 theses masks are non-volume (subject) specific, each mask from the list will be used on all volumes
 %
 %
-%    .roi_type.mask_specific (cellstr) such as :
-%                                 par.roi_type.mask_specific = {
-%                                      'path/to/subject1/to/mask_1_right.nii'
-%                                      'path/to/subject2/to/mask_1_right.nii'
-%                                      'path/to/subject3/to/mask_1_right.nii'
-%                                       }; 
-%                                 these masks are specific to each subject, but have the same name.
-%                                 Use "get_subdir_regex_files" to select more than one specific mask :
-%                                 par.roi_type.mask_specific = {
+%    .roi_type.mask_specific.path (cellstr) such as :
+%                                 
+%                                 par.roi_type.mask_specific.path = {
 %                                       ['path/to/subject1/to/mask_1_right.nii'
 %                                        'path/to/subject1/to/mask_1_left.nii ']                               
 %                                       ['path/to/subject2/to/mask_1_right.nii'
 %                                        'path/to/subject2/to/mask_1_left.nii ']                                      
 %                                       ...
 %                                       };  
+%             Use "get_subdir_regex_files" to select more than one specific mask
 %
-%             .mask_name is mandatory if  par.roi_type.mask_specific is used. See "batch_fMRIrs_exemple"
+%             .mask_specific.info is mandatory if  par.roi_type.mask_specific.path is used. See "batch_fMRIrs_exemple"
 %             
-%    .roi_type.mask_name (cellstr array) such as :
-%                                  par.roi_type.mask_name = {
-%                                      % filename             abbrev       description
-%                                      'mask_1_right.nii',   'mask1_R'    'my mask 1 region Right'
-%                                       };
-%                              OR
-%                                   par.roi_type.mask_name = {
+%    .roi_type.mask_specific.info (cellstr array) such as :
+%                                   par.roi_type.mask_specific.info = {
 %                                      % filename             abbrev       description
 %                                      'mask_1_right.nii',   'mask1_R'    'my mask 1 region Right'
 %                                      'mask_1_left.nii',    'mask1_L'    'my mask 1 region Left'
-%                                       };
-%                              ...
+%                                       };                              
 %                              
 %
 %
@@ -218,7 +207,7 @@ nVol = nVol(1);
 assert(isfield(par, 'roi_type'), 'roi_type must be field in the parameters. Check help')
 
 % check .roi_type sub-fields
-allowed_roi_type = {'atlas_cat12', 'mask_global','mask_specific', 'mask_name', 'sphere_global'};
+allowed_roi_type = {'atlas_cat12', 'mask_global','mask_specific','sphere_global'};
 msg_allowed_roi_type = sprintf(repmat('%s, ', [1 length(allowed_roi_type)]), allowed_roi_type{:});
 input_roi_type = fieldnames(par.roi_type);
 for iType = 1 : length(input_roi_type)
@@ -260,16 +249,16 @@ if isfield(par.roi_type, 'mask_specific')
     use_mask           = 1;
     use_mask_specific  = 1;
     
-    assert(iscell(par.roi_type.mask_specific) && ~isempty(par.roi_type.mask_specific) , 'par.roi_type.mask_specific must be a non-empty cell' )
-    assert(isfield(par.roi_type,'mask_name') && ~isempty(par.roi_type.mask_name), 'par.roi_type.mask_name must be a field in parameters and non-empty cell arry. Check help')
-    assert(size(par.roi_type.mask_name,2) == 3, 'par.roi_type.mask_name must be cell array : n rows by 3 columns ')
+    assert(isfield(par.roi_type.mask_specific,'path') && iscell(par.roi_type.mask_specific.path) && ~isempty(par.roi_type.mask_specific.path) , 'par.roi_type.mask_specific.path must be a field and a non-empty cell' )
+    assert(isfield(par.roi_type.mask_specific,'info') && ~isempty(par.roi_type.mask_specific.info), 'par.roi_type.mask_specific.info must be a field in parameters and non-empty cell arry. Check help')
+    assert(size(par.roi_type.mask_specific.info,2) == 3, 'par.roi_type.mask_specific.info must be cell array : n rows by 3 columns ')
     
-    mask_specific_list = par.roi_type.mask_specific;
-    specific_name_list = par.roi_type.mask_name;
+    mask_specific_list = par.roi_type.mask_specific.path;
+    specific_name_list = par.roi_type.mask_specific.info;
     
     [nbr_mask_specific, ~]  = cellfun(@size,mask_specific_list);
     nbr_mask_specific       = unique(nbr_mask_specific);
-    assert(length(nbr_mask_specific) == 1 && nbr_mask_specific == size(specific_name_list,1) ,'Each subject must have same mask number as mask name ....')
+    assert(length(nbr_mask_specific) == 1 ,'Each subject must have same number and order of masks as par.roi_type.mask_specific.info')
     
     outname1            = 'mask_specific__';
     outname2            = 'mask_specific__';
