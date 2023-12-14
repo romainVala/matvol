@@ -154,8 +154,8 @@ par.mask_threshold       = 0.8;
 par.bandpass             = [0.01 0.1];            % Filter 
 par.subdir               = 'rsfc';
 
-par.roi_type.mask_specific = froi;                % Specific masks 
-par.roi_type.mask_name     =  mask_name;          % names 
+par.roi_type.mask_specific.path = froi;                % Specific masks 
+par.roi_type.mask_specific.info =  mask_name;          % names 
 
 
 par.outname  = 'masks';   
