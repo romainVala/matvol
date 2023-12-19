@@ -260,8 +260,8 @@ if isfield(par.roi_type, 'mask_specific')
     nbr_mask_specific       = unique(nbr_mask_specific);
     assert(length(nbr_mask_specific) == 1 ,'Each subject must have same number and order of masks as par.roi_type.mask_specific.info')
     
-    outname1            = 'mask_specific__';
-    outname2            = 'mask_specific__';
+    outname1            = sprintf('%s%s__', outname1, 'mask_specific');
+    outname2            = sprintf('%s%s__', outname2, 'mask_specific');
     
 end
 
