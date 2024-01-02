@@ -39,7 +39,7 @@ function TS_struct = job_extract_timeseries(par)
 % also MANDATORY, at least one
 %----------------------------------------------------------------------------------------------------------------------------------------------------
 %
-%    .roi_type.atlas_cat12  (char/cellstr)  available atlas in CAT12 are : 
+%    .roi_type.atlas_cat12  (char/cellstr)  available atlas in CAT12 are :
 %                                  * aal3, anatomy3, cobra, hammers, ibsr, julichbrain, lpba40, mori, neuromorphometrics, thalamus
 %                                  * Schaefer2018_100Parcels_17Networks_order
 %                                  * Schaefer2018_200Parcels_17Networks_order
@@ -57,10 +57,29 @@ function TS_struct = job_extract_timeseries(par)
 %                                     '/path/to/mask1.nii',  'mask_1',  'my mask region 1'
 %                                     '/path/to/mask2.nii',  'mask_2',  'my mask region 2'
 %                                     };
-%                                 theses masks ar non-volume (subject) specific, each mask from the list will be used on all volumes
+%                                 theses masks are non-volume (subject) specific, each mask from the list will be used on all volumes
 %
 %
-%    (.roi_type.mask_specific !!! not coded yet !!!)
+%    .roi_type.mask_specific.path (cellstr) such as :
+%                                 
+%                                 par.roi_type.mask_specific.path = {
+%                                       ['path/to/subject1/to/mask_1_right.nii'
+%                                        'path/to/subject1/to/mask_1_left.nii ']                               
+%                                       ['path/to/subject2/to/mask_1_right.nii'
+%                                        'path/to/subject2/to/mask_1_left.nii ']                                      
+%                                       ...
+%                                       };  
+%             Use "get_subdir_regex_files" to select more than one specific mask
+%
+%             .mask_specific.info is mandatory if  par.roi_type.mask_specific.path is used. See "batch_fMRIrs_exemple"
+%             
+%    .roi_type.mask_specific.info (cellstr array) such as :
+%                                   par.roi_type.mask_specific.info = {
+%                                      % filename             abbrev       description
+%                                      'mask_1_right.nii',   'mask1_R'    'my mask 1 region Right'
+%                                      'mask_1_left.nii',    'mask1_L'    'my mask 1 region Left'
+%                                       };                              
+%                              
 %
 %
 %    .roi_type.sphere_global  (cell), such as :
@@ -185,10 +204,10 @@ nVol = nVol(1);
 %% Check input ROI
 
 % check .roi_type field
-assert(isfield(par, 'roi_type'), 'roi_type must be field in the parameters. Check hehp')
+assert(isfield(par, 'roi_type'), 'roi_type must be field in the parameters. Check help')
 
 % check .roi_type sub-fields
-allowed_roi_type = {'atlas_cat12', 'mask_global', 'sphere_global'};
+allowed_roi_type = {'atlas_cat12', 'mask_global','mask_specific','sphere_global'};
 msg_allowed_roi_type = sprintf(repmat('%s, ', [1 length(allowed_roi_type)]), allowed_roi_type{:});
 input_roi_type = fieldnames(par.roi_type);
 for iType = 1 : length(input_roi_type)
@@ -225,6 +244,31 @@ if isfield(par.roi_type, 'mask_global')
     gmsk_letter = gmsk_abbrev(:,1);
     outname2 = sprintf('%s%s__', outname2, gmsk_letter(:)');
 end
+
+if isfield(par.roi_type, 'mask_specific')
+    use_mask           = 1;
+    use_mask_specific  = 1;
+    
+    assert(isfield(par.roi_type.mask_specific,'path') && iscell(par.roi_type.mask_specific.path) && ~isempty(par.roi_type.mask_specific.path) , 'par.roi_type.mask_specific.path must be a field and a non-empty cell' )
+    assert(isfield(par.roi_type.mask_specific,'info') && ~isempty(par.roi_type.mask_specific.info), 'par.roi_type.mask_specific.info must be a field in parameters and non-empty cell arry. Check help')
+    assert(size(par.roi_type.mask_specific.info,2) == 3, 'par.roi_type.mask_specific.info must be cell array : n rows by 3 columns ')
+    
+    mask_specific_list = par.roi_type.mask_specific.path;
+    specific_name_list = par.roi_type.mask_specific.info;
+    
+    [nbr_mask_specific, ~]  = cellfun(@size,mask_specific_list);
+    nbr_mask_specific       = unique(nbr_mask_specific);
+    assert(length(nbr_mask_specific) == 1 ,'Each subject must have same number and order of masks as par.roi_type.mask_specific.info')
+    
+    outname1            = sprintf('%s%s__', outname1, 'mask_specific');
+    outname2            = sprintf('%s%s__', outname2, 'mask_specific');
+    
+end
+
+
+
+
+
 if isfield(par.roi_type, 'sphere_global')
     use_sphere         = 1;
     use_sphere_global  = 1;
@@ -304,10 +348,10 @@ for iVol = 1:nVol
         cfg.sge = 0;
         cfg.run = 1;
         code = gencode(cfg, 'par')';
-        code{end+1} = sprintf('%s(par)', mfilename); %#ok<AGROW> 
-        code{end+1} = ''; %#ok<AGROW> 
-        code = strjoin(code, sprintf('\n')); %#ok<SPRINTFN> 
-        job_sge{end+1} = code; %#ok<AGROW> 
+        code{end+1} = sprintf('%s(par)', mfilename); %#ok<AGROW>
+        code{end+1} = ''; %#ok<AGROW>
+        code = strjoin(code, sprintf('\n')); %#ok<SPRINTFN>
+        job_sge{end+1} = code; %#ok<AGROW>
         continue
     end
     
@@ -360,7 +404,7 @@ for iVol = 1:nVol
         matlabbatch{3}.spm.util.cat.name    = par.clean4D_name;
         matlabbatch{3}.spm.util.cat.dtype   = 0;
         matlabbatch{3}.spm.util.cat.RT      = TR; %%%%
-    
+        
         spm_jobman('run', matlabbatch)
         
         symlink(fullfile(glmdir_path, par.clean4D_name), cleaned_volume_path                              , par.redo);
@@ -378,7 +422,7 @@ for iVol = 1:nVol
     % here is also a good occasion to compute ALFF and fALFF since they use Fourier corefficients from the FFT
     
     if ~exist(bp_volume_path, 'file') || par.redo
-    
+        
         fprintf('[%s]:      bandpass filtering using FFT \n', mfilename)
         
         % load volume
@@ -604,10 +648,10 @@ for iVol = 1:nVol
                     newrow.nvoxel       = size(masked_bp_2D,2);
                     newrow.type         = {'atlas'};
                     newrow.source       = {'cat12'};
-                    ts_table   = [ts_table;struct2table(newrow)]; %#ok<AGROW> 
+                    ts_table   = [ts_table;struct2table(newrow)]; %#ok<AGROW>
                     
                 end % iROI
-            
+                
             end % atlas_cat12_idx
             
         end % use_atlas_cat12
@@ -690,11 +734,77 @@ for iVol = 1:nVol
                 newrow.type         = {'mask'};
                 newrow.source       = {'global'};
                 ts_table   = [ts_table;struct2table(newrow)]; %#ok<AGROW>
-                    
+                
                 
             end % mask_global_idx
             
         end % use_mask_global
+        
+        if use_mask_specific
+            
+            mask_spec_nsuj = cellstr(mask_specific_list{iVol});
+            
+            for imask = 1:length(mask_spec_nsuj)
+                
+                mask_spec_path = mask_spec_nsuj{imask};
+                
+                % Check reslice
+                if spm_check_orientations([bp_header(1), spm_vol(mask_spec_path)], false)
+                    resliced_mask_spec_path = mask_spec_path;
+                else
+                    resliced_mask_spec_path = spm_file(mask_spec_path, 'Prefix', 'r');
+                    if ~exist(resliced_mask_spec_path, 'file') || par.redo
+                        fprintf('[%s]:          reslice mask global to functional resolution : %s \n', mfilename, mask_spec_path)
+                        clear matlabbatch
+                        matlabbatch{1}.spm.spatial.coreg.write.ref             = volume_path;
+                        matlabbatch{1}.spm.spatial.coreg.write.source          = {mask_spec_path};
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.interp = 0; % nearest interpolation, to avoid voxel blending
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.wrap   = [0 0 0];
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.mask   = 0;
+                        matlabbatch{1}.spm.spatial.coreg.write.roptions.prefix = 'r';
+                        spm_jobman('run', matlabbatch)
+                    end
+                end
+                
+                %----------------------------------------------------------
+                % extract timeseries
+                %----------------------------------------------------------
+                
+                % load mask specific
+                mask_spec_header = spm_vol(resliced_mask_spec_path);
+                mask_spec_3D     = spm_read_vols(mask_spec_header);
+                mask_spec_3D(~isfinite(mask_spec_3D)) = 0;
+                mask_spec_3D  = logical(mask_spec_3D);
+                assert(sum(mask_spec_3D(:))>0, 'after minimal cleaning, empty mask : %s', resliced_mask_spec_path)
+                
+                % extract timeseries
+                masked_bp_2D  = bp_2D(:,mask_spec_3D(:));
+                masked_bp_2D(~isfinite(masked_bp_2D)) = 0; % infinite values can appear when the label in the mask does not perfectly overlap with input BOLD data
+                
+                y = extract_first_eigenvariate(masked_bp_2D);
+                assert(~any(isnan(y)), 'extracted timeseries contains NaN: %s', resliced_mask_spec_path)
+                
+                % append data
+                ts_counter = ts_counter + 1;
+                timeseries(:,ts_counter) = y;
+                newrow              = struct;
+                newrow.id           = ts_counter;
+                newrow.id0          = ts_counter-1;
+                newrow.abbreviation = specific_name_list(imask, 2);
+                newrow.description  = specific_name_list(imask, 3);
+                newrow.nvoxel       = size(masked_bp_2D,2);
+                newrow.type         = {'mask'};
+                newrow.source       = {'specific'};
+                ts_table   = [ts_table;struct2table(newrow)]; %#ok<AGROW>
+                
+                
+            end % imask specific
+            
+
+        end % use_mask_specific
+        
+        
+        
         
     end % use_mask
     
@@ -784,7 +894,7 @@ for iVol = 1:nVol
     %------------------------------------------------------------------
     save(timeseries_path, 'timeseries', 'ts_table', 'par', 'TR', 'nTR', 'scans');
     fprintf('[%s]:          timeseries saved : %s // %s \n', mfilename, outname, timeseries_path)
-
+    
     
 end % iVol
 
