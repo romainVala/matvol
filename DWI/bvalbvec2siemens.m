@@ -56,6 +56,7 @@ end
 %% Print in terminal a small histogram
 
 norm_bvec   = cell(n_bvec,1);
+norm_bval   = cell(n_bvec,1);
 bval_approx = cell(size(n_bvec,1),1);
 hist_x      = cell(n_bvec,1);
 hist_y      = cell(n_bvec,1);
@@ -74,6 +75,7 @@ for i = 1 : n_bvec
 
     % Histogram of bval
     bval_approx{i} = tolerance * round(bval{i}/tolerance);
+    norm_bval  {i} = bval_approx{i} / max(abs(bval_approx{i}));
     unique_val = unique( bval_approx{i} );
     hist_x{i} = unique_val;
     hist_y{i} = zeros(size(hist_x));
@@ -124,17 +126,23 @@ for i = 1 : n_bvec
         fprintf(fid,'%d x b%d', hist_y{i}(j), hist_x{i}(j));
     end
     fprintf(fid,'\n');
+    fprintf(fid,'# on Diff card set b-value to b=%d \n', max(bval{i}));
     fprintf(fid,'[directions=%d]\n', length(bval{i}));
     fprintf(fid,'CoordinateSystem = xyz\n');
     fprintf(fid,'Normalisation = none\n');
     for d = 1 : length(bval{i})
-        fprintf(fid,'Vector[%d] = ( %g, %g, %g )\n', d-1, bvec{i}(1,d), bvec{i}(2,d), bvec{i}(3,d) );
+        fprintf(fid,'Vector[%d] = ( %g, %g, %g )\n', d-1, bvec{i}(1,d)*sqrt(norm_bval{i}(d)), bvec{i}(2,d)*sqrt(norm_bval{i}(d)), bvec{i}(3,d)*sqrt(norm_bval{i}(d)) );
     end
     fprintf(fid,'\n');
 end
 
 % dont forget to close file
 fclose(fid);
+
+
+%% Perform check
+
+plot_dwi_vectors_siemens(dvs_fpath)
 
 
 end % function
