@@ -1,15 +1,21 @@
 function bvalbvec2siemens( dwi_dir, tolerance )
-% BVALBVEC2SIEMENS will fetch .bvec and .bval files in a directory and generate .dvs file for Siemens
+% BVALBVEC2SIEMENS will fetch .bvec and .bval files in each directory and
+% generate a single .dvs (diffusion vector set) for Siemens magnets.
 %
 % SYNTAX
+%   plot_bvec_bval()                      => a SPM GUI will pop to select dirs
+%   plot_bvec_bval( dwi_dir )             => dir(s) provided
+%   plot_bvec_bval( dwi_dir, tolerance )  => tolerance provided
 %
-% plot_bvec_bval()                      => a GUI will pop to select select dirs
-% plot_bvec_bval( dwi_dir )             => dir(s) provided
-% plot_bvec_bval( dwi_dir, tolerance )  => tolerance provided
+% NOTES
+%   `tolerance` is used to smooth the b-values interpretation : usually
+%   when you ask on the magnet for bval=2000, you will get a value like
+%   1990 or 2005. Other exemple : when you ask for bval=0, you will get 5.
 %
+% See also plot_bvec_bval, plot_dwi_vectors_siemens, gen_scheme2siemens
 
 if nargin < 2
-    tolerance = 100; % bvalue tolerance
+    tolerance = 50; % bvalue tolerance
 end
 
 
@@ -39,27 +45,20 @@ n_bval = size(bval_file,1);
 
 assert( n_bvec==n_bval && n_bvec==n_dir, 'found %d bvec and %d bval files in %d dirs', n_bvec, n_bval, n_dir )
 
+data = struct;
+
 
 %% Load
 
-bvec = cell(size(n_bvec,1),1);
-bval = cell(size(n_bvec,1),1);
-
 for i = 1 : n_bvec
 
-    bvec{i} = load( deblank(bvec_file(i,:)) );
-    bval{i} = load( deblank(bval_file(i,:)) );
+    data(i).bvec = load( deblank(bvec_file(i,:)) );
+    data(i).bval = load( deblank(bval_file(i,:)) );
 
 end
 
 
 %% Print in terminal a small histogram
-
-norm_bvec   = cell(n_bvec,1);
-norm_bval   = cell(n_bvec,1);
-bval_approx = cell(size(n_bvec,1),1);
-hist_x      = cell(n_bvec,1);
-hist_y      = cell(n_bvec,1);
 
 for i = 1 : n_bvec
 
@@ -67,23 +66,23 @@ for i = 1 : n_bvec
     fprintf('%s \n', upper_dir_name{i});
 
     % Norm of bvec
-    norm_bvec{i} = sqrt( bvec{i}(1,:).^2 + bvec{i}(2,:).^2 + bvec{i}(3,:).^2 );
-    norm_bvec{i} = round(norm_bvec{i} * 1000) / 1000; % round it to 1/1000
-    unique_norm  = unique( norm_bvec{i} );
+    data(i).norm_bvec = sqrt(  data(i).bvec(1,:).^2 +  data(i).bvec(2,:).^2 +  data(i).bvec(3,:).^2 );
+    data(i).norm_bvec = round( data(i).norm_bvec * 1000) / 1000; % round it to 1/1000
+    data(i).unique_norm  = unique(  data(i).norm_bvec );
 
-    fprintf('vector unique norm (approx +-1/1000) = %s\n', num2str(unique_norm,'%1.3g '))
+    fprintf('vector unique norm (approx +-1/1000) = %s\n', num2str(data(i).unique_norm,'%1.3g '))
 
     % Histogram of bval
-    bval_approx{i} = tolerance * round(bval{i}/tolerance);
-    norm_bval  {i} = bval_approx{i} / max(abs(bval_approx{i}));
-    unique_val = unique( bval_approx{i} );
-    hist_x{i} = unique_val;
-    hist_y{i} = zeros(size(hist_x));
-    for j = 1 : length(unique_val)
-        hist_y{i}(j) = sum( unique_val(j)==bval_approx{i} );
+    data(i).bval_approx = tolerance * round(data(i).bval/tolerance);
+    data(i).norm_bval   = data(i).bval_approx / max(abs(data(i).bval_approx));
+    data(i).unique_val  = unique( data(i).bval_approx );
+    data(i).hist_x = data(i).unique_val;
+    data(i).hist_y = zeros(size(data(i).hist_x));
+    for j = 1 : length(data(i).unique_val)
+        data(i).hist_y(j) = sum( data(i).unique_val(j)==data(i).bval_approx );
     end
-    fprintf('bval unique (approx b=+-%d) = %s \n', tolerance, num2str(hist_x{i},'%d '))
-    fprintf('bval ucount (approx b=+-%d) = %s \n', tolerance, num2str(hist_y{i},'%d '))
+    fprintf('bval unique (approx b=+-%d) = %s \n', tolerance, num2str(data(i).hist_x,'%d '))
+    fprintf('bval ucount (approx b=+-%d) = %s \n', tolerance, num2str(data(i).hist_y,'%d '))
 
     fprintf('\n')
 
@@ -95,10 +94,10 @@ end
 % prepare filename
 str = '';
 for i = 1 : n_bvec
-    for j = 1 : length(hist_x{i})
-        str = sprintf('%s%dxb%d', str, hist_y{i}(j), hist_x{i}(j));
-        if j < length(hist_x{i})
-            str = sprintf('%s+', str);
+    for j = 1 : length(data(i).hist_x)
+        str = sprintf('%s%db%d', str, data(i).hist_y(j), data(i).hist_x(j));
+        if j < length(data(i).hist_x)
+            str = sprintf('%s-', str);
         else
             if i < n_bvec
                 str = sprintf('%s_', str);
@@ -119,19 +118,22 @@ fprintf('writing file : %s \n', dvs_fpath)
 fprintf(fid,'# generation info : %s \n\n', dvs_fpath);
 for i = 1 : n_bvec
     fprintf(fid,'# intended for ndir/bval = ');
-    for j = 1 : length(hist_x{i})
+    for j = 1 : length(data(i).hist_x)
         if j ~= 1
-            fprintf(fid,' // ');
+            fprintf(fid,' - ');
         end
-        fprintf(fid,'%d x b%d', hist_y{i}(j), hist_x{i}(j));
+        fprintf(fid,'%db%d', data(i).hist_y(j), data(i).hist_x(j));
     end
     fprintf(fid,'\n');
-    fprintf(fid,'# on Diff card set b-value to b=%d \n', max(bval{i}));
-    fprintf(fid,'[directions=%d]\n', length(bval{i}));
+    fprintf(fid,'# on Diff card set b-value to b=%d \n', max(data(i).bval));
+    fprintf(fid,'[directions=%d]\n', length(data(i).bval));
     fprintf(fid,'CoordinateSystem = xyz\n');
     fprintf(fid,'Normalisation = none\n');
-    for d = 1 : length(bval{i})
-        fprintf(fid,'Vector[%d] = ( %g, %g, %g )\n', d-1, bvec{i}(1,d)*sqrt(norm_bval{i}(d)), bvec{i}(2,d)*sqrt(norm_bval{i}(d)), bvec{i}(3,d)*sqrt(norm_bval{i}(d)) );
+    for d = 1 : length(data(i).bval)
+        fprintf(fid,'Vector[%d] = ( %g, %g, %g )\n', d-1, ...
+            data(i).bvec(1,d)*sqrt(data(i).norm_bval(d)), ...
+            data(i).bvec(2,d)*sqrt(data(i).norm_bval(d)), ...
+            data(i).bvec(3,d)*sqrt(data(i).norm_bval(d)));
     end
     fprintf(fid,'\n');
 end
