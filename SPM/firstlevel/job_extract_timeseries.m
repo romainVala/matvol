@@ -221,6 +221,7 @@ use_mask          = 0;
 use_mask_global   = 0;
 use_sphere        = 0;
 use_sphere_global = 0;
+use_mask_specific = 0;
 
 outname1 = '';
 outname2 = '';
