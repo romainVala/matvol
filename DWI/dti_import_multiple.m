@@ -67,10 +67,20 @@ for k=1:length(dti_spm_dir)
         %check if dti file start with s which mean only one volume
         fftest = get_subdir_regex_files(dti_spm_dir{k},'^[sv].*nii')
         if isempty(fftest), error(sprintf('missing bval or bvec and no s file \n so check %s', dti_spm_dir{k})); end
-        
+
+        [vv,aa] = nifti_spm_vol(fftest{1});
+        nb_b0 = length(vv);
         dd=get_parent_path(which('dti_import_multiple.m'));
-        bval_f(k) = get_subdir_regex_files(dd,'bvals_b0',1);
-        bvec_f(k) = get_subdir_regex_files(dd,'bvecs_b0',1);
+        if nb_b0==1
+            bval_f(k) = get_subdir_regex_files(dd,'bvals_b0',1);
+            bvec_f(k) = get_subdir_regex_files(dd,'bvecs_b0',1);
+        elseif nb_b0==2
+            bval_f(k) = get_subdir_regex_files(dd,'bvals_b0_N2',1);
+            bvec_f(k) = get_subdir_regex_files(dd,'bvecs_b0_N2',1);
+        else
+            error('more than 2 b0 without bvals')
+        end
+        
     end
 end
 
@@ -345,6 +355,9 @@ else
         ind=find(bval==0);
         for k=1:length(session)
             aa  = find(ind<=k);
+            if isempty(aa) %series does not start by a b0 ...
+                aa = 1
+            end
             fprintf(fid,'%d ',aa(end));
             fprintf(fid2,'%d ',ll(aa(end)));
             if any(acqp(k,:)-acqp(ind(aa(end)),:))
@@ -352,6 +365,7 @@ else
             end
         end
         fclose(fid);    fclose(fid2);
+        
         [job par.mask] = do_fsl_bet({fodti},par,job);
         par.sge=choose_sge;
 
