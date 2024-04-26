@@ -140,7 +140,7 @@ defpar.walltime = '04:00:00';
 par = complet_struct(par,defpar);
 
 % subfolder trick : the line bellow will be executed before the spm_jobman(), especially useful for cluster
-defpar.cmd_prepend = sprintf('global cat; cat.extopts.expertgui=2; cat.extopts.subfolders=%d;',par.subfolder);
+defpar.cmd_prepend = sprintf('spm(''defaults'',''fmri''); spm_jobman(''initcfg''); cat_defaults;global cat; cat.extopts.expertgui=2; cat.extopts.subfolders=%d;',par.subfolder);
 defpar.matlab_opt  = ' -nodesktop ';
 
 par = complet_struct(par,defpar);
