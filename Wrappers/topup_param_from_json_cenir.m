@@ -85,7 +85,7 @@ for k = 1:length(finii)
             [ out ] = get_string_from_json( fdic{k} , field_to_get , field_type );
             %change encoding direction to phase sign
             if length(out{4})==0
-                warning('can not find parameter PhaseEncodingDirection in json file %s\n Assuming j', fdic{k})
+                error('can not find parameter PhaseEncodingDirection in json file %s\n Assuming j', fdic{k})
                 out{4} = 'j';
             end
             if length(out{5}) == 0
