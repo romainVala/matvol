@@ -84,7 +84,15 @@ for k = 1:length(finii)
 
             [ out ] = get_string_from_json( fdic{k} , field_to_get , field_type );
             %change encoding direction to phase sign
-            if length(out{4})>1
+            if length(out{4})==0
+                warning('can not find parameter PhaseEncodingDirection in json file %s\n Assuming j', fdic{k})
+                out{4} = 'j';
+            end
+            if length(out{5}) == 0
+                warning('can not find parameter BandwidthPerPixelPhaseEncode in json file %s\n so taking 0.005', fdic{k})
+                out{5} = 0.005;
+            end
+            if length(out{4})>1  %which mean either -j or -i or -k ...
                 out{4} = 1
             else
                 out{4} = 0;
