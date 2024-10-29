@@ -16,13 +16,13 @@ function [fo job] = nifti_reg(fmov,fref,par,jobappend)
 if ~exist('par','var'),par ='';end
 if ~exist('jobappend','var'), jobappend ='';end
 
-
 defpar.sge=1;
 defpar.jobname = 'nireg';
 defpar.walltime = '12:00:00';
 defpar.prefix = 'nr_';
 
 defpar.do_affine = 1;
+defpar.rigOnly = 0;
 defpar.do_NL = 1;
 defpar.mask = '';
 defpar.nl_args = '' ; % mouse '-ln 4 -lp 2 -pad 0 --lncc -5 '; % crane -be 0.05 -sx -10
@@ -58,13 +58,22 @@ for k=1:length(fmov)
     if par.do_affine
         cmd = sprintf('%s reg_aladin -flo %s -ref %s ',cmd,fname_mov{k},fref{k});
         cmd = sprintf('%s %s ',cmd,par.nl_aff_args);
-        cmd = sprintf('%s -aff aff_%s.txt -res aff_%s.nii.gz -omp %d \n',cmd,transform,transform,par.nb_thread);
+        cmd = sprintf('%s -aff aff_%s.txt -res aff_%s.nii.gz -omp %d ',cmd,transform,transform,par.nb_thread);
+    end
+    if par.rigOnly
+        cmd = sprintf('%s -rigOnly ',cmd );
     end
     
+    cmd = sprintf('%s \n ',cmd );
+
     if par.do_NL
         cmd = sprintf('%s reg_f3d -flo %s -ref  %s',cmd,fname_mov{k},fref{k});
         cmd = sprintf('%s %s ',cmd,par.nl_args);
-        cmd = sprintf('%s -aff aff_%s.txt -res %s.nii.gz -cpp ycpp_%s.nii.gz -omp %d ',cmd,transform,transform,transform,par.nb_thread);
+        if par.do_affine
+            cmd = sprintf('%s -aff aff_%s.txt -res %s.nii.gz -cpp ycpp_%s.nii.gz -omp %d ',cmd,transform,transform,transform,par.nb_thread);
+        else
+            cmd = sprintf('%s -res %s.nii.gz -cpp ycpp_%s.nii.gz -omp %d ',cmd,transform,transform,par.nb_thread);
+        end
     end
     
     if ~isempty(par.mask)
