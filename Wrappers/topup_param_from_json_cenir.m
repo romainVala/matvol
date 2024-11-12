@@ -99,7 +99,31 @@ for k = 1:length(finii)
             end
             
         end
+        
+        if length(out{5}) == 0
+            field_to_get={
+                'SeriesNumber'
+                'CsaSeries.MrPhoenixProtocol.sSliceArray.asSlice\[0\].dInPlaneRot' %not exist
+                'InPlanePhaseEncodingDirectionDICOM'  %%%
+                'PhaseEncodingDirection' %  j- or j
+                'TotalReadoutTime'       %  use an other json key
+                };
+            field_type={'double', 'double', 'char', 'char','double'  };
+            [ out ] = get_string_from_json( fdic{k} , field_to_get , field_type );
+            if length(out{5}) == 0
+                warning('can not find parameter BandwidthPerPixelPhaseEncode in json file %s\n so taking 0.05', fdic{k})
+                out{5} = 0.05;
+            end
             
+            out{5} = 1/out{5};  % because line 150 :  1/hz
+        end
+        
+        if length(out{4})>1
+            out{4} = 1
+        else
+            out{4} = 0;
+        end
+
     end
     
     for nbf=1:nbline
@@ -120,7 +144,7 @@ for k = 1:length(finii)
             
             if isempty(out{1})
                 hsession(totfile)=1;  hseries(totfile) = k;
-                phase_angle=0;   phase_dir = 'COL'; phase_sign=1; hz=0.005;
+                phase_angle=0;   phase_dir = 'COL'; phase_sign=1; hz=20;
             else
                 hsession(totfile) =  out{1};
                 hseries(totfile) = k;
