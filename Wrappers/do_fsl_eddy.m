@@ -67,8 +67,11 @@ else
     if ischar(par.topup_dir) % then it is relative to DWI dir
         par.topup_dir = addsuffixtofilenames(dtidir,['/' par.topup_dir]);
     end
-        
-    par.topup_acqp = addsuffixtofilenames(par.topup_dir,['/' par.topup_acqp]);
+    if contains(par.topup_acqp,'/')
+        par.topup_acqp = addsuffixtofilenames(dtidir,['/' par.topup_acqp]);
+    else
+        par.topup_acqp = addsuffixtofilenames(par.topup_dir,['/' par.topup_acqp]);
+    end
     if ~strcmp(par.topup(1),'/')
         par.topup = addsuffixtofilenames(par.topup_dir,['/' par.topup]);
     end    

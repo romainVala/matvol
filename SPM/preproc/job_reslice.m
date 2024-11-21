@@ -25,7 +25,7 @@ for k=1:length(fref)
             ffs{kk} = sprintf('%s,%d',ffsession{1},kk);
         end
     else
-        ffs = ffsession;
+        ffs = ffsession';
     end
 
     %-----------------------------------------------------------------------
