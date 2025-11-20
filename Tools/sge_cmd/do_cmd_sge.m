@@ -14,7 +14,7 @@ def_par.software_path    = '';
 
 def_par.jobdir        = pwd;
 def_par.sge           = 1;
-def_par.sge_queu      = 'normal';
+def_par.sge_queu      = 'medium';
 def_par.job_append    = 1;
 def_par.sge_nb_coeur  = 1;
 def_par.submit_sleep  = 1;  %add a sleep of 1 second between each qsub
