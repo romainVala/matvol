@@ -89,8 +89,8 @@ for k = 1:length(finii)
                 out{4} = 'j';
             end
 
-            if length(out{4})>1  %which mean either -j or -i or -k ...
-                out{4} = 1
+            if length(out{4})>1  % which mean either -j or -i or -k ...
+                out{4} = 1;
             else
                 out{4} = 0;
             end
@@ -109,18 +109,16 @@ for k = 1:length(finii)
             [ out ] = get_string_from_json( fdic{k} , field_to_get , field_type );
             if length(out{5}) == 0
                 warning('can not find parameter BandwidthPerPixelPhaseEncode in json file %s\n so taking 0.05', fdic{k})
-                out{5} = 0.05;
+                out{5} = 20;  % because below we use 1/hz
             end
-            
-            out{5} = 1/out{5};  % because line 150 :  1/hz
+%           phase-encoding sign inside the current condition.            
+            if length(out{4})>1
+                out{4} = 1
+            else
+                out{4} = 0;
+            end
         end
         
-        if length(out{4})>1
-            out{4} = 1
-        else
-            out{4} = 0;
-        end
-
     end
     
     for nbf=1:nbline
