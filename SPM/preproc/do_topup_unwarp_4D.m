@@ -1,4 +1,4 @@
-function job = do_topup_unwarp_4D(in,par)
+ function job = do_topup_unwarp_4D(in,par)
 % DO_TOPUP_UNWARP_4D - FSL:topup - FSL:unwarp
 %
 % INPUT : in can be 'char' of dir, multi-level 'cellstr' of dir, '@volume' array
@@ -36,6 +36,7 @@ end
 defpar.todo               = 0;
 defpar.subdir             = 'topup';
 defpar.file_reg           = '^f.*nii';
+defpar.json_reg           = '(^dic.*json$)|(^stack_.*json$)';
 defpar.fsl_output_format  = 'NIFTI';
 defpar.do_apply           = [];
 
@@ -49,6 +50,7 @@ defpar.auto_add_obj       = 1;
 
 % cluster
 defpar.jobname            = 'fsltopup_unwarp4D';
+defpar.mem                = '16G';
 
 par = complet_struct(par,defpar);
 
@@ -121,8 +123,8 @@ for subj=1:nrSubject
             end
         end
         
-        runList{run}=char([cellstr(char(runList(run)));mean_files_cellstr]);
-        fmean(run) = mean_files_cellstr(1); %#ok<AGROW>
+        runList{run} =char([cellstr(char(runList(run)));mean_files_cellstr]);
+        fmean(run)  = mean_files_cellstr(1); %#ok<AGROW>
         
     end
     
@@ -132,14 +134,22 @@ for subj=1:nrSubject
         fprintf('[%s]: skiping topup estimate because %s exists \n',mfilename,fout{1})
     else
         
-        %ACQP=topup_param_from_nifti_cenir(runList,topup_outdir)
-        try
-            ACQP=topup_param_from_json_cenir(fmean,topup_outdir);
-        catch err
-            warning(err.message)
+        %ACQP=topup_param_from_nifti_cenir(runList,topup_outdir)q
+        fdic = get_subdir_regex_files(get_parent_path(fmean), par.json_reg); % can change the json file regax 
+        
+        if numel(fdic) ~= numel(fmean)
+            warning('Number of json files mismatchn in subject %d. Trying to get topup parameter from a NIfTI CENIR ... ', subj);
             ACQP=topup_param_from_nifti_cenir(fmean,topup_outdir);
+            
+        else
+            try
+                ACQP=topup_param_from_json_cenir(fmean,topup_outdir,fdic);   % add json files
+            catch err
+                warning(err.message)
+                ACQP=topup_param_from_nifti_cenir(fmean,topup_outdir);
+            end
         end
-        if size(unique(ACQP),1)<2
+        if size(unique(ACQP(:,2)),1)<2  % Check more 
             error('all the serie have the same phase direction can not do topup')
         end
         
@@ -153,6 +163,7 @@ for subj=1:nrSubject
     end
     
     fo = addsuffixtofilenames(topup_outdir,'/4D_orig_topup');
+    
     
     if isempty(par.do_apply)
         do_apply = ones(size(runList));
