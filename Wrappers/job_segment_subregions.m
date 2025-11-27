@@ -1,20 +1,22 @@
 function jobs = job_segment_subregions(sujname, par)
-
-% FreeSurfer cross-sectional and longitudinal segmentation
-% Generate commands jobs == > cluster 
-% Segment three structures : thalamus, brainstem, hippo-amygdala
-% This func in used after ran recon-all 
+% FreeSurfer cross-sectional and longitudinal segmentation and command job generation
 %
-% Inputs: cellstr, sujname (or suj ID) for cross-sectional analysis or base name for
-% longitudinal analysis
+% This function segments three structures: thalamus, brainstem, hippo-amygdala.
+% It must be run after recon-all.
 %
+% Inputs: 
+%         sujname: cellstr of subject name used in the previous cross-sectional step, 
+%                  or the base name for longitudinal analysis (use get_parent_path to get sujnames).
+%         par: freesurfer and matvol parameters. 
+%         par.subject_dir (alternatively, export SUBJECT_DIR) defines the subjects directory.
+%         
+% Output: segmentations and computed structure volumes. 
+%
+% Requires Freesurfer version 7.3 or higher. 
 %  
-% Output segmentations and computed structure volumes will be saved to the
-% Need Freesurfer 7.3 or more 
-%  
-% Use ex. module load FreeSurfer/7.4.1
-% and export SUBJECT_DIR=path2freesurfer recon-all or par.subject_dir
-% 
+% Usage example: module load FreeSurfer/7.4.1
+%
+%--------------------------------------------------------------------------
 
 
 
@@ -22,13 +24,13 @@ if ~exist('par','var'), par = ''; % for defpar
 end
 
 
-defpar.structure = 'all';      % thalamus, brainstem, hippo-amygdala
+defpar.structure = 'all';      % 'thalamus', 'brainstem', 'hippo-amygdala'
 
 defpar.segment_analysis = 0;   % 0 : cross-sectional analysis,  1 : longitudinal analysis
 
 defpar.debug    = 0;           % Write intermediate debugging outputs for the 1st subject.
-defpar.temp_dir = {''};        % Path to write intermediate debugging outputs.
-defpar.subject_dir = {''};     % Subjects directory (override SUBJECTS_DIR env)
+defpar.temp_dir = '';          % Path to write intermediate debugging outputs.
+defpar.subject_dir = '';       % Subjects directory (override SUBJECTS_DIR env)
 
 % Matvol opt
 
@@ -50,9 +52,11 @@ end
 
 if par.debug, debug =  '--debug'; else, debug = ''; end;
 
-if ~isempty(par.temp_dir{1}), temp_dir = ['--temp-dir ' par.temp_dir{1}]; else, temp_dir = ''; end;
+if ~isempty(par.temp_dir), temp_dir = ['--temp-dir ' par.temp_dir]; else, temp_dir = ''; end;
 
-if ~isempty(par.subject_dir{1}), subject_dir = ['--sd ' par.subject_dir{1}]; else, subject_dir = ''; end;
+if ~isempty(par.subject_dir), subject_dir = ['--sd ' par.subject_dir]; else, subject_dir = ''; 
+    warning('Parameter par.subject_dir is not set. Please ensure that the environment variable SUBJECT_DIR is correctly defined'); 
+end;
 
 jobs = {};
 for nbr = 1 : length(sujname)
