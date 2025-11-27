@@ -12,16 +12,11 @@ function job = job_fastSurfer(fanat,par)
 %        generate jobs whose number is equal to the size of the fanat input variable
 %        
 %
-% 
+% environment :
+%   module load singularity/***
+%   module load FreeSurfer/***
 %
-%
-% Note, Run Singularity locally
-% add it (/!\ version) to your path : export PATH="/network/lustre/iss01/apps/tools/singularity/3.8.3/bin:$PATH"
-% Use : 
-% module load singularity/****
-% module load FreeSurfer/***
-%
-%
+%--------------------------------------------------------------------------
 
 
 
@@ -99,7 +94,7 @@ job = do_cmd_sge(job,par);
 
 
 border = repmat('-', 1, 100);
-fprintf('%s\n\n      Don''t forget to run:\n      module load singularity/xxx\n      module load FreeSurfer/xxx\n\n%s\n', border, border);
+fprintf('%s\n\n      Don''t forget :\n      module load singularity/xxx\n      module load FreeSurfer/xxx\n\n%s\n', border, border);
 
 
 end
