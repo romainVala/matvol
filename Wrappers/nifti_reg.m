@@ -25,6 +25,7 @@ defpar.do_affine = 1;
 defpar.rigOnly = 0;
 defpar.do_NL = 1;
 defpar.mask = '';
+defpar.refmask = '';
 defpar.nl_args = '' ; % mouse '-ln 4 -lp 2 -pad 0 --lncc -5 '; % crane -be 0.05 -sx -10
 defpar.nl_aff_args ='';
 
@@ -60,6 +61,14 @@ for k=1:length(fmov)
         cmd = sprintf('%s %s ',cmd,par.nl_aff_args);
         cmd = sprintf('%s -aff aff_%s.txt -res aff_%s.nii.gz -omp %d ',cmd,transform,transform,par.nb_thread);
     end
+
+    if ~isempty(par.mask)
+        cmd = sprintf('%s -fmask %s ',cmd,par.mask{k})
+	if ~isempty(par.refmask)
+   	     cmd = sprintf('%s -rmask %s ',cmd,par.refmask{k})
+	end	
+    end    
+
     if par.rigOnly
         cmd = sprintf('%s -rigOnly ',cmd );
     end
@@ -74,11 +83,17 @@ for k=1:length(fmov)
         else
             cmd = sprintf('%s -res %s.nii.gz -cpp ycpp_%s.nii.gz -omp %d ',cmd,transform,transform,par.nb_thread);
         end
-    end
-    
+
     if ~isempty(par.mask)
         cmd = sprintf('%s -fmask %s ',cmd,par.mask{k})
+	if ~isempty(par.refmask)
+   	     cmd = sprintf('%s -rmask %s ',cmd,par.refmask{k})
+	end	
     end    
+
+    end
+    
+
 
     job{k} = sprintf('%s\n',cmd);
 end
