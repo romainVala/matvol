@@ -1,28 +1,28 @@
 function job = job_amicofit(fdwi,par)
-% JOB_AMICOFIT : Fit diffusion data models : NODDI, SANDI, ACTIVEAX
+% JOB_AMICOFIT : fit diffusion models : NODDI, SANDI, ACTIVEAX
 %
+% DESCRIPTION:
+%     Performs diffusion model fitting using the AMICO Python library.
+%     By default, it computes the **NODDI** model. Optionally, it compute 
+%     **SANDI** and **ACTIVEAX**.
+%     See the 'par' section below for model-specific settings.
 %
-%
-% Input :
-%        fdwi : provide Cell array containing paths to DWI (diffusion-weighted) image files.
-%        par  : par : structure containing dwi file names (regex) and matvol prameters
-%
-%
-%
+% Inputs:
+%     fdwi: cellstr, paths to the Diffusion-Weighted Imaging (DWI) files.
+%     par  : matvol & amicofit parameters
 %
 % Output :
-%        generate and save the metric files in a foldername defined in "par.output"
-%              in the same directory as the 'fdwi' folder
-%  
-%
-%
+%        Metric files are saved in the defined folder (par.output) in same directory 
+%         as the input 'fdwi' files.
 %
 % REQUIREMENTS: 
-% /!\ To use this function which requires (DIPY env) run :
 % 
-% conda activate /network/iss/cenir/software/irm/conda_env/envs_old_lustr/amico-env
-%
-
+%  conda activate /network/iss/cenir/software/irm/conda_env/envs_old_lustr/amico-env
+% 
+% For more information see :
+%                           https://github.com/daducci/AMICO/wiki
+%  
+%--------------------------------------------------------------------------
 
 if ~exist('par'), par = ''; end
 
@@ -37,18 +37,9 @@ defpar.delta       =[];   % Time between pulses (s)
 defpar.smalldelta  =[];   % Pulses duration (s)
 defpar.echotime    =[];   % Echo time (s)
 
-%
-% defpar.lambda1 = [];
-% defpar.lambda2 = [];
-
-
-
 
 % activeAx par
 defpar.activate_sheme  = '';           % ActiveAx scheme file for activeAx model 
-
-
-
 defpar.do_dtifit = 0;        % Compute standard DTI model 1 or 0
 
 defpar.sge      = 1;
