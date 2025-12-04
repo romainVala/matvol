@@ -9,7 +9,7 @@ defpar.jobname = 'niregApplyW';
 defpar.walltime = '02:00:00';
 defpar.prefix = 'nw_';
 defpar.mask = '';
-defpar.interp = 1; % Interpolation order (0, 1, 3, 4)[3] (0=NN, 1=LIN; 3=CUB, 4=SINC) 
+defpar.interp = 3; % Interpolation order (0, 1, 3, 4)[3] (0=NN, 1=LIN; 3=CUB, 4=SINC) 
 defpar.folder = 'warp'; % create res in folder where the warp is if = 'mov' 
 defpar.inv = 0;   
 defpar.inv_ref=''; % target (ref) image in the direct registration
@@ -54,22 +54,47 @@ end
 
 job=cell(fmov);
 for k=1:length(fmov)
-    path_warp = cellstr(deblank(ores{k}));
+    path_output = cellstr(deblank(ores{k}));
     
     ffname_mov = cellstr(fname_mov{k});
     ffmov = cellstr(char(fmov{k}));
-    if strcmp(par.folder,'warp')
-        path_warp=repmat(path_warp,size(ffmov)); %one warp several move
-    end
+    %if strcmp(par.folder,'warp')   hmm should be always
+    path_output=repmat(path_output,size(ffmov)); %one warp several move
+    %end
     
     if isempty(par.inv_temp_dir)        
-        cmd = sprintf('cd %s\n',dirw{k});
+        cmd = sprintf('cd %s\n',ores{k});
     else
         tmpdir = tempname(par.inv_temp_dir);
         cmd = sprintf('mkdir -p %s\ncd %s\n',tmpdir,tmpdir);
     end
     
     the_fwarp = fwarp{k};
+    nb_warp = size(the_fwarp,1);
+    if nb_warp>1 %multiple fwarp to compose
+        the_fwarp_names = fwarp_file{k};
+        fw1 = deblank(the_fwarp(1,:));
+        name_warp_comp1 = fwarp_file{k}(1,1:10);
+        composit_ext = '.txt'
+        if fw1(end-2:end)=='.gz' | fw1(end-2:end)=='nii'
+            composit_ext = '.nii'
+        end
+        for nb_compose = 2:nb_warp
+            name_warp_comp2 = fwarp_file{k}(nb_compose,1:10)
+            fo_compose = sprintf('ycomp_%s_%s%s',name_warp_comp1, name_warp_comp2, composit_ext );
+            fw2 = deblank(the_fwarp(nb_compose,:));
+            if fw2(end-2:end)=='.gz' | fw2(end-2:end)=='nii'
+                composit_ext = '.nii'
+            end
+            
+            cmd = sprintf('%s \n reg_transform -ref %s -comp %s %s %s\n',cmd, fref{k},fw1, fw2,fo_compose)
+            fw1 = fo_compose;
+            name_warp_comp1 = fo_compose ;
+        end
+        the_fwarp = fo_compose;
+        
+    end
+
     if par.inv
         %cmd = sprintf('%s reg_transform -def %s %s -ref %s \n',cmd,the_fwarp,fo_def{k},fref{k});
         %cmd = sprintf('%s reg_transform -invNrr %s %s %s \n',cmd,fo_def{k},frefiw{k},foinv{k});
@@ -77,10 +102,11 @@ for k=1:length(fmov)
         cmd = sprintf('%s reg_transform -invNrr %s %s %s \n',cmd,fo_def{k},fref{k},foinv{k});
         the_fwarp = foinv{k};
     end
-
+    
+    
     for nb_mov = 1:length(ffname_mov)
         
-        fo = fullfile(path_warp{nb_mov},[par.prefix ffname_mov{nb_mov} '.nii.gz']);
+        fo = fullfile(path_output{nb_mov},[par.prefix ffname_mov{nb_mov} '.nii.gz']);
         
         %cmd = sprintf('cd %s',ores{k});
         cmd = sprintf('%s reg_resample -flo %s -ref %s -res %s ',cmd,ffmov{nb_mov},fref{k},fo);
