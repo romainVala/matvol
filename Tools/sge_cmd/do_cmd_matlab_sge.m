@@ -13,7 +13,7 @@ def_par.get_matlab_path = 1;
 
 def_par.jobdir=pwd; 
 %def_par.sge_queu = 'matlab_nodes';
-def_par.sge_queu = 'normal';
+def_par.sge_queu = 'medium';
 def_par.sge_nb_coeur=1;
 def_par.submit_sleep = 1;  %add a sleep of 1 second between each qsub
 def_par.fake = 0;

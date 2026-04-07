@@ -61,15 +61,15 @@ pdir   = get_parent_path(fdwi,1); % parent dir
 tmp_time = '';
 switch  par.model
     case 'noddi'
-        model = '--noddi'
+        model = 'noddi'
     case 'sandi'
-        model = '--sandi'
-        assert(~any(~[length(par.delta) length(par.smalldelta) length(par.echotime)]), 'To fit the SANDI model, define the acquisition parameters.');
+        model = 'sandi'
+        assert(~any(~[length(par.delta) length(par.smalldelta) length(par.echotime)]), 'Define the acquisition parameters to fit the SANDI model');
         tmp_time = sprintf('-d %s -sd %s -te %s',par.delta, par.smalldelta, par.echotime)
     case 'activeAx'
-        model = '--activeAx'
+        model = 'activeAx'
     otherwise
-        error('Selected model doesn''t exist')
+        error('Model doesn''t exist')
 end
 
 b0_thr = '';
@@ -80,7 +80,7 @@ if par.b0_thr ~= 50,  b0_thr =['--b0_thr' par.b0_thr]; end
 for nbs=1:length(fdwi) 
     
     cmd = sprintf('cd %s\n',pdir{nbs});
-    cmd = sprintf('%samicofit %s -dwi %s -bval %s -bvec %s -mask %s %s %s \n\n',cmd, model,fdwi{nbs},bval{nbs}, bvec{nbs}, mask{nbs}, b0_thr, tmp_time);
+    cmd = sprintf('%samicofit --model %s -dwi %s -bval %s -bvec %s --mask %s %s %s \n\n',cmd, model,fdwi{nbs},bval{nbs}, bvec{nbs}, mask{nbs}, b0_thr, tmp_time);
     job{nbs} = cmd;
   
 end

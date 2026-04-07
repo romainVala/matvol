@@ -10,22 +10,22 @@
 
 
 
-% We use CAT12, SPM12 and mrview to visualize images 
+% We use CAT12 for anatomical preprocessing, SPM12 for rs-fMRI preprocessing, 
+%    and mrview for image visualization.
 
 
 
-
-% First, copy the data to your working directory using Matvol's 
+%% First, copy the data to your working directory using Matvol's 
 % 'r_movefile' function.
 
 
 % Data directory 
-dataDir = '/network/lustre/iss02/cenir/analyse/irm/users/salim.ouarab/data/DataTP_fMRIrs';
+dataDir = '/network/iss/cenir/analyse/irm/users/salim.ouarab/data/DataTP_fMRIrs';
 suj     = gdir(dataDir,'^2')           % 4 subjects 
 
 % Working directory
-% /!\ Change this path with your own workspace path 
-dir     = '/network/lustre/iss02/cenir/analyse/irm/users/salim.ouarab/data/DataTP_fMRIrs/data';
+% /!\ Replace this path with the path to your own workspace.
+dir     = '/network/iss/cenir/analyse/irm/users/salim.ouarab/data/DataTP_fMRIrs/data';
 
 % Using cluster 
 clear par
@@ -41,13 +41,11 @@ r_movefile(suj,dir,'copy',par)
 
 % Get subjects from working directory
 
-dir = '/network/lustre/iss02/cenir/analyse/irm/users/salim.ouarab/data/DataTP_fMRIrs/data';
+dir = '/network/iss/cenir/analyse/irm/users/salim.ouarab/data/DataTP_fMRIrs/data';
 suj = gdir(dir,'^2')          % 4 subjects are copied  
 
 
-% Check data organization and visualize images  :
-%       - file json 
-%       - images 
+% Check data organization 
 
 
 
@@ -82,24 +80,18 @@ job_do_segmentCAT12(fanat,par)
 %                -------------------
 
 
-% /!\   Slice Timing VS Realign
-
-%     Which step should be used first : slice Timing VS realign ? 
-
-% It just an (SPM) advice : use slice timing first when slice order  
-% is not continuous
-
 
 
 dfunc = get_subdir_regex_multi(suj, 'IRMf');
 
 clear par;
 
-par.use_JSON             = 0; % Here, we manually specify the order of the slices.       
-par.user_reference_slice = 0.9930
-par.user_slice_order     = [		0,		1.051,		0.058,		1.11,		0.117,		1.168,		0.175,		1.226,		0.234,		1.285,		0.292,		1.343,		0.35,		1.402,		0.409,		1.46,		0.467,		1.518,		0.526,		1.577,		0.584,		1.635,		0.642,		1.694,		0.701,		1.752,		0.759,		1.81,		0.818,		1.869,		0.876,		1.927,		0.934,		1.986,		0.993,		0,		1.051,		0.058,		1.11,		0.117,		1.168,		0.175,		1.226,		0.234,		1.285,		0.292,		1.343,		0.35,		1.402,		0.409,		1.46,		0.467,		1.518,		0.526,		1.577,		0.584,		1.635,		0.642,		1.694,		0.701,		1.752,		0.759,		1.81,		0.818,		1.869,		0.876,		1.927,		0.934,		1.986,		0.993	];
+par.use_JSON        = 0;  % Here, we manually specify the order of the slices.       
+par.reference_slice = 'middle';   % first / middle / last / sliceNumber (integer)
+par.slice_order     = 'interleaved_ascending';
 
- 
+
+
 par.display  = 0; 
 par.run      = 0;
 par.sge      = 1;
@@ -150,8 +142,6 @@ plot_realign(rp(2))             % Plot 2nd subject
 %                       coregistration 
 %                          using SPM
 %                      ----------------
-
-
 
 % Realign functional images with anatomical images.
 
@@ -240,4 +230,4 @@ j = job_smooth(ffunc,par);
 
 
 
-% Now, use the "batch_fMRIrs_example.m" script to help you do the Cleaning and Filtering.
+% Use the "batch_denoise_rsfMRI.m" script to perform data cleaning and filtering..

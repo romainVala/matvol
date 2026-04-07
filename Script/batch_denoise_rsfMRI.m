@@ -14,7 +14,7 @@
 
 
 % Working directory 
-dir = '/network/lustre/iss02/cenir/analyse/irm/users/salim.ouarab/data/crc_covid';
+dir = '/network/iss/cenir/analyse/irm/users/salim.ouarab/data/crc_covid';
 
 
 

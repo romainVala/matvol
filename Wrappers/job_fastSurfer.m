@@ -55,7 +55,7 @@ sub    = gdir(output,par.sujname);
 
 assert(isempty(sub),'Output name already exists');
 
-
+[ppath, fanat_name] = get_parent_path(fanat);
 
 job={};
 
@@ -63,8 +63,8 @@ for nbr = 1:length(fanat)
     cmd = 'singularity exec --nv --no-home '
     ist1link = ~unix(sprintf('test -L %s\n',fanat{nbr}));
     
-    ppath = split(fanat(nbr),par.sujname{nbr});       % !
-    
+          % !
+    ppath_file = ppath{nbr}
     
     if ist1link
         [~, pathLink]  = unix(sprintf('readlink -f  %s',fanat{nbr}));
@@ -72,18 +72,18 @@ for nbr = 1:length(fanat)
         if par.copylink
             %  [ft1, jcopyt1] = r_movefile(fft1, ft1','copy',par);   
         else   
-            ppath = split(cellstr(char(pathLink)),par.sujname{nbr});
+           ppath_file = char(get_parent_path(pathLink));
             
         end
         
     end
         
     
-    cmd = sprintf('%s -B %s:/data -B %s:/output',cmd, ppath{1}, output{1});                      % path data
+    cmd = sprintf('%s -B %s:/data -B %s:/output',cmd, ppath_file, output{1});                      % path data
     cmd = sprintf('%s -B %s:/fs_license \\\\\n%s \\\\\n', cmd, par.freesurfer{1},par.img{1});    %
     
     cmd = sprintf('%s/fastsurfer/run_fastsurfer.sh --fs_license /fs_license/license.txt', cmd ); %
-    cmd = sprintf('%s --t1 /data/%s/%s --sid %s --sd /output --parallel --3T', cmd, par.sujname{nbr}, ppath{2},par.sujname{nbr})
+    cmd = sprintf('%s --t1 /data/%s --sid %s --sd /output --parallel --3T', cmd, fanat_name{nbr},par.sujname{nbr})
     
     
     job{end+1} = cmd;

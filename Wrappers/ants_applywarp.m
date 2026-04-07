@@ -1,6 +1,9 @@
 function ants_applywarp(fmov,fwarp,fref,par)
 
 
+
+
+
 if ~exist('par','var'),par ='';end
 
 defpar.sge=0;
@@ -12,7 +15,7 @@ defpar.interp = 'Linear'; % BSpline NearestNeighbor MultiLabel[<sigma=imageSpaci
 % BSpline[<order=3>] CosineWindowedSinc WelchWindowedSinc HammingWindowedSinc LanczosWindowedSinc
 defpar.inv = 0;
 defpar.folder = 'mov'; %same dir as the move file %'warp' same dir as the warp file
-defpar.nii4D=0
+defpar.nii4D  = 0;
 
 par = complet_struct(par,defpar);
 
@@ -22,11 +25,12 @@ end
 
 
 
-[ppwarp fname_warp ] = get_parent_path(fwarp); fname_warp = change_file_extension(fname_warp,'');
-[ppmov fname_mov ] = get_parent_path(fmov); fname_mov = change_file_extension(fname_mov,'');
+[ppwarp fname_warp ] = get_parent_path(fwarp); % fname_warp = change_file_extension(fname_warp,'');
+[ppmov fname_mov ]   = get_parent_path(fmov);  fname_mov  = change_file_extension(fname_mov,'');
+new_fname_mov        = addprefixtofilenames(fname_mov, par.prefix);
 
 % -i ../../../template/mask.nii -r v10_s20141028_SN_Track_Rat1-917505-00001-000001.nii.gz -o iwmask.nii
-%-t [aw_v10_s20141028_SN_Track_Rat1-917505-00001-000001_to_ants_template0GenericAffine.mat,1] -t aw_v10_s20141028_SN_Track_Rat1-917505-00001-000001_to_ants_template1InverseWarp.nii.gz
+% -t [aw_v10_s20141028_SN_Track_Rat1-917505-00001-000001_to_ants_template0GenericAffine.mat,1] -t aw_v10_s20141028_SN_Track_Rat1-917505-00001-000001_to_ants_template1InverseWarp.nii.gz
 
 for k=1:length(fmov)
     switch par.folder
@@ -36,31 +40,32 @@ for k=1:length(fmov)
             path_warp = ppwarp{k}(1,:);
     end
     
-    fo = fullfile(path_warp,[par.prefix fname_mov{k} '.nii.gz']);
+    fo    = fullfile(path_warp, cellstr(new_fname_mov{k}));
+    ffmov = cellstr(fmov{k});
     
     %cmd = sprintf('cd %s',ppwarp{k});
-    cmd = sprintf('antsApplyTransforms -i %s -r %s -o %s ',fmov{k},fref{k},fo);
-    
-    if par.nii4D
-        cmd=sprintf('%s -e 3 ',cmd)
-    end
-    
-    ffwarp = cellstr(fwarp{k});
-    if length(par.inv) ~= length(ffwarp)
-        par.inv = repmat(par.inv,size(ffwarp));
-    end
-    
-    for kw = 1:length(ffwarp)
-        if par.inv(kw)
-            cmd = sprintf('%s -t [%s,1] ',cmd,ffwarp{kw});
-        else
-            cmd = sprintf('%s -t %s ',cmd,ffwarp{kw});
+    cmd = '';
+    for nk = 1:length(ffmov)
+        cmd = sprintf('%santsApplyTransforms -i %s -r %s -o %s.nii.gz ',cmd,ffmov{nk},fref{k},fo{nk});
+        
+        if par.nii4D
+            cmd=sprintf('%s -e 3 ',cmd)
         end
+        
+        ffwarp = cellstr(fwarp{k});
+        inv = contains(ffwarp, '.mat');
+       
+        for kw = 1:length(ffwarp)
+            if inv(kw)
+                cmd = sprintf('%s -t [%s,1] ',cmd,ffwarp{kw});
+            else
+                cmd = sprintf('%s -t %s ',cmd,ffwarp{kw});
+            end
+        end
+        
+        cmd = sprintf('%s -n %s\n',cmd,par.interp);
+        
     end
-    
-    cmd = sprintf('%s -n %s',cmd,par.interp);
-    
-    
     job{k} = cmd;
 end
 

@@ -109,7 +109,7 @@ for k = 1:length(finii)
             [ out ] = get_string_from_json( fdic{k} , field_to_get , field_type );
             if length(out{5}) == 0
                 warning('can not find parameter BandwidthPerPixelPhaseEncode in json file %s\n so taking 0.05', fdic{k})
-                out{5} = 20;  % because below we use 1/hz
+                out{5} = 0.05;  % because below we use 1/hz
             end
 %           phase-encoding sign inside the current condition.            
             if length(out{4})>1
@@ -117,6 +117,7 @@ for k = 1:length(finii)
             else
                 out{4} = 0;
             end
+            out{5} = 1/out{5};  % because line 150 :  1/hz
         end
         
     end
