@@ -44,7 +44,7 @@ end
     
 for k=1:length(fi_4D)
     %test if only one b0
-    Bvals = load(fbval{k});
+    Bvals = load(fbval{k},'-ASCII');
     if length(Bvals) == 1 %dwiextract does not work so just copy
         cmd{k} = sprintf('cp  %s %s \n',fi_4D{k},fo4D{k});
     else
