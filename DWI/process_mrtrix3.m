@@ -71,8 +71,8 @@ for nbsuj = 1:length(V4D)
             %if strcmp(ex,'.gz'),   aa = unzip_volume(aa);  end
             V4D(nbsuj) = aa;
             
-            bvec = load(bvecsf{1});
-            bval = load(bvalsf{1});
+            bvec = load(bvecsf{1},'-ASCII');
+            bval = load(bvalsf{1},'-ASCII');
             bval(bval<50) = 0;
             
             if size(bvec,1)>size(bvec,2), bvec=bvec';bval=bval';end
