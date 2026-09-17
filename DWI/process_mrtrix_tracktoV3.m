@@ -72,7 +72,7 @@ for nbsuj = 1:length(sdata)
     end
         
     if ~isempty(par.minlength)
-        cmd = sprintf('%s -minlenth %d',cmd, par.minlength);
+        cmd = sprintf('%s -minlength %d',cmd, par.minlength);
     end
         
     if ~isempty(par.power)
